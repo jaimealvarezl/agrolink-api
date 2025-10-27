@@ -153,15 +153,17 @@ AgroLink.Infrastructure/
 
 ### Database Setup
 
-The application will automatically create the database schema on first run. For production, consider using Entity Framework migrations:
+The application includes pre-created Entity Framework migrations. You can apply them using:
 
 ```bash
-# Add migration
-dotnet ef migrations add InitialCreate --project AgroLink.Infrastructure --startup-project AgroLink.API
-
-# Update database
+# Apply existing migrations
 dotnet ef database update --project AgroLink.Infrastructure --startup-project AgroLink.API
+
+# Create new migration (if you modify entities)
+dotnet ef migrations add YourMigrationName --project AgroLink.Infrastructure --startup-project AgroLink.API
 ```
+
+**Note**: The application will automatically create the database schema on first run if no migrations are applied (development only).
 
 ## 📱 API Endpoints
 

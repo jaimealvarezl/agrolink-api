@@ -8,26 +8,19 @@ namespace AgroLink.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class AnimalsController : ControllerBase
+public class AnimalsController(IAnimalService animalService) : ControllerBase
 {
-    private readonly IAnimalService _animalService;
-
-    public AnimalsController(IAnimalService animalService)
-    {
-        _animalService = animalService;
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll()
     {
-        var animals = await _animalService.GetAllAsync();
+        var animals = await animalService.GetAllAsync();
         return Ok(animals);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<AnimalDto>> GetById(int id)
     {
-        var animal = await _animalService.GetByIdAsync(id);
+        var animal = await animalService.GetByIdAsync(id);
         if (animal == null)
             return NotFound();
 
@@ -37,14 +30,14 @@ public class AnimalsController : ControllerBase
     [HttpGet("lot/{lotId}")]
     public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(int lotId)
     {
-        var animals = await _animalService.GetByLotAsync(lotId);
+        var animals = await animalService.GetByLotAsync(lotId);
         return Ok(animals);
     }
 
     [HttpGet("{id}/genealogy")]
     public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(int id)
     {
-        var genealogy = await _animalService.GetGenealogyAsync(id);
+        var genealogy = await animalService.GetGenealogyAsync(id);
         if (genealogy == null)
             return NotFound();
 
@@ -56,7 +49,7 @@ public class AnimalsController : ControllerBase
     {
         try
         {
-            var animal = await _animalService.CreateAsync(dto);
+            var animal = await animalService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = animal.Id }, animal);
         }
         catch (ArgumentException ex)
@@ -70,7 +63,7 @@ public class AnimalsController : ControllerBase
     {
         try
         {
-            var animal = await _animalService.UpdateAsync(id, dto);
+            var animal = await animalService.UpdateAsync(id, dto);
             return Ok(animal);
         }
         catch (ArgumentException ex)
@@ -84,7 +77,7 @@ public class AnimalsController : ControllerBase
     {
         try
         {
-            await _animalService.DeleteAsync(id);
+            await animalService.DeleteAsync(id);
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -99,7 +92,8 @@ public class AnimalsController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
-            var animal = await _animalService.MoveAnimalAsync(id, request.FromLotId, request.ToLotId, request.Reason, userId);
+            var animal =
+                await animalService.MoveAnimalAsync(id, request.FromLotId, request.ToLotId, request.Reason, userId);
             return Ok(animal);
         }
         catch (ArgumentException ex)

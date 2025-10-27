@@ -3,21 +3,14 @@ using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.Extensions.Configuration;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class PhotoService : IPhotoService
+public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfiguration configuration)
+    : IPhotoService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IAmazonS3 _s3Client;
-    private readonly string _bucketName;
-
-    public PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfiguration configuration)
-    {
-        _unitOfWork = unitOfWork;
-        _s3Client = s3Client;
-        _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
-    }
+    private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
 
     public async Task<PhotoDto> UploadPhotoAsync(CreatePhotoDto dto, Stream fileStream, string fileName)
     {
@@ -29,14 +22,14 @@ public class PhotoService : IPhotoService
             Description = dto.Description
         };
 
-        await _unitOfWork.Photos.AddAsync(photo);
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.Photos.AddAsync(photo);
+        await unitOfWork.SaveChangesAsync();
 
         // Try to upload to S3
         try
         {
             var key = $"photos/{dto.EntityType.ToLower()}/{dto.EntityId}/{photo.Id}_{fileName}";
-            
+
             var request = new PutObjectRequest
             {
                 BucketName = _bucketName,
@@ -45,14 +38,14 @@ public class PhotoService : IPhotoService
                 ContentType = GetContentType(fileName)
             };
 
-            await _s3Client.PutObjectAsync(request);
-            
+            await s3Client.PutObjectAsync(request);
+
             photo.UriRemote = $"https://{_bucketName}.s3.amazonaws.com/{key}";
             photo.Uploaded = true;
             photo.UpdatedAt = DateTime.UtcNow;
 
-            await _unitOfWork.Photos.UpdateAsync(photo);
-            await _unitOfWork.SaveChangesAsync();
+            await unitOfWork.Photos.UpdateAsync(photo);
+            await unitOfWork.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -76,8 +69,8 @@ public class PhotoService : IPhotoService
 
     public async Task<IEnumerable<PhotoDto>> GetByEntityAsync(string entityType, int entityId)
     {
-        var photos = await _unitOfWork.Photos.FindAsync(p => p.EntityType == entityType && p.EntityId == entityId);
-        
+        var photos = await unitOfWork.Photos.FindAsync(p => p.EntityType == entityType && p.EntityId == entityId);
+
         return photos.Select(p => new PhotoDto
         {
             Id = p.Id,
@@ -93,7 +86,7 @@ public class PhotoService : IPhotoService
 
     public async Task DeleteAsync(int id)
     {
-        var photo = await _unitOfWork.Photos.GetByIdAsync(id);
+        var photo = await unitOfWork.Photos.GetByIdAsync(id);
         if (photo == null) throw new ArgumentException("Photo not found");
 
         // Try to delete from S3
@@ -102,7 +95,7 @@ public class PhotoService : IPhotoService
             try
             {
                 var key = ExtractKeyFromUrl(photo.UriRemote);
-                await _s3Client.DeleteObjectAsync(_bucketName, key);
+                await s3Client.DeleteObjectAsync(_bucketName, key);
             }
             catch (Exception ex)
             {
@@ -110,14 +103,14 @@ public class PhotoService : IPhotoService
             }
         }
 
-        await _unitOfWork.Photos.DeleteAsync(photo);
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.Photos.DeleteAsync(photo);
+        await unitOfWork.SaveChangesAsync();
     }
 
     public async Task SyncPendingPhotosAsync()
     {
-        var pendingPhotos = await _unitOfWork.Photos.FindAsync(p => !p.Uploaded);
-        
+        var pendingPhotos = await unitOfWork.Photos.FindAsync(p => !p.Uploaded);
+
         foreach (var photo in pendingPhotos)
         {
             try
@@ -126,7 +119,7 @@ public class PhotoService : IPhotoService
                 // Implementation depends on how local files are stored
                 // For now, we'll just mark as attempted
                 photo.UpdatedAt = DateTime.UtcNow;
-                await _unitOfWork.Photos.UpdateAsync(photo);
+                await unitOfWork.Photos.UpdateAsync(photo);
             }
             catch (Exception ex)
             {
@@ -134,7 +127,7 @@ public class PhotoService : IPhotoService
             }
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 
     private static string GetContentType(string fileName)
