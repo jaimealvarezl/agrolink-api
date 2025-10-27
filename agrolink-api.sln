@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink", "AgroLink\src\AgroLink\AgroLink.csproj", "{D726A3C4-C5E9-4844-AA45-0A9FD147F529}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink", "AgroLink\AgroLink.csproj", "{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +8,9 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D726A3C4-C5E9-4844-AA45-0A9FD147F529}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D726A3C4-C5E9-4844-AA45-0A9FD147F529}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D726A3C4-C5E9-4844-AA45-0A9FD147F529}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D726A3C4-C5E9-4844-AA45-0A9FD147F529}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
