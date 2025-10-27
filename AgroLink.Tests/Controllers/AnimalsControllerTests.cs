@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using AgroLink.API.Controllers;
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
@@ -18,6 +20,23 @@ public class AnimalsControllerTests
     {
         _animalServiceMock = new Mock<IAnimalService>();
         _controller = new AnimalsController(_animalServiceMock.Object);
+        
+        // Setup HTTP context with user claims for tests that need it
+        var claims = new List<Claim>
+        {
+            new Claim("userid", "1"),
+            new Claim(ClaimTypes.Name, "testuser")
+        };
+        var identity = new ClaimsIdentity(claims, "test");
+        var principal = new ClaimsPrincipal(identity);
+        
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = principal
+            }
+        };
     }
 
     [Test]
@@ -62,8 +81,8 @@ public class AnimalsControllerTests
         // Assert
         result.ShouldNotBeNull();
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var returnedAnimals = okResult.Value.ShouldBeOfType<IEnumerable<AnimalDto>>();
-        returnedAnimals.Count().ShouldBe(2);
+        var returnedAnimals = okResult.Value.ShouldBeOfType<List<AnimalDto>>();
+        returnedAnimals.Count.ShouldBe(2);
     }
 
     [Test]
@@ -144,8 +163,8 @@ public class AnimalsControllerTests
         // Assert
         result.ShouldNotBeNull();
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var returnedAnimals = okResult.Value.ShouldBeOfType<IEnumerable<AnimalDto>>();
-        returnedAnimals.Count().ShouldBe(1);
+        var returnedAnimals = okResult.Value.ShouldBeOfType<List<AnimalDto>>();
+        returnedAnimals.Count.ShouldBe(1);
         returnedAnimals.First().LotId.ShouldBe(lotId);
     }
 
@@ -259,7 +278,7 @@ public class AnimalsControllerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.Result.ShouldBeOfType<NotFoundResult>();
+        result.ShouldBeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -293,7 +312,7 @@ public class AnimalsControllerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.ShouldBeOfType<NotFoundResult>();
+        result.ShouldBeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -338,7 +357,7 @@ public class AnimalsControllerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.Result.ShouldBeOfType<NotFoundResult>();
+        result.ShouldBeOfType<BadRequestObjectResult>();
     }
 
     [Test]

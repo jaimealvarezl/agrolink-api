@@ -10,19 +10,12 @@ namespace AgroLink.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class FarmsController : ControllerBase
+public class FarmsController(AgroLinkDbContext context) : ControllerBase
 {
-    private readonly AgroLinkDbContext _context;
-
-    public FarmsController(AgroLinkDbContext context)
-    {
-        _context = context;
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FarmDto>>> GetAll()
     {
-        var farms = await _context.Farms.ToListAsync();
+        var farms = await context.Farms.ToListAsync();
         var result = farms.Select(f => new FarmDto
         {
             Id = f.Id,
@@ -37,7 +30,7 @@ public class FarmsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<FarmDto>> GetById(int id)
     {
-        var farm = await _context.Farms.FindAsync(id);
+        var farm = await context.Farms.FindAsync(id);
         if (farm == null)
             return NotFound();
 
@@ -57,8 +50,8 @@ public class FarmsController : ControllerBase
     {
         var farm = new Farm { Name = request.Name, Location = request.Location };
 
-        _context.Farms.Add(farm);
-        await _context.SaveChangesAsync();
+        context.Farms.Add(farm);
+        await context.SaveChangesAsync();
 
         var result = new FarmDto
         {
@@ -74,7 +67,7 @@ public class FarmsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<FarmDto>> Update(int id, UpdateFarmRequest request)
     {
-        var farm = await _context.Farms.FindAsync(id);
+        var farm = await context.Farms.FindAsync(id);
         if (farm == null)
             return NotFound();
 
@@ -82,8 +75,8 @@ public class FarmsController : ControllerBase
         farm.Location = request.Location ?? farm.Location;
         farm.UpdatedAt = DateTime.UtcNow;
 
-        _context.Farms.Update(farm);
-        await _context.SaveChangesAsync();
+        context.Farms.Update(farm);
+        await context.SaveChangesAsync();
 
         var result = new FarmDto
         {
@@ -99,12 +92,12 @@ public class FarmsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var farm = await _context.Farms.FindAsync(id);
+        var farm = await context.Farms.FindAsync(id);
         if (farm == null)
             return NotFound();
 
-        _context.Farms.Remove(farm);
-        await _context.SaveChangesAsync();
+        context.Farms.Remove(farm);
+        await context.SaveChangesAsync();
 
         return NoContent();
     }

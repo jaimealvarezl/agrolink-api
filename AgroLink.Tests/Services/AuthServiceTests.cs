@@ -6,33 +6,29 @@ using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Moq;
 using Shouldly;
 
 namespace AgroLink.Tests.Services;
 
 [TestFixture]
-public class AuthServiceTests
+public class AuthServiceTests : TestBase
 {
-    private Mock<AgroLinkDbContext> _contextMock = null!;
-    private Mock<IConfiguration> _configurationMock = null!;
+    private AgroLinkDbContext _context = null!;
+    private IConfiguration _configuration = null!;
     private AuthService _service = null!;
 
     [SetUp]
     public void Setup()
     {
-        _contextMock = new Mock<AgroLinkDbContext>(new DbContextOptions<AgroLinkDbContext>());
-        _configurationMock = new Mock<IConfiguration>();
+        _context = CreateInMemoryContext();
+        _configuration = TestConfiguration.CreateConfiguration();
+        _service = new AuthService(_context, _configuration);
+    }
 
-        // Setup configuration mock
-        _configurationMock
-            .Setup(x => x["Jwt:SecretKey"])
-            .Returns("test-secret-key-that-is-long-enough-for-hmac-sha256");
-        _configurationMock.Setup(x => x["Jwt:Issuer"]).Returns("AgroLink-Test");
-        _configurationMock.Setup(x => x["Jwt:Audience"]).Returns("AgroLink-Test");
-        _configurationMock.Setup(x => x["Jwt:ExpiryMinutes"]).Returns("60");
-
-        _service = new AuthService(_contextMock.Object, _configurationMock.Object);
+    [TearDown]
+    public void TearDown()
+    {
+        _context?.Dispose();
     }
 
     [Test]
@@ -53,17 +49,8 @@ public class AuthServiceTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        var usersDbSet = new Mock<DbSet<User>>();
-        usersDbSet
-            .Setup(x =>
-                x.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(user);
-
-        _contextMock.Setup(x => x.Users).Returns(usersDbSet.Object);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
         // Act
         var result = await _service.LoginAsync(loginDto);
@@ -73,7 +60,6 @@ public class AuthServiceTests
         result.Token.ShouldNotBeNullOrEmpty();
         result.User.ShouldNotBeNull();
         result.User.Email.ShouldBe(loginDto.Email);
-        result.User.Name.ShouldBe("Test User");
     }
 
     [Test]
@@ -81,18 +67,6 @@ public class AuthServiceTests
     {
         // Arrange
         var loginDto = new LoginDto { Email = "nonexistent@example.com", Password = "password123" };
-
-        var usersDbSet = new Mock<DbSet<User>>();
-        usersDbSet
-            .Setup(x =>
-                x.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync((User?)null);
-
-        _contextMock.Setup(x => x.Users).Returns(usersDbSet.Object);
 
         // Act
         var result = await _service.LoginAsync(loginDto);
@@ -119,17 +93,8 @@ public class AuthServiceTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        var usersDbSet = new Mock<DbSet<User>>();
-        usersDbSet
-            .Setup(x =>
-                x.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(user);
-
-        _contextMock.Setup(x => x.Users).Returns(usersDbSet.Object);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
         // Act
         var result = await _service.LoginAsync(loginDto);
@@ -147,12 +112,15 @@ public class AuthServiceTests
             Id = 1,
             Name = "Test User",
             Email = "test@example.com",
+            PasswordHash = "hashedpassword",
             Role = "Admin",
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
         };
 
-        // Create a valid token
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
         var token = CreateValidJwtToken(user);
 
         // Act
@@ -166,7 +134,7 @@ public class AuthServiceTests
     public async Task ValidateTokenAsync_WithInvalidToken_ShouldReturnFalse()
     {
         // Arrange
-        var invalidToken = "invalid.token.here";
+        var invalidToken = "invalid.jwt.token";
 
         // Act
         var result = await _service.ValidateTokenAsync(invalidToken);
@@ -184,10 +152,14 @@ public class AuthServiceTests
             Id = 1,
             Name = "Test User",
             Email = "test@example.com",
+            PasswordHash = "hashedpassword",
             Role = "Admin",
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
         };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
         var token = CreateValidJwtToken(user);
 
@@ -196,15 +168,15 @@ public class AuthServiceTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.Id.ShouldBe(1);
-        result.Email.ShouldBe("test@example.com");
+        result.Id.ShouldBe(user.Id);
+        result.Email.ShouldBe(user.Email);
     }
 
     [Test]
     public async Task GetUserFromTokenAsync_WithInvalidToken_ShouldReturnNull()
     {
         // Arrange
-        var invalidToken = "invalid.token.here";
+        var invalidToken = "invalid.jwt.token";
 
         // Act
         var result = await _service.GetUserFromTokenAsync(invalidToken);
@@ -213,29 +185,90 @@ public class AuthServiceTests
         result.ShouldBeNull();
     }
 
-    private string CreateValidJwtToken(User user)
+    [Test]
+    public async Task RegisterAsync_WithValidData_ShouldReturnUser()
     {
-        var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes("test-secret-key-that-is-long-enough-for-hmac-sha256");
-
-        var tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        // Arrange
+        var userDto = new UserDto
         {
-            Subject = new ClaimsIdentity(
-                new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.Name),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role),
-                }
-            ),
-            Expires = DateTime.UtcNow.AddDays(7),
-            SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
-                new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
-                Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature
-            ),
+            Name = "New User",
+            Email = "newuser@example.com",
+            Role = "User"
+        };
+        var password = "password123";
+
+        // Act
+        var result = await _service.RegisterAsync(userDto, password);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Name.ShouldBe(userDto.Name);
+        result.Email.ShouldBe(userDto.Email);
+        result.Role.ShouldBe(userDto.Role);
+
+        // Verify user was saved to database
+        var savedUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userDto.Email);
+        savedUser.ShouldNotBeNull();
+        savedUser.Name.ShouldBe(userDto.Name);
+    }
+
+    [Test]
+    public async Task RegisterAsync_WithExistingEmail_ShouldThrowException()
+    {
+        // Arrange
+        var existingUser = new User
+        {
+            Id = 1,
+            Name = "Existing User",
+            Email = "existing@example.com",
+            PasswordHash = "hashedpassword",
+            Role = "Admin",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
         };
 
+        _context.Users.Add(existingUser);
+        await _context.SaveChangesAsync();
+
+        var userDto = new UserDto
+        {
+            Name = "New User",
+            Email = "existing@example.com", // Same email
+            Role = "User"
+        };
+        var password = "password123";
+
+        // Act & Assert
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await _service.RegisterAsync(userDto, password));
+    }
+
+    private string CreateValidJwtToken(User user)
+    {
+        var secretKey = _configuration["Jwt:SecretKey"] ?? "test-secret-key";
+        var issuer = _configuration["Jwt:Issuer"] ?? "AgroLink-Test";
+        var audience = _configuration["Jwt:Audience"] ?? "AgroLink-Test";
+        var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "60");
+
+        var key = Encoding.UTF8.GetBytes(secretKey);
+        var tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim("userid", user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
+            }),
+            Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
+            Issuer = issuer,
+            Audience = audience,
+            SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
+                new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
+                Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }

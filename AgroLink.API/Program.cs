@@ -54,7 +54,7 @@ builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // AWS S3
-builder.Services.AddSingleton<IAmazonS3>(provider => new Amazon.S3.AmazonS3Client());
+builder.Services.AddSingleton<IAmazonS3>(provider => new AmazonS3Client());
 
 // JWT Authentication
 var jwtKey =
@@ -85,10 +85,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(
         "AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-        }
+        policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }
     );
 });
 

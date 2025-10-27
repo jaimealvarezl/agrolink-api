@@ -8,26 +8,19 @@ namespace AgroLink.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class ChecklistsController : ControllerBase
+public class ChecklistsController(IChecklistService checklistService) : ControllerBase
 {
-    private readonly IChecklistService _checklistService;
-
-    public ChecklistsController(IChecklistService checklistService)
-    {
-        _checklistService = checklistService;
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetAll()
     {
-        var checklists = await _checklistService.GetAllAsync();
+        var checklists = await checklistService.GetAllAsync();
         return Ok(checklists);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ChecklistDto>> GetById(int id)
     {
-        var checklist = await _checklistService.GetByIdAsync(id);
+        var checklist = await checklistService.GetByIdAsync(id);
         if (checklist == null)
             return NotFound();
 
@@ -40,7 +33,7 @@ public class ChecklistsController : ControllerBase
         int scopeId
     )
     {
-        var checklists = await _checklistService.GetByScopeAsync(scopeType, scopeId);
+        var checklists = await checklistService.GetByScopeAsync(scopeType, scopeId);
         return Ok(checklists);
     }
 
@@ -50,7 +43,7 @@ public class ChecklistsController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
-            var checklist = await _checklistService.CreateAsync(dto, userId);
+            var checklist = await checklistService.CreateAsync(dto, userId);
             return CreatedAtAction(nameof(GetById), new { id = checklist.Id }, checklist);
         }
         catch (ArgumentException ex)
@@ -64,7 +57,7 @@ public class ChecklistsController : ControllerBase
     {
         try
         {
-            var checklist = await _checklistService.UpdateAsync(id, dto);
+            var checklist = await checklistService.UpdateAsync(id, dto);
             return Ok(checklist);
         }
         catch (ArgumentException ex)
@@ -78,7 +71,7 @@ public class ChecklistsController : ControllerBase
     {
         try
         {
-            await _checklistService.DeleteAsync(id);
+            await checklistService.DeleteAsync(id);
             return NoContent();
         }
         catch (ArgumentException ex)

@@ -7,19 +7,12 @@ namespace AgroLink.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController(IAuthService authService) : ControllerBase
 {
-    private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
-    {
-        _authService = authService;
-    }
-
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
-        var result = await _authService.LoginAsync(dto);
+        var result = await authService.LoginAsync(dto);
         if (result == null)
             return Unauthorized("Invalid credentials");
 
@@ -31,14 +24,9 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var userDto = new UserDto
-            {
-                Name = request.Name,
-                Email = request.Email,
-                Role = request.Role ?? "USER",
-            };
+            var userDto = new UserDto { Name = request.Name, Email = request.Email, Role = request.Role ?? "USER", };
 
-            var user = await _authService.RegisterAsync(userDto, request.Password);
+            var user = await authService.RegisterAsync(userDto, request.Password);
             return CreatedAtAction(nameof(GetProfile), new { id = user.Id }, user);
         }
         catch (ArgumentException ex)
@@ -55,7 +43,7 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(token))
             return Unauthorized();
 
-        var user = await _authService.GetUserFromTokenAsync(token);
+        var user = await authService.GetUserFromTokenAsync(token);
         if (user == null)
             return Unauthorized();
 
@@ -65,17 +53,18 @@ public class AuthController : ControllerBase
     [HttpPost("validate")]
     public async Task<ActionResult<object>> ValidateToken([FromBody] ValidateTokenRequest request)
     {
-        var isValid = await _authService.ValidateTokenAsync(request.Token);
+        var isValid = await authService.ValidateTokenAsync(request.Token);
         return Ok(new { valid = isValid });
     }
 
     private string? GetTokenFromHeader()
     {
-        var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+        var authHeader = Request.Headers.Authorization.FirstOrDefault();
         if (authHeader?.StartsWith("Bearer ") == true)
         {
             return authHeader.Substring("Bearer ".Length).Trim();
         }
+
         return null;
     }
 }

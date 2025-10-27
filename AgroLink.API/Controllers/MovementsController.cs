@@ -8,29 +8,22 @@ namespace AgroLink.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class MovementsController : ControllerBase
+public class MovementsController(IMovementService movementService) : ControllerBase
 {
-    private readonly IMovementService _movementService;
-
-    public MovementsController(IMovementService movementService)
-    {
-        _movementService = movementService;
-    }
-
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<MovementDto>>> GetByEntity(
         string entityType,
         int entityId
     )
     {
-        var movements = await _movementService.GetByEntityAsync(entityType, entityId);
+        var movements = await movementService.GetByEntityAsync(entityType, entityId);
         return Ok(movements);
     }
 
     [HttpGet("animal/{animalId}/history")]
     public async Task<ActionResult<IEnumerable<MovementDto>>> GetAnimalHistory(int animalId)
     {
-        var movements = await _movementService.GetAnimalHistoryAsync(animalId);
+        var movements = await movementService.GetAnimalHistoryAsync(animalId);
         return Ok(movements);
     }
 
@@ -40,7 +33,7 @@ public class MovementsController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
-            var movement = await _movementService.CreateAsync(dto, userId);
+            var movement = await movementService.CreateAsync(dto, userId);
             return CreatedAtAction(
                 nameof(GetByEntity),
                 new { entityType = dto.EntityType, entityId = dto.EntityId },

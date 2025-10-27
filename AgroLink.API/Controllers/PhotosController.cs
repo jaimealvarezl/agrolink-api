@@ -8,29 +8,22 @@ namespace AgroLink.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class PhotosController : ControllerBase
+public class PhotosController(IPhotoService photoService) : ControllerBase
 {
-    private readonly IPhotoService _photoService;
-
-    public PhotosController(IPhotoService photoService)
-    {
-        _photoService = photoService;
-    }
-
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<PhotoDto>>> GetByEntity(
         string entityType,
         int entityId
     )
     {
-        var photos = await _photoService.GetByEntityAsync(entityType, entityId);
+        var photos = await photoService.GetByEntityAsync(entityType, entityId);
         return Ok(photos);
     }
 
     [HttpPost("upload")]
     public async Task<ActionResult<PhotoDto>> UploadPhoto(
         [FromForm] CreatePhotoDto dto,
-        [FromForm] IFormFile file
+        [FromForm] IFormFile? file
     )
     {
         if (file == null || file.Length == 0)
@@ -38,8 +31,8 @@ public class PhotosController : ControllerBase
 
         try
         {
-            using var stream = file.OpenReadStream();
-            var photo = await _photoService.UploadPhotoAsync(dto, stream, file.FileName);
+            await using var stream = file.OpenReadStream();
+            var photo = await photoService.UploadPhotoAsync(dto, stream, file.FileName);
             return Ok(photo);
         }
         catch (ArgumentException ex)
@@ -53,7 +46,7 @@ public class PhotosController : ControllerBase
     {
         try
         {
-            await _photoService.DeleteAsync(id);
+            await photoService.DeleteAsync(id);
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -65,7 +58,7 @@ public class PhotosController : ControllerBase
     [HttpPost("sync")]
     public async Task<ActionResult> SyncPendingPhotos()
     {
-        await _photoService.SyncPendingPhotosAsync();
+        await photoService.SyncPendingPhotosAsync();
         return Ok(new { message = "Photo sync completed" });
     }
 }
