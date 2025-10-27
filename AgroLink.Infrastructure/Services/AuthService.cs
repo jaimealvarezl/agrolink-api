@@ -1,6 +1,8 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
+using AgroLink.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,26 +13,26 @@ namespace AgroLink.Infrastructure.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly AgroLinkDbContext _context;
     private readonly IConfiguration _configuration;
 
-    public AuthService(IUnitOfWork unitOfWork, IConfiguration configuration)
+    public AuthService(AgroLinkDbContext context, IConfiguration configuration)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
         _configuration = configuration;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
     {
-        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.IsActive);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.IsActive);
         if (user == null) return null;
 
         if (!VerifyPassword(dto.Password, user.PasswordHash))
             return null;
 
         user.LastLoginAt = DateTime.UtcNow;
-        await _unitOfWork.Users.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
         var expiresAt = DateTime.UtcNow.AddDays(7); // Token expires in 7 days
@@ -54,7 +56,7 @@ public class AuthService : IAuthService
 
     public async Task<UserDto> RegisterAsync(UserDto dto, string password)
     {
-        var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (existingUser != null)
             throw new ArgumentException("User with this email already exists");
 
@@ -67,8 +69,8 @@ public class AuthService : IAuthService
             IsActive = true
         };
 
-        await _unitOfWork.Users.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
         return new UserDto
         {
@@ -118,7 +120,7 @@ public class AuthService : IAuthService
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                 return null;
 
-            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            var user = await _context.Users.FindAsync(userId);
             if (user == null || !user.IsActive)
                 return null;
 

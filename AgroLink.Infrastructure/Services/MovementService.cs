@@ -1,21 +1,23 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
+using AgroLink.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Services;
 
 public class MovementService : IMovementService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly AgroLinkDbContext _context;
 
-    public MovementService(IUnitOfWork unitOfWork)
+    public MovementService(AgroLinkDbContext context)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task<IEnumerable<MovementDto>> GetByEntityAsync(string entityType, int entityId)
     {
-        var movements = await _unitOfWork.Movements.FindAsync(m => m.EntityType == entityType && m.EntityId == entityId);
+        var movements = await _context.Movements.Where(m => m.EntityType == entityType && m.EntityId == entityId).ToListAsync();
         var result = new List<MovementDto>();
 
         foreach (var movement in movements)
@@ -39,8 +41,8 @@ public class MovementService : IMovementService
             UserId = userId
         };
 
-        await _unitOfWork.Movements.AddAsync(movement);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Movements.Add(movement);
+        await _context.SaveChangesAsync();
 
         return await MapToDtoAsync(movement);
     }
@@ -52,7 +54,7 @@ public class MovementService : IMovementService
 
     private async Task<MovementDto> MapToDtoAsync(Movement movement)
     {
-        var user = await _unitOfWork.Users.GetByIdAsync(movement.UserId);
+        var user = await _context.Users.FindAsync(movement.UserId);
         
         string? entityName = null;
         string? fromName = null;
@@ -61,12 +63,12 @@ public class MovementService : IMovementService
         // Get entity name
         if (movement.EntityType == "ANIMAL")
         {
-            var animal = await _unitOfWork.Animals.GetByIdAsync(movement.EntityId);
+            var animal = await _context.Animals.FindAsync(movement.EntityId);
             entityName = animal?.Tag;
         }
         else if (movement.EntityType == "LOT")
         {
-            var lot = await _unitOfWork.Lots.GetByIdAsync(movement.EntityId);
+            var lot = await _context.Lots.FindAsync(movement.EntityId);
             entityName = lot?.Name;
         }
 
@@ -75,12 +77,12 @@ public class MovementService : IMovementService
         {
             if (movement.EntityType == "ANIMAL")
             {
-                var lot = await _unitOfWork.Lots.GetByIdAsync(movement.FromId.Value);
+                var lot = await _context.Lots.FindAsync(movement.FromId.Value);
                 fromName = lot?.Name;
             }
             else if (movement.EntityType == "LOT")
             {
-                var paddock = await _unitOfWork.Paddocks.GetByIdAsync(movement.FromId.Value);
+                var paddock = await _context.Paddocks.FindAsync(movement.FromId.Value);
                 fromName = paddock?.Name;
             }
         }
@@ -90,12 +92,12 @@ public class MovementService : IMovementService
         {
             if (movement.EntityType == "ANIMAL")
             {
-                var lot = await _unitOfWork.Lots.GetByIdAsync(movement.ToId.Value);
+                var lot = await _context.Lots.FindAsync(movement.ToId.Value);
                 toName = lot?.Name;
             }
             else if (movement.EntityType == "LOT")
             {
-                var paddock = await _unitOfWork.Paddocks.GetByIdAsync(movement.ToId.Value);
+                var paddock = await _context.Paddocks.FindAsync(movement.ToId.Value);
                 toName = paddock?.Name;
             }
         }

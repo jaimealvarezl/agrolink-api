@@ -1,8 +1,9 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
-using AgroLink.Core.Interfaces;
+using AgroLink.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.API.Controllers;
 
@@ -11,22 +12,22 @@ namespace AgroLink.API.Controllers;
 [Authorize]
 public class LotsController : ControllerBase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly AgroLinkDbContext _context;
 
-    public LotsController(IUnitOfWork unitOfWork)
+    public LotsController(AgroLinkDbContext context)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetAll()
     {
-        var lots = await _unitOfWork.Lots.GetAllAsync();
+        var lots = await _context.Lots.ToListAsync();
         var result = new List<LotDto>();
 
         foreach (var lot in lots)
         {
-            var paddock = await _unitOfWork.Paddocks.GetByIdAsync(lot.PaddockId);
+            var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
             result.Add(new LotDto
             {
                 Id = lot.Id,
@@ -44,12 +45,12 @@ public class LotsController : ControllerBase
     [HttpGet("paddock/{paddockId}")]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetByPaddock(int paddockId)
     {
-        var lots = await _unitOfWork.Lots.FindAsync(l => l.PaddockId == paddockId);
+        var lots = await _context.Lots.Where(l => l.PaddockId == paddockId).ToListAsync();
         var result = new List<LotDto>();
 
         foreach (var lot in lots)
         {
-            var paddock = await _unitOfWork.Paddocks.GetByIdAsync(lot.PaddockId);
+            var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
             result.Add(new LotDto
             {
                 Id = lot.Id,
@@ -67,11 +68,11 @@ public class LotsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<LotDto>> GetById(int id)
     {
-        var lot = await _unitOfWork.Lots.GetByIdAsync(id);
+        var lot = await _context.Lots.FindAsync(id);
         if (lot == null)
             return NotFound();
 
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(lot.PaddockId);
+        var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
         var result = new LotDto
         {
             Id = lot.Id,
@@ -95,10 +96,10 @@ public class LotsController : ControllerBase
             Status = request.Status ?? "ACTIVE"
         };
 
-        await _unitOfWork.Lots.AddAsync(lot);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Lots.Add(lot);
+        await _context.SaveChangesAsync();
 
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(lot.PaddockId);
+        var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
         var result = new LotDto
         {
             Id = lot.Id,
@@ -115,7 +116,7 @@ public class LotsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<LotDto>> Update(int id, UpdateLotRequest request)
     {
-        var lot = await _unitOfWork.Lots.GetByIdAsync(id);
+        var lot = await _context.Lots.FindAsync(id);
         if (lot == null)
             return NotFound();
 
@@ -124,10 +125,10 @@ public class LotsController : ControllerBase
         lot.Status = request.Status ?? lot.Status;
         lot.UpdatedAt = DateTime.UtcNow;
 
-        await _unitOfWork.Lots.UpdateAsync(lot);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Lots.Update(lot);
+        await _context.SaveChangesAsync();
 
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(lot.PaddockId);
+        var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
         var result = new LotDto
         {
             Id = lot.Id,
@@ -144,12 +145,12 @@ public class LotsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var lot = await _unitOfWork.Lots.GetByIdAsync(id);
+        var lot = await _context.Lots.FindAsync(id);
         if (lot == null)
             return NotFound();
 
-        await _unitOfWork.Lots.DeleteAsync(lot);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Lots.Remove(lot);
+        await _context.SaveChangesAsync();
 
         return NoContent();
     }
@@ -157,7 +158,7 @@ public class LotsController : ControllerBase
     [HttpPost("{id}/move")]
     public async Task<ActionResult<LotDto>> MoveLot(int id, [FromBody] MoveLotRequest request)
     {
-        var lot = await _unitOfWork.Lots.GetByIdAsync(id);
+        var lot = await _context.Lots.FindAsync(id);
         if (lot == null)
             return NotFound();
 
@@ -165,7 +166,7 @@ public class LotsController : ControllerBase
         lot.PaddockId = request.ToPaddockId;
         lot.UpdatedAt = DateTime.UtcNow;
 
-        await _unitOfWork.Lots.UpdateAsync(lot);
+        _context.Lots.Update(lot);
 
         // Record movement
         var userId = GetCurrentUserId();
@@ -180,10 +181,10 @@ public class LotsController : ControllerBase
             UserId = userId
         };
 
-        await _unitOfWork.Movements.AddAsync(movement);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Movements.Add(movement);
+        await _context.SaveChangesAsync();
 
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(lot.PaddockId);
+        var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
         var result = new LotDto
         {
             Id = lot.Id,

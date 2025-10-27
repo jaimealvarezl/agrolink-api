@@ -1,8 +1,9 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
-using AgroLink.Core.Interfaces;
+using AgroLink.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.API.Controllers;
 
@@ -11,22 +12,22 @@ namespace AgroLink.API.Controllers;
 [Authorize]
 public class PaddocksController : ControllerBase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly AgroLinkDbContext _context;
 
-    public PaddocksController(IUnitOfWork unitOfWork)
+    public PaddocksController(AgroLinkDbContext context)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PaddockDto>>> GetAll()
     {
-        var paddocks = await _unitOfWork.Paddocks.GetAllAsync();
+        var paddocks = await _context.Paddocks.ToListAsync();
         var result = new List<PaddockDto>();
 
         foreach (var paddock in paddocks)
         {
-            var farm = await _unitOfWork.Farms.GetByIdAsync(paddock.FarmId);
+            var farm = await _context.Farms.FindAsync(paddock.FarmId);
             result.Add(new PaddockDto
             {
                 Id = paddock.Id,
@@ -43,12 +44,12 @@ public class PaddocksController : ControllerBase
     [HttpGet("farm/{farmId}")]
     public async Task<ActionResult<IEnumerable<PaddockDto>>> GetByFarm(int farmId)
     {
-        var paddocks = await _unitOfWork.Paddocks.FindAsync(p => p.FarmId == farmId);
+        var paddocks = await _context.Paddocks.Where(p => p.FarmId == farmId).ToListAsync();
         var result = new List<PaddockDto>();
 
         foreach (var paddock in paddocks)
         {
-            var farm = await _unitOfWork.Farms.GetByIdAsync(paddock.FarmId);
+            var farm = await _context.Farms.FindAsync(paddock.FarmId);
             result.Add(new PaddockDto
             {
                 Id = paddock.Id,
@@ -65,11 +66,11 @@ public class PaddocksController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PaddockDto>> GetById(int id)
     {
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(id);
+        var paddock = await _context.Paddocks.FindAsync(id);
         if (paddock == null)
             return NotFound();
 
-        var farm = await _unitOfWork.Farms.GetByIdAsync(paddock.FarmId);
+        var farm = await _context.Farms.FindAsync(paddock.FarmId);
         var result = new PaddockDto
         {
             Id = paddock.Id,
@@ -91,10 +92,10 @@ public class PaddocksController : ControllerBase
             FarmId = request.FarmId
         };
 
-        await _unitOfWork.Paddocks.AddAsync(paddock);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Paddocks.Add(paddock);
+        await _context.SaveChangesAsync();
 
-        var farm = await _unitOfWork.Farms.GetByIdAsync(paddock.FarmId);
+        var farm = await _context.Farms.FindAsync(paddock.FarmId);
         var result = new PaddockDto
         {
             Id = paddock.Id,
@@ -110,7 +111,7 @@ public class PaddocksController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<PaddockDto>> Update(int id, UpdatePaddockRequest request)
     {
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(id);
+        var paddock = await _context.Paddocks.FindAsync(id);
         if (paddock == null)
             return NotFound();
 
@@ -118,10 +119,10 @@ public class PaddocksController : ControllerBase
         paddock.FarmId = request.FarmId ?? paddock.FarmId;
         paddock.UpdatedAt = DateTime.UtcNow;
 
-        await _unitOfWork.Paddocks.UpdateAsync(paddock);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Paddocks.Update(paddock);
+        await _context.SaveChangesAsync();
 
-        var farm = await _unitOfWork.Farms.GetByIdAsync(paddock.FarmId);
+        var farm = await _context.Farms.FindAsync(paddock.FarmId);
         var result = new PaddockDto
         {
             Id = paddock.Id,
@@ -137,12 +138,12 @@ public class PaddocksController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var paddock = await _unitOfWork.Paddocks.GetByIdAsync(id);
+        var paddock = await _context.Paddocks.FindAsync(id);
         if (paddock == null)
             return NotFound();
 
-        await _unitOfWork.Paddocks.DeleteAsync(paddock);
-        await _unitOfWork.SaveChangesAsync();
+        _context.Paddocks.Remove(paddock);
+        await _context.SaveChangesAsync();
 
         return NoContent();
     }

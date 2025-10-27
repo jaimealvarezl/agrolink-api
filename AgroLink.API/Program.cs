@@ -1,6 +1,5 @@
 using AgroLink.Core.Interfaces;
 using AgroLink.Infrastructure.Data;
-using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,9 +17,6 @@ builder.Services.AddSwaggerGen();
 // Database
 builder.Services.AddDbContext<AgroLinkDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Repositories and Unit of Work
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Services
 builder.Services.AddScoped<IAnimalService, AnimalService>();

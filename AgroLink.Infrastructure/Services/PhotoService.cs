@@ -1,16 +1,26 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
+using AgroLink.Infrastructure.Data;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfiguration configuration)
-    : IPhotoService
+public class PhotoService : IPhotoService
 {
-    private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
+    private readonly AgroLinkDbContext _context;
+    private readonly IAmazonS3 _s3Client;
+    private readonly string _bucketName;
+
+    public PhotoService(AgroLinkDbContext context, IAmazonS3 s3Client, IConfiguration configuration)
+    {
+        _context = context;
+        _s3Client = s3Client;
+        _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
+    }
 
     public async Task<PhotoDto> UploadPhotoAsync(CreatePhotoDto dto, Stream fileStream, string fileName)
     {
@@ -22,14 +32,14 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
             Description = dto.Description
         };
 
-        await unitOfWork.Photos.AddAsync(photo);
-        await unitOfWork.SaveChangesAsync();
+        _context.Photos.Add(photo);
+        await _context.SaveChangesAsync();
 
         // Try to upload to S3
         try
         {
             var key = $"photos/{dto.EntityType.ToLower()}/{dto.EntityId}/{photo.Id}_{fileName}";
-
+            
             var request = new PutObjectRequest
             {
                 BucketName = _bucketName,
@@ -38,14 +48,14 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
                 ContentType = GetContentType(fileName)
             };
 
-            await s3Client.PutObjectAsync(request);
-
+            await _s3Client.PutObjectAsync(request);
+            
             photo.UriRemote = $"https://{_bucketName}.s3.amazonaws.com/{key}";
             photo.Uploaded = true;
             photo.UpdatedAt = DateTime.UtcNow;
 
-            await unitOfWork.Photos.UpdateAsync(photo);
-            await unitOfWork.SaveChangesAsync();
+            _context.Photos.Update(photo);
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -69,8 +79,8 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
 
     public async Task<IEnumerable<PhotoDto>> GetByEntityAsync(string entityType, int entityId)
     {
-        var photos = await unitOfWork.Photos.FindAsync(p => p.EntityType == entityType && p.EntityId == entityId);
-
+        var photos = await _context.Photos.Where(p => p.EntityType == entityType && p.EntityId == entityId).ToListAsync();
+        
         return photos.Select(p => new PhotoDto
         {
             Id = p.Id,
@@ -86,7 +96,7 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
 
     public async Task DeleteAsync(int id)
     {
-        var photo = await unitOfWork.Photos.GetByIdAsync(id);
+        var photo = await _context.Photos.FindAsync(id);
         if (photo == null) throw new ArgumentException("Photo not found");
 
         // Try to delete from S3
@@ -95,7 +105,7 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
             try
             {
                 var key = ExtractKeyFromUrl(photo.UriRemote);
-                await s3Client.DeleteObjectAsync(_bucketName, key);
+                await _s3Client.DeleteObjectAsync(_bucketName, key);
             }
             catch (Exception ex)
             {
@@ -103,14 +113,14 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
             }
         }
 
-        await unitOfWork.Photos.DeleteAsync(photo);
-        await unitOfWork.SaveChangesAsync();
+        _context.Photos.Remove(photo);
+        await _context.SaveChangesAsync();
     }
 
     public async Task SyncPendingPhotosAsync()
     {
-        var pendingPhotos = await unitOfWork.Photos.FindAsync(p => !p.Uploaded);
-
+        var pendingPhotos = await _context.Photos.Where(p => !p.Uploaded).ToListAsync();
+        
         foreach (var photo in pendingPhotos)
         {
             try
@@ -119,7 +129,7 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
                 // Implementation depends on how local files are stored
                 // For now, we'll just mark as attempted
                 photo.UpdatedAt = DateTime.UtcNow;
-                await unitOfWork.Photos.UpdateAsync(photo);
+                _context.Photos.Update(photo);
             }
             catch (Exception ex)
             {
@@ -127,7 +137,7 @@ public class PhotoService(IUnitOfWork unitOfWork, IAmazonS3 s3Client, IConfigura
             }
         }
 
-        await unitOfWork.SaveChangesAsync();
+        await _context.SaveChangesAsync();
     }
 
     private static string GetContentType(string fileName)
