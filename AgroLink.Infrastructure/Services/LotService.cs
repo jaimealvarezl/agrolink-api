@@ -7,9 +7,10 @@ using Microsoft.EntityFrameworkCore;
 namespace AgroLink.Infrastructure.Services;
 
 public class LotService(
-    ILotRepository lotRepository, 
+    ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
-    IMovementRepository movementRepository) : ILotService
+    IMovementRepository movementRepository
+) : ILotService
 {
     public async Task<LotDto?> GetByIdAsync(int id)
     {
@@ -38,15 +39,17 @@ public class LotService(
         foreach (var lot in lots)
         {
             var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
-            result.Add(new LotDto
-            {
-                Id = lot.Id,
-                Name = lot.Name,
-                PaddockId = lot.PaddockId,
-                PaddockName = paddock?.Name ?? "",
-                Status = lot.Status,
-                CreatedAt = lot.CreatedAt,
-            });
+            result.Add(
+                new LotDto
+                {
+                    Id = lot.Id,
+                    Name = lot.Name,
+                    PaddockId = lot.PaddockId,
+                    PaddockName = paddock?.Name ?? "",
+                    Status = lot.Status,
+                    CreatedAt = lot.CreatedAt,
+                }
+            );
         }
 
         return result;

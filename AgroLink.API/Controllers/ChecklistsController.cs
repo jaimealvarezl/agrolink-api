@@ -77,5 +77,4 @@ public class ChecklistsController(IChecklistService checklistService) : BaseCont
             return BadRequest(ex.Message);
         }
     }
-
 }

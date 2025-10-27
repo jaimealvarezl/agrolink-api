@@ -73,6 +73,11 @@ public class ValidateTokenRequest
     public string Token { get; set; } = string.Empty;
 }
 
+public class ValidateTokenResponse
+{
+    public bool Valid { get; set; }
+}
+
 // Create DTOs
 public class CreateFarmDto
 {

@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class PaddockService(IPaddockRepository paddockRepository, IFarmRepository farmRepository) : IPaddockService
+public class PaddockService(IPaddockRepository paddockRepository, IFarmRepository farmRepository)
+    : IPaddockService
 {
     public async Task<PaddockDto?> GetByIdAsync(int id)
     {
@@ -34,14 +35,16 @@ public class PaddockService(IPaddockRepository paddockRepository, IFarmRepositor
         foreach (var paddock in paddocks)
         {
             var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
-            result.Add(new PaddockDto
-            {
-                Id = paddock.Id,
-                Name = paddock.Name,
-                FarmId = paddock.FarmId,
-                FarmName = farm?.Name ?? "",
-                CreatedAt = paddock.CreatedAt,
-            });
+            result.Add(
+                new PaddockDto
+                {
+                    Id = paddock.Id,
+                    Name = paddock.Name,
+                    FarmId = paddock.FarmId,
+                    FarmName = farm?.Name ?? "",
+                    CreatedAt = paddock.CreatedAt,
+                }
+            );
         }
 
         return result;
@@ -64,11 +67,7 @@ public class PaddockService(IPaddockRepository paddockRepository, IFarmRepositor
 
     public async Task<PaddockDto> CreateAsync(CreatePaddockDto dto)
     {
-        var paddock = new Paddock
-        {
-            Name = dto.Name,
-            FarmId = dto.FarmId,
-        };
+        var paddock = new Paddock { Name = dto.Name, FarmId = dto.FarmId };
 
         await paddockRepository.AddAsync(paddock);
 

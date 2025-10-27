@@ -21,7 +21,7 @@ public abstract class BaseController : ControllerBase
         {
             ArgumentException => BadRequest(ex.Message),
             UnauthorizedAccessException => Unauthorized(ex.Message),
-            _ => StatusCode(500, "An unexpected error occurred")
+            _ => StatusCode(500, "An unexpected error occurred"),
         };
     }
 }

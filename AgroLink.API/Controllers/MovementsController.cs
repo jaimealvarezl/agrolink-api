@@ -43,5 +43,4 @@ public class MovementsController(IMovementService movementService) : BaseControl
             return BadRequest(ex.Message);
         }
     }
-
 }

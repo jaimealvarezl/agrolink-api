@@ -20,22 +20,19 @@ public class AnimalsControllerTests
     {
         _animalServiceMock = new Mock<IAnimalService>();
         _controller = new AnimalsController(_animalServiceMock.Object);
-        
+
         // Setup HTTP context with user claims for tests that need it
         var claims = new List<Claim>
         {
             new Claim("userid", "1"),
-            new Claim(ClaimTypes.Name, "testuser")
+            new Claim(ClaimTypes.Name, "testuser"),
         };
         var identity = new ClaimsIdentity(claims, "test");
         var principal = new ClaimsPrincipal(identity);
-        
+
         _controller.ControllerContext = new ControllerContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                User = principal
-            }
+            HttpContext = new DefaultHttpContext { User = principal },
         };
     }
 

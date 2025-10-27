@@ -7,7 +7,10 @@ namespace AgroLink.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    ITokenExtractionService tokenExtractionService
+) : ControllerBase
 {
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
@@ -24,9 +27,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         try
         {
-            var userDto = new UserDto { Name = request.Name, Email = request.Email, Role = request.Role ?? "USER", };
-
-            var user = await authService.RegisterAsync(userDto, request.Password);
+            var user = await authService.RegisterUserAsync(request);
             return CreatedAtAction(nameof(GetProfile), new { id = user.Id }, user);
         }
         catch (ArgumentException ex)
@@ -39,11 +40,11 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize]
     public async Task<ActionResult<UserDto>> GetProfile()
     {
-        var token = GetTokenFromHeader();
+        var token = ExtractTokenFromRequest();
         if (string.IsNullOrEmpty(token))
             return Unauthorized();
 
-        var user = await authService.GetUserFromTokenAsync(token);
+        var user = await authService.GetUserProfileAsync(token);
         if (user == null)
             return Unauthorized();
 
@@ -51,33 +52,17 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("validate")]
-    public async Task<ActionResult<object>> ValidateToken([FromBody] ValidateTokenRequest request)
+    public async Task<ActionResult<ValidateTokenResponse>> ValidateToken(
+        [FromBody] ValidateTokenRequest request
+    )
     {
-        var isValid = await authService.ValidateTokenAsync(request.Token);
-        return Ok(new { valid = isValid });
+        var result = await authService.ValidateTokenResponseAsync(request.Token);
+        return Ok(result);
     }
 
-    private string? GetTokenFromHeader()
+    private string? ExtractTokenFromRequest()
     {
         var authHeader = Request.Headers.Authorization.FirstOrDefault();
-        if (authHeader?.StartsWith("Bearer ") == true)
-        {
-            return authHeader.Substring("Bearer ".Length).Trim();
-        }
-
-        return null;
+        return tokenExtractionService.ExtractTokenFromHeader(authHeader ?? string.Empty);
     }
-}
-
-public class RegisterRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string? Role { get; set; }
-}
-
-public class ValidateTokenRequest
-{
-    public string Token { get; set; } = string.Empty;
 }

@@ -51,11 +51,11 @@ public interface IAuthService
     Task<UserDto> RegisterAsync(UserDto dto, string password);
     Task<bool> ValidateTokenAsync(string token);
     Task<UserDto?> GetUserFromTokenAsync(string token);
-    
+
     // New methods for controller logic
     Task<UserDto> RegisterUserAsync(RegisterRequest request);
     Task<UserDto?> GetUserProfileAsync(string token);
-    Task<object> ValidateTokenResponseAsync(string token);
+    Task<ValidateTokenResponse> ValidateTokenResponseAsync(string token);
 }
 
 public interface IFarmService

@@ -37,11 +37,11 @@ public class LotsController(ILotService lotService) : BaseController
     {
         try
         {
-            var dto = new CreateLotDto 
-            { 
-                Name = request.Name, 
-                PaddockId = request.PaddockId, 
-                Status = request.Status 
+            var dto = new CreateLotDto
+            {
+                Name = request.Name,
+                PaddockId = request.PaddockId,
+                Status = request.Status,
             };
             var lot = await lotService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = lot.Id }, lot);
@@ -57,11 +57,11 @@ public class LotsController(ILotService lotService) : BaseController
     {
         try
         {
-            var dto = new UpdateLotDto 
-            { 
-                Name = request.Name, 
-                PaddockId = request.PaddockId, 
-                Status = request.Status 
+            var dto = new UpdateLotDto
+            {
+                Name = request.Name,
+                PaddockId = request.PaddockId,
+                Status = request.Status,
             };
             var lot = await lotService.UpdateAsync(id, dto);
             return Ok(lot);
@@ -92,7 +92,12 @@ public class LotsController(ILotService lotService) : BaseController
         try
         {
             var userId = GetCurrentUserId();
-            var lot = await lotService.MoveLotAsync(id, request.ToPaddockId, request.Reason, userId);
+            var lot = await lotService.MoveLotAsync(
+                id,
+                request.ToPaddockId,
+                request.Reason,
+                userId
+            );
             return Ok(lot);
         }
         catch (ArgumentException ex)
@@ -100,7 +105,6 @@ public class LotsController(ILotService lotService) : BaseController
             return BadRequest(ex.Message);
         }
     }
-
 }
 
 public class CreateLotRequest

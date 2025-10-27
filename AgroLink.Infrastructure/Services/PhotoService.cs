@@ -9,8 +9,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class PhotoService(AgroLinkDbContext context, IAmazonS3 s3Client, IConfiguration configuration)
-    : IPhotoService
+public class PhotoService(
+    AgroLinkDbContext context,
+    IAmazonS3 s3Client,
+    IConfiguration configuration
+) : IPhotoService
 {
     private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
 

@@ -11,22 +11,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class AuthService : IAuthService
+public class AuthService(AgroLinkDbContext context, IConfiguration configuration) : IAuthService
 {
-    private readonly AgroLinkDbContext _context;
-    private readonly IConfiguration _configuration;
-
-    public AuthService(AgroLinkDbContext context, IConfiguration configuration)
-    {
-        _context = context;
-        _configuration = configuration;
-    }
-
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u =>
-            u.Email == dto.Email && u.IsActive
-        );
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.IsActive);
         if (user == null)
             return null;
 
@@ -34,8 +23,8 @@ public class AuthService : IAuthService
             return null;
 
         user.LastLoginAt = DateTime.UtcNow;
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
         var expiresAt = DateTime.UtcNow.AddDays(7); // Token expires in 7 days
@@ -59,7 +48,7 @@ public class AuthService : IAuthService
 
     public async Task<UserDto> RegisterAsync(UserDto dto, string password)
     {
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (existingUser != null)
             throw new ArgumentException("User with this email already exists");
 
@@ -72,8 +61,8 @@ public class AuthService : IAuthService
             IsActive = true,
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
         return new UserDto
         {
@@ -91,7 +80,7 @@ public class AuthService : IAuthService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "default-key");
+            var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
 
             tokenHandler.ValidateToken(
                 token,
@@ -100,12 +89,12 @@ public class AuthService : IAuthService
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidIssuer = configuration["Jwt:Issuer"],
                     ValidateAudience = true,
-                    ValidAudience = _configuration["Jwt:Audience"],
+                    ValidAudience = configuration["Jwt:Audience"],
                     ClockSkew = TimeSpan.Zero,
                 },
-                out SecurityToken validatedToken
+                out _
             );
 
             return true;
@@ -127,7 +116,7 @@ public class AuthService : IAuthService
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                 return null;
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await context.Users.FindAsync(userId);
             if (user == null || !user.IsActive)
                 return null;
 
@@ -151,22 +140,21 @@ public class AuthService : IAuthService
     private string GenerateJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "default-key");
+        var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(
-                new[]
-                {
+                [
                     new Claim("userid", user.Id.ToString()),
                     new Claim("email", user.Email),
                     new Claim("role", user.Role),
                     new Claim("name", user.Name),
-                }
+                ]
             ),
             Expires = DateTime.UtcNow.AddDays(7),
-            Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
+            Issuer = configuration["Jwt:Issuer"],
+            Audience = configuration["Jwt:Audience"],
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature
@@ -185,5 +173,32 @@ public class AuthService : IAuthService
     private static bool VerifyPassword(string password, string hash)
     {
         return BCrypt.Net.BCrypt.Verify(password, hash);
+    }
+
+    // New methods for controller logic
+    public async Task<UserDto> RegisterUserAsync(RegisterRequest request)
+    {
+        var userDto = new UserDto
+        {
+            Name = request.Name,
+            Email = request.Email,
+            Role = request.Role ?? "USER",
+        };
+
+        return await RegisterAsync(userDto, request.Password);
+    }
+
+    public async Task<UserDto?> GetUserProfileAsync(string token)
+    {
+        if (string.IsNullOrEmpty(token))
+            return null;
+
+        return await GetUserFromTokenAsync(token);
+    }
+
+    public async Task<ValidateTokenResponse> ValidateTokenResponseAsync(string token)
+    {
+        var isValid = await ValidateTokenAsync(token);
+        return new ValidateTokenResponse { Valid = isValid };
     }
 }

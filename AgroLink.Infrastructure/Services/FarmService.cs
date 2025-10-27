@@ -37,11 +37,7 @@ public class FarmService(IFarmRepository farmRepository) : IFarmService
 
     public async Task<FarmDto> CreateAsync(CreateFarmDto dto)
     {
-        var farm = new Farm
-        {
-            Name = dto.Name,
-            Location = dto.Location,
-        };
+        var farm = new Farm { Name = dto.Name, Location = dto.Location };
 
         await farmRepository.AddAsync(farm);
 

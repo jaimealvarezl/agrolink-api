@@ -193,7 +193,7 @@ public class AuthServiceTests : TestBase
         {
             Name = "New User",
             Email = "newuser@example.com",
-            Role = "User"
+            Role = "User",
         };
         var password = "password123";
 
@@ -234,13 +234,14 @@ public class AuthServiceTests : TestBase
         {
             Name = "New User",
             Email = "existing@example.com", // Same email
-            Role = "User"
+            Role = "User",
         };
         var password = "password123";
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(async () =>
-            await _service.RegisterAsync(userDto, password));
+            await _service.RegisterAsync(userDto, password)
+        );
     }
 
     private string CreateValidJwtToken(User user)
@@ -253,23 +254,205 @@ public class AuthServiceTests : TestBase
         var key = Encoding.UTF8.GetBytes(secretKey);
         var tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim("userid", user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
-            }),
+            Subject = new ClaimsIdentity(
+                new[]
+                {
+                    new Claim("userid", user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role),
+                }
+            ),
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
             Issuer = issuer,
             Audience = audience,
             SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
                 new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
-                Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature)
+                Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature
+            ),
         };
 
         var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    [Test]
+    public async Task RegisterUserAsync_WithValidRequest_ShouldReturnUserDto()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Name = "Test User",
+            Email = "test@example.com",
+            Password = "password123",
+            Role = "ADMIN",
+        };
+
+        // Act
+        var result = await _service.RegisterUserAsync(request);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Name.ShouldBe("Test User");
+        result.Email.ShouldBe("test@example.com");
+        result.Role.ShouldBe("ADMIN");
+        result.IsActive.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task RegisterUserAsync_WithNullRole_ShouldUseDefaultRole()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Name = "Test User",
+            Email = "test@example.com",
+            Password = "password123",
+            Role = null,
+        };
+
+        // Act
+        var result = await _service.RegisterUserAsync(request);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Role.ShouldBe("USER");
+    }
+
+    [Test]
+    public async Task RegisterUserAsync_WithExistingEmail_ShouldThrowException()
+    {
+        // Arrange
+        var existingUser = new User
+        {
+            Name = "Existing User",
+            Email = "existing@example.com",
+            PasswordHash = "hashed",
+            Role = "USER",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        _context.Users.Add(existingUser);
+        await _context.SaveChangesAsync();
+
+        var request = new RegisterRequest
+        {
+            Name = "Test User",
+            Email = "existing@example.com",
+            Password = "password123",
+        };
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _service.RegisterUserAsync(request)
+        );
+    }
+
+    [Test]
+    public async Task GetUserProfileAsync_WithValidToken_ShouldReturnUserDto()
+    {
+        // Arrange
+        var user = new User
+        {
+            Name = "Test User",
+            Email = "test@example.com",
+            PasswordHash = "hashed",
+            Role = "USER",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        var token = CreateValidJwtToken(user);
+
+        // Act
+        var result = await _service.GetUserProfileAsync(token);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Name.ShouldBe("Test User");
+        result.Email.ShouldBe("test@example.com");
+        result.Role.ShouldBe("USER");
+    }
+
+    [Test]
+    public async Task GetUserProfileAsync_WithInvalidToken_ShouldReturnNull()
+    {
+        // Arrange
+        var invalidToken = "invalid.token.here";
+
+        // Act
+        var result = await _service.GetUserProfileAsync(invalidToken);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task GetUserProfileAsync_WithEmptyToken_ShouldReturnNull()
+    {
+        // Arrange
+        var emptyToken = "";
+
+        // Act
+        var result = await _service.GetUserProfileAsync(emptyToken);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task GetUserProfileAsync_WithNullToken_ShouldReturnNull()
+    {
+        // Arrange
+        string? nullToken = null;
+
+        // Act
+        var result = await _service.GetUserProfileAsync(nullToken!);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task ValidateTokenResponseAsync_WithValidToken_ShouldReturnValidTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Name = "Test User",
+            Email = "test@example.com",
+            PasswordHash = "hashed",
+            Role = "USER",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        var token = CreateValidJwtToken(user);
+
+        // Act
+        var result = await _service.ValidateTokenResponseAsync(token);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Valid.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task ValidateTokenResponseAsync_WithInvalidToken_ShouldReturnValidFalse()
+    {
+        // Arrange
+        var invalidToken = "invalid.token.here";
+
+        // Act
+        var result = await _service.ValidateTokenResponseAsync(invalidToken);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Valid.ShouldBeFalse();
     }
 }

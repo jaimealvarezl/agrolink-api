@@ -107,7 +107,6 @@ public class AnimalsController(IAnimalService animalService) : BaseController
             return BadRequest(ex.Message);
         }
     }
-
 }
 
 public class MoveAnimalRequest
