@@ -14,7 +14,7 @@ public static class TestConfiguration
                 {
                     ["ConnectionStrings:DefaultConnection"] =
                         "Server=localhost;Database=agrolink_test;Username=postgres;Password=password",
-                    ["Jwt:SecretKey"] = "test-secret-key-that-is-long-enough-for-hmac-sha256",
+                    ["Jwt:Key"] = "test-secret-key-that-is-long-enough-for-hmac-sha256-this-is-128-bits-minimum",
                     ["Jwt:Issuer"] = "AgroLink-Test",
                     ["Jwt:Audience"] = "AgroLink-Test",
                     ["Jwt:ExpiryMinutes"] = "60",

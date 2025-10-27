@@ -278,7 +278,7 @@ public class AnimalsControllerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.ShouldBeOfType<BadRequestObjectResult>();
+        result.Result.ShouldBeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -357,7 +357,7 @@ public class AnimalsControllerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.ShouldBeOfType<BadRequestObjectResult>();
+        result.Result.ShouldBeOfType<NotFoundResult>();
     }
 
     [Test]

@@ -239,13 +239,13 @@ public class AuthServiceTests : TestBase
         var password = "password123";
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () =>
+        await Should.ThrowAsync<ArgumentException>(async () =>
             await _service.RegisterAsync(userDto, password));
     }
 
     private string CreateValidJwtToken(User user)
     {
-        var secretKey = _configuration["Jwt:SecretKey"] ?? "test-secret-key";
+        var secretKey = _configuration["Jwt:Key"] ?? "test-secret-key";
         var issuer = _configuration["Jwt:Issuer"] ?? "AgroLink-Test";
         var audience = _configuration["Jwt:Audience"] ?? "AgroLink-Test";
         var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "60");
