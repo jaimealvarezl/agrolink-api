@@ -71,7 +71,7 @@ public class FarmRepositoryTests : TestBase
         // Arrange
         var farm1 = await CreateTestFarmAsync(_context, "Farm 1");
         var farm2 = await CreateTestFarmAsync(_context, "Farm 2");
-        
+
         await CreateTestPaddockAsync(_context, farm1.Id, "Paddock 1");
         await CreateTestPaddockAsync(_context, farm1.Id, "Paddock 2");
         await CreateTestPaddockAsync(_context, farm2.Id, "Paddock 3");
@@ -82,10 +82,10 @@ public class FarmRepositoryTests : TestBase
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        
+
         var farm1Result = result.First(f => f.Id == farm1.Id);
         farm1Result.Paddocks.Count.ShouldBe(2);
-        
+
         var farm2Result = result.First(f => f.Id == farm2.Id);
         farm2Result.Paddocks.Count.ShouldBe(1);
     }
@@ -126,7 +126,7 @@ public class FarmRepositoryTests : TestBase
         {
             Name = "New Farm",
             Location = "New Location",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         // Act

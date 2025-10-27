@@ -31,7 +31,8 @@ public class AnimalServiceTests
             _lotRepositoryMock.Object,
             _ownerRepositoryMock.Object,
             _photoRepositoryMock.Object,
-            _animalOwnerRepositoryMock.Object);
+            _animalOwnerRepositoryMock.Object
+        );
     }
 
     [Test]
@@ -48,22 +49,18 @@ public class AnimalServiceTests
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        var lot = new Lot
-        {
-            Id = 1,
-            Name = "Test Lot"
-        };
+        var lot = new Lot { Id = 1, Name = "Test Lot" };
 
-        _animalRepositoryMock.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(lot);
-        _animalOwnerRepositoryMock.Setup(x => x.GetByAnimalIdAsync(1))
+        _animalRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(animal);
+        _lotRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(lot);
+        _animalOwnerRepositoryMock
+            .Setup(x => x.GetByAnimalIdAsync(1))
             .ReturnsAsync(new List<AnimalOwner>());
-        _photoRepositoryMock.Setup(x => x.GetByEntityAsync("ANIMAL", 1))
+        _photoRepositoryMock
+            .Setup(x => x.GetByEntityAsync("ANIMAL", 1))
             .ReturnsAsync(new List<Photo>());
 
         // Act
@@ -81,8 +78,7 @@ public class AnimalServiceTests
     public async Task GetByIdAsync_WhenAnimalDoesNotExist_ShouldReturnNull()
     {
         // Arrange
-        _animalRepositoryMock.Setup(x => x.GetByIdAsync(999))
-            .ReturnsAsync((Animal?)null);
+        _animalRepositoryMock.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((Animal?)null);
 
         // Act
         var result = await _service.GetByIdAsync(999);
@@ -107,7 +103,7 @@ public class AnimalServiceTests
                 Sex = "Female",
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = 1,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
             },
             new Animal
             {
@@ -119,17 +115,19 @@ public class AnimalServiceTests
                 Sex = "Male",
                 BirthDate = DateTime.UtcNow.AddYears(-1),
                 LotId = 1,
-                CreatedAt = DateTime.UtcNow
-            }
+                CreatedAt = DateTime.UtcNow,
+            },
         };
 
-        _animalRepositoryMock.Setup(x => x.GetAllAsync())
-            .ReturnsAsync(animals);
-        _lotRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>()))
+        _animalRepositoryMock.Setup(x => x.GetAllAsync()).ReturnsAsync(animals);
+        _lotRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new Lot { Id = 1, Name = "Test Lot" });
-        _animalOwnerRepositoryMock.Setup(x => x.GetByAnimalIdAsync(It.IsAny<int>()))
+        _animalOwnerRepositoryMock
+            .Setup(x => x.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
-        _photoRepositoryMock.Setup(x => x.GetByEntityAsync("ANIMAL", It.IsAny<int>()))
+        _photoRepositoryMock
+            .Setup(x => x.GetByEntityAsync("ANIMAL", It.IsAny<int>()))
             .ReturnsAsync(new List<Photo>());
 
         // Act
@@ -156,17 +154,19 @@ public class AnimalServiceTests
                 Sex = "Female",
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = 1,
-                CreatedAt = DateTime.UtcNow
-            }
+                CreatedAt = DateTime.UtcNow,
+            },
         };
 
-        _animalRepositoryMock.Setup(x => x.GetByLotIdAsync(1))
-            .ReturnsAsync(animals);
-        _lotRepositoryMock.Setup(x => x.GetByIdAsync(1))
+        _animalRepositoryMock.Setup(x => x.GetByLotIdAsync(1)).ReturnsAsync(animals);
+        _lotRepositoryMock
+            .Setup(x => x.GetByIdAsync(1))
             .ReturnsAsync(new Lot { Id = 1, Name = "Test Lot" });
-        _animalOwnerRepositoryMock.Setup(x => x.GetByAnimalIdAsync(It.IsAny<int>()))
+        _animalOwnerRepositoryMock
+            .Setup(x => x.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
-        _photoRepositoryMock.Setup(x => x.GetByEntityAsync("ANIMAL", It.IsAny<int>()))
+        _photoRepositoryMock
+            .Setup(x => x.GetByEntityAsync("ANIMAL", It.IsAny<int>()))
             .ReturnsAsync(new List<Photo>());
 
         // Act
@@ -193,12 +193,8 @@ public class AnimalServiceTests
             LotId = 1,
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto
-                {
-                    OwnerId = 1,
-                    SharePercent = 100
-                }
-            }
+                new AnimalOwnerDto { OwnerId = 1, SharePercent = 100 },
+            },
         };
 
         var createdAnimal = new Animal
@@ -211,14 +207,15 @@ public class AnimalServiceTests
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        _animalRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Animal>()))
+        _animalRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<Animal>()))
             .Returns(Task.CompletedTask);
-        _animalRepositoryMock.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-        _animalOwnerRepositoryMock.Setup(x => x.AddAsync(It.IsAny<AnimalOwner>()))
+        _animalRepositoryMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        _animalOwnerRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<AnimalOwner>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -248,7 +245,7 @@ public class AnimalServiceTests
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         var updateDto = new UpdateAnimalDto
@@ -258,14 +255,13 @@ public class AnimalServiceTests
             Breed = "Angus",
             Status = "Active",
             BirthDate = DateTime.UtcNow.AddYears(-3),
-            Owners = new List<AnimalOwnerDto>()
+            Owners = new List<AnimalOwnerDto>(),
         };
 
-        _animalRepositoryMock.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(existingAnimal);
-        _animalRepositoryMock.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-        _animalOwnerRepositoryMock.Setup(x => x.RemoveByAnimalIdAsync(1))
+        _animalRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(existingAnimal);
+        _animalRepositoryMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        _animalOwnerRepositoryMock
+            .Setup(x => x.RemoveByAnimalIdAsync(1))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -288,11 +284,10 @@ public class AnimalServiceTests
         var updateDto = new UpdateAnimalDto
         {
             Name = "Updated Name",
-            Owners = new List<AnimalOwnerDto>()
+            Owners = new List<AnimalOwnerDto>(),
         };
 
-        _animalRepositoryMock.Setup(x => x.GetByIdAsync(999))
-            .ReturnsAsync((Animal?)null);
+        _animalRepositoryMock.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((Animal?)null);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(() => _service.UpdateAsync(999, updateDto));
@@ -312,13 +307,11 @@ public class AnimalServiceTests
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        _animalRepositoryMock.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(existingAnimal);
-        _animalRepositoryMock.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
+        _animalRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(existingAnimal);
+        _animalRepositoryMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _service.DeleteAsync(1);
@@ -332,8 +325,7 @@ public class AnimalServiceTests
     public async Task DeleteAsync_WhenAnimalDoesNotExist_ShouldThrowArgumentException()
     {
         // Arrange
-        _animalRepositoryMock.Setup(x => x.GetByIdAsync(999))
-            .ReturnsAsync((Animal?)null);
+        _animalRepositoryMock.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((Animal?)null);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(() => _service.DeleteAsync(999));

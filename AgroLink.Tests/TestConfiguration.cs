@@ -9,18 +9,21 @@ public static class TestConfiguration
     public static IConfiguration CreateConfiguration()
     {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DefaultConnection"] = "Server=localhost;Database=agrolink_test;Username=postgres;Password=password",
-                ["Jwt:SecretKey"] = "test-secret-key-that-is-long-enough-for-hmac-sha256",
-                ["Jwt:Issuer"] = "AgroLink-Test",
-                ["Jwt:Audience"] = "AgroLink-Test",
-                ["Jwt:ExpiryMinutes"] = "60",
-                ["AWS:AccessKey"] = "test-access-key",
-                ["AWS:SecretKey"] = "test-secret-key",
-                ["AWS:Region"] = "us-east-1",
-                ["AWS:S3BucketName"] = "agrolink-test-bucket"
-            })
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] =
+                        "Server=localhost;Database=agrolink_test;Username=postgres;Password=password",
+                    ["Jwt:SecretKey"] = "test-secret-key-that-is-long-enough-for-hmac-sha256",
+                    ["Jwt:Issuer"] = "AgroLink-Test",
+                    ["Jwt:Audience"] = "AgroLink-Test",
+                    ["Jwt:ExpiryMinutes"] = "60",
+                    ["AWS:AccessKey"] = "test-access-key",
+                    ["AWS:SecretKey"] = "test-secret-key",
+                    ["AWS:Region"] = "us-east-1",
+                    ["AWS:S3BucketName"] = "agrolink-test-bucket",
+                }
+            )
             .Build();
 
         return configuration;

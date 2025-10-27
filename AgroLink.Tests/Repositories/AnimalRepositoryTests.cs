@@ -80,7 +80,7 @@ public class AnimalRepositoryTests : TestBase
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot1 = await CreateTestLotAsync(_context, paddock.Id, "Lot 1");
         var lot2 = await CreateTestLotAsync(_context, paddock.Id, "Lot 2");
-        
+
         await CreateTestAnimalAsync(_context, lot1.Id, "A001");
         await CreateTestAnimalAsync(_context, lot1.Id, "A002");
         await CreateTestAnimalAsync(_context, lot2.Id, "A003");
@@ -129,7 +129,7 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        
+
         var animal = new Animal
         {
             Tag = "A001",
@@ -139,7 +139,7 @@ public class AnimalRepositoryTests : TestBase
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = lot.Id,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         // Act
@@ -198,10 +198,10 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        
+
         var mother = await CreateTestAnimalAsync(_context, lot.Id, "M001");
         var father = await CreateTestAnimalAsync(_context, lot.Id, "F001");
-        
+
         var child1 = new Animal
         {
             Tag = "C001",
@@ -213,9 +213,9 @@ public class AnimalRepositoryTests : TestBase
             LotId = lot.Id,
             MotherId = mother.Id,
             FatherId = father.Id,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
-        
+
         var child2 = new Animal
         {
             Tag = "C002",
@@ -227,7 +227,7 @@ public class AnimalRepositoryTests : TestBase
             LotId = lot.Id,
             MotherId = mother.Id,
             FatherId = father.Id,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         _context.Animals.AddRange(child1, child2);

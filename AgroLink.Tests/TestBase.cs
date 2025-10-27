@@ -22,10 +22,10 @@ public abstract class TestBase
     protected ServiceProvider CreateServiceProvider(AgroLinkDbContext context)
     {
         var services = new ServiceCollection();
-        
+
         // Add DbContext
         services.AddSingleton(context);
-        
+
         // Add repositories
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IFarmRepository, FarmRepository>();
@@ -38,24 +38,27 @@ public abstract class TestBase
         services.AddScoped<IMovementRepository, MovementRepository>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
-        
+
         // Add services
         services.AddScoped<IAnimalService, AnimalService>();
         services.AddScoped<IChecklistService, ChecklistService>();
         services.AddScoped<IMovementService, MovementService>();
         services.AddScoped<IPhotoService, PhotoService>();
         services.AddScoped<IAuthService, AuthService>();
-        
+
         return services.BuildServiceProvider();
     }
 
-    protected async Task<Farm> CreateTestFarmAsync(AgroLinkDbContext context, string name = "Test Farm")
+    protected async Task<Farm> CreateTestFarmAsync(
+        AgroLinkDbContext context,
+        string name = "Test Farm"
+    )
     {
         var farm = new Farm
         {
             Name = name,
             Location = "Test Location",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         context.Farms.Add(farm);
@@ -63,13 +66,17 @@ public abstract class TestBase
         return farm;
     }
 
-    protected async Task<Paddock> CreateTestPaddockAsync(AgroLinkDbContext context, int farmId, string name = "Test Paddock")
+    protected async Task<Paddock> CreateTestPaddockAsync(
+        AgroLinkDbContext context,
+        int farmId,
+        string name = "Test Paddock"
+    )
     {
         var paddock = new Paddock
         {
             Name = name,
             FarmId = farmId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         context.Paddocks.Add(paddock);
@@ -77,14 +84,18 @@ public abstract class TestBase
         return paddock;
     }
 
-    protected async Task<Lot> CreateTestLotAsync(AgroLinkDbContext context, int paddockId, string name = "Test Lot")
+    protected async Task<Lot> CreateTestLotAsync(
+        AgroLinkDbContext context,
+        int paddockId,
+        string name = "Test Lot"
+    )
     {
         var lot = new Lot
         {
             Name = name,
             PaddockId = paddockId,
             Status = "Active",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         context.Lots.Add(lot);
@@ -92,7 +103,11 @@ public abstract class TestBase
         return lot;
     }
 
-    protected async Task<Animal> CreateTestAnimalAsync(AgroLinkDbContext context, int lotId, string tag = "A001")
+    protected async Task<Animal> CreateTestAnimalAsync(
+        AgroLinkDbContext context,
+        int lotId,
+        string tag = "A001"
+    )
     {
         var animal = new Animal
         {
@@ -103,7 +118,7 @@ public abstract class TestBase
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = lotId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         context.Animals.Add(animal);
@@ -111,13 +126,16 @@ public abstract class TestBase
         return animal;
     }
 
-    protected async Task<Owner> CreateTestOwnerAsync(AgroLinkDbContext context, string name = "Test Owner")
+    protected async Task<Owner> CreateTestOwnerAsync(
+        AgroLinkDbContext context,
+        string name = "Test Owner"
+    )
     {
         var owner = new Owner
         {
             Name = name,
             Phone = "123-456-7890",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         context.Owners.Add(owner);
@@ -125,7 +143,10 @@ public abstract class TestBase
         return owner;
     }
 
-    protected async Task<User> CreateTestUserAsync(AgroLinkDbContext context, string email = "test@example.com")
+    protected async Task<User> CreateTestUserAsync(
+        AgroLinkDbContext context,
+        string email = "test@example.com"
+    )
     {
         var user = new User
         {
@@ -134,7 +155,7 @@ public abstract class TestBase
             PasswordHash = "hashed_password",
             Role = "Admin",
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         context.Users.Add(user);

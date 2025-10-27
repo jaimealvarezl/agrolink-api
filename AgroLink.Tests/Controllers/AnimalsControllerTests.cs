@@ -37,7 +37,7 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = 1,
                 LotName = "Test Lot",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
             },
             new AnimalDto
             {
@@ -50,12 +50,11 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-1),
                 LotId = 1,
                 LotName = "Test Lot",
-                CreatedAt = DateTime.UtcNow
-            }
+                CreatedAt = DateTime.UtcNow,
+            },
         };
 
-        _animalServiceMock.Setup(x => x.GetAllAsync())
-            .ReturnsAsync(animals);
+        _animalServiceMock.Setup(x => x.GetAllAsync()).ReturnsAsync(animals);
 
         // Act
         var result = await _controller.GetAll();
@@ -83,11 +82,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock.Setup(x => x.GetByIdAsync(animalId))
-            .ReturnsAsync(animal);
+        _animalServiceMock.Setup(x => x.GetByIdAsync(animalId)).ReturnsAsync(animal);
 
         // Act
         var result = await _controller.GetById(animalId);
@@ -106,8 +104,7 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _animalServiceMock.Setup(x => x.GetByIdAsync(animalId))
-            .ReturnsAsync((AnimalDto?)null);
+        _animalServiceMock.Setup(x => x.GetByIdAsync(animalId)).ReturnsAsync((AnimalDto?)null);
 
         // Act
         var result = await _controller.GetById(animalId);
@@ -135,12 +132,11 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = lotId,
                 LotName = "Test Lot",
-                CreatedAt = DateTime.UtcNow
-            }
+                CreatedAt = DateTime.UtcNow,
+            },
         };
 
-        _animalServiceMock.Setup(x => x.GetByLotAsync(lotId))
-            .ReturnsAsync(animals);
+        _animalServiceMock.Setup(x => x.GetByLotAsync(lotId)).ReturnsAsync(animals);
 
         // Act
         var result = await _controller.GetByLot(lotId);
@@ -168,12 +164,8 @@ public class AnimalsControllerTests
             LotId = 1,
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto
-                {
-                    OwnerId = 1,
-                    SharePercent = 100
-                }
-            }
+                new AnimalOwnerDto { OwnerId = 1, SharePercent = 100 },
+            },
         };
 
         var createdAnimal = new AnimalDto
@@ -187,11 +179,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock.Setup(x => x.CreateAsync(createDto))
-            .ReturnsAsync(createdAnimal);
+        _animalServiceMock.Setup(x => x.CreateAsync(createDto)).ReturnsAsync(createdAnimal);
 
         // Act
         var result = await _controller.Create(createDto);
@@ -216,7 +207,7 @@ public class AnimalsControllerTests
             Breed = "Angus",
             Status = "Active",
             BirthDate = DateTime.UtcNow.AddYears(-3),
-            Owners = new List<AnimalOwnerDto>()
+            Owners = new List<AnimalOwnerDto>(),
         };
 
         var updatedAnimal = new AnimalDto
@@ -230,10 +221,11 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-3),
             LotId = 1,
             LotName = "Test Lot",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock.Setup(x => x.UpdateAsync(animalId, updateDto))
+        _animalServiceMock
+            .Setup(x => x.UpdateAsync(animalId, updateDto))
             .ReturnsAsync(updatedAnimal);
 
         // Act
@@ -255,10 +247,11 @@ public class AnimalsControllerTests
         var updateDto = new UpdateAnimalDto
         {
             Name = "Updated Animal",
-            Owners = new List<AnimalOwnerDto>()
+            Owners = new List<AnimalOwnerDto>(),
         };
 
-        _animalServiceMock.Setup(x => x.UpdateAsync(animalId, updateDto))
+        _animalServiceMock
+            .Setup(x => x.UpdateAsync(animalId, updateDto))
             .ThrowsAsync(new ArgumentException("Animal not found"));
 
         // Act
@@ -275,8 +268,7 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 1;
 
-        _animalServiceMock.Setup(x => x.DeleteAsync(animalId))
-            .Returns(Task.CompletedTask);
+        _animalServiceMock.Setup(x => x.DeleteAsync(animalId)).Returns(Task.CompletedTask);
 
         // Act
         var result = await _controller.Delete(animalId);
@@ -292,7 +284,8 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _animalServiceMock.Setup(x => x.DeleteAsync(animalId))
+        _animalServiceMock
+            .Setup(x => x.DeleteAsync(animalId))
             .ThrowsAsync(new ArgumentException("Animal not found"));
 
         // Act
@@ -314,11 +307,10 @@ public class AnimalsControllerTests
             Tag = "A001",
             Name = "Test Animal",
             Sex = "Female",
-            BirthDate = DateTime.UtcNow.AddYears(-2)
+            BirthDate = DateTime.UtcNow.AddYears(-2),
         };
 
-        _animalServiceMock.Setup(x => x.GetGenealogyAsync(animalId))
-            .ReturnsAsync(genealogy);
+        _animalServiceMock.Setup(x => x.GetGenealogyAsync(animalId)).ReturnsAsync(genealogy);
 
         // Act
         var result = await _controller.GetGenealogy(animalId);
@@ -337,7 +329,8 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _animalServiceMock.Setup(x => x.GetGenealogyAsync(animalId))
+        _animalServiceMock
+            .Setup(x => x.GetGenealogyAsync(animalId))
             .ReturnsAsync((AnimalGenealogyDto?)null);
 
         // Act
@@ -357,7 +350,7 @@ public class AnimalsControllerTests
         {
             FromLotId = 1,
             ToLotId = 2,
-            Reason = "Health check"
+            Reason = "Health check",
         };
 
         var movedAnimal = new AnimalDto
@@ -371,10 +364,19 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 2, // Moved to new lot
             LotName = "New Lot",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock.Setup(x => x.MoveAnimalAsync(animalId, moveRequest.FromLotId, moveRequest.ToLotId, moveRequest.Reason, 1))
+        _animalServiceMock
+            .Setup(x =>
+                x.MoveAnimalAsync(
+                    animalId,
+                    moveRequest.FromLotId,
+                    moveRequest.ToLotId,
+                    moveRequest.Reason,
+                    1
+                )
+            )
             .ReturnsAsync(movedAnimal);
 
         // Act
