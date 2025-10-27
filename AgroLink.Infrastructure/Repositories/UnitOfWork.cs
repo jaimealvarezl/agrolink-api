@@ -31,11 +31,14 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<T> GetRepository<T>() where T : class
     {
         var type = typeof(T);
-        if (!_repositories.ContainsKey(type))
+        if (_repositories.TryGetValue(type, out var value))
         {
-            _repositories[type] = new Repository<T>(_context);
+            return (IRepository<T>)value;
         }
-        return (IRepository<T>)_repositories[type];
+
+        value = new Repository<T>(_context);
+        _repositories[type] = value;
+        return (IRepository<T>)value;
     }
 
     public async Task<int> SaveChangesAsync()
