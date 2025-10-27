@@ -7,9 +7,8 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class ChecklistRepository : Repository<Checklist>, IChecklistRepository
 {
-    public ChecklistRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public ChecklistRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<Checklist>> GetByScopeAsync(string scopeType, int scopeId)
     {
@@ -23,11 +22,14 @@ public class ChecklistRepository : Repository<Checklist>, IChecklistRepository
     {
         return await _dbSet
             .Include(c => c.ChecklistItems)
-                .ThenInclude(ci => ci.Animal)
+            .ThenInclude(ci => ci.Animal)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<IEnumerable<Checklist>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<Checklist>> GetByDateRangeAsync(
+        DateTime startDate,
+        DateTime endDate
+    )
     {
         return await _dbSet
             .Where(c => c.Date >= startDate && c.Date <= endDate)

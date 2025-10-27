@@ -87,13 +87,21 @@ public class AnimalsController(IAnimalService animalService) : ControllerBase
     }
 
     [HttpPost("{id}/move")]
-    public async Task<ActionResult<AnimalDto>> MoveAnimal(int id, [FromBody] MoveAnimalRequest request)
+    public async Task<ActionResult<AnimalDto>> MoveAnimal(
+        int id,
+        [FromBody] MoveAnimalRequest request
+    )
     {
         try
         {
             var userId = GetCurrentUserId();
-            var animal =
-                await animalService.MoveAnimalAsync(id, request.FromLotId, request.ToLotId, request.Reason, userId);
+            var animal = await animalService.MoveAnimalAsync(
+                id,
+                request.FromLotId,
+                request.ToLotId,
+                request.Reason,
+                userId
+            );
             return Ok(animal);
         }
         catch (ArgumentException ex)

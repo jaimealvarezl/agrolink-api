@@ -16,64 +16,146 @@ namespace AgroLink.Infrastructure.Migrations
                 name: "Farms",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Location = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Name = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: false
+                    ),
+                    Location = table.Column<string>(
+                        type: "character varying(500)",
+                        maxLength: 500,
+                        nullable: true
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Farms", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Owners",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Name = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: false
+                    ),
+                    Phone = table.Column<string>(
+                        type: "character varying(20)",
+                        maxLength: 20,
+                        nullable: true
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Owners", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Name = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: false
+                    ),
+                    Email = table.Column<string>(
+                        type: "character varying(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
+                    PasswordHash = table.Column<string>(
+                        type: "character varying(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
+                    Role = table.Column<string>(
+                        type: "character varying(50)",
+                        maxLength: 50,
+                        nullable: false
+                    ),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
+                    LastLoginAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Paddocks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Name = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: false
+                    ),
                     FarmId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
@@ -83,22 +165,45 @@ namespace AgroLink.Infrastructure.Migrations
                         column: x => x.FarmId,
                         principalTable: "Farms",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Checklists",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ScopeType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    ScopeType = table.Column<string>(
+                        type: "character varying(20)",
+                        maxLength: 20,
+                        nullable: false
+                    ),
                     ScopeId = table.Column<int>(type: "integer", nullable: false),
-                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Date = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                     UserId = table.Column<int>(type: "integer", nullable: false),
-                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Notes = table.Column<string>(
+                        type: "character varying(1000)",
+                        maxLength: 1000,
+                        nullable: true
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
@@ -108,20 +213,40 @@ namespace AgroLink.Infrastructure.Migrations
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
+                        onDelete: ReferentialAction.Restrict
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Lots",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Name = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: false
+                    ),
                     PaddockId = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Status = table.Column<string>(
+                        type: "character varying(50)",
+                        maxLength: 50,
+                        nullable: false
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
@@ -131,27 +256,66 @@ namespace AgroLink.Infrastructure.Migrations
                         column: x => x.PaddockId,
                         principalTable: "Paddocks",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Animals",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Tag = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Color = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Breed = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Sex = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    Tag = table.Column<string>(
+                        type: "character varying(50)",
+                        maxLength: 50,
+                        nullable: false
+                    ),
+                    Name = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: true
+                    ),
+                    Color = table.Column<string>(
+                        type: "character varying(100)",
+                        maxLength: 100,
+                        nullable: true
+                    ),
+                    Breed = table.Column<string>(
+                        type: "character varying(100)",
+                        maxLength: 100,
+                        nullable: true
+                    ),
+                    Sex = table.Column<string>(
+                        type: "character varying(10)",
+                        maxLength: 10,
+                        nullable: false
+                    ),
+                    Status = table.Column<string>(
+                        type: "character varying(50)",
+                        maxLength: 50,
+                        nullable: false
+                    ),
+                    BirthDate = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                     LotId = table.Column<int>(type: "integer", nullable: false),
                     MotherId = table.Column<int>(type: "integer", nullable: true),
                     FatherId = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
                 },
                 constraints: table =>
                 {
@@ -161,20 +325,24 @@ namespace AgroLink.Infrastructure.Migrations
                         column: x => x.FatherId,
                         principalTable: "Animals",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Restrict
+                    );
                     table.ForeignKey(
                         name: "FK_Animals_Animals_MotherId",
                         column: x => x.MotherId,
                         principalTable: "Animals",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Restrict
+                    );
                     table.ForeignKey(
                         name: "FK_Animals_Lots_LotId",
                         column: x => x.LotId,
                         principalTable: "Lots",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
+                        onDelete: ReferentialAction.Restrict
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "AnimalOwners",
@@ -182,8 +350,16 @@ namespace AgroLink.Infrastructure.Migrations
                 {
                     AnimalId = table.Column<int>(type: "integer", nullable: false),
                     OwnerId = table.Column<int>(type: "integer", nullable: false),
-                    SharePercent = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    SharePercent = table.Column<decimal>(
+                        type: "numeric(5,2)",
+                        precision: 5,
+                        scale: 2,
+                        nullable: false
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
@@ -193,27 +369,45 @@ namespace AgroLink.Infrastructure.Migrations
                         column: x => x.AnimalId,
                         principalTable: "Animals",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Cascade
+                    );
                     table.ForeignKey(
                         name: "FK_AnimalOwners_Owners_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "Owners",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "ChecklistItems",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
                     ChecklistId = table.Column<int>(type: "integer", nullable: false),
                     AnimalId = table.Column<int>(type: "integer", nullable: false),
                     Present = table.Column<bool>(type: "boolean", nullable: false),
-                    Condition = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Notes = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Condition = table.Column<string>(
+                        type: "character varying(10)",
+                        maxLength: 10,
+                        nullable: false
+                    ),
+                    Notes = table.Column<string>(
+                        type: "character varying(500)",
+                        maxLength: 500,
+                        nullable: true
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
@@ -223,31 +417,49 @@ namespace AgroLink.Infrastructure.Migrations
                         column: x => x.AnimalId,
                         principalTable: "Animals",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Cascade
+                    );
                     table.ForeignKey(
                         name: "FK_ChecklistItems_Checklists_ChecklistId",
                         column: x => x.ChecklistId,
                         principalTable: "Checklists",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Movements",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EntityType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    EntityType = table.Column<string>(
+                        type: "character varying(20)",
+                        maxLength: 20,
+                        nullable: false
+                    ),
                     EntityId = table.Column<int>(type: "integer", nullable: false),
                     FromId = table.Column<int>(type: "integer", nullable: true),
                     ToId = table.Column<int>(type: "integer", nullable: true),
                     At = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Reason = table.Column<string>(
+                        type: "character varying(500)",
+                        maxLength: 500,
+                        nullable: true
+                    ),
                     UserId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                     AnimalId = table.Column<int>(type: "integer", nullable: true),
-                    LotId = table.Column<int>(type: "integer", nullable: true)
+                    LotId = table.Column<int>(type: "integer", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -256,35 +468,65 @@ namespace AgroLink.Infrastructure.Migrations
                         name: "FK_Movements_Animals_AnimalId",
                         column: x => x.AnimalId,
                         principalTable: "Animals",
-                        principalColumn: "Id");
+                        principalColumn: "Id"
+                    );
                     table.ForeignKey(
                         name: "FK_Movements_Lots_LotId",
                         column: x => x.LotId,
                         principalTable: "Lots",
-                        principalColumn: "Id");
+                        principalColumn: "Id"
+                    );
                     table.ForeignKey(
                         name: "FK_Movements_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
+                        onDelete: ReferentialAction.Restrict
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Photos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EntityType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Id = table
+                        .Column<int>(type: "integer", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    EntityType = table.Column<string>(
+                        type: "character varying(20)",
+                        maxLength: 20,
+                        nullable: false
+                    ),
                     EntityId = table.Column<int>(type: "integer", nullable: false),
-                    UriLocal = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    UriRemote = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    UriLocal = table.Column<string>(
+                        type: "character varying(500)",
+                        maxLength: 500,
+                        nullable: false
+                    ),
+                    UriRemote = table.Column<string>(
+                        type: "character varying(500)",
+                        maxLength: 500,
+                        nullable: true
+                    ),
                     Uploaded = table.Column<bool>(type: "boolean", nullable: false),
-                    Description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    AnimalId = table.Column<int>(type: "integer", nullable: true)
+                    Description = table.Column<string>(
+                        type: "character varying(200)",
+                        maxLength: 200,
+                        nullable: true
+                    ),
+                    CreatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
+                    UpdatedAt = table.Column<DateTime>(
+                        type: "timestamp with time zone",
+                        nullable: true
+                    ),
+                    AnimalId = table.Column<int>(type: "integer", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -293,162 +535,160 @@ namespace AgroLink.Infrastructure.Migrations
                         name: "FK_Photos_Animals_AnimalId",
                         column: x => x.AnimalId,
                         principalTable: "Animals",
-                        principalColumn: "Id");
-                });
+                        principalColumn: "Id"
+                    );
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_AnimalOwners_OwnerId",
                 table: "AnimalOwners",
-                column: "OwnerId");
+                column: "OwnerId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Animals_FatherId",
                 table: "Animals",
-                column: "FatherId");
+                column: "FatherId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Animals_LotId",
                 table: "Animals",
-                column: "LotId");
+                column: "LotId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Animals_MotherId",
                 table: "Animals",
-                column: "MotherId");
+                column: "MotherId"
+            );
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Animals_Name",
-                table: "Animals",
-                column: "Name");
+            migrationBuilder.CreateIndex(name: "IX_Animals_Name", table: "Animals", column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Animals_Tag",
                 table: "Animals",
                 column: "Tag",
-                unique: true);
+                unique: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChecklistItems_AnimalId",
                 table: "ChecklistItems",
-                column: "AnimalId");
+                column: "AnimalId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChecklistItems_ChecklistId",
                 table: "ChecklistItems",
-                column: "ChecklistId");
+                column: "ChecklistId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Checklists_ScopeType_ScopeId_Date",
                 table: "Checklists",
-                columns: new[] { "ScopeType", "ScopeId", "Date" });
+                columns: new[] { "ScopeType", "ScopeId", "Date" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Checklists_UserId",
                 table: "Checklists",
-                column: "UserId");
+                column: "UserId"
+            );
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Farms_Name",
-                table: "Farms",
-                column: "Name");
+            migrationBuilder.CreateIndex(name: "IX_Farms_Name", table: "Farms", column: "Name");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Lots_Name",
-                table: "Lots",
-                column: "Name");
+            migrationBuilder.CreateIndex(name: "IX_Lots_Name", table: "Lots", column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Lots_PaddockId",
                 table: "Lots",
-                column: "PaddockId");
+                column: "PaddockId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Movements_AnimalId",
                 table: "Movements",
-                column: "AnimalId");
+                column: "AnimalId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Movements_EntityType_EntityId",
                 table: "Movements",
-                columns: new[] { "EntityType", "EntityId" });
+                columns: new[] { "EntityType", "EntityId" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Movements_LotId",
                 table: "Movements",
-                column: "LotId");
+                column: "LotId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Movements_UserId",
                 table: "Movements",
-                column: "UserId");
+                column: "UserId"
+            );
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Owners_Name",
-                table: "Owners",
-                column: "Name");
+            migrationBuilder.CreateIndex(name: "IX_Owners_Name", table: "Owners", column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Paddocks_FarmId",
                 table: "Paddocks",
-                column: "FarmId");
+                column: "FarmId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Paddocks_Name",
                 table: "Paddocks",
-                column: "Name");
+                column: "Name"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Photos_AnimalId",
                 table: "Photos",
-                column: "AnimalId");
+                column: "AnimalId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Photos_EntityType_EntityId",
                 table: "Photos",
-                columns: new[] { "EntityType", "EntityId" });
+                columns: new[] { "EntityType", "EntityId" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
-                unique: true);
+                unique: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "AnimalOwners");
+            migrationBuilder.DropTable(name: "AnimalOwners");
 
-            migrationBuilder.DropTable(
-                name: "ChecklistItems");
+            migrationBuilder.DropTable(name: "ChecklistItems");
 
-            migrationBuilder.DropTable(
-                name: "Movements");
+            migrationBuilder.DropTable(name: "Movements");
 
-            migrationBuilder.DropTable(
-                name: "Photos");
+            migrationBuilder.DropTable(name: "Photos");
 
-            migrationBuilder.DropTable(
-                name: "Owners");
+            migrationBuilder.DropTable(name: "Owners");
 
-            migrationBuilder.DropTable(
-                name: "Checklists");
+            migrationBuilder.DropTable(name: "Checklists");
 
-            migrationBuilder.DropTable(
-                name: "Animals");
+            migrationBuilder.DropTable(name: "Animals");
 
-            migrationBuilder.DropTable(
-                name: "Users");
+            migrationBuilder.DropTable(name: "Users");
 
-            migrationBuilder.DropTable(
-                name: "Lots");
+            migrationBuilder.DropTable(name: "Lots");
 
-            migrationBuilder.DropTable(
-                name: "Paddocks");
+            migrationBuilder.DropTable(name: "Paddocks");
 
-            migrationBuilder.DropTable(
-                name: "Farms");
+            migrationBuilder.DropTable(name: "Farms");
         }
     }
 }

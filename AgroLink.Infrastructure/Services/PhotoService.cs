@@ -22,14 +22,18 @@ public class PhotoService : IPhotoService
         _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
     }
 
-    public async Task<PhotoDto> UploadPhotoAsync(CreatePhotoDto dto, Stream fileStream, string fileName)
+    public async Task<PhotoDto> UploadPhotoAsync(
+        CreatePhotoDto dto,
+        Stream fileStream,
+        string fileName
+    )
     {
         var photo = new Photo
         {
             EntityType = dto.EntityType,
             EntityId = dto.EntityId,
             UriLocal = $"local/{dto.EntityType.ToLower()}/{dto.EntityId}/{fileName}",
-            Description = dto.Description
+            Description = dto.Description,
         };
 
         _context.Photos.Add(photo);
@@ -39,17 +43,17 @@ public class PhotoService : IPhotoService
         try
         {
             var key = $"photos/{dto.EntityType.ToLower()}/{dto.EntityId}/{photo.Id}_{fileName}";
-            
+
             var request = new PutObjectRequest
             {
                 BucketName = _bucketName,
                 Key = key,
                 InputStream = fileStream,
-                ContentType = GetContentType(fileName)
+                ContentType = GetContentType(fileName),
             };
 
             await _s3Client.PutObjectAsync(request);
-            
+
             photo.UriRemote = $"https://{_bucketName}.s3.amazonaws.com/{key}";
             photo.Uploaded = true;
             photo.UpdatedAt = DateTime.UtcNow;
@@ -73,31 +77,36 @@ public class PhotoService : IPhotoService
             UriRemote = photo.UriRemote,
             Uploaded = photo.Uploaded,
             Description = photo.Description,
-            CreatedAt = photo.CreatedAt
+            CreatedAt = photo.CreatedAt,
         };
     }
 
     public async Task<IEnumerable<PhotoDto>> GetByEntityAsync(string entityType, int entityId)
     {
-        var photos = await _context.Photos.Where(p => p.EntityType == entityType && p.EntityId == entityId).ToListAsync();
-        
-        return photos.Select(p => new PhotoDto
-        {
-            Id = p.Id,
-            EntityType = p.EntityType,
-            EntityId = p.EntityId,
-            UriLocal = p.UriLocal,
-            UriRemote = p.UriRemote,
-            Uploaded = p.Uploaded,
-            Description = p.Description,
-            CreatedAt = p.CreatedAt
-        }).ToList();
+        var photos = await _context
+            .Photos.Where(p => p.EntityType == entityType && p.EntityId == entityId)
+            .ToListAsync();
+
+        return photos
+            .Select(p => new PhotoDto
+            {
+                Id = p.Id,
+                EntityType = p.EntityType,
+                EntityId = p.EntityId,
+                UriLocal = p.UriLocal,
+                UriRemote = p.UriRemote,
+                Uploaded = p.Uploaded,
+                Description = p.Description,
+                CreatedAt = p.CreatedAt,
+            })
+            .ToList();
     }
 
     public async Task DeleteAsync(int id)
     {
         var photo = await _context.Photos.FindAsync(id);
-        if (photo == null) throw new ArgumentException("Photo not found");
+        if (photo == null)
+            throw new ArgumentException("Photo not found");
 
         // Try to delete from S3
         if (!string.IsNullOrEmpty(photo.UriRemote))
@@ -120,7 +129,7 @@ public class PhotoService : IPhotoService
     public async Task SyncPendingPhotosAsync()
     {
         var pendingPhotos = await _context.Photos.Where(p => !p.Uploaded).ToListAsync();
-        
+
         foreach (var photo in pendingPhotos)
         {
             try
@@ -149,7 +158,7 @@ public class PhotoService : IPhotoService
             ".png" => "image/png",
             ".gif" => "image/gif",
             ".webp" => "image/webp",
-            _ => "application/octet-stream"
+            _ => "application/octet-stream",
         };
     }
 

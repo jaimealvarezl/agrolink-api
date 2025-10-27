@@ -18,14 +18,20 @@ public class PhotosController : ControllerBase
     }
 
     [HttpGet("entity/{entityType}/{entityId}")]
-    public async Task<ActionResult<IEnumerable<PhotoDto>>> GetByEntity(string entityType, int entityId)
+    public async Task<ActionResult<IEnumerable<PhotoDto>>> GetByEntity(
+        string entityType,
+        int entityId
+    )
     {
         var photos = await _photoService.GetByEntityAsync(entityType, entityId);
         return Ok(photos);
     }
 
     [HttpPost("upload")]
-    public async Task<ActionResult<PhotoDto>> UploadPhoto([FromForm] CreatePhotoDto dto, [FromForm] IFormFile file)
+    public async Task<ActionResult<PhotoDto>> UploadPhoto(
+        [FromForm] CreatePhotoDto dto,
+        [FromForm] IFormFile file
+    )
     {
         if (file == null || file.Length == 0)
             return BadRequest("No file provided");

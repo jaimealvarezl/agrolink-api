@@ -18,7 +18,10 @@ public class MovementsController : ControllerBase
     }
 
     [HttpGet("entity/{entityType}/{entityId}")]
-    public async Task<ActionResult<IEnumerable<MovementDto>>> GetByEntity(string entityType, int entityId)
+    public async Task<ActionResult<IEnumerable<MovementDto>>> GetByEntity(
+        string entityType,
+        int entityId
+    )
     {
         var movements = await _movementService.GetByEntityAsync(entityType, entityId);
         return Ok(movements);
@@ -38,7 +41,11 @@ public class MovementsController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var movement = await _movementService.CreateAsync(dto, userId);
-            return CreatedAtAction(nameof(GetByEntity), new { entityType = dto.EntityType, entityId = dto.EntityId }, movement);
+            return CreatedAtAction(
+                nameof(GetByEntity),
+                new { entityType = dto.EntityType, entityId = dto.EntityId },
+                movement
+            );
         }
         catch (ArgumentException ex)
         {

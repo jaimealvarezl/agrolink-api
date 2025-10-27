@@ -35,7 +35,10 @@ public class ChecklistsController : ControllerBase
     }
 
     [HttpGet("scope/{scopeType}/{scopeId}")]
-    public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetByScope(string scopeType, int scopeId)
+    public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetByScope(
+        string scopeType,
+        int scopeId
+    )
     {
         var checklists = await _checklistService.GetByScopeAsync(scopeType, scopeId);
         return Ok(checklists);

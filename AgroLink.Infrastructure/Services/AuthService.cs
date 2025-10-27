@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
@@ -5,9 +8,6 @@ using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace AgroLink.Infrastructure.Services;
 
@@ -24,8 +24,11 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.IsActive);
-        if (user == null) return null;
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == dto.Email && u.IsActive
+        );
+        if (user == null)
+            return null;
 
         if (!VerifyPassword(dto.Password, user.PasswordHash))
             return null;
@@ -48,9 +51,9 @@ public class AuthService : IAuthService
                 Role = user.Role,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt
+                LastLoginAt = user.LastLoginAt,
             },
-            ExpiresAt = expiresAt
+            ExpiresAt = expiresAt,
         };
     }
 
@@ -66,7 +69,7 @@ public class AuthService : IAuthService
             Email = dto.Email,
             PasswordHash = HashPassword(password),
             Role = dto.Role,
-            IsActive = true
+            IsActive = true,
         };
 
         _context.Users.Add(user);
@@ -79,7 +82,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role,
             IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
         };
     }
 
@@ -89,17 +92,21 @@ public class AuthService : IAuthService
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "default-key");
-            
-            tokenHandler.ValidateToken(token, new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = true,
-                ValidIssuer = _configuration["Jwt:Issuer"],
-                ValidateAudience = true,
-                ValidAudience = _configuration["Jwt:Audience"],
-                ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
+
+            tokenHandler.ValidateToken(
+                token,
+                new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["Jwt:Audience"],
+                    ClockSkew = TimeSpan.Zero,
+                },
+                out SecurityToken validatedToken
+            );
 
             return true;
         }
@@ -115,7 +122,7 @@ public class AuthService : IAuthService
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwt = tokenHandler.ReadJwtToken(token);
-            
+
             var userIdClaim = jwt.Claims.FirstOrDefault(x => x.Type == "userid");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                 return null;
@@ -132,7 +139,7 @@ public class AuthService : IAuthService
                 Role = user.Role,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt
+                LastLoginAt = user.LastLoginAt,
             };
         }
         catch
@@ -145,20 +152,25 @@ public class AuthService : IAuthService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "default-key");
-        
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim("userid", user.Id.ToString()),
-                new Claim("email", user.Email),
-                new Claim("role", user.Role),
-                new Claim("name", user.Name)
-            }),
+            Subject = new ClaimsIdentity(
+                new[]
+                {
+                    new Claim("userid", user.Id.ToString()),
+                    new Claim("email", user.Email),
+                    new Claim("role", user.Role),
+                    new Claim("name", user.Name),
+                }
+            ),
             Expires = DateTime.UtcNow.AddDays(7),
             Issuer = _configuration["Jwt:Issuer"],
             Audience = _configuration["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature
+            ),
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);

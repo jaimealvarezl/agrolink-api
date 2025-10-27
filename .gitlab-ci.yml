@@ -1,16 +1,65 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+# AgroLink API - GitLab CI Pipeline
 stages:
-- test
-- secret-detection
+  - format-check
+  - build
+  - test
+  - secret-detection
+
 variables:
   SECRET_DETECTION_ENABLED: 'true'
+  DOTNET_VERSION: '8.0.x'
+
+# Code formatting check with CSharpier
+format_check:
+  stage: format-check
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  before_script:
+    - dotnet tool restore
+  script:
+    - echo "🔍 Checking code formatting with CSharpier..."
+    - dotnet tool run csharpier check .
+    - echo "✅ Code formatting check passed!"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# Build the solution
+build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "🔨 Building AgroLink API..."
+    - dotnet restore
+    - dotnet build --no-restore --configuration Release
+    - echo "✅ Build completed successfully!"
+  artifacts:
+    paths:
+      - "*/bin/"
+      - "*/obj/"
+    expire_in: 1 hour
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# Run tests (when test projects are added)
+test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "🧪 Running tests..."
+    - dotnet test --no-build --configuration Release --verbosity normal
+    - echo "✅ All tests passed!"
+  dependencies:
+    - build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# Security scanning
 secret_detection:
   stage: secret-detection
-include:
-- template: Security/Secret-Detection.gitlab-ci.yml
+  include:
+    - template: Security/Secret-Detection.gitlab-ci.yml

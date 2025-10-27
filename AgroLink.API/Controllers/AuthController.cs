@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
             {
                 Name = request.Name,
                 Email = request.Email,
-                Role = request.Role ?? "USER"
+                Role = request.Role ?? "USER",
             };
 
             var user = await _authService.RegisterAsync(userDto, request.Password);

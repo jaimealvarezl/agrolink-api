@@ -17,7 +17,9 @@ public class MovementService : IMovementService
 
     public async Task<IEnumerable<MovementDto>> GetByEntityAsync(string entityType, int entityId)
     {
-        var movements = await _context.Movements.Where(m => m.EntityType == entityType && m.EntityId == entityId).ToListAsync();
+        var movements = await _context
+            .Movements.Where(m => m.EntityType == entityType && m.EntityId == entityId)
+            .ToListAsync();
         var result = new List<MovementDto>();
 
         foreach (var movement in movements)
@@ -38,7 +40,7 @@ public class MovementService : IMovementService
             ToId = dto.ToId,
             At = dto.At,
             Reason = dto.Reason,
-            UserId = userId
+            UserId = userId,
         };
 
         _context.Movements.Add(movement);
@@ -55,7 +57,7 @@ public class MovementService : IMovementService
     private async Task<MovementDto> MapToDtoAsync(Movement movement)
     {
         var user = await _context.Users.FindAsync(movement.UserId);
-        
+
         string? entityName = null;
         string? fromName = null;
         string? toName = null;
@@ -116,7 +118,7 @@ public class MovementService : IMovementService
             Reason = movement.Reason,
             UserId = movement.UserId,
             UserName = user?.Name ?? "",
-            CreatedAt = movement.CreatedAt
+            CreatedAt = movement.CreatedAt,
         };
     }
 }

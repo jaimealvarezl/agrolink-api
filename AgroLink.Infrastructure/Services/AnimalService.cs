@@ -17,7 +17,8 @@ public class AnimalService : IAnimalService
         ILotRepository lotRepository,
         IOwnerRepository ownerRepository,
         IPhotoRepository photoRepository,
-        IAnimalOwnerRepository animalOwnerRepository)
+        IAnimalOwnerRepository animalOwnerRepository
+    )
     {
         _animalRepository = animalRepository;
         _lotRepository = lotRepository;
@@ -29,7 +30,8 @@ public class AnimalService : IAnimalService
     public async Task<AnimalDto?> GetByIdAsync(int id)
     {
         var animal = await _animalRepository.GetByIdAsync(id);
-        if (animal == null) return null;
+        if (animal == null)
+            return null;
 
         return await MapToDtoAsync(animal);
     }
@@ -72,7 +74,7 @@ public class AnimalService : IAnimalService
             BirthDate = dto.BirthDate,
             LotId = dto.LotId,
             MotherId = dto.MotherId,
-            FatherId = dto.FatherId
+            FatherId = dto.FatherId,
         };
 
         await _animalRepository.AddAsync(animal);
@@ -85,7 +87,7 @@ public class AnimalService : IAnimalService
             {
                 AnimalId = animal.Id,
                 OwnerId = ownerDto.OwnerId,
-                SharePercent = ownerDto.SharePercent
+                SharePercent = ownerDto.SharePercent,
             };
             await _animalOwnerRepository.AddAsync(animalOwner);
         }
@@ -97,7 +99,8 @@ public class AnimalService : IAnimalService
     public async Task<AnimalDto> UpdateAsync(int id, UpdateAnimalDto dto)
     {
         var animal = await _animalRepository.GetByIdAsync(id);
-        if (animal == null) throw new ArgumentException("Animal not found");
+        if (animal == null)
+            throw new ArgumentException("Animal not found");
 
         animal.Name = dto.Name ?? animal.Name;
         animal.Color = dto.Color ?? animal.Color;
@@ -119,7 +122,7 @@ public class AnimalService : IAnimalService
             {
                 AnimalId = id,
                 OwnerId = ownerDto.OwnerId,
-                SharePercent = ownerDto.SharePercent
+                SharePercent = ownerDto.SharePercent,
             };
             await _animalOwnerRepository.AddAsync(animalOwner);
         }
@@ -131,7 +134,8 @@ public class AnimalService : IAnimalService
     public async Task DeleteAsync(int id)
     {
         var animal = await _animalRepository.GetByIdAsync(id);
-        if (animal == null) throw new ArgumentException("Animal not found");
+        if (animal == null)
+            throw new ArgumentException("Animal not found");
 
         _animalRepository.Remove(animal);
         await _animalRepository.SaveChangesAsync();
@@ -140,15 +144,23 @@ public class AnimalService : IAnimalService
     public async Task<AnimalGenealogyDto?> GetGenealogyAsync(int id)
     {
         var animal = await _animalRepository.GetAnimalWithGenealogyAsync(id);
-        if (animal == null) return null;
+        if (animal == null)
+            return null;
 
         return await BuildGenealogyAsync(animal);
     }
 
-    public async Task<AnimalDto> MoveAnimalAsync(int animalId, int fromLotId, int toLotId, string? reason, int userId)
+    public async Task<AnimalDto> MoveAnimalAsync(
+        int animalId,
+        int fromLotId,
+        int toLotId,
+        string? reason,
+        int userId
+    )
     {
         var animal = await _animalRepository.GetByIdAsync(animalId);
-        if (animal == null) throw new ArgumentException("Animal not found");
+        if (animal == null)
+            throw new ArgumentException("Animal not found");
 
         animal.LotId = toLotId;
         animal.UpdatedAt = DateTime.UtcNow;
@@ -166,8 +178,12 @@ public class AnimalService : IAnimalService
     private async Task<AnimalDto> MapToDtoAsync(Animal animal)
     {
         var lot = await _lotRepository.GetByIdAsync(animal.LotId);
-        var mother = animal.MotherId.HasValue ? await _animalRepository.GetByIdAsync(animal.MotherId.Value) : null;
-        var father = animal.FatherId.HasValue ? await _animalRepository.GetByIdAsync(animal.FatherId.Value) : null;
+        var mother = animal.MotherId.HasValue
+            ? await _animalRepository.GetByIdAsync(animal.MotherId.Value)
+            : null;
+        var father = animal.FatherId.HasValue
+            ? await _animalRepository.GetByIdAsync(animal.FatherId.Value)
+            : null;
 
         var owners = await _animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
         var ownerDtos = new List<AnimalOwnerDto>();
@@ -177,27 +193,31 @@ public class AnimalService : IAnimalService
             var ownerEntity = await _ownerRepository.GetByIdAsync(owner.OwnerId);
             if (ownerEntity != null)
             {
-                ownerDtos.Add(new AnimalOwnerDto
-                {
-                    OwnerId = owner.OwnerId,
-                    OwnerName = ownerEntity.Name,
-                    SharePercent = owner.SharePercent
-                });
+                ownerDtos.Add(
+                    new AnimalOwnerDto
+                    {
+                        OwnerId = owner.OwnerId,
+                        OwnerName = ownerEntity.Name,
+                        SharePercent = owner.SharePercent,
+                    }
+                );
             }
         }
 
         var photos = await _photoRepository.GetByEntityAsync("ANIMAL", animal.Id);
-        var photoDtos = photos.Select(p => new PhotoDto
-        {
-            Id = p.Id,
-            EntityType = p.EntityType,
-            EntityId = p.EntityId,
-            UriLocal = p.UriLocal,
-            UriRemote = p.UriRemote,
-            Uploaded = p.Uploaded,
-            Description = p.Description,
-            CreatedAt = p.CreatedAt
-        }).ToList();
+        var photoDtos = photos
+            .Select(p => new PhotoDto
+            {
+                Id = p.Id,
+                EntityType = p.EntityType,
+                EntityId = p.EntityId,
+                UriLocal = p.UriLocal,
+                UriRemote = p.UriRemote,
+                Uploaded = p.Uploaded,
+                Description = p.Description,
+                CreatedAt = p.CreatedAt,
+            })
+            .ToList();
 
         return new AnimalDto
         {
@@ -218,7 +238,7 @@ public class AnimalService : IAnimalService
             Owners = ownerDtos,
             Photos = photoDtos,
             CreatedAt = animal.CreatedAt,
-            UpdatedAt = animal.UpdatedAt
+            UpdatedAt = animal.UpdatedAt,
         };
     }
 
@@ -230,7 +250,7 @@ public class AnimalService : IAnimalService
             Tag = animal.Tag,
             Name = animal.Name,
             Sex = animal.Sex,
-            BirthDate = animal.BirthDate
+            BirthDate = animal.BirthDate,
         };
 
         if (animal.MotherId.HasValue)

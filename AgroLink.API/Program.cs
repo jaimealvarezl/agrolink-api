@@ -1,3 +1,4 @@
+using System.Text;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
 using AgroLink.Infrastructure.Data;
@@ -7,7 +8,6 @@ using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +18,8 @@ builder.Services.AddSwaggerGen();
 
 // Database
 builder.Services.AddDbContext<AgroLinkDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
 // Repositories
 builder.Services.AddScoped<IRepository<Farm>, Repository<Farm>>();
@@ -56,11 +57,13 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IAmazonS3>(provider => new Amazon.S3.AmazonS3Client());
 
 // JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
+var jwtKey =
+    builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AgroLink";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AgroLink";
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -71,7 +74,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwtIssuer,
             ValidateAudience = true,
             ValidAudience = jwtAudience,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
         };
     });
 
@@ -80,12 +83,13 @@ builder.Services.AddAuthorization();
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+    options.AddPolicy(
+        "AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        }
+    );
 });
 
 var app = builder.Build();

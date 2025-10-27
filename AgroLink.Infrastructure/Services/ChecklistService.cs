@@ -18,7 +18,8 @@ public class ChecklistService : IChecklistService
     public async Task<ChecklistDto?> GetByIdAsync(int id)
     {
         var checklist = await _context.Checklists.FindAsync(id);
-        if (checklist == null) return null;
+        if (checklist == null)
+            return null;
 
         return await MapToDtoAsync(checklist);
     }
@@ -38,7 +39,9 @@ public class ChecklistService : IChecklistService
 
     public async Task<IEnumerable<ChecklistDto>> GetByScopeAsync(string scopeType, int scopeId)
     {
-        var checklists = await _context.Checklists.Where(c => c.ScopeType == scopeType && c.ScopeId == scopeId).ToListAsync();
+        var checklists = await _context
+            .Checklists.Where(c => c.ScopeType == scopeType && c.ScopeId == scopeId)
+            .ToListAsync();
         var result = new List<ChecklistDto>();
 
         foreach (var checklist in checklists)
@@ -57,7 +60,7 @@ public class ChecklistService : IChecklistService
             ScopeId = dto.ScopeId,
             Date = dto.Date,
             UserId = userId,
-            Notes = dto.Notes
+            Notes = dto.Notes,
         };
 
         _context.Checklists.Add(checklist);
@@ -72,7 +75,7 @@ public class ChecklistService : IChecklistService
                 AnimalId = itemDto.AnimalId,
                 Present = itemDto.Present,
                 Condition = itemDto.Condition,
-                Notes = itemDto.Notes
+                Notes = itemDto.Notes,
             };
             _context.ChecklistItems.Add(item);
         }
@@ -84,7 +87,8 @@ public class ChecklistService : IChecklistService
     public async Task<ChecklistDto> UpdateAsync(int id, CreateChecklistDto dto)
     {
         var checklist = await _context.Checklists.FindAsync(id);
-        if (checklist == null) throw new ArgumentException("Checklist not found");
+        if (checklist == null)
+            throw new ArgumentException("Checklist not found");
 
         checklist.ScopeType = dto.ScopeType;
         checklist.ScopeId = dto.ScopeId;
@@ -95,7 +99,9 @@ public class ChecklistService : IChecklistService
         _context.Checklists.Update(checklist);
 
         // Update checklist items
-        var existingItems = await _context.ChecklistItems.Where(ci => ci.ChecklistId == id).ToListAsync();
+        var existingItems = await _context
+            .ChecklistItems.Where(ci => ci.ChecklistId == id)
+            .ToListAsync();
         _context.ChecklistItems.RemoveRange(existingItems);
 
         foreach (var itemDto in dto.Items)
@@ -106,7 +112,7 @@ public class ChecklistService : IChecklistService
                 AnimalId = itemDto.AnimalId,
                 Present = itemDto.Present,
                 Condition = itemDto.Condition,
-                Notes = itemDto.Notes
+                Notes = itemDto.Notes,
             };
             _context.ChecklistItems.Add(item);
         }
@@ -118,7 +124,8 @@ public class ChecklistService : IChecklistService
     public async Task DeleteAsync(int id)
     {
         var checklist = await _context.Checklists.FindAsync(id);
-        if (checklist == null) throw new ArgumentException("Checklist not found");
+        if (checklist == null)
+            throw new ArgumentException("Checklist not found");
 
         _context.Checklists.Remove(checklist);
         await _context.SaveChangesAsync();
@@ -127,36 +134,44 @@ public class ChecklistService : IChecklistService
     private async Task<ChecklistDto> MapToDtoAsync(Checklist checklist)
     {
         var user = await _context.Users.FindAsync(checklist.UserId);
-        var items = await _context.ChecklistItems.Where(ci => ci.ChecklistId == checklist.Id).ToListAsync();
-        var photos = await _context.Photos.Where(p => p.EntityType == "CHECKLIST" && p.EntityId == checklist.Id).ToListAsync();
+        var items = await _context
+            .ChecklistItems.Where(ci => ci.ChecklistId == checklist.Id)
+            .ToListAsync();
+        var photos = await _context
+            .Photos.Where(p => p.EntityType == "CHECKLIST" && p.EntityId == checklist.Id)
+            .ToListAsync();
 
         var itemDtos = new List<ChecklistItemDto>();
         foreach (var item in items)
         {
             var animal = await _context.Animals.FindAsync(item.AnimalId);
-            itemDtos.Add(new ChecklistItemDto
-            {
-                Id = item.Id,
-                AnimalId = item.AnimalId,
-                AnimalTag = animal?.Tag ?? "",
-                AnimalName = animal?.Name,
-                Present = item.Present,
-                Condition = item.Condition,
-                Notes = item.Notes
-            });
+            itemDtos.Add(
+                new ChecklistItemDto
+                {
+                    Id = item.Id,
+                    AnimalId = item.AnimalId,
+                    AnimalTag = animal?.Tag ?? "",
+                    AnimalName = animal?.Name,
+                    Present = item.Present,
+                    Condition = item.Condition,
+                    Notes = item.Notes,
+                }
+            );
         }
 
-        var photoDtos = photos.Select(p => new PhotoDto
-        {
-            Id = p.Id,
-            EntityType = p.EntityType,
-            EntityId = p.EntityId,
-            UriLocal = p.UriLocal,
-            UriRemote = p.UriRemote,
-            Uploaded = p.Uploaded,
-            Description = p.Description,
-            CreatedAt = p.CreatedAt
-        }).ToList();
+        var photoDtos = photos
+            .Select(p => new PhotoDto
+            {
+                Id = p.Id,
+                EntityType = p.EntityType,
+                EntityId = p.EntityId,
+                UriLocal = p.UriLocal,
+                UriRemote = p.UriRemote,
+                Uploaded = p.Uploaded,
+                Description = p.Description,
+                CreatedAt = p.CreatedAt,
+            })
+            .ToList();
 
         string? scopeName = null;
         if (checklist.ScopeType == "LOT")
@@ -182,7 +197,7 @@ public class ChecklistService : IChecklistService
             Notes = checklist.Notes,
             Items = itemDtos,
             Photos = photoDtos,
-            CreatedAt = checklist.CreatedAt
+            CreatedAt = checklist.CreatedAt,
         };
     }
 }

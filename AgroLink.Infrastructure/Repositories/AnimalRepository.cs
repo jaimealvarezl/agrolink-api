@@ -7,22 +7,19 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class AnimalRepository : Repository<Animal>, IAnimalRepository
 {
-    public AnimalRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public AnimalRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId)
     {
-        return await _dbSet
-            .Where(a => a.LotId == lotId)
-            .ToListAsync();
+        return await _dbSet.Where(a => a.LotId == lotId).ToListAsync();
     }
 
     public async Task<Animal?> GetAnimalWithOwnersAsync(int id)
     {
         return await _dbSet
             .Include(a => a.AnimalOwners)
-                .ThenInclude(ao => ao.Owner)
+            .ThenInclude(ao => ao.Owner)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -44,7 +41,6 @@ public class AnimalRepository : Repository<Animal>, IAnimalRepository
 
     public async Task<Animal?> GetByTagAsync(string tag)
     {
-        return await _dbSet
-            .FirstOrDefaultAsync(a => a.Tag == tag);
+        return await _dbSet.FirstOrDefaultAsync(a => a.Tag == tag);
     }
 }

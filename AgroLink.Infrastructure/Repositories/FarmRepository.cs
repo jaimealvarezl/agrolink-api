@@ -7,21 +7,16 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class FarmRepository : Repository<Farm>, IFarmRepository
 {
-    public FarmRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public FarmRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<Farm>> GetFarmsWithPaddocksAsync()
     {
-        return await _dbSet
-            .Include(f => f.Paddocks)
-            .ToListAsync();
+        return await _dbSet.Include(f => f.Paddocks).ToListAsync();
     }
 
     public async Task<Farm?> GetFarmWithPaddocksAsync(int id)
     {
-        return await _dbSet
-            .Include(f => f.Paddocks)
-            .FirstOrDefaultAsync(f => f.Id == id);
+        return await _dbSet.Include(f => f.Paddocks).FirstOrDefaultAsync(f => f.Id == id);
     }
 }

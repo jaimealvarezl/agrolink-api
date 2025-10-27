@@ -7,9 +7,8 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class AnimalOwnerRepository : Repository<AnimalOwner>, IAnimalOwnerRepository
 {
-    public AnimalOwnerRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public AnimalOwnerRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<AnimalOwner>> GetByAnimalIdAsync(int animalId)
     {
@@ -29,10 +28,8 @@ public class AnimalOwnerRepository : Repository<AnimalOwner>, IAnimalOwnerReposi
 
     public async Task RemoveByAnimalIdAsync(int animalId)
     {
-        var animalOwners = await _dbSet
-            .Where(ao => ao.AnimalId == animalId)
-            .ToListAsync();
-        
+        var animalOwners = await _dbSet.Where(ao => ao.AnimalId == animalId).ToListAsync();
+
         _dbSet.RemoveRange(animalOwners);
     }
 }

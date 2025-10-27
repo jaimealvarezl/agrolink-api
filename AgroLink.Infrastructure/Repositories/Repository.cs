@@ -1,11 +1,12 @@
+using System.Linq.Expressions;
 using AgroLink.Core.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class Repository<T> : IRepository<T> where T : class
+public class Repository<T> : IRepository<T>
+    where T : class
 {
     protected readonly AgroLinkDbContext _context;
     protected readonly DbSet<T> _dbSet;

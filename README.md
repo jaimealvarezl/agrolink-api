@@ -42,6 +42,7 @@ AgroLink.Infrastructure/
 - **Photo Storage**: AWS S3
 - **Password Hashing**: BCrypt
 - **API Documentation**: Swagger/OpenAPI
+- **Code Formatting**: CSharpier (local .NET tool)
 
 ## 📊 Database Schema
 
@@ -275,6 +276,40 @@ WORKDIR /app
 EXPOSE 80
 ENTRYPOINT ["dotnet", "AgroLink.API.dll"]
 ```
+
+## 🔧 Development
+
+### Code Formatting
+
+This project uses **CSharpier** for consistent code formatting. CSharpier is installed as a local .NET tool and integrated into the GitLab CI pipeline.
+
+#### Format all files
+```bash
+# Using .NET tool
+dotnet tool run csharpier format .
+```
+
+#### Check formatting
+```bash
+# Using .NET tool
+dotnet tool run csharpier check .
+```
+
+#### IDE Integration
+- **Visual Studio**: Install the CSharpier extension
+- **VS Code**: Install the CSharpier extension
+- **JetBrains Rider**: Install the CSharpier plugin
+
+### CI/CD Pipeline
+
+The GitLab CI pipeline includes:
+- **Format Check**: Validates code formatting with CSharpier
+- **Build**: Compiles the solution in Release mode
+- **Test**: Runs unit tests (when test projects are added)
+- **Security**: Secret detection and security scanning
+
+### Build Process
+The project automatically formats code during the build process. If you prefer to disable this, remove the `FormatCode` target from `Directory.Build.props`.
 
 ## 🧪 Testing
 

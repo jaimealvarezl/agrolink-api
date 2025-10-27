@@ -28,7 +28,7 @@ public class FarmsController : ControllerBase
             Id = f.Id,
             Name = f.Name,
             Location = f.Location,
-            CreatedAt = f.CreatedAt
+            CreatedAt = f.CreatedAt,
         });
 
         return Ok(result);
@@ -46,7 +46,7 @@ public class FarmsController : ControllerBase
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
-            CreatedAt = farm.CreatedAt
+            CreatedAt = farm.CreatedAt,
         };
 
         return Ok(result);
@@ -55,11 +55,7 @@ public class FarmsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<FarmDto>> Create(CreateFarmRequest request)
     {
-        var farm = new Farm
-        {
-            Name = request.Name,
-            Location = request.Location
-        };
+        var farm = new Farm { Name = request.Name, Location = request.Location };
 
         _context.Farms.Add(farm);
         await _context.SaveChangesAsync();
@@ -69,7 +65,7 @@ public class FarmsController : ControllerBase
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
-            CreatedAt = farm.CreatedAt
+            CreatedAt = farm.CreatedAt,
         };
 
         return CreatedAtAction(nameof(GetById), new { id = farm.Id }, result);
@@ -94,7 +90,7 @@ public class FarmsController : ControllerBase
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
-            CreatedAt = farm.CreatedAt
+            CreatedAt = farm.CreatedAt,
         };
 
         return Ok(result);

@@ -7,9 +7,8 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class PhotoRepository : Repository<Photo>, IPhotoRepository
 {
-    public PhotoRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public PhotoRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<Photo>> GetByEntityAsync(string entityType, int entityId)
     {
@@ -21,10 +20,7 @@ public class PhotoRepository : Repository<Photo>, IPhotoRepository
 
     public async Task<IEnumerable<Photo>> GetPendingUploadsAsync()
     {
-        return await _dbSet
-            .Where(p => !p.Uploaded)
-            .OrderBy(p => p.CreatedAt)
-            .ToListAsync();
+        return await _dbSet.Where(p => !p.Uploaded).OrderBy(p => p.CreatedAt).ToListAsync();
     }
 
     public async Task<IEnumerable<Photo>> GetByEntityTypeAsync(string entityType)

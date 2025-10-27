@@ -28,15 +28,17 @@ public class LotsController : ControllerBase
         foreach (var lot in lots)
         {
             var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
-            result.Add(new LotDto
-            {
-                Id = lot.Id,
-                Name = lot.Name,
-                PaddockId = lot.PaddockId,
-                PaddockName = paddock?.Name ?? "",
-                Status = lot.Status,
-                CreatedAt = lot.CreatedAt
-            });
+            result.Add(
+                new LotDto
+                {
+                    Id = lot.Id,
+                    Name = lot.Name,
+                    PaddockId = lot.PaddockId,
+                    PaddockName = paddock?.Name ?? "",
+                    Status = lot.Status,
+                    CreatedAt = lot.CreatedAt,
+                }
+            );
         }
 
         return Ok(result);
@@ -51,15 +53,17 @@ public class LotsController : ControllerBase
         foreach (var lot in lots)
         {
             var paddock = await _context.Paddocks.FindAsync(lot.PaddockId);
-            result.Add(new LotDto
-            {
-                Id = lot.Id,
-                Name = lot.Name,
-                PaddockId = lot.PaddockId,
-                PaddockName = paddock?.Name ?? "",
-                Status = lot.Status,
-                CreatedAt = lot.CreatedAt
-            });
+            result.Add(
+                new LotDto
+                {
+                    Id = lot.Id,
+                    Name = lot.Name,
+                    PaddockId = lot.PaddockId,
+                    PaddockName = paddock?.Name ?? "",
+                    Status = lot.Status,
+                    CreatedAt = lot.CreatedAt,
+                }
+            );
         }
 
         return Ok(result);
@@ -80,7 +84,7 @@ public class LotsController : ControllerBase
             PaddockId = lot.PaddockId,
             PaddockName = paddock?.Name ?? "",
             Status = lot.Status,
-            CreatedAt = lot.CreatedAt
+            CreatedAt = lot.CreatedAt,
         };
 
         return Ok(result);
@@ -93,7 +97,7 @@ public class LotsController : ControllerBase
         {
             Name = request.Name,
             PaddockId = request.PaddockId,
-            Status = request.Status ?? "ACTIVE"
+            Status = request.Status ?? "ACTIVE",
         };
 
         _context.Lots.Add(lot);
@@ -107,7 +111,7 @@ public class LotsController : ControllerBase
             PaddockId = lot.PaddockId,
             PaddockName = paddock?.Name ?? "",
             Status = lot.Status,
-            CreatedAt = lot.CreatedAt
+            CreatedAt = lot.CreatedAt,
         };
 
         return CreatedAtAction(nameof(GetById), new { id = lot.Id }, result);
@@ -136,7 +140,7 @@ public class LotsController : ControllerBase
             PaddockId = lot.PaddockId,
             PaddockName = paddock?.Name ?? "",
             Status = lot.Status,
-            CreatedAt = lot.CreatedAt
+            CreatedAt = lot.CreatedAt,
         };
 
         return Ok(result);
@@ -178,7 +182,7 @@ public class LotsController : ControllerBase
             ToId = request.ToPaddockId,
             At = DateTime.UtcNow,
             Reason = request.Reason,
-            UserId = userId
+            UserId = userId,
         };
 
         _context.Movements.Add(movement);
@@ -192,7 +196,7 @@ public class LotsController : ControllerBase
             PaddockId = lot.PaddockId,
             PaddockName = paddock?.Name ?? "",
             Status = lot.Status,
-            CreatedAt = lot.CreatedAt
+            CreatedAt = lot.CreatedAt,
         };
 
         return Ok(result);

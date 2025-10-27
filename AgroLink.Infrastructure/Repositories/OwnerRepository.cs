@@ -7,9 +7,8 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class OwnerRepository : Repository<Owner>, IOwnerRepository
 {
-    public OwnerRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public OwnerRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<Owner>> GetOwnersByAnimalIdAsync(int animalId)
     {
@@ -22,7 +21,7 @@ public class OwnerRepository : Repository<Owner>, IOwnerRepository
     {
         return await _dbSet
             .Include(o => o.AnimalOwners)
-                .ThenInclude(ao => ao.Animal)
+            .ThenInclude(ao => ao.Animal)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
 }

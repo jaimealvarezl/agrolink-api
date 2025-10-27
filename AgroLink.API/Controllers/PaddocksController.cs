@@ -28,14 +28,16 @@ public class PaddocksController : ControllerBase
         foreach (var paddock in paddocks)
         {
             var farm = await _context.Farms.FindAsync(paddock.FarmId);
-            result.Add(new PaddockDto
-            {
-                Id = paddock.Id,
-                Name = paddock.Name,
-                FarmId = paddock.FarmId,
-                FarmName = farm?.Name ?? "",
-                CreatedAt = paddock.CreatedAt
-            });
+            result.Add(
+                new PaddockDto
+                {
+                    Id = paddock.Id,
+                    Name = paddock.Name,
+                    FarmId = paddock.FarmId,
+                    FarmName = farm?.Name ?? "",
+                    CreatedAt = paddock.CreatedAt,
+                }
+            );
         }
 
         return Ok(result);
@@ -50,14 +52,16 @@ public class PaddocksController : ControllerBase
         foreach (var paddock in paddocks)
         {
             var farm = await _context.Farms.FindAsync(paddock.FarmId);
-            result.Add(new PaddockDto
-            {
-                Id = paddock.Id,
-                Name = paddock.Name,
-                FarmId = paddock.FarmId,
-                FarmName = farm?.Name ?? "",
-                CreatedAt = paddock.CreatedAt
-            });
+            result.Add(
+                new PaddockDto
+                {
+                    Id = paddock.Id,
+                    Name = paddock.Name,
+                    FarmId = paddock.FarmId,
+                    FarmName = farm?.Name ?? "",
+                    CreatedAt = paddock.CreatedAt,
+                }
+            );
         }
 
         return Ok(result);
@@ -77,7 +81,7 @@ public class PaddocksController : ControllerBase
             Name = paddock.Name,
             FarmId = paddock.FarmId,
             FarmName = farm?.Name ?? "",
-            CreatedAt = paddock.CreatedAt
+            CreatedAt = paddock.CreatedAt,
         };
 
         return Ok(result);
@@ -86,11 +90,7 @@ public class PaddocksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PaddockDto>> Create(CreatePaddockRequest request)
     {
-        var paddock = new Paddock
-        {
-            Name = request.Name,
-            FarmId = request.FarmId
-        };
+        var paddock = new Paddock { Name = request.Name, FarmId = request.FarmId };
 
         _context.Paddocks.Add(paddock);
         await _context.SaveChangesAsync();
@@ -102,7 +102,7 @@ public class PaddocksController : ControllerBase
             Name = paddock.Name,
             FarmId = paddock.FarmId,
             FarmName = farm?.Name ?? "",
-            CreatedAt = paddock.CreatedAt
+            CreatedAt = paddock.CreatedAt,
         };
 
         return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, result);
@@ -129,7 +129,7 @@ public class PaddocksController : ControllerBase
             Name = paddock.Name,
             FarmId = paddock.FarmId,
             FarmName = farm?.Name ?? "",
-            CreatedAt = paddock.CreatedAt
+            CreatedAt = paddock.CreatedAt,
         };
 
         return Ok(result);

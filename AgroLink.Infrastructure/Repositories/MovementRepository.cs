@@ -7,9 +7,8 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class MovementRepository : Repository<Movement>, IMovementRepository
 {
-    public MovementRepository(AgroLinkDbContext context) : base(context)
-    {
-    }
+    public MovementRepository(AgroLinkDbContext context)
+        : base(context) { }
 
     public async Task<IEnumerable<Movement>> GetByEntityAsync(string entityType, int entityId)
     {
@@ -24,7 +23,10 @@ public class MovementRepository : Repository<Movement>, IMovementRepository
         return await GetByEntityAsync("ANIMAL", animalId);
     }
 
-    public async Task<IEnumerable<Movement>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<Movement>> GetByDateRangeAsync(
+        DateTime startDate,
+        DateTime endDate
+    )
     {
         return await _dbSet
             .Where(m => m.At >= startDate && m.At <= endDate)
