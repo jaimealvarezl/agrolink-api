@@ -43,16 +43,20 @@ build:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "develop"
 
-# Run tests (when test projects are added)
+# Run tests
 test:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
   script:
     - echo "🧪 Running tests..."
-    - dotnet test --no-build --configuration Release --verbosity normal
+    - dotnet test --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
     - echo "✅ All tests passed!"
-  dependencies:
-    - build
+  artifacts:
+    reports:
+      junit: "**/test-results.trx"
+    paths:
+      - "**/TestResults/"
+    expire_in: 1 week
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
