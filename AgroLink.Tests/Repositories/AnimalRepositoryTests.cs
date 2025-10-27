@@ -9,9 +9,6 @@ namespace AgroLink.Tests.Repositories;
 [TestFixture]
 public class AnimalRepositoryTests : TestBase
 {
-    private AgroLinkDbContext _context = null!;
-    private IAnimalRepository _repository = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -25,6 +22,9 @@ public class AnimalRepositoryTests : TestBase
         _context.Dispose();
     }
 
+    private AgroLinkDbContext _context = null!;
+    private IAnimalRepository _repository = null!;
+
     [Test]
     public async Task GetByIdAsync_WhenAnimalExists_ShouldReturnAnimal()
     {
@@ -32,7 +32,7 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        var animal = await CreateTestAnimalAsync(_context, lot.Id, "A001");
+        var animal = await CreateTestAnimalAsync(_context, lot.Id);
 
         // Act
         var result = await _repository.GetByIdAsync(animal.Id);
@@ -61,7 +61,7 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        await CreateTestAnimalAsync(_context, lot.Id, "A001");
+        await CreateTestAnimalAsync(_context, lot.Id);
         await CreateTestAnimalAsync(_context, lot.Id, "A002");
 
         // Act
@@ -81,7 +81,7 @@ public class AnimalRepositoryTests : TestBase
         var lot1 = await CreateTestLotAsync(_context, paddock.Id, "Lot 1");
         var lot2 = await CreateTestLotAsync(_context, paddock.Id, "Lot 2");
 
-        await CreateTestAnimalAsync(_context, lot1.Id, "A001");
+        await CreateTestAnimalAsync(_context, lot1.Id);
         await CreateTestAnimalAsync(_context, lot1.Id, "A002");
         await CreateTestAnimalAsync(_context, lot2.Id, "A003");
 
@@ -101,7 +101,7 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        var animal = await CreateTestAnimalAsync(_context, lot.Id, "A001");
+        var animal = await CreateTestAnimalAsync(_context, lot.Id);
 
         // Act
         var result = await _repository.GetByTagAsync("A001");
@@ -159,7 +159,7 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        var animal = await CreateTestAnimalAsync(_context, lot.Id, "A001");
+        var animal = await CreateTestAnimalAsync(_context, lot.Id);
 
         // Act
         animal.Name = "Updated Name";
@@ -180,7 +180,7 @@ public class AnimalRepositoryTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        var animal = await CreateTestAnimalAsync(_context, lot.Id, "A001");
+        var animal = await CreateTestAnimalAsync(_context, lot.Id);
 
         // Act
         _repository.Remove(animal);

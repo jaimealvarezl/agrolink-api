@@ -1,6 +1,5 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
@@ -25,7 +24,9 @@ public class PhotosController(IPhotoService photoService) : BaseController
     )
     {
         if (file == null || file.Length == 0)
+        {
             return BadRequest("No file provided");
+        }
 
         try
         {

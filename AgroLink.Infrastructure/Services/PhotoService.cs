@@ -101,7 +101,9 @@ public class PhotoService(
     {
         var photo = await context.Photos.FindAsync(id);
         if (photo == null)
+        {
             throw new ArgumentException("Photo not found");
+        }
 
         // Try to delete from S3
         if (!string.IsNullOrEmpty(photo.UriRemote))

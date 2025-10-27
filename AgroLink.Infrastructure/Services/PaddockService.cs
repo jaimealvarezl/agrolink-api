@@ -1,8 +1,6 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
-using AgroLink.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Services;
 
@@ -13,7 +11,9 @@ public class PaddockService(IPaddockRepository paddockRepository, IFarmRepositor
     {
         var paddock = await paddockRepository.GetByIdAsync(id);
         if (paddock == null)
+        {
             return null;
+        }
 
         var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
 
@@ -87,13 +87,19 @@ public class PaddockService(IPaddockRepository paddockRepository, IFarmRepositor
     {
         var paddock = await paddockRepository.GetByIdAsync(id);
         if (paddock == null)
+        {
             throw new ArgumentException("Paddock not found");
+        }
 
         if (!string.IsNullOrEmpty(dto.Name))
+        {
             paddock.Name = dto.Name;
+        }
 
         if (dto.FarmId.HasValue)
+        {
             paddock.FarmId = dto.FarmId.Value;
+        }
 
         paddock.UpdatedAt = DateTime.UtcNow;
 
@@ -115,7 +121,9 @@ public class PaddockService(IPaddockRepository paddockRepository, IFarmRepositor
     {
         var paddock = await paddockRepository.GetByIdAsync(id);
         if (paddock == null)
+        {
             throw new ArgumentException("Paddock not found");
+        }
 
         paddockRepository.Remove(paddock);
     }

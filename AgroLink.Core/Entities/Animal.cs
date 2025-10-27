@@ -42,7 +42,9 @@ public class Animal
     public virtual ICollection<Animal> Children { get; set; } = new List<Animal>();
     public virtual ICollection<AnimalOwner> AnimalOwners { get; set; } = new List<AnimalOwner>();
     public virtual ICollection<Movement> Movements { get; set; } = new List<Movement>();
+
     public virtual ICollection<ChecklistItem> ChecklistItems { get; set; } =
         new List<ChecklistItem>();
+
     public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
 }

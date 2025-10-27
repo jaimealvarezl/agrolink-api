@@ -7,13 +7,13 @@ namespace AgroLink.Tests.Services;
 [TestFixture]
 public class TokenExtractionServiceTests
 {
-    private ITokenExtractionService _service = null!;
-
     [SetUp]
     public void Setup()
     {
         _service = new TokenExtractionService();
     }
+
+    private ITokenExtractionService _service = null!;
 
     [Test]
     public void ExtractTokenFromHeader_WithValidBearerToken_ShouldReturnToken()

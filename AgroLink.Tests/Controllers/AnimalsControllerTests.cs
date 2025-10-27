@@ -12,9 +12,6 @@ namespace AgroLink.Tests.Controllers;
 [TestFixture]
 public class AnimalsControllerTests
 {
-    private Mock<IAnimalService> _animalServiceMock = null!;
-    private AnimalsController _controller = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -22,11 +19,7 @@ public class AnimalsControllerTests
         _controller = new AnimalsController(_animalServiceMock.Object);
 
         // Setup HTTP context with user claims for tests that need it
-        var claims = new List<Claim>
-        {
-            new Claim("userid", "1"),
-            new Claim(ClaimTypes.Name, "testuser"),
-        };
+        var claims = new List<Claim> { new("userid", "1"), new(ClaimTypes.Name, "testuser") };
         var identity = new ClaimsIdentity(claims, "test");
         var principal = new ClaimsPrincipal(identity);
 
@@ -36,13 +29,16 @@ public class AnimalsControllerTests
         };
     }
 
+    private Mock<IAnimalService> _animalServiceMock = null!;
+    private AnimalsController _controller = null!;
+
     [Test]
     public async Task GetAll_ShouldReturnOkWithAnimals()
     {
         // Arrange
         var animals = new List<AnimalDto>
         {
-            new AnimalDto
+            new()
             {
                 Id = 1,
                 Tag = "A001",
@@ -55,7 +51,7 @@ public class AnimalsControllerTests
                 LotName = "Test Lot",
                 CreatedAt = DateTime.UtcNow,
             },
-            new AnimalDto
+            new()
             {
                 Id = 2,
                 Tag = "A002",
@@ -137,7 +133,7 @@ public class AnimalsControllerTests
         var lotId = 1;
         var animals = new List<AnimalDto>
         {
-            new AnimalDto
+            new()
             {
                 Id = 1,
                 Tag = "A001",
@@ -180,7 +176,7 @@ public class AnimalsControllerTests
             LotId = 1,
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto { OwnerId = 1, SharePercent = 100 },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
 

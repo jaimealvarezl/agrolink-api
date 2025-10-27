@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AgroLink.Core.DTOs;
@@ -6,6 +7,7 @@ using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Shouldly;
 
 namespace AgroLink.Tests.Services;
@@ -13,10 +15,6 @@ namespace AgroLink.Tests.Services;
 [TestFixture]
 public class AuthServiceTests : TestBase
 {
-    private AgroLinkDbContext _context = null!;
-    private IConfiguration _configuration = null!;
-    private AuthService _service = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -30,6 +28,10 @@ public class AuthServiceTests : TestBase
     {
         _context?.Dispose();
     }
+
+    private AgroLinkDbContext _context = null!;
+    private IConfiguration _configuration = null!;
+    private AuthService _service = null!;
 
     [Test]
     public async Task LoginAsync_WithValidCredentials_ShouldReturnAuthResponse()
@@ -252,7 +254,7 @@ public class AuthServiceTests : TestBase
         var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "60");
 
         var key = Encoding.UTF8.GetBytes(secretKey);
-        var tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(
                 new[]
@@ -266,13 +268,13 @@ public class AuthServiceTests : TestBase
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
             Issuer = issuer,
             Audience = audience,
-            SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
-                new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
-                Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature
             ),
         };
 
-        var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }

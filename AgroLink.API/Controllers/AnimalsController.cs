@@ -1,6 +1,5 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
@@ -20,7 +19,9 @@ public class AnimalsController(IAnimalService animalService) : BaseController
     {
         var animal = await animalService.GetByIdAsync(id);
         if (animal == null)
+        {
             return NotFound();
+        }
 
         return Ok(animal);
     }
@@ -37,7 +38,9 @@ public class AnimalsController(IAnimalService animalService) : BaseController
     {
         var genealogy = await animalService.GetGenealogyAsync(id);
         if (genealogy == null)
+        {
             return NotFound();
+        }
 
         return Ok(genealogy);
     }

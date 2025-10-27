@@ -1,6 +1,5 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
@@ -27,7 +26,9 @@ public class PaddocksController(IPaddockService paddockService) : BaseController
     {
         var paddock = await paddockService.GetByIdAsync(id);
         if (paddock == null)
+        {
             return NotFound();
+        }
 
         return Ok(paddock);
     }

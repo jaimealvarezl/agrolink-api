@@ -17,7 +17,9 @@ public class AuthController(
     {
         var result = await authService.LoginAsync(dto);
         if (result == null)
+        {
             return Unauthorized("Invalid credentials");
+        }
 
         return Ok(result);
     }
@@ -42,11 +44,15 @@ public class AuthController(
     {
         var token = ExtractTokenFromRequest();
         if (string.IsNullOrEmpty(token))
+        {
             return Unauthorized();
+        }
 
         var user = await authService.GetUserProfileAsync(token);
         if (user == null)
+        {
             return Unauthorized();
+        }
 
         return Ok(user);
     }

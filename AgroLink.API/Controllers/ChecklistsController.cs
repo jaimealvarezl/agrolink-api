@@ -1,6 +1,5 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
@@ -20,7 +19,9 @@ public class ChecklistsController(IChecklistService checklistService) : BaseCont
     {
         var checklist = await checklistService.GetByIdAsync(id);
         if (checklist == null)
+        {
             return NotFound();
+        }
 
         return Ok(checklist);
     }

@@ -17,10 +17,14 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.IsActive);
         if (user == null)
+        {
             return null;
+        }
 
         if (!VerifyPassword(dto.Password, user.PasswordHash))
+        {
             return null;
+        }
 
         user.LastLoginAt = DateTime.UtcNow;
         context.Users.Update(user);
@@ -50,7 +54,9 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
     {
         var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (existingUser != null)
+        {
             throw new ArgumentException("User with this email already exists");
+        }
 
         var user = new User
         {
@@ -113,12 +119,16 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
             var jwt = tokenHandler.ReadJwtToken(token);
 
             var userIdClaim = jwt.Claims.FirstOrDefault(x => x.Type == "userid");
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
                 return null;
+            }
 
             var user = await context.Users.FindAsync(userId);
             if (user == null || !user.IsActive)
+            {
                 return null;
+            }
 
             return new UserDto
             {
@@ -135,6 +145,35 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
         {
             return null;
         }
+    }
+
+    // New methods for controller logic
+    public async Task<UserDto> RegisterUserAsync(RegisterRequest request)
+    {
+        var userDto = new UserDto
+        {
+            Name = request.Name,
+            Email = request.Email,
+            Role = request.Role ?? "USER",
+        };
+
+        return await RegisterAsync(userDto, request.Password);
+    }
+
+    public async Task<UserDto?> GetUserProfileAsync(string token)
+    {
+        if (string.IsNullOrEmpty(token))
+        {
+            return null;
+        }
+
+        return await GetUserFromTokenAsync(token);
+    }
+
+    public async Task<ValidateTokenResponse> ValidateTokenResponseAsync(string token)
+    {
+        var isValid = await ValidateTokenAsync(token);
+        return new ValidateTokenResponse { Valid = isValid };
     }
 
     private string GenerateJwtToken(User user)
@@ -173,32 +212,5 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
     private static bool VerifyPassword(string password, string hash)
     {
         return BCrypt.Net.BCrypt.Verify(password, hash);
-    }
-
-    // New methods for controller logic
-    public async Task<UserDto> RegisterUserAsync(RegisterRequest request)
-    {
-        var userDto = new UserDto
-        {
-            Name = request.Name,
-            Email = request.Email,
-            Role = request.Role ?? "USER",
-        };
-
-        return await RegisterAsync(userDto, request.Password);
-    }
-
-    public async Task<UserDto?> GetUserProfileAsync(string token)
-    {
-        if (string.IsNullOrEmpty(token))
-            return null;
-
-        return await GetUserFromTokenAsync(token);
-    }
-
-    public async Task<ValidateTokenResponse> ValidateTokenResponseAsync(string token)
-    {
-        var isValid = await ValidateTokenAsync(token);
-        return new ValidateTokenResponse { Valid = isValid };
     }
 }

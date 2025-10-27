@@ -1,8 +1,6 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
-using AgroLink.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Services;
 
@@ -16,7 +14,9 @@ public class LotService(
     {
         var lot = await lotRepository.GetByIdAsync(id);
         if (lot == null)
+        {
             return null;
+        }
 
         var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
 
@@ -99,16 +99,24 @@ public class LotService(
     {
         var lot = await lotRepository.GetByIdAsync(id);
         if (lot == null)
+        {
             throw new ArgumentException("Lot not found");
+        }
 
         if (!string.IsNullOrEmpty(dto.Name))
+        {
             lot.Name = dto.Name;
+        }
 
         if (dto.PaddockId.HasValue)
+        {
             lot.PaddockId = dto.PaddockId.Value;
+        }
 
         if (!string.IsNullOrEmpty(dto.Status))
+        {
             lot.Status = dto.Status;
+        }
 
         lot.UpdatedAt = DateTime.UtcNow;
 
@@ -131,7 +139,9 @@ public class LotService(
     {
         var lot = await lotRepository.GetByIdAsync(id);
         if (lot == null)
+        {
             throw new ArgumentException("Lot not found");
+        }
 
         lotRepository.Remove(lot);
     }
@@ -140,7 +150,9 @@ public class LotService(
     {
         var lot = await lotRepository.GetByIdAsync(lotId);
         if (lot == null)
+        {
             throw new ArgumentException("Lot not found");
+        }
 
         var fromPaddockId = lot.PaddockId;
         lot.PaddockId = toPaddockId;

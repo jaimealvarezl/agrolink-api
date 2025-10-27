@@ -1,6 +1,5 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
@@ -27,7 +26,9 @@ public class LotsController(ILotService lotService) : BaseController
     {
         var lot = await lotService.GetByIdAsync(id);
         if (lot == null)
+        {
             return NotFound();
+        }
 
         return Ok(lot);
     }

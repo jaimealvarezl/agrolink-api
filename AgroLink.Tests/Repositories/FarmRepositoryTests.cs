@@ -9,9 +9,6 @@ namespace AgroLink.Tests.Repositories;
 [TestFixture]
 public class FarmRepositoryTests : TestBase
 {
-    private AgroLinkDbContext _context = null!;
-    private IFarmRepository _repository = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -25,11 +22,14 @@ public class FarmRepositoryTests : TestBase
         _context.Dispose();
     }
 
+    private AgroLinkDbContext _context = null!;
+    private IFarmRepository _repository = null!;
+
     [Test]
     public async Task GetByIdAsync_WhenFarmExists_ShouldReturnFarm()
     {
         // Arrange
-        var farm = await CreateTestFarmAsync(_context, "Test Farm");
+        var farm = await CreateTestFarmAsync(_context);
 
         // Act
         var result = await _repository.GetByIdAsync(farm.Id);
@@ -94,7 +94,7 @@ public class FarmRepositoryTests : TestBase
     public async Task GetFarmWithPaddocksAsync_WhenFarmExists_ShouldReturnFarmWithPaddocks()
     {
         // Arrange
-        var farm = await CreateTestFarmAsync(_context, "Test Farm");
+        var farm = await CreateTestFarmAsync(_context);
         await CreateTestPaddockAsync(_context, farm.Id, "Paddock 1");
         await CreateTestPaddockAsync(_context, farm.Id, "Paddock 2");
 
@@ -161,7 +161,7 @@ public class FarmRepositoryTests : TestBase
     public async Task Remove_ShouldRemoveFarm()
     {
         // Arrange
-        var farm = await CreateTestFarmAsync(_context, "Test Farm");
+        var farm = await CreateTestFarmAsync(_context);
 
         // Act
         _repository.Remove(farm);
@@ -190,7 +190,7 @@ public class FarmRepositoryTests : TestBase
     public async Task ExistsAsync_WhenFarmExists_ShouldReturnTrue()
     {
         // Arrange
-        var farm = await CreateTestFarmAsync(_context, "Test Farm");
+        var farm = await CreateTestFarmAsync(_context);
 
         // Act
         var exists = await _repository.ExistsAsync(f => f.Id == farm.Id);

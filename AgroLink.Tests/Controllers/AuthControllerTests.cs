@@ -11,10 +11,6 @@ namespace AgroLink.Tests.Controllers;
 [TestFixture]
 public class AuthControllerTests
 {
-    private Mock<IAuthService> _authServiceMock = null!;
-    private Mock<ITokenExtractionService> _tokenExtractionServiceMock = null!;
-    private AuthController _controller = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -25,6 +21,10 @@ public class AuthControllerTests
             _tokenExtractionServiceMock.Object
         );
     }
+
+    private Mock<IAuthService> _authServiceMock = null!;
+    private Mock<ITokenExtractionService> _tokenExtractionServiceMock = null!;
+    private AuthController _controller = null!;
 
     [Test]
     public async Task Login_WithValidCredentials_ShouldReturnOkWithAuthResponse()

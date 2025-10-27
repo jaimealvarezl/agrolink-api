@@ -33,7 +33,7 @@ public static class TestConfiguration
     public static AgroLinkDbContext CreateTestDbContext()
     {
         var options = new DbContextOptionsBuilder<AgroLinkDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
         return new AgroLinkDbContext(options);

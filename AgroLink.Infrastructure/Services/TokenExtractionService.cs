@@ -7,7 +7,9 @@ public class TokenExtractionService : ITokenExtractionService
     public string? ExtractTokenFromHeader(string authorizationHeader)
     {
         if (string.IsNullOrEmpty(authorizationHeader))
+        {
             return null;
+        }
 
         if (authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {

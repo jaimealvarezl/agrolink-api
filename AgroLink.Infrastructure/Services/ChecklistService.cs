@@ -6,27 +6,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class ChecklistService : IChecklistService
+public class ChecklistService(AgroLinkDbContext context) : IChecklistService
 {
-    private readonly AgroLinkDbContext _context;
-
-    public ChecklistService(AgroLinkDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<ChecklistDto?> GetByIdAsync(int id)
     {
-        var checklist = await _context.Checklists.FindAsync(id);
+        var checklist = await context.Checklists.FindAsync(id);
         if (checklist == null)
+        {
             return null;
+        }
 
         return await MapToDtoAsync(checklist);
     }
 
     public async Task<IEnumerable<ChecklistDto>> GetAllAsync()
     {
-        var checklists = await _context.Checklists.ToListAsync();
+        var checklists = await context.Checklists.ToListAsync();
         var result = new List<ChecklistDto>();
 
         foreach (var checklist in checklists)
@@ -39,7 +34,7 @@ public class ChecklistService : IChecklistService
 
     public async Task<IEnumerable<ChecklistDto>> GetByScopeAsync(string scopeType, int scopeId)
     {
-        var checklists = await _context
+        var checklists = await context
             .Checklists.Where(c => c.ScopeType == scopeType && c.ScopeId == scopeId)
             .ToListAsync();
         var result = new List<ChecklistDto>();
@@ -63,8 +58,8 @@ public class ChecklistService : IChecklistService
             Notes = dto.Notes,
         };
 
-        _context.Checklists.Add(checklist);
-        await _context.SaveChangesAsync();
+        context.Checklists.Add(checklist);
+        await context.SaveChangesAsync();
 
         // Add checklist items
         foreach (var itemDto in dto.Items)
@@ -77,18 +72,20 @@ public class ChecklistService : IChecklistService
                 Condition = itemDto.Condition,
                 Notes = itemDto.Notes,
             };
-            _context.ChecklistItems.Add(item);
+            context.ChecklistItems.Add(item);
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return await MapToDtoAsync(checklist);
     }
 
     public async Task<ChecklistDto> UpdateAsync(int id, CreateChecklistDto dto)
     {
-        var checklist = await _context.Checklists.FindAsync(id);
+        var checklist = await context.Checklists.FindAsync(id);
         if (checklist == null)
+        {
             throw new ArgumentException("Checklist not found");
+        }
 
         checklist.ScopeType = dto.ScopeType;
         checklist.ScopeId = dto.ScopeId;
@@ -96,13 +93,13 @@ public class ChecklistService : IChecklistService
         checklist.Notes = dto.Notes;
         checklist.UpdatedAt = DateTime.UtcNow;
 
-        _context.Checklists.Update(checklist);
+        context.Checklists.Update(checklist);
 
         // Update checklist items
-        var existingItems = await _context
+        var existingItems = await context
             .ChecklistItems.Where(ci => ci.ChecklistId == id)
             .ToListAsync();
-        _context.ChecklistItems.RemoveRange(existingItems);
+        context.ChecklistItems.RemoveRange(existingItems);
 
         foreach (var itemDto in dto.Items)
         {
@@ -114,37 +111,39 @@ public class ChecklistService : IChecklistService
                 Condition = itemDto.Condition,
                 Notes = itemDto.Notes,
             };
-            _context.ChecklistItems.Add(item);
+            context.ChecklistItems.Add(item);
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return await MapToDtoAsync(checklist);
     }
 
     public async Task DeleteAsync(int id)
     {
-        var checklist = await _context.Checklists.FindAsync(id);
+        var checklist = await context.Checklists.FindAsync(id);
         if (checklist == null)
+        {
             throw new ArgumentException("Checklist not found");
+        }
 
-        _context.Checklists.Remove(checklist);
-        await _context.SaveChangesAsync();
+        context.Checklists.Remove(checklist);
+        await context.SaveChangesAsync();
     }
 
     private async Task<ChecklistDto> MapToDtoAsync(Checklist checklist)
     {
-        var user = await _context.Users.FindAsync(checklist.UserId);
-        var items = await _context
+        var user = await context.Users.FindAsync(checklist.UserId);
+        var items = await context
             .ChecklistItems.Where(ci => ci.ChecklistId == checklist.Id)
             .ToListAsync();
-        var photos = await _context
+        var photos = await context
             .Photos.Where(p => p.EntityType == "CHECKLIST" && p.EntityId == checklist.Id)
             .ToListAsync();
 
         var itemDtos = new List<ChecklistItemDto>();
         foreach (var item in items)
         {
-            var animal = await _context.Animals.FindAsync(item.AnimalId);
+            var animal = await context.Animals.FindAsync(item.AnimalId);
             itemDtos.Add(
                 new ChecklistItemDto
                 {
@@ -176,12 +175,12 @@ public class ChecklistService : IChecklistService
         string? scopeName = null;
         if (checklist.ScopeType == "LOT")
         {
-            var lot = await _context.Lots.FindAsync(checklist.ScopeId);
+            var lot = await context.Lots.FindAsync(checklist.ScopeId);
             scopeName = lot?.Name;
         }
         else if (checklist.ScopeType == "PADDOCK")
         {
-            var paddock = await _context.Paddocks.FindAsync(checklist.ScopeId);
+            var paddock = await context.Paddocks.FindAsync(checklist.ScopeId);
             scopeName = paddock?.Name;
         }
 

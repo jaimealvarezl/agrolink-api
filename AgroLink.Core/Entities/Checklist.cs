@@ -24,6 +24,7 @@ public class Checklist
 
     // Navigation properties
     public virtual User User { get; set; } = null!;
+
     public virtual ICollection<ChecklistItem> ChecklistItems { get; set; } =
         new List<ChecklistItem>();
 }

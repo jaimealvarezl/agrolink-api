@@ -1,8 +1,6 @@
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
-using AgroLink.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Services;
 
@@ -12,7 +10,9 @@ public class FarmService(IFarmRepository farmRepository) : IFarmService
     {
         var farm = await farmRepository.GetByIdAsync(id);
         if (farm == null)
+        {
             return null;
+        }
 
         return new FarmDto
         {
@@ -54,13 +54,19 @@ public class FarmService(IFarmRepository farmRepository) : IFarmService
     {
         var farm = await farmRepository.GetByIdAsync(id);
         if (farm == null)
+        {
             throw new ArgumentException("Farm not found");
+        }
 
         if (!string.IsNullOrEmpty(dto.Name))
+        {
             farm.Name = dto.Name;
+        }
 
         if (dto.Location != null)
+        {
             farm.Location = dto.Location;
+        }
 
         farm.UpdatedAt = DateTime.UtcNow;
 
@@ -79,7 +85,9 @@ public class FarmService(IFarmRepository farmRepository) : IFarmService
     {
         var farm = await farmRepository.GetByIdAsync(id);
         if (farm == null)
+        {
             throw new ArgumentException("Farm not found");
+        }
 
         farmRepository.Remove(farm);
     }

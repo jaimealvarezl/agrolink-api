@@ -4,41 +4,28 @@ using AgroLink.Core.Interfaces;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class AnimalService : IAnimalService
+public class AnimalService(
+    IAnimalRepository animalRepository,
+    ILotRepository lotRepository,
+    IOwnerRepository ownerRepository,
+    IPhotoRepository photoRepository,
+    IAnimalOwnerRepository animalOwnerRepository)
+    : IAnimalService
 {
-    private readonly IAnimalRepository _animalRepository;
-    private readonly ILotRepository _lotRepository;
-    private readonly IOwnerRepository _ownerRepository;
-    private readonly IPhotoRepository _photoRepository;
-    private readonly IAnimalOwnerRepository _animalOwnerRepository;
-
-    public AnimalService(
-        IAnimalRepository animalRepository,
-        ILotRepository lotRepository,
-        IOwnerRepository ownerRepository,
-        IPhotoRepository photoRepository,
-        IAnimalOwnerRepository animalOwnerRepository
-    )
-    {
-        _animalRepository = animalRepository;
-        _lotRepository = lotRepository;
-        _ownerRepository = ownerRepository;
-        _photoRepository = photoRepository;
-        _animalOwnerRepository = animalOwnerRepository;
-    }
-
     public async Task<AnimalDto?> GetByIdAsync(int id)
     {
-        var animal = await _animalRepository.GetByIdAsync(id);
+        var animal = await animalRepository.GetByIdAsync(id);
         if (animal == null)
+        {
             return null;
+        }
 
         return await MapToDtoAsync(animal);
     }
 
     public async Task<IEnumerable<AnimalDto>> GetAllAsync()
     {
-        var animals = await _animalRepository.GetAllAsync();
+        var animals = await animalRepository.GetAllAsync();
         var result = new List<AnimalDto>();
 
         foreach (var animal in animals)
@@ -51,7 +38,7 @@ public class AnimalService : IAnimalService
 
     public async Task<IEnumerable<AnimalDto>> GetByLotAsync(int lotId)
     {
-        var animals = await _animalRepository.GetByLotIdAsync(lotId);
+        var animals = await animalRepository.GetByLotIdAsync(lotId);
         var result = new List<AnimalDto>();
 
         foreach (var animal in animals)
@@ -77,8 +64,8 @@ public class AnimalService : IAnimalService
             FatherId = dto.FatherId,
         };
 
-        await _animalRepository.AddAsync(animal);
-        await _animalRepository.SaveChangesAsync();
+        await animalRepository.AddAsync(animal);
+        await animalRepository.SaveChangesAsync();
 
         // Add owners
         foreach (var ownerDto in dto.Owners)
@@ -89,18 +76,20 @@ public class AnimalService : IAnimalService
                 OwnerId = ownerDto.OwnerId,
                 SharePercent = ownerDto.SharePercent,
             };
-            await _animalOwnerRepository.AddAsync(animalOwner);
+            await animalOwnerRepository.AddAsync(animalOwner);
         }
 
-        await _animalRepository.SaveChangesAsync();
+        await animalRepository.SaveChangesAsync();
         return await MapToDtoAsync(animal);
     }
 
     public async Task<AnimalDto> UpdateAsync(int id, UpdateAnimalDto dto)
     {
-        var animal = await _animalRepository.GetByIdAsync(id);
+        var animal = await animalRepository.GetByIdAsync(id);
         if (animal == null)
+        {
             throw new ArgumentException("Animal not found");
+        }
 
         animal.Name = dto.Name ?? animal.Name;
         animal.Color = dto.Color ?? animal.Color;
@@ -111,10 +100,10 @@ public class AnimalService : IAnimalService
         animal.FatherId = dto.FatherId ?? animal.FatherId;
         animal.UpdatedAt = DateTime.UtcNow;
 
-        _animalRepository.Update(animal);
+        animalRepository.Update(animal);
 
         // Update owners
-        await _animalOwnerRepository.RemoveByAnimalIdAsync(id);
+        await animalOwnerRepository.RemoveByAnimalIdAsync(id);
 
         foreach (var ownerDto in dto.Owners)
         {
@@ -124,28 +113,32 @@ public class AnimalService : IAnimalService
                 OwnerId = ownerDto.OwnerId,
                 SharePercent = ownerDto.SharePercent,
             };
-            await _animalOwnerRepository.AddAsync(animalOwner);
+            await animalOwnerRepository.AddAsync(animalOwner);
         }
 
-        await _animalRepository.SaveChangesAsync();
+        await animalRepository.SaveChangesAsync();
         return await MapToDtoAsync(animal);
     }
 
     public async Task DeleteAsync(int id)
     {
-        var animal = await _animalRepository.GetByIdAsync(id);
+        var animal = await animalRepository.GetByIdAsync(id);
         if (animal == null)
+        {
             throw new ArgumentException("Animal not found");
+        }
 
-        _animalRepository.Remove(animal);
-        await _animalRepository.SaveChangesAsync();
+        animalRepository.Remove(animal);
+        await animalRepository.SaveChangesAsync();
     }
 
     public async Task<AnimalGenealogyDto?> GetGenealogyAsync(int id)
     {
-        var animal = await _animalRepository.GetAnimalWithGenealogyAsync(id);
+        var animal = await animalRepository.GetAnimalWithGenealogyAsync(id);
         if (animal == null)
+        {
             return null;
+        }
 
         return await BuildGenealogyAsync(animal);
     }
@@ -158,39 +151,41 @@ public class AnimalService : IAnimalService
         int userId
     )
     {
-        var animal = await _animalRepository.GetByIdAsync(animalId);
+        var animal = await animalRepository.GetByIdAsync(animalId);
         if (animal == null)
+        {
             throw new ArgumentException("Animal not found");
+        }
 
         animal.LotId = toLotId;
         animal.UpdatedAt = DateTime.UtcNow;
 
-        _animalRepository.Update(animal);
+        animalRepository.Update(animal);
 
         // Record movement - we'll need to create a Movement repository
         // For now, let's skip this and focus on the core functionality
         // TODO: Add IMovementRepository
 
-        await _animalRepository.SaveChangesAsync();
+        await animalRepository.SaveChangesAsync();
         return await MapToDtoAsync(animal);
     }
 
     private async Task<AnimalDto> MapToDtoAsync(Animal animal)
     {
-        var lot = await _lotRepository.GetByIdAsync(animal.LotId);
+        var lot = await lotRepository.GetByIdAsync(animal.LotId);
         var mother = animal.MotherId.HasValue
-            ? await _animalRepository.GetByIdAsync(animal.MotherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
             : null;
         var father = animal.FatherId.HasValue
-            ? await _animalRepository.GetByIdAsync(animal.FatherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.FatherId.Value)
             : null;
 
-        var owners = await _animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
+        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
         var ownerDtos = new List<AnimalOwnerDto>();
 
         foreach (var owner in owners)
         {
-            var ownerEntity = await _ownerRepository.GetByIdAsync(owner.OwnerId);
+            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
             if (ownerEntity != null)
             {
                 ownerDtos.Add(
@@ -204,7 +199,7 @@ public class AnimalService : IAnimalService
             }
         }
 
-        var photos = await _photoRepository.GetByEntityAsync("ANIMAL", animal.Id);
+        var photos = await photoRepository.GetByEntityAsync("ANIMAL", animal.Id);
         var photoDtos = photos
             .Select(p => new PhotoDto
             {
@@ -255,7 +250,7 @@ public class AnimalService : IAnimalService
 
         if (animal.MotherId.HasValue)
         {
-            var mother = await _animalRepository.GetByIdAsync(animal.MotherId.Value);
+            var mother = await animalRepository.GetByIdAsync(animal.MotherId.Value);
             if (mother != null)
             {
                 genealogy.Mother = await BuildGenealogyAsync(mother);
@@ -264,7 +259,7 @@ public class AnimalService : IAnimalService
 
         if (animal.FatherId.HasValue)
         {
-            var father = await _animalRepository.GetByIdAsync(animal.FatherId.Value);
+            var father = await animalRepository.GetByIdAsync(animal.FatherId.Value);
             if (father != null)
             {
                 genealogy.Father = await BuildGenealogyAsync(father);
@@ -272,7 +267,7 @@ public class AnimalService : IAnimalService
         }
 
         // Get children
-        var children = await _animalRepository.GetChildrenAsync(animal.Id);
+        var children = await animalRepository.GetChildrenAsync(animal.Id);
         foreach (var child in children)
         {
             genealogy.Children.Add(await BuildGenealogyAsync(child));

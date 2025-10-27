@@ -13,7 +13,7 @@ public abstract class TestBase
     protected AgroLinkDbContext CreateInMemoryContext()
     {
         var options = new DbContextOptionsBuilder<AgroLinkDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
         return new AgroLinkDbContext(options);
