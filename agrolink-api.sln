@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink", "AgroLink\AgroLink.csproj", "{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.API", "AgroLink.API\AgroLink.API.csproj", "{F0D9CCB0-C34C-4F0A-85BA-7190C8B29B64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

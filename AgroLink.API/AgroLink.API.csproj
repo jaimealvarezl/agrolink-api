@@ -10,6 +10,7 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <!-- Generate ready to run images during publishing to improve cold start time. -->
         <PublishReadyToRun>true</PublishReadyToRun>
+        <RootNamespace>AgroLink</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="9.2.0"/>

@@ -5,10 +5,10 @@
     "dotnet lambda help",
     "All the command line options for the Lambda command can be specified in this file."
   ],
-  "profile": "default",
+  "profile": "",
   "region": "us-east-1",
   "configuration": "Release",
-  "s3-prefix": "AgroLink/",
+  "s3-prefix": "AgroLink.API/",
   "template": "serverless.template",
   "template-parameters": ""
 }
