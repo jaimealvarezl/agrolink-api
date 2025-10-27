@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class PhotosController(IPhotoService photoService) : ControllerBase
+public class PhotosController(IPhotoService photoService) : BaseController
 {
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<PhotoDto>>> GetByEntity(

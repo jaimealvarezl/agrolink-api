@@ -58,3 +58,57 @@ public class AuthResponseDto
     public UserDto User { get; set; } = new();
     public DateTime ExpiresAt { get; set; }
 }
+
+// Request DTOs for AuthController
+public class RegisterRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? Role { get; set; }
+}
+
+public class ValidateTokenRequest
+{
+    public string Token { get; set; } = string.Empty;
+}
+
+// Create DTOs
+public class CreateFarmDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Location { get; set; }
+}
+
+public class CreatePaddockDto
+{
+    public string Name { get; set; } = string.Empty;
+    public int FarmId { get; set; }
+}
+
+public class CreateLotDto
+{
+    public string Name { get; set; } = string.Empty;
+    public int PaddockId { get; set; }
+    public string? Status { get; set; }
+}
+
+// Update DTOs
+public class UpdateFarmDto
+{
+    public string? Name { get; set; }
+    public string? Location { get; set; }
+}
+
+public class UpdatePaddockDto
+{
+    public string? Name { get; set; }
+    public int? FarmId { get; set; }
+}
+
+public class UpdateLotDto
+{
+    public string? Name { get; set; }
+    public int? PaddockId { get; set; }
+    public string? Status { get; set; }
+}

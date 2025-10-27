@@ -1,105 +1,72 @@
 using AgroLink.Core.DTOs;
-using AgroLink.Core.Entities;
-using AgroLink.Infrastructure.Data;
+using AgroLink.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.API.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class FarmsController(AgroLinkDbContext context) : ControllerBase
+public class FarmsController(IFarmService farmService) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FarmDto>>> GetAll()
     {
-        var farms = await context.Farms.ToListAsync();
-        var result = farms.Select(f => new FarmDto
-        {
-            Id = f.Id,
-            Name = f.Name,
-            Location = f.Location,
-            CreatedAt = f.CreatedAt,
-        });
-
-        return Ok(result);
+        var farms = await farmService.GetAllAsync();
+        return Ok(farms);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<FarmDto>> GetById(int id)
     {
-        var farm = await context.Farms.FindAsync(id);
+        var farm = await farmService.GetByIdAsync(id);
         if (farm == null)
             return NotFound();
 
-        var result = new FarmDto
-        {
-            Id = farm.Id,
-            Name = farm.Name,
-            Location = farm.Location,
-            CreatedAt = farm.CreatedAt,
-        };
-
-        return Ok(result);
+        return Ok(farm);
     }
 
     [HttpPost]
     public async Task<ActionResult<FarmDto>> Create(CreateFarmRequest request)
     {
-        var farm = new Farm { Name = request.Name, Location = request.Location };
-
-        context.Farms.Add(farm);
-        await context.SaveChangesAsync();
-
-        var result = new FarmDto
+        try
         {
-            Id = farm.Id,
-            Name = farm.Name,
-            Location = farm.Location,
-            CreatedAt = farm.CreatedAt,
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = farm.Id }, result);
+            var dto = new CreateFarmDto { Name = request.Name, Location = request.Location };
+            var farm = await farmService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<FarmDto>> Update(int id, UpdateFarmRequest request)
     {
-        var farm = await context.Farms.FindAsync(id);
-        if (farm == null)
-            return NotFound();
-
-        farm.Name = request.Name ?? farm.Name;
-        farm.Location = request.Location ?? farm.Location;
-        farm.UpdatedAt = DateTime.UtcNow;
-
-        context.Farms.Update(farm);
-        await context.SaveChangesAsync();
-
-        var result = new FarmDto
+        try
         {
-            Id = farm.Id,
-            Name = farm.Name,
-            Location = farm.Location,
-            CreatedAt = farm.CreatedAt,
-        };
-
-        return Ok(result);
+            var dto = new UpdateFarmDto { Name = request.Name, Location = request.Location };
+            var farm = await farmService.UpdateAsync(id, dto);
+            return Ok(farm);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var farm = await context.Farms.FindAsync(id);
-        if (farm == null)
-            return NotFound();
-
-        context.Farms.Remove(farm);
-        await context.SaveChangesAsync();
-
-        return NoContent();
+        try
+        {
+            await farmService.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }
 

@@ -1,144 +1,79 @@
 using AgroLink.Core.DTOs;
-using AgroLink.Core.Entities;
-using AgroLink.Infrastructure.Data;
+using AgroLink.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.API.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class PaddocksController(AgroLinkDbContext context) : ControllerBase
+public class PaddocksController(IPaddockService paddockService) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PaddockDto>>> GetAll()
     {
-        var paddocks = await context.Paddocks.ToListAsync();
-        var result = new List<PaddockDto>();
-
-        foreach (var paddock in paddocks)
-        {
-            var farm = await context.Farms.FindAsync(paddock.FarmId);
-            result.Add(
-                new PaddockDto
-                {
-                    Id = paddock.Id,
-                    Name = paddock.Name,
-                    FarmId = paddock.FarmId,
-                    FarmName = farm?.Name ?? "",
-                    CreatedAt = paddock.CreatedAt,
-                }
-            );
-        }
-
-        return Ok(result);
+        var paddocks = await paddockService.GetAllAsync();
+        return Ok(paddocks);
     }
 
     [HttpGet("farm/{farmId}")]
     public async Task<ActionResult<IEnumerable<PaddockDto>>> GetByFarm(int farmId)
     {
-        var paddocks = await context.Paddocks.Where(p => p.FarmId == farmId).ToListAsync();
-        var result = new List<PaddockDto>();
-
-        foreach (var paddock in paddocks)
-        {
-            var farm = await context.Farms.FindAsync(paddock.FarmId);
-            result.Add(
-                new PaddockDto
-                {
-                    Id = paddock.Id,
-                    Name = paddock.Name,
-                    FarmId = paddock.FarmId,
-                    FarmName = farm?.Name ?? "",
-                    CreatedAt = paddock.CreatedAt,
-                }
-            );
-        }
-
-        return Ok(result);
+        var paddocks = await paddockService.GetByFarmAsync(farmId);
+        return Ok(paddocks);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<PaddockDto>> GetById(int id)
     {
-        var paddock = await context.Paddocks.FindAsync(id);
+        var paddock = await paddockService.GetByIdAsync(id);
         if (paddock == null)
             return NotFound();
 
-        var farm = await context.Farms.FindAsync(paddock.FarmId);
-        var result = new PaddockDto
-        {
-            Id = paddock.Id,
-            Name = paddock.Name,
-            FarmId = paddock.FarmId,
-            FarmName = farm?.Name ?? "",
-            CreatedAt = paddock.CreatedAt,
-        };
-
-        return Ok(result);
+        return Ok(paddock);
     }
 
     [HttpPost]
     public async Task<ActionResult<PaddockDto>> Create(CreatePaddockRequest request)
     {
-        var paddock = new Paddock { Name = request.Name, FarmId = request.FarmId };
-
-        context.Paddocks.Add(paddock);
-        await context.SaveChangesAsync();
-
-        var farm = await context.Farms.FindAsync(paddock.FarmId);
-        var result = new PaddockDto
+        try
         {
-            Id = paddock.Id,
-            Name = paddock.Name,
-            FarmId = paddock.FarmId,
-            FarmName = farm?.Name ?? "",
-            CreatedAt = paddock.CreatedAt,
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, result);
+            var dto = new CreatePaddockDto { Name = request.Name, FarmId = request.FarmId };
+            var paddock = await paddockService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, paddock);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<PaddockDto>> Update(int id, UpdatePaddockRequest request)
     {
-        var paddock = await context.Paddocks.FindAsync(id);
-        if (paddock == null)
-            return NotFound();
-
-        paddock.Name = request.Name ?? paddock.Name;
-        paddock.FarmId = request.FarmId ?? paddock.FarmId;
-        paddock.UpdatedAt = DateTime.UtcNow;
-
-        context.Paddocks.Update(paddock);
-        await context.SaveChangesAsync();
-
-        var farm = await context.Farms.FindAsync(paddock.FarmId);
-        var result = new PaddockDto
+        try
         {
-            Id = paddock.Id,
-            Name = paddock.Name,
-            FarmId = paddock.FarmId,
-            FarmName = farm?.Name ?? "",
-            CreatedAt = paddock.CreatedAt,
-        };
-
-        return Ok(result);
+            var dto = new UpdatePaddockDto { Name = request.Name, FarmId = request.FarmId };
+            var paddock = await paddockService.UpdateAsync(id, dto);
+            return Ok(paddock);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var paddock = await context.Paddocks.FindAsync(id);
-        if (paddock == null)
-            return NotFound();
-
-        context.Paddocks.Remove(paddock);
-        await context.SaveChangesAsync();
-
-        return NoContent();
+        try
+        {
+            await paddockService.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }
 

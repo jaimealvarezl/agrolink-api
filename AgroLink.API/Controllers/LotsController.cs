@@ -1,207 +1,106 @@
 using AgroLink.Core.DTOs;
-using AgroLink.Core.Entities;
-using AgroLink.Infrastructure.Data;
+using AgroLink.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.API.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class LotsController(AgroLinkDbContext context) : ControllerBase
+public class LotsController(ILotService lotService) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetAll()
     {
-        var lots = await context.Lots.ToListAsync();
-        var result = new List<LotDto>();
-
-        foreach (var lot in lots)
-        {
-            var paddock = await context.Paddocks.FindAsync(lot.PaddockId);
-            result.Add(
-                new LotDto
-                {
-                    Id = lot.Id,
-                    Name = lot.Name,
-                    PaddockId = lot.PaddockId,
-                    PaddockName = paddock?.Name ?? "",
-                    Status = lot.Status,
-                    CreatedAt = lot.CreatedAt,
-                }
-            );
-        }
-
-        return Ok(result);
+        var lots = await lotService.GetAllAsync();
+        return Ok(lots);
     }
 
     [HttpGet("paddock/{paddockId}")]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetByPaddock(int paddockId)
     {
-        var lots = await context.Lots.Where(l => l.PaddockId == paddockId).ToListAsync();
-        var result = new List<LotDto>();
-
-        foreach (var lot in lots)
-        {
-            var paddock = await context.Paddocks.FindAsync(lot.PaddockId);
-            result.Add(
-                new LotDto
-                {
-                    Id = lot.Id,
-                    Name = lot.Name,
-                    PaddockId = lot.PaddockId,
-                    PaddockName = paddock?.Name ?? "",
-                    Status = lot.Status,
-                    CreatedAt = lot.CreatedAt,
-                }
-            );
-        }
-
-        return Ok(result);
+        var lots = await lotService.GetByPaddockAsync(paddockId);
+        return Ok(lots);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<LotDto>> GetById(int id)
     {
-        var lot = await context.Lots.FindAsync(id);
+        var lot = await lotService.GetByIdAsync(id);
         if (lot == null)
             return NotFound();
 
-        var paddock = await context.Paddocks.FindAsync(lot.PaddockId);
-        var result = new LotDto
-        {
-            Id = lot.Id,
-            Name = lot.Name,
-            PaddockId = lot.PaddockId,
-            PaddockName = paddock?.Name ?? "",
-            Status = lot.Status,
-            CreatedAt = lot.CreatedAt,
-        };
-
-        return Ok(result);
+        return Ok(lot);
     }
 
     [HttpPost]
     public async Task<ActionResult<LotDto>> Create(CreateLotRequest request)
     {
-        var lot = new Lot
+        try
         {
-            Name = request.Name,
-            PaddockId = request.PaddockId,
-            Status = request.Status ?? "ACTIVE",
-        };
-
-        context.Lots.Add(lot);
-        await context.SaveChangesAsync();
-
-        var paddock = await context.Paddocks.FindAsync(lot.PaddockId);
-        var result = new LotDto
+            var dto = new CreateLotDto 
+            { 
+                Name = request.Name, 
+                PaddockId = request.PaddockId, 
+                Status = request.Status 
+            };
+            var lot = await lotService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = lot.Id }, lot);
+        }
+        catch (ArgumentException ex)
         {
-            Id = lot.Id,
-            Name = lot.Name,
-            PaddockId = lot.PaddockId,
-            PaddockName = paddock?.Name ?? "",
-            Status = lot.Status,
-            CreatedAt = lot.CreatedAt,
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = lot.Id }, result);
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<LotDto>> Update(int id, UpdateLotRequest request)
     {
-        var lot = await context.Lots.FindAsync(id);
-        if (lot == null)
-            return NotFound();
-
-        lot.Name = request.Name ?? lot.Name;
-        lot.PaddockId = request.PaddockId ?? lot.PaddockId;
-        lot.Status = request.Status ?? lot.Status;
-        lot.UpdatedAt = DateTime.UtcNow;
-
-        context.Lots.Update(lot);
-        await context.SaveChangesAsync();
-
-        var paddock = await context.Paddocks.FindAsync(lot.PaddockId);
-        var result = new LotDto
+        try
         {
-            Id = lot.Id,
-            Name = lot.Name,
-            PaddockId = lot.PaddockId,
-            PaddockName = paddock?.Name ?? "",
-            Status = lot.Status,
-            CreatedAt = lot.CreatedAt,
-        };
-
-        return Ok(result);
+            var dto = new UpdateLotDto 
+            { 
+                Name = request.Name, 
+                PaddockId = request.PaddockId, 
+                Status = request.Status 
+            };
+            var lot = await lotService.UpdateAsync(id, dto);
+            return Ok(lot);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var lot = await context.Lots.FindAsync(id);
-        if (lot == null)
-            return NotFound();
-
-        context.Lots.Remove(lot);
-        await context.SaveChangesAsync();
-
-        return NoContent();
+        try
+        {
+            await lotService.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("{id}/move")]
     public async Task<ActionResult<LotDto>> MoveLot(int id, [FromBody] MoveLotRequest request)
     {
-        var lot = await context.Lots.FindAsync(id);
-        if (lot == null)
-            return NotFound();
-
-        var fromPaddockId = lot.PaddockId;
-        lot.PaddockId = request.ToPaddockId;
-        lot.UpdatedAt = DateTime.UtcNow;
-
-        context.Lots.Update(lot);
-
-        // Record movement
-        var userId = GetCurrentUserId();
-        var movement = new Movement
+        try
         {
-            EntityType = "LOT",
-            EntityId = id,
-            FromId = fromPaddockId,
-            ToId = request.ToPaddockId,
-            At = DateTime.UtcNow,
-            Reason = request.Reason,
-            UserId = userId,
-        };
-
-        context.Movements.Add(movement);
-        await context.SaveChangesAsync();
-
-        var paddock = await context.Paddocks.FindAsync(lot.PaddockId);
-        var result = new LotDto
+            var userId = GetCurrentUserId();
+            var lot = await lotService.MoveLotAsync(id, request.ToPaddockId, request.Reason, userId);
+            return Ok(lot);
+        }
+        catch (ArgumentException ex)
         {
-            Id = lot.Id,
-            Name = lot.Name,
-            PaddockId = lot.PaddockId,
-            PaddockName = paddock?.Name ?? "",
-            Status = lot.Status,
-            CreatedAt = lot.CreatedAt,
-        };
-
-        return Ok(result);
+            return BadRequest(ex.Message);
+        }
     }
 
-    private int GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userid");
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            throw new UnauthorizedAccessException("Invalid user token");
-        return userId;
-    }
 }
 
 public class CreateLotRequest

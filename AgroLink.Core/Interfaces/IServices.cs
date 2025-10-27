@@ -51,4 +51,39 @@ public interface IAuthService
     Task<UserDto> RegisterAsync(UserDto dto, string password);
     Task<bool> ValidateTokenAsync(string token);
     Task<UserDto?> GetUserFromTokenAsync(string token);
+    
+    // New methods for controller logic
+    Task<UserDto> RegisterUserAsync(RegisterRequest request);
+    Task<UserDto?> GetUserProfileAsync(string token);
+    Task<object> ValidateTokenResponseAsync(string token);
+}
+
+public interface IFarmService
+{
+    Task<FarmDto?> GetByIdAsync(int id);
+    Task<IEnumerable<FarmDto>> GetAllAsync();
+    Task<FarmDto> CreateAsync(CreateFarmDto dto);
+    Task<FarmDto> UpdateAsync(int id, UpdateFarmDto dto);
+    Task DeleteAsync(int id);
+}
+
+public interface ILotService
+{
+    Task<LotDto?> GetByIdAsync(int id);
+    Task<IEnumerable<LotDto>> GetAllAsync();
+    Task<IEnumerable<LotDto>> GetByPaddockAsync(int paddockId);
+    Task<LotDto> CreateAsync(CreateLotDto dto);
+    Task<LotDto> UpdateAsync(int id, UpdateLotDto dto);
+    Task DeleteAsync(int id);
+    Task<LotDto> MoveLotAsync(int lotId, int toPaddockId, string? reason, int userId);
+}
+
+public interface IPaddockService
+{
+    Task<PaddockDto?> GetByIdAsync(int id);
+    Task<IEnumerable<PaddockDto>> GetAllAsync();
+    Task<IEnumerable<PaddockDto>> GetByFarmAsync(int farmId);
+    Task<PaddockDto> CreateAsync(CreatePaddockDto dto);
+    Task<PaddockDto> UpdateAsync(int id, UpdatePaddockDto dto);
+    Task DeleteAsync(int id);
 }

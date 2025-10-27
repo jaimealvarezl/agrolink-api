@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class ChecklistsController(IChecklistService checklistService) : ControllerBase
+public class ChecklistsController(IChecklistService checklistService) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetAll()
@@ -80,11 +78,4 @@ public class ChecklistsController(IChecklistService checklistService) : Controll
         }
     }
 
-    private int GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userid");
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            throw new UnauthorizedAccessException("Invalid user token");
-        return userId;
-    }
 }

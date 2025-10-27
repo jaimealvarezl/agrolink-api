@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.API.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class MovementsController(IMovementService movementService) : ControllerBase
+public class MovementsController(IMovementService movementService) : BaseController
 {
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<MovementDto>>> GetByEntity(
@@ -46,11 +44,4 @@ public class MovementsController(IMovementService movementService) : ControllerB
         }
     }
 
-    private int GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userid");
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            throw new UnauthorizedAccessException("Invalid user token");
-        return userId;
-    }
 }

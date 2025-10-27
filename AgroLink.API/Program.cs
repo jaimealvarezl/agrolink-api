@@ -52,6 +52,10 @@ builder.Services.AddScoped<IChecklistService, ChecklistService>();
 builder.Services.AddScoped<IMovementService, MovementService>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IFarmService, FarmService>();
+builder.Services.AddScoped<IPaddockService, PaddockService>();
+builder.Services.AddScoped<ILotService, LotService>();
+builder.Services.AddScoped<ITokenExtractionService, TokenExtractionService>();
 
 // AWS S3
 builder.Services.AddSingleton<IAmazonS3>(provider => new AmazonS3Client());
