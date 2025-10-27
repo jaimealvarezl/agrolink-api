@@ -1,5 +1,7 @@
+using AgroLink.Core.Entities;
 using AgroLink.Core.Interfaces;
 using AgroLink.Infrastructure.Data;
+using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +19,31 @@ builder.Services.AddSwaggerGen();
 // Database
 builder.Services.AddDbContext<AgroLinkDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repositories
+builder.Services.AddScoped<IRepository<Farm>, Repository<Farm>>();
+builder.Services.AddScoped<IRepository<Paddock>, Repository<Paddock>>();
+builder.Services.AddScoped<IRepository<Lot>, Repository<Lot>>();
+builder.Services.AddScoped<IRepository<Animal>, Repository<Animal>>();
+builder.Services.AddScoped<IRepository<Owner>, Repository<Owner>>();
+builder.Services.AddScoped<IRepository<AnimalOwner>, Repository<AnimalOwner>>();
+builder.Services.AddScoped<IRepository<Checklist>, Repository<Checklist>>();
+builder.Services.AddScoped<IRepository<ChecklistItem>, Repository<ChecklistItem>>();
+builder.Services.AddScoped<IRepository<Movement>, Repository<Movement>>();
+builder.Services.AddScoped<IRepository<Photo>, Repository<Photo>>();
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
+
+// Specific Repositories
+builder.Services.AddScoped<IFarmRepository, FarmRepository>();
+builder.Services.AddScoped<IPaddockRepository, PaddockRepository>();
+builder.Services.AddScoped<ILotRepository, LotRepository>();
+builder.Services.AddScoped<IAnimalRepository, AnimalRepository>();
+builder.Services.AddScoped<IOwnerRepository, OwnerRepository>();
+builder.Services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();
+builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
+builder.Services.AddScoped<IMovementRepository, MovementRepository>();
+builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Services
 builder.Services.AddScoped<IAnimalService, AnimalService>();
