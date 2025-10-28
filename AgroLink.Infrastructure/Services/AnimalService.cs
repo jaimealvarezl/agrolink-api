@@ -9,8 +9,8 @@ public class AnimalService(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IPhotoRepository photoRepository,
-    IAnimalOwnerRepository animalOwnerRepository)
-    : IAnimalService
+    IAnimalOwnerRepository animalOwnerRepository
+) : IAnimalService
 {
     public async Task<AnimalDto?> GetByIdAsync(int id)
     {
