@@ -231,17 +231,6 @@ jobs:
         working-directory: iac
         run: terraform validate
 
-      - name: Terraform Plan (Dry Run)
-        id: plan
-        working-directory: iac
-        run: |
-          echo "📋 Running terraform plan (dry run)..."
-          terraform plan -out=tfplan -input=false || echo "⚠️ Plan step completed with warnings (may require AWS credentials)"
-        continue-on-error: true
-        env:
-          AWS_REGION: us-east-1
-          # Note: terraform plan may fail without AWS credentials, but validate should pass
-
   secret-detection:
     name: Secret Detection
     runs-on: ubuntu-latest
