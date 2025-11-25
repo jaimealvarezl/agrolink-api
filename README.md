@@ -19,20 +19,24 @@ AgroLink is designed to help farmers in Boaco, Nicaragua manage their cattle ope
 
 ### Project Structure
 ```
-AgroLink.API/
-├── Controllers/          # API Controllers
-├── Program.cs           # Application startup
-└── appsettings.json     # Configuration
+AgroLink.API/              # Presentation Layer (ASP.NET Core Web API)
+├── Controllers/           # API Controllers
+├── Program.cs             # Application startup and configuration
+└── appsettings.json      # Configuration files
 
-AgroLink.Core/
-├── Entities/            # Domain entities
-├── DTOs/               # Data Transfer Objects
-└── Interfaces/         # Service and repository interfaces
+AgroLink.Core/             # Domain Layer (Core Business Logic)
+├── Entities/              # Domain entities
+├── DTOs/                  # Data Transfer Objects
+└── Interfaces/            # Service and repository interfaces
 
-AgroLink.Infrastructure/
-├── Data/               # Entity Framework context
-├── Repositories/       # Repository implementations
-└── Services/          # Business logic services
+AgroLink.Infrastructure/   # Infrastructure Layer
+├── Data/                  # Entity Framework DbContext
+├── Repositories/          # Repository implementations
+├── Services/              # Business logic services
+└── Migrations/            # Database migrations
+
+AgroLink.Tests/            # Unit Tests
+└── [Test files]           # NUnit test classes
 ```
 
 ### Technology Stack
@@ -108,9 +112,10 @@ AgroLink.Infrastructure/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- .NET 8 SDK
-- PostgreSQL 12+
+- .NET 8 SDK (see `global.json` for version requirements)
+- PostgreSQL 12+ (or use Docker)
 - AWS Account (for S3 photo storage)
+- Git
 
 ### Installation
 
@@ -120,7 +125,12 @@ AgroLink.Infrastructure/
    cd agrolink-api
    ```
 
-2. **Configure Database**
+2. **Restore .NET tools**
+   ```bash
+   dotnet tool restore
+   ```
+
+3. **Configure Database**
    ```bash
    # Update connection string in appsettings.json
    "ConnectionStrings": {
@@ -128,7 +138,7 @@ AgroLink.Infrastructure/
    }
    ```
 
-3. **Configure AWS S3**
+4. **Configure AWS S3**
    ```bash
    # Set AWS credentials (via AWS CLI, environment variables, or IAM roles)
    aws configure
@@ -139,22 +149,27 @@ AgroLink.Infrastructure/
    }
    ```
 
-4. **Install Dependencies**
+5. **Install Dependencies**
    ```bash
    dotnet restore
    ```
 
-5. **Run the Application**
+6. **Run Database Migrations**
+   ```bash
+   dotnet ef database update --project AgroLink.Infrastructure --startup-project AgroLink.API
+   ```
+
+7. **Run the Application**
    ```bash
    dotnet run --project AgroLink.API
    ```
 
-6. **Access Swagger Documentation**
-   Navigate to `https://localhost:7000/swagger` (or your configured port)
+8. **Access Swagger Documentation**
+   Navigate to `https://localhost:5001/swagger` or `http://localhost:5000/swagger` (check `launchSettings.json` for configured ports)
 
 ### Database Setup
 
-The application includes pre-created Entity Framework migrations. You can apply them using:
+The application uses Entity Framework Core migrations for database schema management.
 
 ```bash
 # Apply existing migrations
@@ -162,9 +177,10 @@ dotnet ef database update --project AgroLink.Infrastructure --startup-project Ag
 
 # Create new migration (if you modify entities)
 dotnet ef migrations add YourMigrationName --project AgroLink.Infrastructure --startup-project AgroLink.API
-```
 
-**Note**: The application will automatically create the database schema on first run if no migrations are applied (development only).
+# Generate SQL script (optional, for review or manual execution)
+dotnet ef migrations script --project AgroLink.Infrastructure --startup-project AgroLink.API --output migration.sql
+```
 
 ## 📱 API Endpoints
 
@@ -259,39 +275,65 @@ The system is designed for offline-first operation:
 
 ## 🚀 Deployment
 
-### AWS Lambda (Recommended)
-The API is designed to run on AWS Lambda for serverless deployment:
+### Docker
 
+Build and run with Docker:
+
+```bash
+# Build the image
+docker build -t agrolink-api .
+
+# Run the container
+docker run -p 8080:80 agrolink-api
+```
+
+Example Dockerfile:
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["AgroLink.API/AgroLink.API.csproj", "AgroLink.API/"]
+COPY ["AgroLink.Core/AgroLink.Core.csproj", "AgroLink.Core/"]
+COPY ["AgroLink.Infrastructure/AgroLink.Infrastructure.csproj", "AgroLink.Infrastructure/"]
+RUN dotnet restore "AgroLink.API/AgroLink.API.csproj"
+COPY . .
+WORKDIR "/src/AgroLink.API"
+RUN dotnet build "AgroLink.API.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "AgroLink.API.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "AgroLink.API.dll"]
+```
+
+### AWS Lambda (Future)
+The API can be adapted for AWS Lambda serverless deployment:
 1. Package the application
 2. Deploy to AWS Lambda
 3. Configure API Gateway
 4. Set up RDS PostgreSQL instance
 5. Configure S3 bucket for photos
 
-### Docker
-```dockerfile
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-COPY . /app
-WORKDIR /app
-EXPOSE 80
-ENTRYPOINT ["dotnet", "AgroLink.API.dll"]
-```
-
 ## 🔧 Development
 
 ### Code Formatting
 
-This project uses **CSharpier** for consistent code formatting. CSharpier is installed as a local .NET tool and integrated into the GitLab CI pipeline.
+This project uses **CSharpier** for consistent code formatting. CSharpier is installed as a local .NET tool and integrated into the GitHub Actions CI pipeline.
 
 #### Format all files
 ```bash
-# Using .NET tool
 dotnet tool run csharpier format .
 ```
 
 #### Check formatting
 ```bash
-# Using .NET tool
 dotnet tool run csharpier check .
 ```
 
@@ -302,20 +344,35 @@ dotnet tool run csharpier check .
 
 ### CI/CD Pipeline
 
-The GitLab CI pipeline includes:
+The GitHub Actions workflow (`.github/workflows/ci.yml`) includes:
 - **Format Check**: Validates code formatting with CSharpier
 - **Build**: Compiles the solution in Release mode
-- **Test**: Runs unit tests (when test projects are added)
-- **Security**: Secret detection and security scanning
+- **Test**: Runs unit tests with coverage reporting
+- **Secret Detection**: Scans for exposed secrets using TruffleHog
+- **Dependency Scanning**: Checks for vulnerable NuGet packages
 
-### Build Process
-The project automatically formats code during the build process. If you prefer to disable this, remove the `FormatCode` target from `Directory.Build.props`.
+The pipeline runs automatically on:
+- Pushes to `main` and `develop` branches
+- Pull requests targeting `main` and `develop` branches
 
 ## 🧪 Testing
 
-Run the application and test with Swagger UI:
+### Running Tests
 
-1. Start the application
+```bash
+# Run all unit tests
+dotnet test
+
+# Run tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run tests in Release mode
+dotnet test --configuration Release
+```
+
+### API Testing with Swagger
+
+1. Start the application: `dotnet run --project AgroLink.API`
 2. Navigate to `/swagger`
 3. Use the "Authorize" button to set JWT token
 4. Test endpoints with sample data
@@ -358,21 +415,36 @@ Farm: "Finca San José"
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Format code with CSharpier (`dotnet tool run csharpier format .`)
+5. Run tests (`dotnet test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Code Standards
+- Follow Clean Architecture principles
+- Write unit tests for new features
+- Ensure all tests pass before submitting PR
+- Code must pass formatting checks (CSharpier)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 📚 Additional Resources
+
+- [Clean Architecture Guidelines](docs/clean-architecture.md) - Architecture documentation
+- [Testing Guidelines](docs/testing.md) - Testing best practices
+- [API Documentation](https://localhost:5001/swagger) - Interactive API documentation (when running)
+
 ## 🆘 Support
 
 For support and questions:
 - Create an issue in the repository
-- Contact the development team
-- Check the documentation
+- Check existing documentation
+- Review the Swagger API documentation
 
 ---
 

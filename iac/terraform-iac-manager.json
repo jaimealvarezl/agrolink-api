@@ -1,0 +1,150 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CoreNetworkingAndCertificates",
+      "Effect": "Allow",
+      "Action": [
+        "networkmanager:*",
+        "ec2:*",
+        "route53:*",
+        "acm:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Storage",
+      "Effect": "Allow",
+      "Action": [
+        "s3:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ApiGateway",
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudFront",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaAndLogs",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:*",
+        "logs:*",
+        "cloudwatch:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSAndKMS",
+      "Effect": "Allow",
+      "Action": [
+        "rds:*",
+        "kms:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SecretsManager",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMManagementForTerraformObjects",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateUser",
+        "iam:DeleteUser",
+        "iam:GetUser",
+        "iam:ListUsers",
+        "iam:CreateAccessKey",
+        "iam:DeleteAccessKey",
+        "iam:ListAccessKeys",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicies",
+        "iam:ListPolicyVersions",
+        "iam:ListAttachedRolePolicies",
+        "iam:AttachUserPolicy",
+        "iam:DetachUserPolicy",
+        "iam:PutUserPolicy",
+        "iam:DeleteUserPolicy",
+        "iam:ListAttachedUserPolicies",
+        "iam:ListRolePolicies",
+        "iam:ListUserPolicies",
+        "iam:ListGroupsForUser",
+        "iam:RemoveUserFromGroup",
+        "iam:ListInstanceProfilesForRole",
+        "iam:RemoveRoleFromInstanceProfile",
+        "iam:GetRolePolicy",
+        "iam:GetUserPolicy",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:TagUser",
+        "iam:UntagUser",
+        "iam:TagPolicy",
+        "iam:UntagPolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "PassRoleForLambda",
+      "Effect": "Allow",
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::432432561723:role/AgroLinkAPI-AspNetCoreFunctionRole"
+      ]
+    },
+    {
+      "Sid": "WAFv2ManagementRegionalAndGlobal",
+      "Effect": "Allow",
+      "Action": [
+        "wafv2:CreateWebACL",
+        "wafv2:UpdateWebACL",
+        "wafv2:DeleteWebACL",
+        "wafv2:GetWebACL",
+        "wafv2:ListWebACLs",
+        "wafv2:AssociateWebACL",
+        "wafv2:DisassociateWebACL",
+        "wafv2:GetLoggingConfiguration",
+        "wafv2:PutLoggingConfiguration",
+        "wafv2:DeleteLoggingConfiguration",
+        "wafv2:ListResourcesForWebACL",
+        "wafv2:GetWebACLForResource",
+        "wafv2:TagResource",
+        "wafv2:UntagResource",
+        "wafv2:ListTagsForResource"
+      ],
+      "Resource": [
+        "arn:aws:wafv2:us-east-1:432432561723:regional/*/*",
+        "arn:aws:wafv2:us-east-1:432432561723:global/*/*"
+      ]
+    }
+  ]
+}
