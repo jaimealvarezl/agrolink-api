@@ -30,6 +30,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v2
         with:
+          list-files: shell
           filters: |
             csharp:
               - '**/*.cs'
@@ -47,6 +48,25 @@ jobs:
               - 'iac/**/*.tfvars'
               - '*.tf'
               - '*.tfvars'
+
+      - name: Debug - Show changed files
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "=== PR Information ==="
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head branch: ${{ github.head_ref }}"
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+          echo ""
+          echo "=== Changed Files ==="
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} || git diff --name-only origin/${{ github.base_ref }}...HEAD
+          echo ""
+          echo "=== Filter Results ==="
+          echo "C# changed: ${{ steps.filter.outputs.csharp }}"
+          echo "Terraform changed: ${{ steps.filter.outputs.terraform }}"
+          echo ""
+          echo "=== Terraform Files Changed ==="
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- 'iac/**/*.tf' 'iac/**/*.tfvars' '*.tf' '*.tfvars' || git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'iac/**/*.tf' 'iac/**/*.tfvars' '*.tf' '*.tfvars' || echo "No terraform files found in diff"
 
   format-check:
     name: Format Check
