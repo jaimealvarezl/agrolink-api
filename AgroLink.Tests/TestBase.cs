@@ -1,0 +1,165 @@
+using AgroLink.Core.Entities;
+using AgroLink.Core.Interfaces;
+using AgroLink.Infrastructure.Data;
+using AgroLink.Infrastructure.Repositories;
+using AgroLink.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace AgroLink.Tests;
+
+public abstract class TestBase
+{
+    protected AgroLinkDbContext CreateInMemoryContext()
+    {
+        var options = new DbContextOptionsBuilder<AgroLinkDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        return new AgroLinkDbContext(options);
+    }
+
+    protected ServiceProvider CreateServiceProvider(AgroLinkDbContext context)
+    {
+        var services = new ServiceCollection();
+
+        // Add DbContext
+        services.AddSingleton(context);
+
+        // Add repositories
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IFarmRepository, FarmRepository>();
+        services.AddScoped<IPaddockRepository, PaddockRepository>();
+        services.AddScoped<ILotRepository, LotRepository>();
+        services.AddScoped<IAnimalRepository, AnimalRepository>();
+        services.AddScoped<IOwnerRepository, OwnerRepository>();
+        services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();
+        services.AddScoped<IChecklistRepository, ChecklistRepository>();
+        services.AddScoped<IMovementRepository, MovementRepository>();
+        services.AddScoped<IPhotoRepository, PhotoRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
+        // Add services
+        services.AddScoped<IAnimalService, AnimalService>();
+        services.AddScoped<IChecklistService, ChecklistService>();
+        services.AddScoped<IMovementService, MovementService>();
+        services.AddScoped<IPhotoService, PhotoService>();
+        services.AddScoped<IAuthService, AuthService>();
+
+        return services.BuildServiceProvider();
+    }
+
+    protected async Task<Farm> CreateTestFarmAsync(
+        AgroLinkDbContext context,
+        string name = "Test Farm"
+    )
+    {
+        var farm = new Farm
+        {
+            Name = name,
+            Location = "Test Location",
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        context.Farms.Add(farm);
+        await context.SaveChangesAsync();
+        return farm;
+    }
+
+    protected async Task<Paddock> CreateTestPaddockAsync(
+        AgroLinkDbContext context,
+        int farmId,
+        string name = "Test Paddock"
+    )
+    {
+        var paddock = new Paddock
+        {
+            Name = name,
+            FarmId = farmId,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        context.Paddocks.Add(paddock);
+        await context.SaveChangesAsync();
+        return paddock;
+    }
+
+    protected async Task<Lot> CreateTestLotAsync(
+        AgroLinkDbContext context,
+        int paddockId,
+        string name = "Test Lot"
+    )
+    {
+        var lot = new Lot
+        {
+            Name = name,
+            PaddockId = paddockId,
+            Status = "Active",
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        context.Lots.Add(lot);
+        await context.SaveChangesAsync();
+        return lot;
+    }
+
+    protected async Task<Animal> CreateTestAnimalAsync(
+        AgroLinkDbContext context,
+        int lotId,
+        string tag = "A001"
+    )
+    {
+        var animal = new Animal
+        {
+            Tag = tag,
+            Name = "Test Animal",
+            Color = "Brown",
+            Breed = "Holstein",
+            Sex = "Female",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LotId = lotId,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        context.Animals.Add(animal);
+        await context.SaveChangesAsync();
+        return animal;
+    }
+
+    protected async Task<Owner> CreateTestOwnerAsync(
+        AgroLinkDbContext context,
+        string name = "Test Owner"
+    )
+    {
+        var owner = new Owner
+        {
+            Name = name,
+            Phone = "123-456-7890",
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        context.Owners.Add(owner);
+        await context.SaveChangesAsync();
+        return owner;
+    }
+
+    protected async Task<User> CreateTestUserAsync(
+        AgroLinkDbContext context,
+        string email = "test@example.com"
+    )
+    {
+        var user = new User
+        {
+            Name = "Test User",
+            Email = email,
+            PasswordHash = "hashed_password",
+            Role = "Admin",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+}
