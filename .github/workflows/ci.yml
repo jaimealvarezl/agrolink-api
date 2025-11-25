@@ -24,13 +24,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for proper PR comparison
+          fetch-depth: 0
 
       - name: Check for changes
         id: filter
         uses: dorny/paths-filter@v2
         with:
-          list-files: shell
           filters: |
             csharp:
               - '**/*.cs'
@@ -48,25 +47,6 @@ jobs:
               - 'iac/**/*.tfvars'
               - '*.tf'
               - '*.tfvars'
-
-      - name: Debug - Show changed files
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "=== PR Information ==="
-          echo "Base branch: ${{ github.base_ref }}"
-          echo "Head branch: ${{ github.head_ref }}"
-          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
-          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
-          echo ""
-          echo "=== Changed Files ==="
-          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} || git diff --name-only origin/${{ github.base_ref }}...HEAD
-          echo ""
-          echo "=== Filter Results ==="
-          echo "C# changed: ${{ steps.filter.outputs.csharp }}"
-          echo "Terraform changed: ${{ steps.filter.outputs.terraform }}"
-          echo ""
-          echo "=== Terraform Files Changed ==="
-          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- 'iac/**/*.tf' 'iac/**/*.tfvars' '*.tf' '*.tfvars' || git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'iac/**/*.tf' 'iac/**/*.tfvars' '*.tf' '*.tfvars' || echo "No terraform files found in diff"
 
   format-check:
     name: Format Check
@@ -86,10 +66,7 @@ jobs:
         run: dotnet tool restore
 
       - name: Check code formatting with CSharpier
-        run: |
-          echo "🔍 Checking code formatting with CSharpier..."
-          dotnet tool run csharpier check .
-          echo "✅ Code formatting check passed!"
+        run: dotnet tool run csharpier check .
 
   build:
     name: Build
@@ -109,10 +86,7 @@ jobs:
         run: dotnet restore
 
       - name: Build solution
-        run: |
-          echo "🔨 Building AgroLink API..."
-          dotnet build --no-restore --configuration Release
-          echo "✅ Build completed successfully!"
+        run: dotnet build --no-restore --configuration Release
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -146,10 +120,7 @@ jobs:
         run: dotnet restore
 
       - name: Run tests
-        run: |
-          echo "🧪 Running tests..."
-          dotnet test --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
-          echo "✅ All tests passed!"
+        run: dotnet test --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -183,24 +154,8 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.terraform-changed == 'true'
     steps:
-      - name: Debug - Job triggered
-        run: |
-          echo "✅ Terraform check job is running!"
-          echo "Terraform changed output: ${{ needs.check-changes.outputs.terraform-changed }}"
-
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: List iac directory
-        run: |
-          echo "=== Contents of iac/ directory ==="
-          ls -la iac/ || echo "iac/ directory not found"
-          echo ""
-          echo "=== Current working directory ==="
-          pwd
-          echo ""
-          echo "=== Terraform files in iac/ ==="
-          find iac -name "*.tf" -type f | head -20
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -222,24 +177,21 @@ jobs:
           exit 1
 
       - name: Terraform Init
-        id: init
         working-directory: iac
         run: terraform init -backend=false
 
       - name: Terraform Validate
-        id: validate
         working-directory: iac
         run: terraform validate
 
   secret-detection:
     name: Secret Detection
     runs-on: ubuntu-latest
-    # Always run secret detection, even for IaC changes
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for better secret detection
+          fetch-depth: 0
 
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@main
