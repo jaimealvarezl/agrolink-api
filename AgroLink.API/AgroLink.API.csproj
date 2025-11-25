@@ -17,9 +17,9 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.7.14" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.13.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.21" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AgroLink.Core\AgroLink.Core.csproj" />
