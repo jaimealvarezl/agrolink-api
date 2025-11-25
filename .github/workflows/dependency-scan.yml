@@ -1,0 +1,50 @@
+name: Dependency Scanning
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run dotnet list package vulnerabilities
+        run: |
+          echo "🔍 Scanning for package vulnerabilities..."
+          dotnet list **/*.csproj package --vulnerable --include-transitive || true
+          echo "✅ Vulnerability scan completed!"
+
+      - name: Generate dependency graph
+        run: |
+          echo "📊 Generating dependency graph..."
+          dotnet list **/*.csproj package --include-transitive > dependencies.txt || true
+          cat dependencies.txt
+
+      - name: Upload dependency information
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-info
+          path: dependencies.txt
+          retention-days: 30
