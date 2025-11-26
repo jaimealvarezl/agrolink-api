@@ -29,10 +29,39 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Run dotnet list package vulnerabilities
         run: |
           echo "🔍 Scanning for package vulnerabilities..."
-          dotnet list **/*.csproj package --vulnerable --include-transitive || true
+          dotnet restore
+          
+          # Check the entire solution for vulnerable packages
+          dotnet list agrolink-api.sln package --vulnerable --include-transitive > dependency-check-report.txt 2>&1 || true
+
+          # Check if any vulnerabilities were found
+          if grep -qi "has no vulnerable packages" dependency-check-report.txt; then
+            echo "✅ No vulnerable dependencies found!"
+            echo "No vulnerabilities detected" >> dependency-check-report.txt
+          else
+            # Check for actual vulnerability indicators
+            if grep -qiE "(CVE-|severity|High|Critical|Medium)" dependency-check-report.txt; then
+              echo "⚠️ Vulnerable packages found:"
+              cat dependency-check-report.txt
+              echo ""
+              echo "❌ Dependency check failed - please update vulnerable packages"
+              exit 1
+            else
+              echo "✅ No vulnerable dependencies found!"
+              echo "No vulnerabilities detected" >> dependency-check-report.txt
+            fi
+          fi
           echo "✅ Vulnerability scan completed!"
 
       - name: Generate dependency graph

@@ -147,22 +147,26 @@ Database connection for local app:
 
 ## ⚠️ IMPORTANT: Database Migrations
 
-**Migrations are handled by GitLab CI/CD**, not during Lambda startup. 
+**Migrations are handled by GitHub Actions CI/CD**, not during Lambda startup. 
 
 **Ensure `Database.Migrate()` is removed from `Program.cs`** to prevent Lambda initialization timeouts.
 
-**GitLab CI/CD runs migrations before deployment:**
+**GitHub Actions runs migrations before deployment using AWS CodeBuild:**
 ```bash
-# GitLab retrieves connection string from Secrets Manager
+# GitHub Actions retrieves connection string from Secrets Manager
 CONNECTION_STRING=$(aws secretsmanager get-secret-value \
   --secret-id "$DB_SECRET_ARN" \
   --query SecretString --output text | jq -r '.connectionString')
 
-# Then runs migrations
-dotnet ef database update --connection "$CONNECTION_STRING"
+# Then runs migrations via CodeBuild
+aws codebuild start-build \
+  --project-name AgroLink-DB-Migrations \
+  --environment-variables-override \
+    name=S3_BUCKET,value=your-migrations-bucket \
+    name=S3_KEY,value=migrations/migrations-bundle.zip
 ```
 
-See `GITLAB_MIGRATIONS.md` for complete GitLab CI/CD setup details.
+The CodeBuild project (`AgroLink-DB-Migrations`) is provisioned by Terraform and runs EF Core migrations in the VPC before Lambda deployment.
 
 ## Database Connection via Secrets Manager
 
