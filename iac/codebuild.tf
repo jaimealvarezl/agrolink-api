@@ -152,7 +152,7 @@ resource "aws_codebuild_project" "db_migrations" {
       value = var.region
     }
 
-    # S3_BUCKET and S3_KEY will be provided when starting the build from GitLab
+    # S3_BUCKET and S3_KEY will be provided when starting the build from GitHub Actions
     # Default to lambda_code_bucket, but can be overridden
     environment_variable {
       name  = "S3_BUCKET"
@@ -160,7 +160,7 @@ resource "aws_codebuild_project" "db_migrations" {
       type  = "PLAINTEXT"
     }
 
-    # S3_KEY will be provided when starting the build from GitLab
+    # S3_KEY will be provided when starting the build from GitHub Actions
     # Example: aws codebuild start-build --project-name AgroLink-DB-Migrations \
     #   --environment-variables-override name=S3_KEY,value=migrations/migrations-123.zip,name=S3_BUCKET,value=agrolink-migrations
   }
