@@ -84,12 +84,34 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
 
     public async Task<bool> ValidateTokenAsync(string token)
     {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return false;
+        }
+
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
+            
+            // Check if token can be read (basic format validation)
+            if (!tokenHandler.CanReadToken(token))
+            {
+                return false;
+            }
+
+            // Try to read the token to ensure it's properly formatted
+            try
+            {
+                tokenHandler.ReadJwtToken(token);
+            }
+            catch
+            {
+                return false;
+            }
+
             var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
 
-            await tokenHandler.ValidateTokenAsync(
+            var result = await tokenHandler.ValidateTokenAsync(
                 token,
                 new TokenValidationParameters
                 {
@@ -103,7 +125,11 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
                 }
             );
 
-            return true;
+            return result != null;
+        }
+        catch (SecurityTokenException)
+        {
+            return false;
         }
         catch
         {
