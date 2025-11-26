@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -26,7 +27,7 @@ public class AuthServiceTests : TestBase
     [TearDown]
     public void TearDown()
     {
-        _context?.Dispose();
+        _context.Dispose();
     }
 
     private AgroLinkDbContext _context = null!;
@@ -251,7 +252,10 @@ public class AuthServiceTests : TestBase
         var secretKey = _configuration["Jwt:Key"] ?? "test-secret-key";
         var issuer = _configuration["Jwt:Issuer"] ?? "AgroLink-Test";
         var audience = _configuration["Jwt:Audience"] ?? "AgroLink-Test";
-        var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "60");
+        var expiryMinutes = int.Parse(
+            _configuration["Jwt:ExpiryMinutes"] ?? "60",
+            CultureInfo.InvariantCulture
+        );
 
         var key = Encoding.UTF8.GetBytes(secretKey);
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -259,7 +263,7 @@ public class AuthServiceTests : TestBase
             Subject = new ClaimsIdentity(
                 new[]
                 {
-                    new Claim("userid", user.Id.ToString()),
+                    new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
                     new Claim(ClaimTypes.Name, user.Name),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Role, user.Role),
