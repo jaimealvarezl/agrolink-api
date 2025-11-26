@@ -99,7 +99,7 @@ jobs:
           retention-days: 1
 
   test:
-    name: Test
+    name: Tests
     runs-on: ubuntu-latest
     needs: [check-changes, build]
     if: needs.check-changes.outputs.csharp == 'true'
@@ -119,8 +119,24 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Run tests
-        run: dotnet test --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
+      - name: Run unit tests
+        run: |
+          echo "🧪 Running unit tests..."
+          dotnet test ./AgroLink.Tests/AgroLink.Tests.csproj \
+            --configuration Release \
+            --verbosity normal \
+            --logger "trx;LogFileName=unit-test-results.trx" \
+            --collect:"XPlat Code Coverage"
+          echo "✅ Unit tests passed!"
+
+      - name: Run integration tests
+        run: |
+          echo "🧪 Running integration tests (E2E)..."
+          dotnet test ./AgroLink.IntegrationTests/AgroLink.IntegrationTests.csproj \
+            --configuration Release \
+            --verbosity normal \
+            --logger "trx;LogFileName=integration-test-results.trx"
+          echo "✅ Integration tests passed!"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -136,7 +152,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
-          files: '**/test-results.trx'
+          files: '**/*test-results.trx'
           check_name: 'Test Results'
           comment_mode: always
           report_individual_runs: true
