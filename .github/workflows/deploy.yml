@@ -44,24 +44,15 @@ jobs:
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run unit tests
+      - name: Run all tests
         run: |
-          echo "🧪 Running unit tests..."
-          dotnet test ./AgroLink.Tests/AgroLink.Tests.csproj \
+          echo "🧪 Running all tests..."
+          dotnet test \
             --configuration Release \
             --verbosity normal \
-            --logger "trx;LogFileName=unit-test-results.trx" \
+            --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage"
-          echo "✅ Unit tests passed!"
-
-      - name: Run integration tests
-        run: |
-          echo "🧪 Running integration tests (E2E)..."
-          dotnet test ./AgroLink.IntegrationTests/AgroLink.IntegrationTests.csproj \
-            --configuration Release \
-            --verbosity normal \
-            --logger "trx;LogFileName=integration-test-results.trx"
-          echo "✅ Integration tests passed!"
+          echo "✅ All tests passed!"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
