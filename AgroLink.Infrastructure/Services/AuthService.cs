@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -88,7 +89,7 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
 
-            tokenHandler.ValidateToken(
+            await tokenHandler.ValidateTokenAsync(
                 token,
                 new TokenValidationParameters
                 {
@@ -99,8 +100,7 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
                     ValidateAudience = true,
                     ValidAudience = configuration["Jwt:Audience"],
                     ClockSkew = TimeSpan.Zero,
-                },
-                out _
+                }
             );
 
             return true;
@@ -185,7 +185,7 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
         {
             Subject = new ClaimsIdentity(
                 [
-                    new Claim("userid", user.Id.ToString()),
+                    new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
                     new Claim("email", user.Email),
                     new Claim("role", user.Role),
                     new Claim("name", user.Name),
