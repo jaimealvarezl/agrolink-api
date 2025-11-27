@@ -9,7 +9,6 @@ on:
 env:
   DOTNET_VERSION: '8.0.x'
   AWS_REGION: 'us-east-1'
-  CODEBUILD_PROJECT_NAME: 'AgroLink-DB-Migrations'
   MIGRATION_S3_BUCKET: 'agrolink-lambda-code-bucket'
   MIGRATION_S3_PREFIX: 'migrations'
 
@@ -129,88 +128,104 @@ jobs:
           dotnet build agrolink-api.sln --configuration Release --no-restore
 
           # Create migration bundle (self-contained executable with migrations)
+          # Build for Linux arm64 to match Lambda runtime architecture
           # API project provides DbContext configuration, Infrastructure project contains migrations
-          echo "Creating EF Core migration bundle..."
+          echo "Creating EF Core migration bundle for Linux arm64..."
           dotnet ef migrations bundle \
             --startup-project ./AgroLink.API/AgroLink.API.csproj \
             --project ./AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
             --configuration Release \
             --output ./migrations-bundle \
-            --self-contained
+            --self-contained \
+            --runtime linux-arm64
 
+          echo "✅ Migration bundle created successfully"
+
+      - name: Upload migration bundle to S3
+        run: |
           # Create zip artifact with unique name based on commit SHA
           MIGRATION_ARTIFACT_NAME="migrations-${GITHUB_SHA:0:7}.zip"
           echo "Creating migration artifact - $MIGRATION_ARTIFACT_NAME"
           zip -r "$MIGRATION_ARTIFACT_NAME" ./migrations-bundle
-
-      - name: Upload migration bundle to S3
-        run: |
+          
           S3_KEY="${MIGRATION_S3_PREFIX}/migrations-${GITHUB_SHA:0:7}.zip"
           echo "Uploading migration artifact to S3 - s3://${MIGRATION_S3_BUCKET}/${S3_KEY}"
-          aws s3 cp "migrations-${GITHUB_SHA:0:7}.zip" "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"
+          aws s3 cp "$MIGRATION_ARTIFACT_NAME" "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"
 
           # Verify upload
           if aws s3 ls "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"; then
-            echo "✅ Migration artifact uploaded successfully"
+            echo "✅ Migration artifact uploaded successfully to S3"
             echo "S3_KEY=${S3_KEY}" >> $GITHUB_ENV
           else
             echo "❌ Failed to verify migration artifact upload"
             exit 1
           fi
 
-      - name: Trigger AWS CodeBuild migration
+      - name: Invoke migration Lambda
         run: |
-          echo "🚀 Triggering AWS CodeBuild project - ${CODEBUILD_PROJECT_NAME}"
-          BUILD_ID=$(aws codebuild start-build \
-            --project-name "${CODEBUILD_PROJECT_NAME}" \
-            --environment-variables-override \
-              name=S3_KEY,value="${S3_KEY}" \
-              name=S3_BUCKET,value="${MIGRATION_S3_BUCKET}" \
+          echo "🚀 Invoking migration Lambda function..."
+          
+          LAMBDA_FUNCTION_NAME="AgroLink-Migration-Function"
+          
+          # Invoke Lambda function with S3 bucket and key
+          echo "Invoking Lambda with:"
+          echo "  S3 Bucket: ${MIGRATION_S3_BUCKET}"
+          echo "  S3 Key: ${S3_KEY}"
+          
+          INVOCATION_PAYLOAD=$(jq -n \
+            --arg bucket "${MIGRATION_S3_BUCKET}" \
+            --arg key "${S3_KEY}" \
+            '{s3_bucket: $bucket, s3_key: $key}')
+          
+          echo "Invocation payload: $INVOCATION_PAYLOAD"
+          
+          # Invoke Lambda synchronously and wait for response
+          aws lambda invoke \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --payload "$INVOCATION_PAYLOAD" \
             --region "${AWS_REGION}" \
-            --query 'build.id' \
-            --output text)
-
-          if [ $? -eq 0 ]; then
-            echo "✅ CodeBuild triggered successfully!"
-            echo "Build ID: $BUILD_ID"
-            echo "S3 Key: ${S3_KEY}"
-            echo "Monitor build at: https://${AWS_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${CODEBUILD_PROJECT_NAME}/build/$BUILD_ID"
-            echo "BUILD_ID=${BUILD_ID}" >> $GITHUB_ENV
-          else
-            echo "❌ Failed to trigger CodeBuild"
+            --cli-binary-format raw-in-base64-out \
+            --cli-read-timeout 900 \
+            /tmp/lambda-response.json
+          
+          # Check invocation result
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to invoke Lambda function"
             exit 1
           fi
-
-      - name: Wait for CodeBuild to complete
-        run: |
-          echo "⏳ Waiting for CodeBuild migration to complete..."
-          MAX_WAIT=1200 # 20 minutes
-          ELAPSED=0
-          INTERVAL=10
-
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
-            STATUS=$(aws codebuild batch-get-builds \
-              --ids "${BUILD_ID}" \
-              --region "${AWS_REGION}" \
-              --query 'builds[0].buildStatus' \
-              --output text)
-
-            echo "CodeBuild status: $STATUS (elapsed: ${ELAPSED}s)"
-
-            if [ "$STATUS" = "SUCCEEDED" ]; then
-              echo "✅ Migration completed successfully!"
-              exit 0
-            elif [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "FAULT" ] || [ "$STATUS" = "TIMED_OUT" ] || [ "$STATUS" = "STOPPED" ]; then
-              echo "❌ Migration failed with status: $STATUS"
-              exit 1
-            fi
-
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
-          done
-
-          echo "❌ Migration timed out after ${MAX_WAIT} seconds"
-          exit 1
+          
+          # Read and display response
+          LAMBDA_RESPONSE=$(cat /tmp/lambda-response.json)
+          echo "Lambda invocation response: $LAMBDA_RESPONSE"
+          
+          # AWS CLI wraps the Lambda response in a Payload field (as a JSON string)
+          # Extract and parse the Payload
+          LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload')
+          
+          # Parse the JSON string in Payload to get the actual response
+          ACTUAL_RESPONSE=$(echo "$LAMBDA_PAYLOAD" | jq '.')
+          
+          echo "Lambda function response: $ACTUAL_RESPONSE"
+          
+          # Parse the actual Lambda response
+          STATUS_CODE=$(echo "$ACTUAL_RESPONSE" | jq -r '.statusCode // 500')
+          RESPONSE_BODY=$(echo "$ACTUAL_RESPONSE" | jq -r '.body // "{}"')
+          
+          echo "Lambda status code: $STATUS_CODE"
+          echo "Lambda response body: $RESPONSE_BODY"
+          
+          if [ "$STATUS_CODE" = "200" ]; then
+            echo "✅ Database migrations completed successfully!"
+            echo "$RESPONSE_BODY" | jq -r '.message // "Migrations applied"'
+          else
+            echo "❌ Database migrations failed"
+            ERROR_MSG=$(echo "$RESPONSE_BODY" | jq -r '.error // "Unknown error"')
+            echo "Error: $ERROR_MSG"
+            # Also print stdout/stderr if available for debugging
+            echo "$RESPONSE_BODY" | jq -r '.stdout // empty' | head -50
+            echo "$RESPONSE_BODY" | jq -r '.stderr // empty' | head -50
+            exit 1
+          fi
 
       - name: Upload migration artifact
         uses: actions/upload-artifact@v4

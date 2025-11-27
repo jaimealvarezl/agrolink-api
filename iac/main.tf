@@ -69,12 +69,12 @@ output "migration_endpoint_url" {
   value       = "${aws_api_gateway_stage.prod.invoke_url}/api/migration/run"
 }
 
-output "codebuild_project_name" {
-  description = "CodeBuild project name for running database migrations"
-  value       = aws_codebuild_project.db_migrations.name
+output "migration_lambda_function_name" {
+  description = "Migration Lambda function name"
+  value       = aws_lambda_function.migration.function_name
 }
 
-output "codebuild_project_arn" {
-  description = "CodeBuild project ARN"
-  value       = aws_codebuild_project.db_migrations.arn
+output "migration_lambda_function_arn" {
+  description = "Migration Lambda function ARN"
+  value       = aws_lambda_function.migration.arn
 }

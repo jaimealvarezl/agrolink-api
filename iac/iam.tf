@@ -151,6 +151,14 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
           "codebuild:StopBuild"
         ],
         Resource = aws_codebuild_project.db_migrations.arn
+      },
+      {
+        Sid    = "MigrationLambdaInvoke",
+        Effect = "Allow",
+        Action = [
+          "lambda:InvokeFunction"
+        ],
+        Resource = aws_lambda_function.migration.arn
       }
     ]
   })
