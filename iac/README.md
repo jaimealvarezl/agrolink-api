@@ -284,6 +284,6 @@ services.AddDbContext<YourDbContext>(options =>
 
 ## Notes / Recommendations
 
-- Consider replacing deploy IAM users with GitHub OIDC + assume-role in the future
+- GitHub Actions uses IAM user access keys for deployment (stored as environment secrets)
 - Scope the Lambda role’s KMS decrypt to the specific key ARN instead of `*`
 - Use a stable Lambda artifact key (e.g., `AgroLink.API/latest.zip`) and let CI copy the build to it

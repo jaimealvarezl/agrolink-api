@@ -142,7 +142,7 @@ AgroLink.Tests/            # Unit Tests
    ```bash
    # Set AWS credentials (via AWS CLI, environment variables, or IAM roles)
    aws configure
-   
+
    # Update S3 bucket name in appsettings.json
    "AWS": {
      "S3BucketName": "your-agrolink-photos-bucket"
