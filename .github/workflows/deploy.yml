@@ -113,7 +113,7 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          apt-get update && apt-get install -y -qq zip
+          sudo apt-get update && sudo apt-get install -y -qq zip jq
 
       - name: Restore dotnet tools
         run: dotnet tool restore
@@ -121,7 +121,7 @@ jobs:
       - name: Generate migration bundle
         run: |
           echo "🗄️ Generating migration bundle..."
-          
+
           # Restore and build solution (ensures all dependencies are resolved)
           echo "Building solution..."
           dotnet restore
@@ -147,7 +147,7 @@ jobs:
           MIGRATION_ARTIFACT_NAME="migrations-${GITHUB_SHA:0:7}.zip"
           echo "Creating migration artifact - $MIGRATION_ARTIFACT_NAME"
           zip -r "$MIGRATION_ARTIFACT_NAME" ./migrations-bundle
-          
+
           S3_KEY="${MIGRATION_S3_PREFIX}/migrations-${GITHUB_SHA:0:7}.zip"
           echo "Uploading migration artifact to S3 - s3://${MIGRATION_S3_BUCKET}/${S3_KEY}"
           aws s3 cp "$MIGRATION_ARTIFACT_NAME" "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"
@@ -164,21 +164,21 @@ jobs:
       - name: Invoke migration Lambda
         run: |
           echo "🚀 Invoking migration Lambda function..."
-          
+
           LAMBDA_FUNCTION_NAME="AgroLink-Migration-Function"
-          
+
           # Invoke Lambda function with S3 bucket and key
           echo "Invoking Lambda with:"
           echo "  S3 Bucket: ${MIGRATION_S3_BUCKET}"
           echo "  S3 Key: ${S3_KEY}"
-          
+
           INVOCATION_PAYLOAD=$(jq -n \
             --arg bucket "${MIGRATION_S3_BUCKET}" \
             --arg key "${S3_KEY}" \
             '{s3_bucket: $bucket, s3_key: $key}')
-          
+
           echo "Invocation payload: $INVOCATION_PAYLOAD"
-          
+
           # Invoke Lambda synchronously and wait for response
           aws lambda invoke \
             --function-name "$LAMBDA_FUNCTION_NAME" \
@@ -187,33 +187,39 @@ jobs:
             --cli-binary-format raw-in-base64-out \
             --cli-read-timeout 900 \
             /tmp/lambda-response.json
-          
+
           # Check invocation result
           if [ $? -ne 0 ]; then
             echo "❌ Failed to invoke Lambda function"
             exit 1
           fi
-          
+
           # Read and display response
           LAMBDA_RESPONSE=$(cat /tmp/lambda-response.json)
           echo "Lambda invocation response: $LAMBDA_RESPONSE"
-          
+
           # AWS CLI wraps the Lambda response in a Payload field (as a JSON string)
-          # Extract and parse the Payload
-          LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload')
-          
-          # Parse the JSON string in Payload to get the actual response
+          # Extract and parse the Payload - it's a JSON-encoded string, so parse it twice
+          LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload // empty')
+
+          if [ -z "$LAMBDA_PAYLOAD" ]; then
+            echo "❌ Failed to extract Payload from Lambda response"
+            echo "Full response: $LAMBDA_RESPONSE"
+            exit 1
+          fi
+
+          # Parse the JSON string in Payload to get the actual response object
           ACTUAL_RESPONSE=$(echo "$LAMBDA_PAYLOAD" | jq '.')
-          
+
           echo "Lambda function response: $ACTUAL_RESPONSE"
-          
+
           # Parse the actual Lambda response
           STATUS_CODE=$(echo "$ACTUAL_RESPONSE" | jq -r '.statusCode // 500')
           RESPONSE_BODY=$(echo "$ACTUAL_RESPONSE" | jq -r '.body // "{}"')
-          
+
           echo "Lambda status code: $STATUS_CODE"
           echo "Lambda response body: $RESPONSE_BODY"
-          
+
           if [ "$STATUS_CODE" = "200" ]; then
             echo "✅ Database migrations completed successfully!"
             echo "$RESPONSE_BODY" | jq -r '.message // "Migrations applied"'
@@ -269,7 +275,7 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          apt-get update && apt-get install -y zip
+          sudo apt-get update && sudo apt-get install -y zip
 
       - name: Restore dotnet tools
         run: dotnet tool restore

@@ -92,7 +92,7 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            
+
             // Check if token can be read (basic format validation)
             if (!tokenHandler.CanReadToken(token))
             {
