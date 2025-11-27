@@ -7,13 +7,14 @@ This repository provisions the AgroLink backend infrastructure in AWS using Terr
 - Networking
   - VPC with DNS support/hostnames
   - Two private subnets
-  - Security groups: `lambda_sg`, `rds_sg`, `vpce_sg`
+  - Security groups: `lambda_sg`, `migration_lambda_sg`, `rds_sg`, `vpce_sg`
   - Default route table
   - VPC endpoints: Secrets Manager (Interface), S3 (Gateway)
 
 - Compute
   - AWS Lambda function `AgroLinkAPI-AspNetCoreFunction` (arm64)
-  - CloudWatch Log Group for the function (30-day retention)
+  - Migration Lambda function `AgroLink-Migration-Function` (runs EF Core migrations in VPC)
+  - CloudWatch Log Groups for both functions (30-day retention)
 
 - API and Edge
   - API Gateway REST API with ANY proxy and root methods, Lambda proxy integrations
@@ -151,22 +152,20 @@ Database connection for local app:
 
 **Ensure `Database.Migrate()` is removed from `Program.cs`** to prevent Lambda initialization timeouts.
 
-**GitHub Actions runs migrations before deployment using AWS CodeBuild:**
+**GitHub Actions runs migrations before deployment using a dedicated Lambda function:**
 ```bash
-# GitHub Actions retrieves connection string from Secrets Manager
-CONNECTION_STRING=$(aws secretsmanager get-secret-value \
-  --secret-id "$DB_SECRET_ARN" \
-  --query SecretString --output text | jq -r '.connectionString')
+# GitHub Actions generates migration bundle and uploads to S3
+dotnet ef migrations bundle --runtime linux-arm64 --output ./migrations-bundle
+aws s3 cp migrations-bundle.zip s3://bucket/migrations/migrations-abc123.zip
 
-# Then runs migrations via CodeBuild
-aws codebuild start-build \
-  --project-name AgroLink-DB-Migrations \
-  --environment-variables-override \
-    name=S3_BUCKET,value=your-migrations-bucket \
-    name=S3_KEY,value=migrations/migrations-bundle.zip
+# Then invokes the migration Lambda function
+aws lambda invoke \
+  --function-name AgroLink-Migration-Function \
+  --payload '{"s3_bucket":"bucket","s3_key":"migrations/migrations-abc123.zip"}' \
+  response.json
 ```
 
-The CodeBuild project (`AgroLink-DB-Migrations`) is provisioned by Terraform and runs EF Core migrations in the VPC before Lambda deployment.
+The migration Lambda function (`AgroLink-Migration-Function`) is provisioned by Terraform and runs EF Core migrations in the VPC before Lambda deployment.
 
 ## Database Connection via Secrets Manager
 

@@ -122,7 +122,7 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   tags = merge(local.common_tags, { Name = "cloudwatch-logs-vpce" })
 }
 
-# Interface endpoint for ECR API (for CodeBuild to pull Docker images)
+# Interface endpoint for ECR API (for Lambda to pull container images if needed)
 resource "aws_vpc_endpoint" "ecr_api" {
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${var.region}.ecr.api"
@@ -146,5 +146,4 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   tags = merge(local.common_tags, { Name = "ecr-dkr-vpce" })
 }
 
-# Gateway endpoint for S3 (already exists, but ensuring it's documented)
-# CodeBuild uses S3 gateway endpoint to pull build artifacts
+# Gateway endpoint for S3 (allows private subnets to access S3 without internet gateway)

@@ -141,7 +141,7 @@ data "archive_file" "migration_lambda_zip" {
   output_path = "${path.module}/migration_lambda.zip"
 
   source {
-    content = <<-EOF
+    content  = <<-EOF
 import json
 import os
 import subprocess

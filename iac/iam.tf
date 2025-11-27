@@ -142,17 +142,6 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         Resource = "*"
       },
       {
-        Sid    = "CodeBuildAccess",
-        Effect = "Allow",
-        Action = [
-          "codebuild:StartBuild",
-          "codebuild:BatchGetBuilds",
-          "codebuild:ListBuildsForProject",
-          "codebuild:StopBuild"
-        ],
-        Resource = aws_codebuild_project.db_migrations.arn
-      },
-      {
         Sid    = "MigrationLambdaInvoke",
         Effect = "Allow",
         Action = [
