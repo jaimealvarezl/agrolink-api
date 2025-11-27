@@ -118,6 +118,14 @@ resource "aws_iam_role_policy" "codebuild_policy" {
             "ec2:AuthorizedService" = "codebuild.amazonaws.com"
           }
         }
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:DescribeDBClusters",
+          "rds:DescribeDBClusterEndpoints"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -219,13 +227,48 @@ phases:
         CONNECTION_STRING=$(jq -r '.connectionString' db.json)
         DB_HOST=$(jq -r '.host' db.json)
         DB_PORT=$(jq -r '.port' db.json)
+        DB_CLUSTER_ID="${var.db_identifier}"
         
         echo ""
         echo "Extracted values:"
         echo "  Host: $DB_HOST"
         echo "  Port: $DB_PORT"
+        echo "  Cluster ID: $DB_CLUSTER_ID"
         echo "  Connection String: $CONNECTION_STRING"
         echo ""
+        
+        # Verify RDS cluster status and wait if paused
+        echo "=== Checking RDS Cluster Status ==="
+        MAX_WAIT=300  # 5 minutes max wait
+        ELAPSED=0
+        INTERVAL=10
+        
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+          CLUSTER_STATUS=$(aws rds describe-db-clusters \
+            --db-cluster-identifier "$DB_CLUSTER_ID" \
+            --query 'DBClusters[0].Status' \
+            --output text 2>/dev/null || echo "unknown")
+          
+          echo "RDS Cluster Status: $CLUSTER_STATUS (elapsed: ${ELAPSED}s)"
+          
+          if [ "$CLUSTER_STATUS" = "available" ]; then
+            echo "✓ RDS cluster is available"
+            break
+          elif [ "$CLUSTER_STATUS" = "starting" ] || [ "$CLUSTER_STATUS" = "backing-up" ]; then
+            echo "⏳ RDS cluster is $CLUSTER_STATUS, waiting..."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          else
+            echo "⚠️  Unexpected RDS status: $CLUSTER_STATUS"
+            echo "Proceeding anyway, but migration may fail..."
+            break
+          fi
+        done
+        
+        if [ $ELAPSED -ge $MAX_WAIT ]; then
+          echo "❌ Timeout waiting for RDS to become available"
+          exit 1
+        fi
         
         # Verify connection string format
         if echo "$CONNECTION_STRING" | grep -q "tcp://"; then
@@ -233,6 +276,7 @@ phases:
         fi
         
         # Test DNS resolution
+        echo ""
         echo "Testing DNS resolution for $DB_HOST..."
         if host "$DB_HOST" > /dev/null 2>&1; then
           echo "✓ DNS resolution successful"
@@ -243,21 +287,39 @@ phases:
           nslookup "$DB_HOST" || echo "nslookup also failed"
         fi
         
-        # Test network connectivity
+        # Test network connectivity with retry
         echo ""
         echo "Testing network connectivity to $DB_HOST:$DB_PORT..."
-        if command -v nc > /dev/null 2>&1; then
-          if timeout 10 nc -zv "$DB_HOST" "$DB_PORT" 2>&1; then
-            echo "✓ Network connectivity test PASSED"
+        CONNECTIVITY_RETRIES=3
+        CONNECTIVITY_SUCCESS=false
+        
+        for i in $(seq 1 $CONNECTIVITY_RETRIES); do
+          if command -v nc > /dev/null 2>&1; then
+            if timeout 10 nc -zv "$DB_HOST" "$DB_PORT" 2>&1; then
+              echo "✓ Network connectivity test PASSED (attempt $i)"
+              CONNECTIVITY_SUCCESS=true
+              break
+            else
+              echo "✗ Network connectivity test FAILED (attempt $i/$CONNECTIVITY_RETRIES)"
+              if [ $i -lt $CONNECTIVITY_RETRIES ]; then
+                echo "  Retrying in 5 seconds..."
+                sleep 5
+              fi
+            fi
           else
-            echo "✗ Network connectivity test FAILED"
-            echo "This could indicate:"
-            echo "  - Security group rules not allowing traffic"
-            echo "  - Database is paused"
-            echo "  - Network routing issue"
+            echo "nc (netcat) not available, skipping connectivity test"
+            CONNECTIVITY_SUCCESS=true  # Skip if tool not available
+            break
           fi
-        else
-          echo "nc (netcat) not available, skipping connectivity test"
+        done
+        
+        if [ "$CONNECTIVITY_SUCCESS" = false ]; then
+          echo "❌ Network connectivity test failed after $CONNECTIVITY_RETRIES attempts"
+          echo "This could indicate:"
+          echo "  - Security group rules not allowing traffic"
+          echo "  - Database is still pausing/starting"
+          echo "  - Network routing issue"
+          exit 1
         fi
         
         # Test with psql if available (just connection test, not actual query)

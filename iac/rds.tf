@@ -13,8 +13,8 @@ resource "aws_rds_cluster" "serverless_db" {
   enable_http_endpoint    = true
   deletion_protection     = true
   serverlessv2_scaling_configuration {
-    max_capacity = 1.0 # ACU (Aurora Capacity Units)
-    min_capacity = 0.0 # Setting to 0 enables auto-pause - database will pause when idle
+    max_capacity = 2.0 # ACU (Aurora Capacity Units)
+    min_capacity = 0.0 # Keep minimum capacity to avoid unexpected pauses during migrations
   }
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name

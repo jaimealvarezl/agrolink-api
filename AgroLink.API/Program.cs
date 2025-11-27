@@ -111,11 +111,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<AgroLinkDbContext>();
-    context.Database.EnsureCreated();
-}
-
 app.Run();
