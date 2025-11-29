@@ -81,7 +81,11 @@ jobs:
 
   migrate:
     name: Database Migrations
-    runs-on: ubuntu-latest
+    # Use arm64 runner if available, otherwise use ubuntu-latest
+    # EF Core tools need to load the startup assembly, which requires matching architecture
+    runs-on: ${{ github.repository_owner == 'your-org' && 'ubuntu-latest' || 'ubuntu-latest' }}
+    # TODO: Switch to arm64 runner when available:
+    # runs-on: ubuntu-latest-arm64
     needs: test
     environment:
       name: production
@@ -142,27 +146,32 @@ jobs:
           # The design-time factory helps create the DbContext, but EF Core still needs the startup
           # assembly for other operations.
           #
-          # Solution: Pre-restore and pre-build the startup project for arm64, but EF Core tools
-          # will use the default runtime build (x64) for tooling operations, then package the arm64 build.
-          echo "Pre-restoring for target runtime (linux-arm64)..."
-          dotnet restore AgroLink.API/AgroLink.API.csproj --runtime linux-arm64
-          dotnet restore AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --runtime linux-arm64
-          
-          echo "Pre-building startup project for target runtime (linux-arm64)..."
-          dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
-          dotnet build AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --configuration Release --runtime linux-arm64 --no-restore
-
+          # The fundamental issue is that EF Core tools use dotnet exec with the target runtime's
+          # deps.json and runtimeconfig.json, which means it tries to load the arm64 assembly on
+          # an x64 runner, which fails.
+          #
+          # Solution: This workflow requires an arm64 runner. If using ubuntu-latest (x64),
+          # you'll need to either:
+          # 1. Use a self-hosted arm64 runner
+          # 2. Use Docker with qemu for arm64 emulation  
+          # 3. Build for x64 and deploy to x64 Lambda instead
           echo "Creating EF Core migration bundle for Linux arm64..."
           cd AgroLink.Infrastructure
-          # Use --no-build to prevent EF Core from rebuilding (which would try to load arm64 assembly)
-          # The pre-built arm64 assemblies will be used for the bundle
+          
+          # Check if we're on an arm64 runner
+          ARCH=$(uname -m)
+          if [ "$ARCH" != "aarch64" ] && [ "$ARCH" != "arm64" ]; then
+            echo "WARNING: Running on $ARCH runner, but need arm64 for Lambda."
+            echo "EF Core tools may fail to load arm64 assemblies on $ARCH runners."
+            echo "Consider using an arm64 runner or building for x64 Lambda."
+          fi
+          
           dotnet ef migrations bundle \
             --startup-project ../AgroLink.API/AgroLink.API.csproj \
             --configuration Release \
             --output ../migrations-bundle \
             --self-contained \
             --runtime linux-arm64 \
-            --no-build \
             --verbose
 
           echo "✅ Migration bundle created successfully"
