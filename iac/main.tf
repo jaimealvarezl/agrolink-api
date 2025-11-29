@@ -78,3 +78,8 @@ output "migration_lambda_function_arn" {
   description = "Migration Lambda function ARN"
   value       = aws_lambda_function.migration.arn
 }
+
+output "migration_lambda_vpc_config" {
+  description = "Migration Lambda VPC configuration (should show subnet_ids and security_group_ids)"
+  value       = aws_lambda_function.migration.vpc_config
+}

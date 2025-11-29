@@ -116,12 +116,11 @@ resource "aws_lambda_function" "migration" {
   filename         = data.archive_file.migration_lambda_zip.output_path
   source_code_hash = data.archive_file.migration_lambda_zip.output_base64sha256
 
-  dynamic "vpc_config" {
-    for_each = var.enable_lambda_vpc ? [1] : []
-    content {
-      subnet_ids         = aws_subnet.private[*].id
-      security_group_ids = [aws_security_group.migration_lambda_sg.id]
-    }
+  # Migration Lambda MUST be in VPC to access RDS
+  # Always enable VPC config regardless of var.enable_lambda_vpc
+  vpc_config {
+    subnet_ids         = aws_subnet.private[*].id
+    security_group_ids = [aws_security_group.migration_lambda_sg.id]
   }
 
   environment {
@@ -201,7 +200,17 @@ def handler(event, context):
                 })
             }
         
-        print("Database connection string retrieved successfully")
+        # Log connection details (without password)
+        host = db_secret.get('host', 'unknown')
+        print(f"Database connection string retrieved successfully")
+        print(f"Database host: {host}")
+        print(f"Database port: {db_secret.get('port', 'unknown')}")
+        print(f"Database name: {db_secret.get('database', 'unknown')}")
+        
+        # Note: Aurora Serverless v2 with min_capacity=0.0 may be paused
+        # The first connection attempt will wake it up, but may take 30-60 seconds
+        print("Note: If using Aurora Serverless v2 with min_capacity=0.0, the database may be paused.")
+        print("The first connection attempt will wake it up, which may take 30-60 seconds.")
         
         # Download migration bundle from S3
         s3_client = boto3.client('s3')
@@ -255,8 +264,20 @@ def handler(event, context):
             env['DOTNET_BUNDLE_EXTRACT_BASE_DIR'] = '/tmp'
             env['HOME'] = '/tmp'  # Some .NET tools also check HOME
             
-            # Execute the migration bundle
+            # Execute the migration bundle with connection string override
+            # Add SSL mode and connection timeout for RDS
+            # Note: Aurora Serverless v2 may take 30-60 seconds to wake up if paused
             print("Executing migration bundle...")
+            print("Note: If database is paused, first connection may take 30-60 seconds to wake it up")
+            
+            # Add connection timeout and SSL mode to connection string if not present
+            if 'Timeout' not in connection_string:
+                connection_string += ';Timeout=120'  # 2 minute connection timeout
+            if 'SSL Mode' not in connection_string and 'SslMode' not in connection_string:
+                connection_string += ';SSL Mode=Prefer'  # Prefer SSL but allow non-SSL
+            
+            env['ConnectionStrings__DefaultConnection'] = connection_string
+            
             result = subprocess.run(
                 [bundle_path, '--verbose'],
                 env=env,
