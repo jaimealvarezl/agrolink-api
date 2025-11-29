@@ -247,10 +247,13 @@ def handler(event, context):
             os.chmod(bundle_path, 0o755)
             print(f"Found migration bundle at {bundle_path}")
             
-            # Set environment variable for connection string
+            # Set environment variables for connection string and bundle extraction
             # EF Core uses ConnectionStrings__DefaultConnection format
+            # DOTNET_BUNDLE_EXTRACT_BASE_DIR is required for self-contained bundles in Lambda
             env = os.environ.copy()
             env['ConnectionStrings__DefaultConnection'] = connection_string
+            env['DOTNET_BUNDLE_EXTRACT_BASE_DIR'] = '/tmp'
+            env['HOME'] = '/tmp'  # Some .NET tools also check HOME
             
             # Execute the migration bundle
             print("Executing migration bundle...")
@@ -259,7 +262,8 @@ def handler(event, context):
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=840  # 14 minutes (slightly less than Lambda timeout)
+                timeout=840,  # 14 minutes (slightly less than Lambda timeout)
+                cwd='/tmp'  # Run from /tmp directory
             )
             
             print(f"Migration bundle exit code: {result.returncode}")
