@@ -176,9 +176,15 @@ jobs:
                 # Restore dotnet tools from project manifest
                 dotnet tool restore
                 
-                # Restore and build solution for arm64
-                dotnet restore --runtime linux-arm64
-                dotnet build agrolink-api.sln --configuration Release --runtime linux-arm64 --no-restore
+                # Restore all projects for arm64 (can't restore solution with RID)
+                dotnet restore AgroLink.Core/AgroLink.Core.csproj --runtime linux-arm64
+                dotnet restore AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --runtime linux-arm64
+                dotnet restore AgroLink.API/AgroLink.API.csproj --runtime linux-arm64
+                
+                # Build projects individually for arm64 (can't build solution with RID)
+                dotnet build AgroLink.Core/AgroLink.Core.csproj --configuration Release --runtime linux-arm64 --no-restore
+                dotnet build AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --configuration Release --runtime linux-arm64 --no-restore
+                dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
                 
                 # Create migration bundle from Infrastructure directory
                 cd AgroLink.Infrastructure
