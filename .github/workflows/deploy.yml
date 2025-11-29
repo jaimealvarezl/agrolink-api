@@ -119,6 +119,12 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y -qq zip jq
 
+      - name: Set up Docker Buildx with qemu for arm64 emulation
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+          docker buildx create --name multiarch --use || docker buildx use multiarch
+          docker buildx inspect --bootstrap || true
+
       - name: Restore dotnet tools
         run: dotnet tool restore
 
@@ -146,33 +152,52 @@ jobs:
           # The design-time factory helps create the DbContext, but EF Core still needs the startup
           # assembly for other operations.
           #
-          # The fundamental issue is that EF Core tools use dotnet exec with the target runtime's
-          # deps.json and runtimeconfig.json, which means it tries to load the arm64 assembly on
-          # an x64 runner, which fails.
-          #
-          # Solution: This workflow requires an arm64 runner. If using ubuntu-latest (x64),
-          # you'll need to either:
-          # 1. Use a self-hosted arm64 runner
-          # 2. Use Docker with qemu for arm64 emulation  
-          # 3. Build for x64 and deploy to x64 Lambda instead
-          echo "Creating EF Core migration bundle for Linux arm64..."
+          # Solution: Use Docker with qemu for arm64 emulation to build the bundle
+          echo "Creating EF Core migration bundle for Linux arm64 using Docker with qemu..."
           cd AgroLink.Infrastructure
           
           # Check if we're on an arm64 runner
           ARCH=$(uname -m)
           if [ "$ARCH" != "aarch64" ] && [ "$ARCH" != "arm64" ]; then
-            echo "WARNING: Running on $ARCH runner, but need arm64 for Lambda."
-            echo "EF Core tools may fail to load arm64 assemblies on $ARCH runners."
-            echo "Consider using an arm64 runner or building for x64 Lambda."
+            echo "Running on $ARCH runner - using Docker with qemu for arm64 emulation..."
+            
+            # Use Docker with qemu to emulate arm64 architecture
+            # This allows EF Core tools to run on arm64 and load arm64 assemblies
+            # Mount the entire workspace so we can access all projects
+            docker run --rm \
+              --platform linux/arm64 \
+              -v "$GITHUB_WORKSPACE:/workspace" \
+              -w /workspace/AgroLink.Infrastructure \
+              mcr.microsoft.com/dotnet/sdk:8.0 \
+              bash -c "
+                # Install EF Core tools in the container
+                dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
+                
+                # Restore and build for arm64
+                dotnet restore ../AgroLink.API/AgroLink.API.csproj --runtime linux-arm64
+                dotnet restore . --runtime linux-arm64
+                dotnet build ../AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
+                dotnet build . --configuration Release --runtime linux-arm64 --no-restore
+                
+                # Create migration bundle
+                dotnet ef migrations bundle \
+                  --startup-project ../AgroLink.API/AgroLink.API.csproj \
+                  --configuration Release \
+                  --output ../migrations-bundle \
+                  --self-contained \
+                  --runtime linux-arm64 \
+                  --verbose
+              "
+          else
+            echo "Running on native arm64 - building directly..."
+            dotnet ef migrations bundle \
+              --startup-project ../AgroLink.API/AgroLink.API.csproj \
+              --configuration Release \
+              --output ../migrations-bundle \
+              --self-contained \
+              --runtime linux-arm64 \
+              --verbose
           fi
-          
-          dotnet ef migrations bundle \
-            --startup-project ../AgroLink.API/AgroLink.API.csproj \
-            --configuration Release \
-            --output ../migrations-bundle \
-            --self-contained \
-            --runtime linux-arm64 \
-            --verbose
 
           echo "✅ Migration bundle created successfully"
 
