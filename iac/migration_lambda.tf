@@ -153,7 +153,7 @@ from urllib.parse import urlparse
 def handler(event, context):
     """
     Lambda handler to run EF Core migrations.
-    
+
     Expected event:
     {
         "s3_bucket": "bucket-name",
@@ -164,7 +164,7 @@ def handler(event, context):
         # Get parameters from event
         s3_bucket = event.get('s3_bucket')
         s3_key = event.get('s3_key')
-        
+
         if not s3_bucket or not s3_key:
             return {
                 'statusCode': 400,
@@ -172,13 +172,13 @@ def handler(event, context):
                     'error': 'Missing s3_bucket or s3_key in event'
                 })
             }
-        
+
         print(f"Starting migration from s3://{s3_bucket}/{s3_key}")
-        
+
         # Get database connection string from Secrets Manager
         secrets_client = boto3.client('secretsmanager')
         db_secret_arn = os.environ.get('DB_SECRET_ARN')
-        
+
         if not db_secret_arn:
             return {
                 'statusCode': 500,
@@ -186,12 +186,12 @@ def handler(event, context):
                     'error': 'DB_SECRET_ARN environment variable not set'
                 })
             }
-        
+
         print(f"Fetching database secret from {db_secret_arn}")
         secret_response = secrets_client.get_secret_value(SecretId=db_secret_arn)
         db_secret = json.loads(secret_response['SecretString'])
         connection_string = db_secret.get('connectionString')
-        
+
         if not connection_string:
             return {
                 'statusCode': 500,
@@ -199,42 +199,42 @@ def handler(event, context):
                     'error': 'Connection string not found in secret'
                 })
             }
-        
+
         # Log connection details (without password)
         host = db_secret.get('host', 'unknown')
         print(f"Database connection string retrieved successfully")
         print(f"Database host: {host}")
         print(f"Database port: {db_secret.get('port', 'unknown')}")
         print(f"Database name: {db_secret.get('database', 'unknown')}")
-        
+
         # Note: Aurora Serverless v2 with min_capacity=0.0 may be paused
         # The first connection attempt will wake it up, but may take 30-60 seconds
         print("Note: If using Aurora Serverless v2 with min_capacity=0.0, the database may be paused.")
         print("The first connection attempt will wake it up, which may take 30-60 seconds.")
-        
+
         # Download migration bundle from S3
         s3_client = boto3.client('s3')
         temp_dir = tempfile.mkdtemp()
-        
+
         try:
             zip_path = os.path.join(temp_dir, 'migrations.zip')
             bundle_path = os.path.join(temp_dir, 'migrations-bundle')
-            
+
             print(f"Downloading migration bundle from S3...")
             s3_client.download_file(s3_bucket, s3_key, zip_path)
             print(f"Downloaded to {zip_path}")
-            
+
             # Extract the zip file
             print("Extracting migration bundle...")
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(temp_dir)
-            
+
             # Find the migration bundle executable
             if not os.path.exists(bundle_path):
                 # Look for the bundle in extracted files
                 extracted_files = os.listdir(temp_dir)
                 print(f"Extracted files: {extracted_files}")
-                
+
                 # The bundle might be in a subdirectory
                 for root, dirs, files in os.walk(temp_dir):
                     for file in files:
@@ -243,7 +243,7 @@ def handler(event, context):
                             break
                     if bundle_path != os.path.join(temp_dir, 'migrations-bundle'):
                         break
-            
+
             if not os.path.exists(bundle_path):
                 return {
                     'statusCode': 500,
@@ -251,11 +251,11 @@ def handler(event, context):
                         'error': f'Migration bundle not found in extracted files. Files: {os.listdir(temp_dir)}'
                     })
                 }
-            
+
             # Make the bundle executable
             os.chmod(bundle_path, 0o755)
             print(f"Found migration bundle at {bundle_path}")
-            
+
             # Set environment variables for connection string and bundle extraction
             # EF Core uses ConnectionStrings__DefaultConnection format
             # DOTNET_BUNDLE_EXTRACT_BASE_DIR is required for self-contained bundles in Lambda
@@ -263,21 +263,23 @@ def handler(event, context):
             env['ConnectionStrings__DefaultConnection'] = connection_string
             env['DOTNET_BUNDLE_EXTRACT_BASE_DIR'] = '/tmp'
             env['HOME'] = '/tmp'  # Some .NET tools also check HOME
-            
+
             # Execute the migration bundle with connection string override
             # Add SSL mode and connection timeout for RDS
             # Note: Aurora Serverless v2 may take 30-60 seconds to wake up if paused
             print("Executing migration bundle...")
             print("Note: If database is paused, first connection may take 30-60 seconds to wake it up")
-            
+
             # Add connection timeout and SSL mode to connection string if not present
+            # Aurora Serverless v2 with min_capacity=0.0 can take 60-120+ seconds to wake up
+            # Plus connection establishment time, so we need a longer timeout
             if 'Timeout' not in connection_string:
-                connection_string += ';Timeout=120'  # 2 minute connection timeout
+                connection_string += ';Timeout=600'  # 10 minute connection timeout (allows for DB wake-up + connection)
             if 'SSL Mode' not in connection_string and 'SslMode' not in connection_string:
                 connection_string += ';SSL Mode=Prefer'  # Prefer SSL but allow non-SSL
-            
+
             env['ConnectionStrings__DefaultConnection'] = connection_string
-            
+
             result = subprocess.run(
                 [bundle_path, '--verbose'],
                 env=env,
@@ -286,12 +288,12 @@ def handler(event, context):
                 timeout=840,  # 14 minutes (slightly less than Lambda timeout)
                 cwd='/tmp'  # Run from /tmp directory
             )
-            
+
             print(f"Migration bundle exit code: {result.returncode}")
             print(f"Migration stdout:\n{result.stdout}")
             if result.stderr:
                 print(f"Migration stderr:\n{result.stderr}")
-            
+
             if result.returncode != 0:
                 return {
                     'statusCode': 500,
@@ -302,7 +304,7 @@ def handler(event, context):
                         'stderr': result.stderr
                     })
                 }
-            
+
             return {
                 'statusCode': 200,
                 'body': json.dumps({
@@ -310,12 +312,12 @@ def handler(event, context):
                     'stdout': result.stdout
                 })
             }
-            
+
         finally:
             # Clean up temporary files
             shutil.rmtree(temp_dir, ignore_errors=True)
             print("Cleaned up temporary files")
-            
+
     except subprocess.TimeoutExpired:
         return {
             'statusCode': 500,
