@@ -43,12 +43,9 @@ resource "aws_security_group" "lambda_sg" {
 resource "aws_security_group" "rds_sg" {
   vpc_id = aws_vpc.main.id
 
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.lambda_sg.id]
-  }
+  # Note: The migration Lambda security group rule is added separately
+  # via aws_security_group_rule.rds_allow_migration_lambda in migration_lambda.tf
+  # This allows for better separation of concerns
 
   egress {
     from_port   = 0
