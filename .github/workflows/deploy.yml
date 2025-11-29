@@ -119,23 +119,38 @@ jobs:
         run: dotnet tool restore
 
       - name: Generate migration bundle
+        working-directory: ${{ github.workspace }}
         run: |
           echo "🗄️ Generating migration bundle..."
+          echo "Working directory: $(pwd)"
+          echo "Listing files:"
+          ls -la
 
           # Restore and build solution (ensures all dependencies are resolved)
+          # The build creates assemblies for the host platform, which EF Core tools can load
           echo "Building solution..."
           dotnet restore
           dotnet build agrolink-api.sln --configuration Release --no-restore
 
+          # Verify the startup project assembly exists
+          echo "Checking for startup project assembly..."
+          if [ -f "AgroLink.API/bin/Release/net8.0/AgroLink.API.dll" ]; then
+            echo "✅ Startup project assembly found"
+          else
+            echo "❌ Startup project assembly not found. Looking for:"
+            find . -name "AgroLink.API.dll" -type f 2>/dev/null || echo "Assembly not found anywhere"
+            exit 1
+          fi
+
           # Create migration bundle (self-contained executable with migrations)
-          # Build for Linux arm64 to match Lambda runtime architecture
-          # API project provides DbContext configuration, Infrastructure project contains migrations
+          # The --runtime flag only affects the OUTPUT bundle, not how EF Core loads the startup project
+          # EF Core tools run on the host and load the host-platform assemblies we just built
           echo "Creating EF Core migration bundle for Linux arm64..."
           dotnet ef migrations bundle \
-            --startup-project ./AgroLink.API/AgroLink.API.csproj \
-            --project ./AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
+            --startup-project AgroLink.API/AgroLink.API.csproj \
+            --project AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
             --configuration Release \
-            --output ./migrations-bundle \
+            --output migrations-bundle \
             --self-contained \
             --runtime linux-arm64
 
