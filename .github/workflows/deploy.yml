@@ -142,8 +142,12 @@ jobs:
           # The design-time factory helps create the DbContext, but EF Core still needs the startup
           # assembly for other operations.
           #
-          # Solution: Pre-build the startup project for arm64, but EF Core tools will use the
-          # default runtime build (x64) for tooling operations, then package the arm64 build.
+          # Solution: Pre-restore and pre-build the startup project for arm64, but EF Core tools
+          # will use the default runtime build (x64) for tooling operations, then package the arm64 build.
+          echo "Pre-restoring for target runtime (linux-arm64)..."
+          dotnet restore AgroLink.API/AgroLink.API.csproj --runtime linux-arm64
+          dotnet restore AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --runtime linux-arm64
+          
           echo "Pre-building startup project for target runtime (linux-arm64)..."
           dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
           dotnet build AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --configuration Release --runtime linux-arm64 --no-restore
