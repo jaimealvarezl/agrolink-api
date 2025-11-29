@@ -140,6 +140,7 @@ jobs:
 
           # Create migration bundle (self-contained executable with migrations)
           # Run from Infrastructure directory - EF Core tools work better from the project directory
+          # The design-time factory allows EF Core to create the DbContext without loading the startup assembly
           echo "Creating EF Core migration bundle for Linux arm64..."
           cd AgroLink.Infrastructure
           dotnet ef migrations bundle \
@@ -147,7 +148,8 @@ jobs:
             --configuration Release \
             --output ../migrations-bundle \
             --self-contained \
-            --runtime linux-arm64
+            --runtime linux-arm64 \
+            --verbose
 
           echo "✅ Migration bundle created successfully"
 
