@@ -209,17 +209,24 @@ jobs:
           echo "Lambda invocation response: $LAMBDA_RESPONSE"
 
           # AWS CLI wraps the Lambda response in a Payload field (as a JSON string)
-          # Extract and parse the Payload - it's a JSON-encoded string, so parse it twice
+          # Try to extract Payload first, if it doesn't exist, assume response is already the Lambda function's response
           LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload // empty')
 
           if [ -z "$LAMBDA_PAYLOAD" ]; then
-            echo "❌ Failed to extract Payload from Lambda response"
-            echo "Full response: $LAMBDA_RESPONSE"
-            exit 1
+            # No Payload field - response might already be the Lambda function's response
+            # Check if it has statusCode field (Lambda function response format)
+            if echo "$LAMBDA_RESPONSE" | jq -e '.statusCode' > /dev/null 2>&1; then
+              echo "Response is already in Lambda function format, using directly"
+              ACTUAL_RESPONSE="$LAMBDA_RESPONSE"
+            else
+              echo "❌ Failed to extract Payload from Lambda response"
+              echo "Full response: $LAMBDA_RESPONSE"
+              exit 1
+            fi
+          else
+            # Parse the JSON string in Payload to get the actual response object
+            ACTUAL_RESPONSE=$(echo "$LAMBDA_PAYLOAD" | jq '.')
           fi
-
-          # Parse the JSON string in Payload to get the actual response object
-          ACTUAL_RESPONSE=$(echo "$LAMBDA_PAYLOAD" | jq '.')
 
           echo "Lambda function response: $ACTUAL_RESPONSE"
 
