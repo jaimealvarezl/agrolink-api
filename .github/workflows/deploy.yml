@@ -307,7 +307,13 @@ jobs:
       - name: Deploy Lambda function
         run: |
           echo "🚀 Deploying Lambda function..."
-          dotnet lambda deploy-function --project-location ./AgroLink.API
+          dotnet lambda deploy-function \
+            --project-location ./AgroLink.API \
+            --function-name AgroLinkAPI-AspNetCoreFunction \
+            --function-runtime dotnet8 \
+            --function-handler AgroLink.API \
+            --package AspNetCoreFunction.zip \
+            --region ${{ env.AWS_REGION }}
           echo "✅ Lambda function deployed successfully!"
 
       - name: Upload Lambda package
