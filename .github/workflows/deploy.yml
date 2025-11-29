@@ -81,14 +81,8 @@ jobs:
 
   migrate:
     name: Database Migrations
-    # Try to use arm64 runner if available (GitHub-hosted or self-hosted)
-    # EF Core tools need to load the startup assembly, which requires matching architecture
-    # If arm64 runner is not available, Docker with qemu will be used as fallback
+    # Building for x64 architecture to match Lambda configuration
     runs-on: ubuntu-latest
-    # For self-hosted arm64 runners, use:
-    # runs-on: self-hosted
-    # For GitHub-hosted arm64 (if available in your organization):
-    # runs-on: ubuntu-latest-arm64
     needs: test
     environment:
       name: production
@@ -122,12 +116,6 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y -qq zip jq
 
-      - name: Set up Docker Buildx with qemu for arm64 emulation
-        run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
-          docker buildx create --name multiarch --use || docker buildx use multiarch
-          docker buildx inspect --bootstrap || true
-
       - name: Restore dotnet tools
         run: dotnet tool restore
 
@@ -149,63 +137,17 @@ jobs:
 
           # Create migration bundle (self-contained executable with migrations)
           # Run from Infrastructure directory - EF Core tools work better from the project directory
-          # 
-          # IMPORTANT: EF Core tools need to load the startup assembly, but when building for
-          # linux-arm64 on a linux-x64 runner, it creates an arm64 assembly that can't be loaded.
-          # The design-time factory helps create the DbContext, but EF Core still needs the startup
-          # assembly for other operations.
-          #
-          # Solution: Use Docker with qemu for arm64 emulation to build the bundle
-          echo "Creating EF Core migration bundle for Linux arm64 using Docker with qemu..."
+          # Building for x64 architecture to match Lambda configuration
+          echo "Creating EF Core migration bundle for Linux x64..."
           cd AgroLink.Infrastructure
           
-          # Check if we're on an arm64 runner
-          ARCH=$(uname -m)
-          if [ "$ARCH" != "aarch64" ] && [ "$ARCH" != "arm64" ]; then
-            echo "Running on $ARCH runner - using Docker with qemu for arm64 emulation..."
-            
-            # Use Docker with qemu to emulate arm64 architecture
-            # This allows EF Core tools to run on arm64 and load arm64 assemblies
-            # Mount the entire workspace so we can access all projects
-            docker run --rm \
-              --platform linux/arm64 \
-              -v "$GITHUB_WORKSPACE:/workspace" \
-              -w /workspace \
-              mcr.microsoft.com/dotnet/sdk:8.0 \
-              bash -c "
-                # Restore dotnet tools from project manifest
-                dotnet tool restore
-                
-                # Restore all projects for arm64 (can't restore solution with RID)
-                dotnet restore AgroLink.Core/AgroLink.Core.csproj --runtime linux-arm64
-                dotnet restore AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --runtime linux-arm64
-                dotnet restore AgroLink.API/AgroLink.API.csproj --runtime linux-arm64
-                
-                # Build projects individually for arm64 (can't build solution with RID)
-                dotnet build AgroLink.Core/AgroLink.Core.csproj --configuration Release --runtime linux-arm64 --no-restore
-                dotnet build AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --configuration Release --runtime linux-arm64 --no-restore
-                dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
-                
-                # Create migration bundle from Infrastructure directory
-                cd AgroLink.Infrastructure
-                dotnet ef migrations bundle \
-                  --startup-project ../AgroLink.API/AgroLink.API.csproj \
-                  --configuration Release \
-                  --output ../migrations-bundle \
-                  --self-contained \
-                  --runtime linux-arm64 \
-                  --verbose
-              "
-          else
-            echo "Running on native arm64 - building directly..."
-            dotnet ef migrations bundle \
-              --startup-project ../AgroLink.API/AgroLink.API.csproj \
-              --configuration Release \
-              --output ../migrations-bundle \
-              --self-contained \
-              --runtime linux-arm64 \
-              --verbose
-          fi
+          dotnet ef migrations bundle \
+            --startup-project ../AgroLink.API/AgroLink.API.csproj \
+            --configuration Release \
+            --output ../migrations-bundle \
+            --self-contained \
+            --runtime linux-x64 \
+            --verbose
 
           echo "✅ Migration bundle created successfully"
 
