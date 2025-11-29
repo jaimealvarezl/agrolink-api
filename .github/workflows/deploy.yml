@@ -167,6 +167,68 @@ jobs:
             exit 1
           fi
 
+      - name: Verify Lambda VPC and security group configuration
+        run: |
+          echo "🔍 Verifying Lambda VPC configuration..."
+          VPC_CONFIG=$(aws lambda get-function-configuration \
+            --function-name AgroLink-Migration-Function \
+            --region "${AWS_REGION}" \
+            --query 'VpcConfig' \
+            --output json)
+          
+          echo "VPC Config: $VPC_CONFIG"
+          
+          SUBNET_COUNT=$(echo "$VPC_CONFIG" | jq '.SubnetIds | length')
+          SG_COUNT=$(echo "$VPC_CONFIG" | jq '.SecurityGroupIds | length')
+          LAMBDA_SG_ID=$(echo "$VPC_CONFIG" | jq -r '.SecurityGroupIds[0]')
+          
+          if [ "$SUBNET_COUNT" -eq 0 ] || [ "$SG_COUNT" -eq 0 ]; then
+            echo "⚠️  WARNING: Lambda is not in VPC!"
+            echo "   Subnet IDs: $SUBNET_COUNT"
+            echo "   Security Group IDs: $SG_COUNT"
+            echo "   This will cause connection timeouts to RDS."
+            exit 1
+          else
+            echo "✅ Lambda is in VPC"
+            echo "   Subnets: $SUBNET_COUNT"
+            echo "   Security Groups: $SG_COUNT"
+            echo "   Lambda Security Group: $LAMBDA_SG_ID"
+          fi
+          
+          echo ""
+          echo "🔍 Verifying RDS security group rules..."
+          # Get RDS security group ID (assuming it has a Name tag)
+          RDS_SG_ID=$(aws ec2 describe-security-groups \
+            --region "${AWS_REGION}" \
+            --filters "Name=tag:Name,Values=rds-sg" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text)
+          
+          if [ "$RDS_SG_ID" != "None" ] && [ -n "$RDS_SG_ID" ]; then
+            echo "RDS Security Group: $RDS_SG_ID"
+            
+            # Check if RDS SG allows ingress from Lambda SG on port 5432
+            INGRESS_RULES=$(aws ec2 describe-security-group-rules \
+              --region "${AWS_REGION}" \
+              --filters "Name=group-id,Values=$RDS_SG_ID" "Name=is-egress,Values=false" "Name=ip-protocol,Values=tcp" "Name=from-port,Values=5432" \
+              --query "SecurityGroupRules[?ReferencedGroupInfo.GroupId=='$LAMBDA_SG_ID']" \
+              --output json)
+            
+            if [ "$(echo "$INGRESS_RULES" | jq 'length')" -gt 0 ]; then
+              echo "✅ RDS security group allows ingress from Lambda security group on port 5432"
+            else
+              echo "⚠️  WARNING: RDS security group may not allow ingress from Lambda security group"
+              echo "   Checking all ingress rules on port 5432:"
+              aws ec2 describe-security-group-rules \
+                --region "${AWS_REGION}" \
+                --filters "Name=group-id,Values=$RDS_SG_ID" "Name=is-egress,Values=false" "Name=ip-protocol,Values=tcp" "Name=from-port,Values=5432" \
+                --query 'SecurityGroupRules[*].[SecurityGroupRuleId,ReferencedGroupInfo.GroupId,FromPort,ToPort]' \
+                --output table
+            fi
+          else
+            echo "⚠️  Could not find RDS security group"
+          fi
+
       - name: Invoke migration Lambda
         run: |
           echo "🚀 Invoking migration Lambda function..."
@@ -236,10 +298,17 @@ jobs:
           else
             echo "❌ Database migrations failed"
             ERROR_MSG=$(echo "$RESPONSE_BODY" | jq -r '.error // "Unknown error"')
+            EXIT_CODE=$(echo "$RESPONSE_BODY" | jq -r '.exit_code // "unknown"')
             echo "Error: $ERROR_MSG"
-            # Also print stdout/stderr if available for debugging
-            echo "$RESPONSE_BODY" | jq -r '.stdout // empty' | head -50
-            echo "$RESPONSE_BODY" | jq -r '.stderr // empty' | head -50
+            echo "Exit code: $EXIT_CODE"
+            echo ""
+            echo "=== Migration stdout (last 100 lines) ==="
+            echo "$RESPONSE_BODY" | jq -r '.stdout // empty' | tail -100
+            echo ""
+            echo "=== Migration stderr ==="
+            echo "$RESPONSE_BODY" | jq -r '.stderr // empty'
+            echo ""
+            echo "💡 Check CloudWatch Logs for full details: /aws/lambda/AgroLink-Migration-Function"
             exit 1
           fi
 
