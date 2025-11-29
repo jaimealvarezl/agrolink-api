@@ -209,14 +209,12 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(
-                [
-                    new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
-                    new Claim("email", user.Email),
-                    new Claim("role", user.Role),
-                    new Claim("name", user.Name),
-                ]
-            ),
+            Subject = new ClaimsIdentity([
+                new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
+                new Claim("email", user.Email),
+                new Claim("role", user.Role),
+                new Claim("name", user.Name),
+            ]),
             Expires = DateTime.UtcNow.AddDays(7),
             Issuer = configuration["Jwt:Issuer"],
             Audience = configuration["Jwt:Audience"],

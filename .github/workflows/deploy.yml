@@ -81,7 +81,6 @@ jobs:
 
   migrate:
     name: Database Migrations
-    # Building for x64 architecture to match Lambda configuration
     runs-on: ubuntu-latest
     needs: test
     environment:
@@ -122,21 +121,11 @@ jobs:
       - name: Generate migration bundle
         run: |
           echo "🗄️ Generating migration bundle..."
-          echo "Working directory: $(pwd)"
-
-          # Restore and build solution (without runtime identifier for EF Core tools)
-          echo "Building solution..."
           dotnet restore
           dotnet build agrolink-api.sln --configuration Release --no-restore
-
-          # Build startup project for default runtime (needed for EF Core tools)
-          echo "Building startup project for default runtime..."
           dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --no-restore
 
-          # Create migration bundle for x64 architecture to match Lambda configuration
-          echo "Creating EF Core migration bundle for Linux x64..."
           cd AgroLink.Infrastructure
-          
           dotnet ef migrations bundle \
             --startup-project ../AgroLink.API/AgroLink.API.csproj \
             --configuration Release \
@@ -149,25 +138,21 @@ jobs:
 
       - name: Upload migration bundle to S3
         run: |
-          # Create zip artifact with unique name based on commit SHA
           MIGRATION_ARTIFACT_NAME="migrations-${GITHUB_SHA:0:7}.zip"
-          echo "Creating migration artifact - $MIGRATION_ARTIFACT_NAME"
-          zip -r "$MIGRATION_ARTIFACT_NAME" ./migrations-bundle
-
           S3_KEY="${MIGRATION_S3_PREFIX}/migrations-${GITHUB_SHA:0:7}.zip"
-          echo "Uploading migration artifact to S3 - s3://${MIGRATION_S3_BUCKET}/${S3_KEY}"
-          aws s3 cp "$MIGRATION_ARTIFACT_NAME" "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"
 
-          # Verify upload
-          if aws s3 ls "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"; then
-            echo "✅ Migration artifact uploaded successfully to S3"
-            echo "S3_KEY=${S3_KEY}" >> $GITHUB_ENV
-          else
+          zip -r "$MIGRATION_ARTIFACT_NAME" ./migrations-bundle
+          aws s3 cp "$MIGRATION_ARTIFACT_NAME" "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"
+          echo "S3_KEY=${S3_KEY}" >> $GITHUB_ENV
+
+          if ! aws s3 ls "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}" > /dev/null; then
             echo "❌ Failed to verify migration artifact upload"
             exit 1
           fi
 
-      - name: Verify Lambda VPC and security group configuration
+          echo "✅ Migration bundle uploaded to S3"
+
+      - name: Verify Lambda VPC configuration
         run: |
           echo "🔍 Verifying Lambda VPC configuration..."
           VPC_CONFIG=$(aws lambda get-function-configuration \
@@ -175,15 +160,12 @@ jobs:
             --region "${AWS_REGION}" \
             --query 'VpcConfig' \
             --output json)
-          
-          echo "VPC Config: $VPC_CONFIG"
-          
+
           SUBNET_COUNT=$(echo "$VPC_CONFIG" | jq '.SubnetIds | length')
           SG_COUNT=$(echo "$VPC_CONFIG" | jq '.SecurityGroupIds | length')
-          LAMBDA_SG_ID=$(echo "$VPC_CONFIG" | jq -r '.SecurityGroupIds[0]')
-          
+
           if [ "$SUBNET_COUNT" -eq 0 ] || [ "$SG_COUNT" -eq 0 ]; then
-            echo "⚠️  WARNING: Lambda is not in VPC!"
+            echo "❌ ERROR: Lambda is not in VPC!"
             echo "   Subnet IDs: $SUBNET_COUNT"
             echo "   Security Group IDs: $SG_COUNT"
             echo "   This will cause connection timeouts to RDS."
@@ -192,103 +174,41 @@ jobs:
             echo "✅ Lambda is in VPC"
             echo "   Subnets: $SUBNET_COUNT"
             echo "   Security Groups: $SG_COUNT"
-            echo "   Lambda Security Group: $LAMBDA_SG_ID"
-          fi
-          
-          echo ""
-          echo "🔍 Verifying RDS security group rules (non-blocking)..."
-          # Get RDS security group ID (assuming it has a Name tag)
-          # Note: This may fail due to IAM permissions, but that's okay
-          RDS_SG_ID=$(aws ec2 describe-security-groups \
-            --region "${AWS_REGION}" \
-            --filters "Name=tag:Name,Values=rds-sg" \
-            --query 'SecurityGroups[0].GroupId' \
-            --output text 2>/dev/null || echo "")
-          
-          if [ -n "$RDS_SG_ID" ] && [ "$RDS_SG_ID" != "None" ]; then
-            echo "RDS Security Group: $RDS_SG_ID"
-            
-            # Check if RDS SG allows ingress from Lambda SG on port 5432
-            # This may fail due to IAM permissions - that's okay, we'll continue
-            INGRESS_RULES=$(aws ec2 describe-security-group-rules \
-              --region "${AWS_REGION}" \
-              --filters "Name=group-id,Values=$RDS_SG_ID" "Name=is-egress,Values=false" "Name=ip-protocol,Values=tcp" "Name=from-port,Values=5432" \
-              --query "SecurityGroupRules[?ReferencedGroupInfo.GroupId=='$LAMBDA_SG_ID']" \
-              --output json 2>/dev/null || echo "[]")
-            
-            if [ "$(echo "$INGRESS_RULES" | jq 'length')" -gt 0 ]; then
-              echo "✅ RDS security group allows ingress from Lambda security group on port 5432"
-            else
-              echo "⚠️  Could not verify RDS security group rules (may need IAM permissions)"
-              echo "   Lambda SG: $LAMBDA_SG_ID should have ingress access to RDS on port 5432"
-            fi
-          else
-            echo "⚠️  Could not verify RDS security group (may need IAM permissions)"
-            echo "   Ensure Terraform rule 'rds_allow_migration_lambda' is applied"
           fi
 
       - name: Invoke migration Lambda
         run: |
           echo "🚀 Invoking migration Lambda function..."
 
-          LAMBDA_FUNCTION_NAME="AgroLink-Migration-Function"
-
-          # Invoke Lambda function with S3 bucket and key
-          echo "Invoking Lambda with:"
-          echo "  S3 Bucket: ${MIGRATION_S3_BUCKET}"
-          echo "  S3 Key: ${S3_KEY}"
-
           INVOCATION_PAYLOAD=$(jq -n \
             --arg bucket "${MIGRATION_S3_BUCKET}" \
             --arg key "${S3_KEY}" \
             '{s3_bucket: $bucket, s3_key: $key}')
 
-          echo "Invocation payload: $INVOCATION_PAYLOAD"
-
-          # Invoke Lambda synchronously and wait for response
           aws lambda invoke \
-            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --function-name AgroLink-Migration-Function \
             --payload "$INVOCATION_PAYLOAD" \
             --region "${AWS_REGION}" \
             --cli-binary-format raw-in-base64-out \
             --cli-read-timeout 900 \
             /tmp/lambda-response.json
 
-          # Check invocation result
-          if [ $? -ne 0 ]; then
-            echo "❌ Failed to invoke Lambda function"
-            exit 1
-          fi
-
-          # Read and display response
           LAMBDA_RESPONSE=$(cat /tmp/lambda-response.json)
-          echo "Lambda invocation response: $LAMBDA_RESPONSE"
-
-          # Extract Payload from AWS CLI response, or use response directly if already in Lambda format
           LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload // empty')
 
           if [ -z "$LAMBDA_PAYLOAD" ]; then
-            # No Payload field - check if response is already in Lambda function format
             if echo "$LAMBDA_RESPONSE" | jq -e '.statusCode' > /dev/null 2>&1; then
               ACTUAL_RESPONSE="$LAMBDA_RESPONSE"
             else
-              echo "❌ Failed to extract Payload from Lambda response"
-              echo "Full response: $LAMBDA_RESPONSE"
+              echo "❌ Failed to parse Lambda response"
               exit 1
             fi
           else
-            # Parse the JSON string in Payload to get the actual response object
             ACTUAL_RESPONSE=$(echo "$LAMBDA_PAYLOAD" | jq '.')
           fi
 
-          echo "Lambda function response: $ACTUAL_RESPONSE"
-
-          # Parse the actual Lambda response
           STATUS_CODE=$(echo "$ACTUAL_RESPONSE" | jq -r '.statusCode // 500')
           RESPONSE_BODY=$(echo "$ACTUAL_RESPONSE" | jq -r '.body // "{}"')
-
-          echo "Lambda status code: $STATUS_CODE"
-          echo "Lambda response body: $RESPONSE_BODY"
 
           if [ "$STATUS_CODE" = "200" ]; then
             echo "✅ Database migrations completed successfully!"
@@ -306,7 +226,7 @@ jobs:
             echo "=== Migration stderr ==="
             echo "$RESPONSE_BODY" | jq -r '.stderr // empty'
             echo ""
-            echo "💡 Check CloudWatch Logs for full details: /aws/lambda/AgroLink-Migration-Function"
+            echo "💡 Check CloudWatch Logs: /aws/lambda/AgroLink-Migration-Function"
             exit 1
           fi
 

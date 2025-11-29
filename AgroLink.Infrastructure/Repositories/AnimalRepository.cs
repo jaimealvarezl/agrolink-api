@@ -19,7 +19,7 @@ public class AnimalRepository : Repository<Animal>, IAnimalRepository
     {
         return await _dbSet
             .Include(a => a.AnimalOwners)
-            .ThenInclude(ao => ao.Owner)
+                .ThenInclude(ao => ao.Owner)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 

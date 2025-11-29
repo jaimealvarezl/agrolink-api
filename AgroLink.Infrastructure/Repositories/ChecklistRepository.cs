@@ -22,7 +22,7 @@ public class ChecklistRepository : Repository<Checklist>, IChecklistRepository
     {
         return await _dbSet
             .Include(c => c.ChecklistItems)
-            .ThenInclude(ci => ci.Animal)
+                .ThenInclude(ci => ci.Animal)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
