@@ -123,28 +123,22 @@ jobs:
           echo "🗄️ Generating migration bundle..."
           echo "Working directory: $(pwd)"
 
-          # Restore and build solution
+          # Restore and build solution (without runtime identifier for EF Core tools)
           echo "Building solution..."
           dotnet restore
           dotnet build agrolink-api.sln --configuration Release --no-restore
 
-          # Sanity check: API assembly should exist in bin
-          echo "Checking for startup project assembly..."
-          if [ -f "AgroLink.API/bin/Release/net8.0/AgroLink.API.dll" ]; then
-            echo "✅ Startup project assembly found"
-          else
-            echo "❌ Startup project assembly not found. Looking for:"
-            find . -name "AgroLink.API.dll" -type f 2>/dev/null || echo "Assembly not found anywhere"
-            exit 1
-          fi
+          # With design-time factory, we don't need to build the startup project
+          # EF Core will use the factory instead of loading the startup assembly
 
           # Create migration bundle (self-contained executable with migrations)
           # Run from Infrastructure directory - EF Core tools work better from the project directory
           # The design-time factory allows EF Core to create the DbContext without loading the startup assembly
+          # When a design-time factory exists, EF Core bypasses loading the startup project
           echo "Creating EF Core migration bundle for Linux arm64..."
           cd AgroLink.Infrastructure
+          # Don't specify --startup-project when using design-time factory
           dotnet ef migrations bundle \
-            --startup-project ../AgroLink.API/AgroLink.API.csproj \
             --configuration Release \
             --output ../migrations-bundle \
             --self-contained \
