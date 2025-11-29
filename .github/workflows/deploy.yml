@@ -81,10 +81,13 @@ jobs:
 
   migrate:
     name: Database Migrations
-    # Use arm64 runner if available, otherwise use ubuntu-latest
+    # Try to use arm64 runner if available (GitHub-hosted or self-hosted)
     # EF Core tools need to load the startup assembly, which requires matching architecture
-    runs-on: ${{ github.repository_owner == 'your-org' && 'ubuntu-latest' || 'ubuntu-latest' }}
-    # TODO: Switch to arm64 runner when available:
+    # If arm64 runner is not available, Docker with qemu will be used as fallback
+    runs-on: ubuntu-latest
+    # For self-hosted arm64 runners, use:
+    # runs-on: self-hosted
+    # For GitHub-hosted arm64 (if available in your organization):
     # runs-on: ubuntu-latest-arm64
     needs: test
     environment:
@@ -167,19 +170,18 @@ jobs:
             docker run --rm \
               --platform linux/arm64 \
               -v "$GITHUB_WORKSPACE:/workspace" \
-              -w /workspace/AgroLink.Infrastructure \
+              -w /workspace \
               mcr.microsoft.com/dotnet/sdk:8.0 \
               bash -c "
-                # Install EF Core tools in the container
-                dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
+                # Restore dotnet tools from project manifest
+                dotnet tool restore
                 
-                # Restore and build for arm64
-                dotnet restore ../AgroLink.API/AgroLink.API.csproj --runtime linux-arm64
-                dotnet restore . --runtime linux-arm64
-                dotnet build ../AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
-                dotnet build . --configuration Release --runtime linux-arm64 --no-restore
+                # Restore and build solution for arm64
+                dotnet restore --runtime linux-arm64
+                dotnet build agrolink-api.sln --configuration Release --runtime linux-arm64 --no-restore
                 
-                # Create migration bundle
+                # Create migration bundle from Infrastructure directory
+                cd AgroLink.Infrastructure
                 dotnet ef migrations bundle \
                   --startup-project ../AgroLink.API/AgroLink.API.csproj \
                   --configuration Release \
