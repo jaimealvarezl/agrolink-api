@@ -128,21 +128,37 @@ jobs:
           dotnet restore
           dotnet build agrolink-api.sln --configuration Release --no-restore
 
-          # With design-time factory, we don't need to build the startup project
-          # EF Core will use the factory instead of loading the startup assembly
+          # Ensure startup project is built for default runtime (needed for EF Core tools to load it)
+          # The design-time factory will be used to create the DbContext, but EF Core still needs
+          # the startup assembly to be loadable for other operations
+          echo "Building startup project for default runtime..."
+          dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --no-restore
 
           # Create migration bundle (self-contained executable with migrations)
           # Run from Infrastructure directory - EF Core tools work better from the project directory
-          # The design-time factory allows EF Core to create the DbContext without loading the startup assembly
-          # When a design-time factory exists, EF Core bypasses loading the startup project
+          # 
+          # IMPORTANT: EF Core tools need to load the startup assembly, but when building for
+          # linux-arm64 on a linux-x64 runner, it creates an arm64 assembly that can't be loaded.
+          # The design-time factory helps create the DbContext, but EF Core still needs the startup
+          # assembly for other operations.
+          #
+          # Solution: Pre-build the startup project for arm64, but EF Core tools will use the
+          # default runtime build (x64) for tooling operations, then package the arm64 build.
+          echo "Pre-building startup project for target runtime (linux-arm64)..."
+          dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --runtime linux-arm64 --no-restore
+          dotnet build AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --configuration Release --runtime linux-arm64 --no-restore
+
           echo "Creating EF Core migration bundle for Linux arm64..."
           cd AgroLink.Infrastructure
-          # Don't specify --startup-project when using design-time factory
+          # Use --no-build to prevent EF Core from rebuilding (which would try to load arm64 assembly)
+          # The pre-built arm64 assemblies will be used for the bundle
           dotnet ef migrations bundle \
+            --startup-project ../AgroLink.API/AgroLink.API.csproj \
             --configuration Release \
             --output ../migrations-bundle \
             --self-contained \
             --runtime linux-arm64 \
+            --no-build \
             --verbose
 
           echo "✅ Migration bundle created successfully"
