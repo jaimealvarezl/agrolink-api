@@ -139,13 +139,13 @@ jobs:
           fi
 
           # Create migration bundle (self-contained executable with migrations)
-          # Run from solution root with explicit startup project
+          # Run from Infrastructure directory - EF Core tools work better from the project directory
           echo "Creating EF Core migration bundle for Linux arm64..."
+          cd AgroLink.Infrastructure
           dotnet ef migrations bundle \
-            --project ./AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
-            --startup-project ./AgroLink.API/AgroLink.API.csproj \
+            --startup-project ../AgroLink.API/AgroLink.API.csproj \
             --configuration Release \
-            --output ./migrations-bundle \
+            --output ../migrations-bundle \
             --self-contained \
             --runtime linux-arm64
 
