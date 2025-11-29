@@ -129,15 +129,11 @@ jobs:
           dotnet restore
           dotnet build agrolink-api.sln --configuration Release --no-restore
 
-          # Ensure startup project is built for default runtime (needed for EF Core tools to load it)
-          # The design-time factory will be used to create the DbContext, but EF Core still needs
-          # the startup assembly to be loadable for other operations
+          # Build startup project for default runtime (needed for EF Core tools)
           echo "Building startup project for default runtime..."
           dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --no-restore
 
-          # Create migration bundle (self-contained executable with migrations)
-          # Run from Infrastructure directory - EF Core tools work better from the project directory
-          # Building for x64 architecture to match Lambda configuration
+          # Create migration bundle for x64 architecture to match Lambda configuration
           echo "Creating EF Core migration bundle for Linux x64..."
           cd AgroLink.Infrastructure
           
@@ -208,15 +204,12 @@ jobs:
           LAMBDA_RESPONSE=$(cat /tmp/lambda-response.json)
           echo "Lambda invocation response: $LAMBDA_RESPONSE"
 
-          # AWS CLI wraps the Lambda response in a Payload field (as a JSON string)
-          # Try to extract Payload first, if it doesn't exist, assume response is already the Lambda function's response
+          # Extract Payload from AWS CLI response, or use response directly if already in Lambda format
           LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload // empty')
 
           if [ -z "$LAMBDA_PAYLOAD" ]; then
-            # No Payload field - response might already be the Lambda function's response
-            # Check if it has statusCode field (Lambda function response format)
+            # No Payload field - check if response is already in Lambda function format
             if echo "$LAMBDA_RESPONSE" | jq -e '.statusCode' > /dev/null 2>&1; then
-              echo "Response is already in Lambda function format, using directly"
               ACTUAL_RESPONSE="$LAMBDA_RESPONSE"
             else
               echo "❌ Failed to extract Payload from Lambda response"

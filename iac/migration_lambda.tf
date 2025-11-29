@@ -207,11 +207,6 @@ def handler(event, context):
         print(f"Database port: {db_secret.get('port', 'unknown')}")
         print(f"Database name: {db_secret.get('database', 'unknown')}")
 
-        # Note: Aurora Serverless v2 with min_capacity=0.0 may be paused
-        # The first connection attempt will wake it up, but may take 30-60 seconds
-        print("Note: If using Aurora Serverless v2 with min_capacity=0.0, the database may be paused.")
-        print("The first connection attempt will wake it up, which may take 30-60 seconds.")
-
         # Download migration bundle from S3
         s3_client = boto3.client('s3')
         temp_dir = tempfile.mkdtemp()
@@ -264,19 +259,15 @@ def handler(event, context):
             env['DOTNET_BUNDLE_EXTRACT_BASE_DIR'] = '/tmp'
             env['HOME'] = '/tmp'  # Some .NET tools also check HOME
 
-            # Execute the migration bundle with connection string override
-            # Add SSL mode and connection timeout for RDS
-            # Note: Aurora Serverless v2 may take 30-60 seconds to wake up if paused
-            print("Executing migration bundle...")
-            print("Note: If database is paused, first connection may take 30-60 seconds to wake it up")
-
+            # Execute the migration bundle
             # Add connection timeout and SSL mode to connection string if not present
-            # Aurora Serverless v2 with min_capacity=0.0 can take 60-120+ seconds to wake up
-            # Plus connection establishment time, so we need a longer timeout
+            # Extended timeout accounts for Aurora Serverless v2 wake-up time when min_capacity=0.0
+            print("Executing migration bundle...")
+            
             if 'Timeout' not in connection_string:
-                connection_string += ';Timeout=600'  # 10 minute connection timeout (allows for DB wake-up + connection)
+                connection_string += ';Timeout=600'  # 10 minute timeout (allows for DB wake-up + connection)
             if 'SSL Mode' not in connection_string and 'SslMode' not in connection_string:
-                connection_string += ';SSL Mode=Prefer'  # Prefer SSL but allow non-SSL
+                connection_string += ';SSL Mode=Prefer'
 
             env['ConnectionStrings__DefaultConnection'] = connection_string
 
