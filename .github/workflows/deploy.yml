@@ -119,36 +119,33 @@ jobs:
         run: dotnet tool restore
 
       - name: Generate migration bundle
-        working-directory: ${{ github.workspace }}/AgroLink.API
         run: |
           echo "🗄️ Generating migration bundle..."
           echo "Working directory: $(pwd)"
-          echo "Listing files:"
-          ls -la
 
-          # Restore and build solution from the repo root
+          # Restore and build solution
           echo "Building solution..."
-          dotnet restore ..
-          dotnet build ../agrolink-api.sln --configuration Release --no-restore
+          dotnet restore
+          dotnet build agrolink-api.sln --configuration Release --no-restore
 
           # Sanity check: API assembly should exist in bin
           echo "Checking for startup project assembly..."
-          if [ -f "bin/Release/net8.0/AgroLink.API.dll" ]; then
+          if [ -f "AgroLink.API/bin/Release/net8.0/AgroLink.API.dll" ]; then
             echo "✅ Startup project assembly found"
           else
             echo "❌ Startup project assembly not found. Looking for:"
-            find .. -name "AgroLink.API.dll" -type f 2>/dev/null || echo "Assembly not found anywhere"
+            find . -name "AgroLink.API.dll" -type f 2>/dev/null || echo "Assembly not found anywhere"
             exit 1
           fi
 
           # Create migration bundle (self-contained executable with migrations)
-          # Here the startup project is the current directory (AgroLink.API),
-          # and the target project is the Infrastructure project with the migrations.
+          # Run from solution root with explicit startup project
           echo "Creating EF Core migration bundle for Linux arm64..."
           dotnet ef migrations bundle \
-            --project ../AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
+            --project ./AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
+            --startup-project ./AgroLink.API/AgroLink.API.csproj \
             --configuration Release \
-            --output ../migrations-bundle \
+            --output ./migrations-bundle \
             --self-contained \
             --runtime linux-arm64
 
