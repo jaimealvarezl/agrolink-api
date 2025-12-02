@@ -1,3 +1,4 @@
+using AgroLink.API.DTOs;
 using AgroLink.Core.DTOs;
 using AgroLink.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -18,20 +19,24 @@ public class PhotosController(IPhotoService photoService) : BaseController
     }
 
     [HttpPost("upload")]
-    public async Task<ActionResult<PhotoDto>> UploadPhoto(
-        [FromForm] CreatePhotoDto dto,
-        [FromForm] IFormFile? file
-    )
+    public async Task<ActionResult<PhotoDto>> UploadPhoto([FromForm] UploadPhotoRequest request)
     {
-        if (file == null || file.Length == 0)
+        if (request.File == null || request.File.Length == 0)
         {
             return BadRequest("No file provided");
         }
 
         try
         {
-            await using var stream = file.OpenReadStream();
-            var photo = await photoService.UploadPhotoAsync(dto, stream, file.FileName);
+            var dto = new CreatePhotoDto
+            {
+                EntityType = request.EntityType,
+                EntityId = request.EntityId,
+                Description = request.Description,
+            };
+
+            await using var stream = request.File.OpenReadStream();
+            var photo = await photoService.UploadPhotoAsync(dto, stream, request.File.FileName);
             return Ok(photo);
         }
         catch (ArgumentException ex)

@@ -14,7 +14,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.CustomSchemaIds(type => type.FullName);
+});
 
 // Database
 builder.Services.AddDbContext<AgroLinkDbContext>(options =>
@@ -58,7 +61,7 @@ builder.Services.AddScoped<ILotService, LotService>();
 builder.Services.AddScoped<ITokenExtractionService, TokenExtractionService>();
 
 // AWS S3
-builder.Services.AddSingleton<IAmazonS3>(provider => new AmazonS3Client());
+builder.Services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client());
 
 // JWT Authentication
 var jwtKey =
