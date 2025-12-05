@@ -87,6 +87,20 @@ resource "aws_api_gateway_stage" "prod" {
   }
 }
 
+resource "aws_api_gateway_method_settings" "prod_settings" {
+  rest_api_id = aws_api_gateway_rest_api.agro_link_api.id
+  stage_name  = aws_api_gateway_stage.prod.stage_name
+  method_path = "*/*"
+
+  settings {
+    metrics_enabled = true
+    logging_level   = "INFO"
+    # Throttling limits to prevent massive bills
+    throttling_burst_limit = 50  # Allow 50 concurrent requests
+    throttling_rate_limit  = 100 # Allow 100 requests per second
+  }
+}
+
 resource "aws_api_gateway_stage" "stage" {
   rest_api_id          = aws_api_gateway_rest_api.agro_link_api.id
   stage_name           = "Stage"

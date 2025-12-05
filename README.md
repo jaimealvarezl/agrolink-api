@@ -21,12 +21,13 @@ AgroLink is designed to help farmers in Boaco, Nicaragua manage their cattle ope
 ```
 AgroLink.API/              # Presentation Layer (ASP.NET Core Web API)
 ├── Controllers/           # API Controllers
+├── DTOs/                  # API-specific Data Transfer Objects
 ├── Program.cs             # Application startup and configuration
 └── appsettings.json      # Configuration files
 
 AgroLink.Core/             # Domain Layer (Core Business Logic)
 ├── Entities/              # Domain entities
-├── DTOs/                  # Data Transfer Objects
+├── DTOs/                  # Shared Data Transfer Objects
 └── Interfaces/            # Service and repository interfaces
 
 AgroLink.Infrastructure/   # Infrastructure Layer
@@ -37,6 +38,11 @@ AgroLink.Infrastructure/   # Infrastructure Layer
 
 AgroLink.Tests/            # Unit Tests
 └── [Test files]           # NUnit test classes
+
+AgroLink.IntegrationTests/ # Integration Tests
+└── [Test files]           # Integration test classes
+
+TestProject1/              # Additional Tests
 ```
 
 ### Technology Stack
