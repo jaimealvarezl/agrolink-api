@@ -174,7 +174,7 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
     }
 
     // New methods for controller logic
-    public async Task<UserDto> RegisterUserAsync(RegisterRequest request)
+    public async Task<AuthResponseDto> RegisterUserAsync(RegisterRequest request)
     {
         var userDto = new UserDto
         {
@@ -183,7 +183,15 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
             Role = request.Role ?? "USER",
         };
 
-        return await RegisterAsync(userDto, request.Password);
+        var registeredUser = await RegisterAsync(userDto, request.Password);
+        var token = GenerateJwtToken(registeredUser);
+
+        return new AuthResponseDto
+        {
+            Token = token,
+            User = registeredUser,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+        };
     }
 
     public async Task<UserDto?> GetUserProfileAsync(string token)
@@ -203,6 +211,32 @@ public class AuthService(AgroLinkDbContext context, IConfiguration configuration
     }
 
     private string GenerateJwtToken(User user)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity([
+                new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
+                new Claim("email", user.Email),
+                new Claim("role", user.Role),
+                new Claim("name", user.Name),
+            ]),
+            Expires = DateTime.UtcNow.AddDays(7),
+            Issuer = configuration["Jwt:Issuer"],
+            Audience = configuration["Jwt:Audience"],
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature
+            ),
+        };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    private string GenerateJwtToken(UserDto user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");

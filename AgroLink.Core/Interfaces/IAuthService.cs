@@ -10,7 +10,7 @@ public interface IAuthService
     Task<UserDto?> GetUserFromTokenAsync(string token);
 
     // New methods for controller logic
-    Task<UserDto> RegisterUserAsync(RegisterRequest request);
+    Task<AuthResponseDto> RegisterUserAsync(RegisterRequest request);
     Task<UserDto?> GetUserProfileAsync(string token);
     Task<ValidateTokenResponse> ValidateTokenResponseAsync(string token);
 }

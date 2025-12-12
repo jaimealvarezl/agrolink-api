@@ -96,7 +96,14 @@ public class AuthControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _authServiceMock.Setup(x => x.RegisterUserAsync(request)).ReturnsAsync(userDto);
+        var authResponse = new AuthResponseDto
+        {
+            Token = "jwt-token",
+            User = userDto,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+        };
+
+        _authServiceMock.Setup(x => x.RegisterUserAsync(request)).ReturnsAsync(authResponse);
 
         // Act
         var result = await _controller.Register(request);
@@ -104,9 +111,10 @@ public class AuthControllerTests
         // Assert
         result.ShouldNotBeNull();
         var createdResult = result.Result.ShouldBeOfType<CreatedAtActionResult>();
-        var returnedUser = createdResult.Value.ShouldBeOfType<UserDto>();
-        returnedUser.Name.ShouldBe("Test User");
-        returnedUser.Email.ShouldBe("test@example.com");
+        var returnedAuthResponse = createdResult.Value.ShouldBeOfType<AuthResponseDto>();
+        returnedAuthResponse.User.Name.ShouldBe("Test User");
+        returnedAuthResponse.User.Email.ShouldBe("test@example.com");
+        returnedAuthResponse.Token.ShouldBe("jwt-token");
     }
 
     [Test]

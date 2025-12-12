@@ -284,7 +284,7 @@ public class AuthServiceTests : TestBase
     }
 
     [Test]
-    public async Task RegisterUserAsync_WithValidRequest_ShouldReturnUserDto()
+    public async Task RegisterUserAsync_WithValidRequest_ShouldReturnAuthResponse()
     {
         // Arrange
         var request = new RegisterRequest
@@ -300,10 +300,11 @@ public class AuthServiceTests : TestBase
 
         // Assert
         result.ShouldNotBeNull();
-        result.Name.ShouldBe("Test User");
-        result.Email.ShouldBe("test@example.com");
-        result.Role.ShouldBe("ADMIN");
-        result.IsActive.ShouldBeTrue();
+        result.User.Name.ShouldBe("Test User");
+        result.User.Email.ShouldBe("test@example.com");
+        result.User.Role.ShouldBe("ADMIN");
+        result.User.IsActive.ShouldBeTrue();
+        result.Token.ShouldNotBeNullOrEmpty();
     }
 
     [Test]
@@ -323,7 +324,8 @@ public class AuthServiceTests : TestBase
 
         // Assert
         result.ShouldNotBeNull();
-        result.Role.ShouldBe("USER");
+        result.User.Role.ShouldBe("USER");
+        result.Token.ShouldNotBeNullOrEmpty();
     }
 
     [Test]

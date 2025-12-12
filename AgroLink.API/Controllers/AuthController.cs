@@ -25,12 +25,12 @@ public class AuthController(
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<UserDto>> Register(RegisterRequest request)
+    public async Task<ActionResult<AuthResponseDto>> Register(RegisterRequest request)
     {
         try
         {
-            var user = await authService.RegisterUserAsync(request);
-            return CreatedAtAction(nameof(GetProfile), new { id = user.Id }, user);
+            var result = await authService.RegisterUserAsync(request);
+            return CreatedAtAction(nameof(GetProfile), new { id = result.User.Id }, result);
         }
         catch (ArgumentException ex)
         {
