@@ -17,7 +17,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AgroLink.Core\AgroLink.Core.csproj" />
+    <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
     <ProjectReference Include="..\AgroLink.Application\AgroLink.Application.csproj" />
   </ItemGroup>
 </Project>

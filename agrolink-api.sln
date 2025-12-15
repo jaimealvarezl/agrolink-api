@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.API", "AgroLink.API\AgroLink.API.csproj", "{21D3F48D-E904-4352-BF4E-5292B1CEFD11}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Api", "AgroLink.Api\AgroLink.Api.csproj", "{21D3F48D-E904-4352-BF4E-5292B1CEFD11}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Core", "AgroLink.Core\AgroLink.Core.csproj", "{93628E5E-2B54-45DF-B1F0-46A5F684C058}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Domain", "AgroLink.Domain\AgroLink.Domain.csproj", "{93628E5E-2B54-45DF-B1F0-46A5F684C058}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Infrastructure", "AgroLink.Infrastructure\AgroLink.Infrastructure.csproj", "{C2BE58EB-DD7E-4C1C-9D24-227ABBC7EEE6}"
 EndProject

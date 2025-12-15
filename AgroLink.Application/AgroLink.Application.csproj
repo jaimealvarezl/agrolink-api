@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\AgroLink.Core\AgroLink.Core.csproj" />
+    <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

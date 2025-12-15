@@ -22,7 +22,7 @@ namespace AgroLink.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Animal", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Animal", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -91,7 +91,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Animals");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.AnimalOwner", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.AnimalOwner", b =>
                 {
                     b.Property<int>("AnimalId")
                         .HasColumnType("integer");
@@ -113,7 +113,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("AnimalOwners");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Checklist", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Checklist", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -154,7 +154,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Checklists");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.ChecklistItem", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.ChecklistItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -192,7 +192,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("ChecklistItems");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Farm", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Farm", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -222,7 +222,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Farms");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Lot", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Lot", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -258,7 +258,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Lots");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Movement", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Movement", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -312,7 +312,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Movements");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Owner", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Owner", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -342,7 +342,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Owners");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Paddock", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Paddock", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -373,7 +373,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Paddocks");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Photo", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Photo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -423,7 +423,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Photos");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.User", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -471,20 +471,20 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Animal", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Animal", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Animal", "Father")
+                    b.HasOne("AgroLink.Domain.Entities.Animal", "Father")
                         .WithMany()
                         .HasForeignKey("FatherId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("AgroLink.Core.Entities.Lot", "Lot")
+                    b.HasOne("AgroLink.Domain.Entities.Lot", "Lot")
                         .WithMany("Animals")
                         .HasForeignKey("LotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("AgroLink.Core.Entities.Animal", "Mother")
+                    b.HasOne("AgroLink.Domain.Entities.Animal", "Mother")
                         .WithMany("Children")
                         .HasForeignKey("MotherId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -496,15 +496,15 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Mother");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.AnimalOwner", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.AnimalOwner", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Animal", "Animal")
+                    b.HasOne("AgroLink.Domain.Entities.Animal", "Animal")
                         .WithMany("AnimalOwners")
                         .HasForeignKey("AnimalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AgroLink.Core.Entities.Owner", "Owner")
+                    b.HasOne("AgroLink.Domain.Entities.Owner", "Owner")
                         .WithMany("AnimalOwners")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -515,9 +515,9 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Checklist", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Checklist", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.User", "User")
+                    b.HasOne("AgroLink.Domain.Entities.User", "User")
                         .WithMany("Checklists")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -526,15 +526,15 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.ChecklistItem", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.ChecklistItem", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Animal", "Animal")
+                    b.HasOne("AgroLink.Domain.Entities.Animal", "Animal")
                         .WithMany("ChecklistItems")
                         .HasForeignKey("AnimalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AgroLink.Core.Entities.Checklist", "Checklist")
+                    b.HasOne("AgroLink.Domain.Entities.Checklist", "Checklist")
                         .WithMany("ChecklistItems")
                         .HasForeignKey("ChecklistId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -545,9 +545,9 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Checklist");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Lot", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Lot", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Paddock", "Paddock")
+                    b.HasOne("AgroLink.Domain.Entities.Paddock", "Paddock")
                         .WithMany("Lots")
                         .HasForeignKey("PaddockId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -556,17 +556,17 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Paddock");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Movement", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Movement", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Animal", null)
+                    b.HasOne("AgroLink.Domain.Entities.Animal", null)
                         .WithMany("Movements")
                         .HasForeignKey("AnimalId");
 
-                    b.HasOne("AgroLink.Core.Entities.Lot", null)
+                    b.HasOne("AgroLink.Domain.Entities.Lot", null)
                         .WithMany("Movements")
                         .HasForeignKey("LotId");
 
-                    b.HasOne("AgroLink.Core.Entities.User", "User")
+                    b.HasOne("AgroLink.Domain.Entities.User", "User")
                         .WithMany("Movements")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -575,9 +575,9 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Paddock", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Paddock", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Farm", "Farm")
+                    b.HasOne("AgroLink.Domain.Entities.Farm", "Farm")
                         .WithMany("Paddocks")
                         .HasForeignKey("FarmId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -586,14 +586,14 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Farm");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Photo", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Photo", b =>
                 {
-                    b.HasOne("AgroLink.Core.Entities.Animal", null)
+                    b.HasOne("AgroLink.Domain.Entities.Animal", null)
                         .WithMany("Photos")
                         .HasForeignKey("AnimalId");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Animal", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Animal", b =>
                 {
                     b.Navigation("AnimalOwners");
 
@@ -606,34 +606,34 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Photos");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Checklist", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Checklist", b =>
                 {
                     b.Navigation("ChecklistItems");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Farm", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Farm", b =>
                 {
                     b.Navigation("Paddocks");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Lot", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Lot", b =>
                 {
                     b.Navigation("Animals");
 
                     b.Navigation("Movements");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Owner", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Owner", b =>
                 {
                     b.Navigation("AnimalOwners");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.Paddock", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.Paddock", b =>
                 {
                     b.Navigation("Lots");
                 });
 
-            modelBuilder.Entity("AgroLink.Core.Entities.User", b =>
+            modelBuilder.Entity("AgroLink.Domain.Entities.User", b =>
                 {
                     b.Navigation("Checklists");
 

@@ -26,8 +26,8 @@
     <Using Include="NUnit.Framework" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AgroLink.Core\AgroLink.Core.csproj" />
+    <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
     <ProjectReference Include="..\AgroLink.Infrastructure\AgroLink.Infrastructure.csproj" />
-    <ProjectReference Include="..\AgroLink.API\AgroLink.API.csproj" />
+    <ProjectReference Include="..\AgroLink.Api\AgroLink.Api.csproj" />
   </ItemGroup>
 </Project>

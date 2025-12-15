@@ -1,6 +1,6 @@
 using AgroLink.Application.Interfaces;
-using AgroLink.Core.Entities;
-using AgroLink.Core.Interfaces;
+using AgroLink.Domain.Entities;
+using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using Shouldly;

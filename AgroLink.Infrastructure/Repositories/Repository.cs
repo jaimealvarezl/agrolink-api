@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Interfaces;
-using AgroLink.Core.Interfaces;
+using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

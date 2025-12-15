@@ -1,4 +1,4 @@
-using AgroLink.Core.Entities;
+using AgroLink.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Data;
