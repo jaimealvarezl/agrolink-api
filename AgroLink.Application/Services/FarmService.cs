@@ -3,7 +3,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 
-namespace AgroLink.Infrastructure.Services;
+namespace AgroLink.Application.Services;
 
 public class FarmService(IFarmRepository farmRepository) : IFarmService
 {

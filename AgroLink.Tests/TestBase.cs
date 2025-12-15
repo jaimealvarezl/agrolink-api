@@ -4,6 +4,7 @@ using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
+using AgroLink.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

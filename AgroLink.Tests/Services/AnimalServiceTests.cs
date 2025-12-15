@@ -2,7 +2,7 @@ using AgroLink.Application.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
-using AgroLink.Infrastructure.Services;
+using AgroLink.Application.Services;
 using Moq;
 using Shouldly;
 

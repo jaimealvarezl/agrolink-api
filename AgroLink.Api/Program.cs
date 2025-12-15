@@ -5,6 +5,7 @@ using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
+using AgroLink.Application.Services;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
