@@ -1,8 +1,16 @@
 using System.Security.Claims;
 using AgroLink.Api.Controllers;
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Animals.Commands.Create;
+using AgroLink.Application.Features.Animals.Commands.Delete;
+using AgroLink.Application.Features.Animals.Commands.Move;
+using AgroLink.Application.Features.Animals.Commands.Update;
+using AgroLink.Application.Features.Animals.Queries.GetAll;
+using AgroLink.Application.Features.Animals.Queries.GetById;
+using AgroLink.Application.Features.Animals.Queries.GetByLot;
+using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -13,11 +21,14 @@ namespace AgroLink.Tests.Controllers;
 [TestFixture]
 public class AnimalsControllerTests
 {
+    private Mock<IMediator> _mediatorMock = null!;
+    private AnimalsController _controller = null!;
+
     [SetUp]
     public void Setup()
     {
-        _animalServiceMock = new Mock<IAnimalService>();
-        _controller = new AnimalsController(_animalServiceMock.Object);
+        _mediatorMock = new Mock<IMediator>();
+        _controller = new AnimalsController(_mediatorMock.Object);
 
         // Setup HTTP context with user claims for tests that need it
         var claims = new List<Claim> { new("userid", "1"), new(ClaimTypes.Name, "testuser") };
@@ -29,9 +40,6 @@ public class AnimalsControllerTests
             HttpContext = new DefaultHttpContext { User = principal },
         };
     }
-
-    private Mock<IAnimalService> _animalServiceMock = null!;
-    private AnimalsController _controller = null!;
 
     [Test]
     public async Task GetAll_ShouldReturnOkWithAnimals()
@@ -67,7 +75,9 @@ public class AnimalsControllerTests
             },
         };
 
-        _animalServiceMock.Setup(x => x.GetAllAsync()).ReturnsAsync(animals);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetAllAnimalsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animals);
 
         // Act
         var result = await _controller.GetAll();
@@ -98,7 +108,14 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock.Setup(x => x.GetByIdAsync(animalId)).ReturnsAsync(animal);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetAnimalByIdQuery>(q => q.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(animal);
 
         // Act
         var result = await _controller.GetById(animalId);
@@ -117,7 +134,14 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _animalServiceMock.Setup(x => x.GetByIdAsync(animalId)).ReturnsAsync((AnimalDto?)null);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetAnimalByIdQuery>(q => q.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync((AnimalDto?)null);
 
         // Act
         var result = await _controller.GetById(animalId);
@@ -149,7 +173,14 @@ public class AnimalsControllerTests
             },
         };
 
-        _animalServiceMock.Setup(x => x.GetByLotAsync(lotId)).ReturnsAsync(animals);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetAnimalsByLotQuery>(q => q.LotId == lotId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(animals);
 
         // Act
         var result = await _controller.GetByLot(lotId);
@@ -195,7 +226,14 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock.Setup(x => x.CreateAsync(createDto)).ReturnsAsync(createdAnimal);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<CreateAnimalCommand>(c => c.Dto == createDto),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(createdAnimal);
 
         // Act
         var result = await _controller.Create(createDto);
@@ -237,8 +275,13 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock
-            .Setup(x => x.UpdateAsync(animalId, updateDto))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<UpdateAnimalCommand>(c => c.Id == animalId && c.Dto == updateDto),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(updatedAnimal);
 
         // Act
@@ -263,8 +306,13 @@ public class AnimalsControllerTests
             Owners = new List<AnimalOwnerDto>(),
         };
 
-        _animalServiceMock
-            .Setup(x => x.UpdateAsync(animalId, updateDto))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<UpdateAnimalCommand>(c => c.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ThrowsAsync(new ArgumentException("Animal not found"));
 
         // Act
@@ -281,7 +329,14 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 1;
 
-        _animalServiceMock.Setup(x => x.DeleteAsync(animalId)).Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<DeleteAnimalCommand>(c => c.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _controller.Delete(animalId);
@@ -297,8 +352,13 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _animalServiceMock
-            .Setup(x => x.DeleteAsync(animalId))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<DeleteAnimalCommand>(c => c.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ThrowsAsync(new ArgumentException("Animal not found"));
 
         // Act
@@ -323,7 +383,14 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
         };
 
-        _animalServiceMock.Setup(x => x.GetGenealogyAsync(animalId)).ReturnsAsync(genealogy);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetAnimalGenealogyQuery>(q => q.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(genealogy);
 
         // Act
         var result = await _controller.GetGenealogy(animalId);
@@ -342,8 +409,13 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _animalServiceMock
-            .Setup(x => x.GetGenealogyAsync(animalId))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetAnimalGenealogyQuery>(q => q.Id == animalId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync((AnimalGenealogyDto?)null);
 
         // Act
@@ -380,14 +452,15 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _animalServiceMock
+        _mediatorMock
             .Setup(x =>
-                x.MoveAnimalAsync(
-                    animalId,
-                    moveRequest.FromLotId,
-                    moveRequest.ToLotId,
-                    moveRequest.Reason,
-                    1
+                x.Send(
+                    It.Is<MoveAnimalCommand>(c =>
+                        c.AnimalId == animalId
+                        && c.FromLotId == moveRequest.FromLotId
+                        && c.ToLotId == moveRequest.ToLotId
+                    ),
+                    It.IsAny<CancellationToken>()
                 )
             )
             .ReturnsAsync(movedAnimal);

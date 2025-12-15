@@ -1,24 +1,28 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Farms.Commands.Create;
+using AgroLink.Application.Features.Farms.Commands.Delete;
+using AgroLink.Application.Features.Farms.Commands.Update;
+using AgroLink.Application.Features.Farms.Queries.GetAll;
+using AgroLink.Application.Features.Farms.Queries.GetById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class FarmsController(IFarmService farmService) : BaseController
+public class FarmsController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FarmDto>>> GetAll()
     {
-        var farms = await farmService.GetAllAsync();
+        var farms = await mediator.Send(new GetAllFarmsQuery());
         return Ok(farms);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<FarmDto>> GetById(int id)
     {
-        var farm = await farmService.GetByIdAsync(id);
+        var farm = await mediator.Send(new GetFarmByIdQuery(id));
         if (farm == null)
         {
             return NotFound();
@@ -33,7 +37,7 @@ public class FarmsController(IFarmService farmService) : BaseController
         try
         {
             var dto = new CreateFarmDto { Name = request.Name, Location = request.Location };
-            var farm = await farmService.CreateAsync(dto);
+            var farm = await mediator.Send(new CreateFarmCommand(dto));
             return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
         }
         catch (ArgumentException ex)
@@ -48,7 +52,7 @@ public class FarmsController(IFarmService farmService) : BaseController
         try
         {
             var dto = new UpdateFarmDto { Name = request.Name, Location = request.Location };
-            var farm = await farmService.UpdateAsync(id, dto);
+            var farm = await mediator.Send(new UpdateFarmCommand(id, dto));
             return Ok(farm);
         }
         catch (ArgumentException ex)
@@ -62,7 +66,7 @@ public class FarmsController(IFarmService farmService) : BaseController
     {
         try
         {
-            await farmService.DeleteAsync(id);
+            await mediator.Send(new DeleteFarmCommand(id));
             return NoContent();
         }
         catch (ArgumentException ex)

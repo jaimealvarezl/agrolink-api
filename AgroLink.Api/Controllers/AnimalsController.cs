@@ -1,24 +1,31 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Animals.Commands.Create;
+using AgroLink.Application.Features.Animals.Commands.Delete;
+using AgroLink.Application.Features.Animals.Commands.Move;
+using AgroLink.Application.Features.Animals.Commands.Update;
+using AgroLink.Application.Features.Animals.Queries.GetAll;
+using AgroLink.Application.Features.Animals.Queries.GetById;
+using AgroLink.Application.Features.Animals.Queries.GetByLot;
+using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class AnimalsController(IAnimalService animalService) : BaseController
+public class AnimalsController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll()
     {
-        var animals = await animalService.GetAllAsync();
+        var animals = await mediator.Send(new GetAllAnimalsQuery());
         return Ok(animals);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<AnimalDto>> GetById(int id)
     {
-        var animal = await animalService.GetByIdAsync(id);
+        var animal = await mediator.Send(new GetAnimalByIdQuery(id));
         if (animal == null)
         {
             return NotFound();
@@ -30,14 +37,14 @@ public class AnimalsController(IAnimalService animalService) : BaseController
     [HttpGet("lot/{lotId}")]
     public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(int lotId)
     {
-        var animals = await animalService.GetByLotAsync(lotId);
+        var animals = await mediator.Send(new GetAnimalsByLotQuery(lotId));
         return Ok(animals);
     }
 
     [HttpGet("{id}/genealogy")]
     public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(int id)
     {
-        var genealogy = await animalService.GetGenealogyAsync(id);
+        var genealogy = await mediator.Send(new GetAnimalGenealogyQuery(id));
         if (genealogy == null)
         {
             return NotFound();
@@ -51,7 +58,7 @@ public class AnimalsController(IAnimalService animalService) : BaseController
     {
         try
         {
-            var animal = await animalService.CreateAsync(dto);
+            var animal = await mediator.Send(new CreateAnimalCommand(dto));
             return CreatedAtAction(nameof(GetById), new { id = animal.Id }, animal);
         }
         catch (ArgumentException ex)
@@ -65,7 +72,7 @@ public class AnimalsController(IAnimalService animalService) : BaseController
     {
         try
         {
-            var animal = await animalService.UpdateAsync(id, dto);
+            var animal = await mediator.Send(new UpdateAnimalCommand(id, dto));
             return Ok(animal);
         }
         catch (ArgumentException ex)
@@ -79,7 +86,7 @@ public class AnimalsController(IAnimalService animalService) : BaseController
     {
         try
         {
-            await animalService.DeleteAsync(id);
+            await mediator.Send(new DeleteAnimalCommand(id));
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -97,12 +104,14 @@ public class AnimalsController(IAnimalService animalService) : BaseController
         try
         {
             var userId = GetCurrentUserId();
-            var animal = await animalService.MoveAnimalAsync(
-                id,
-                request.FromLotId,
-                request.ToLotId,
-                request.Reason,
-                userId
+            var animal = await mediator.Send(
+                new MoveAnimalCommand(
+                    id,
+                    request.FromLotId,
+                    request.ToLotId,
+                    request.Reason,
+                    userId
+                )
             );
             return Ok(animal);
         }

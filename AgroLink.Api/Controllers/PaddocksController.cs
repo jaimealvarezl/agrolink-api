@@ -1,31 +1,36 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Paddocks.Commands.Create;
+using AgroLink.Application.Features.Paddocks.Commands.Delete;
+using AgroLink.Application.Features.Paddocks.Commands.Update;
+using AgroLink.Application.Features.Paddocks.Queries.GetAll;
+using AgroLink.Application.Features.Paddocks.Queries.GetByFarm;
+using AgroLink.Application.Features.Paddocks.Queries.GetById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class PaddocksController(IPaddockService paddockService) : BaseController
+public class PaddocksController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PaddockDto>>> GetAll()
     {
-        var paddocks = await paddockService.GetAllAsync();
+        var paddocks = await mediator.Send(new GetAllPaddocksQuery());
         return Ok(paddocks);
     }
 
     [HttpGet("farm/{farmId}")]
     public async Task<ActionResult<IEnumerable<PaddockDto>>> GetByFarm(int farmId)
     {
-        var paddocks = await paddockService.GetByFarmAsync(farmId);
+        var paddocks = await mediator.Send(new GetPaddocksByFarmQuery(farmId));
         return Ok(paddocks);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<PaddockDto>> GetById(int id)
     {
-        var paddock = await paddockService.GetByIdAsync(id);
+        var paddock = await mediator.Send(new GetPaddockByIdQuery(id));
         if (paddock == null)
         {
             return NotFound();
@@ -40,7 +45,7 @@ public class PaddocksController(IPaddockService paddockService) : BaseController
         try
         {
             var dto = new CreatePaddockDto { Name = request.Name, FarmId = request.FarmId };
-            var paddock = await paddockService.CreateAsync(dto);
+            var paddock = await mediator.Send(new CreatePaddockCommand(dto));
             return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, paddock);
         }
         catch (ArgumentException ex)
@@ -55,7 +60,7 @@ public class PaddocksController(IPaddockService paddockService) : BaseController
         try
         {
             var dto = new UpdatePaddockDto { Name = request.Name, FarmId = request.FarmId };
-            var paddock = await paddockService.UpdateAsync(id, dto);
+            var paddock = await mediator.Send(new UpdatePaddockCommand(id, dto));
             return Ok(paddock);
         }
         catch (ArgumentException ex)
@@ -69,7 +74,7 @@ public class PaddocksController(IPaddockService paddockService) : BaseController
     {
         try
         {
-            await paddockService.DeleteAsync(id);
+            await mediator.Send(new DeletePaddockCommand(id));
             return NoContent();
         }
         catch (ArgumentException ex)

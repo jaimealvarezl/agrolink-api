@@ -1,10 +1,10 @@
 using AgroLink.Application.Interfaces;
+using AgroLink.Application.Services;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
-using AgroLink.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,8 +41,6 @@ public abstract class TestBase
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
-        // Add services
-        services.AddScoped<IAnimalService, AnimalService>();
         services.AddScoped<IChecklistService, ChecklistService>();
         services.AddScoped<IMovementService, MovementService>();
         services.AddScoped<IPhotoService, PhotoService>();

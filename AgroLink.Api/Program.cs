@@ -1,11 +1,12 @@
 using System.Text;
+using AgroLink.Application.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Application.Services;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
-using AgroLink.Application.Services;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -51,16 +52,18 @@ builder.Services.AddScoped<IMovementRepository, MovementRepository>();
 builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-// Services
-builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IChecklistService, ChecklistService>();
 builder.Services.AddScoped<IMovementService, MovementService>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IFarmService, FarmService>();
-builder.Services.AddScoped<IPaddockService, PaddockService>();
-builder.Services.AddScoped<ILotService, LotService>();
+
+// builder.Services.AddScoped<IFarmService, FarmService>(); // Deprecated, replaced by CQRS
+// builder.Services.AddScoped<IPaddockService, PaddockService>(); // Deprecated, replaced by CQRS
+// builder.Services.AddScoped<ILotService, LotService>(); // Deprecated, replaced by CQRS
 builder.Services.AddScoped<ITokenExtractionService, TokenExtractionService>();
+
+// MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AnimalDto).Assembly));
 
 // AWS S3
 builder.Services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client());

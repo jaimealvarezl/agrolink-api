@@ -1,13 +1,18 @@
 using AgroLink.Api.DTOs;
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Photos.Commands.DeletePhoto;
+using AgroLink.Application.Features.Photos.Commands.SyncPendingPhotos;
+using AgroLink.Application.Features.Photos.Commands.UploadPhoto;
+using AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity; // Added this using directive
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class PhotosController(IPhotoService photoService) : BaseController
+public class PhotosController(IPhotoService photoService, IMediator mediator) : BaseController
 {
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<PhotoDto>>> GetByEntity(
@@ -15,7 +20,7 @@ public class PhotosController(IPhotoService photoService) : BaseController
         int entityId
     )
     {
-        var photos = await photoService.GetByEntityAsync(entityType, entityId);
+        var photos = await mediator.Send(new GetPhotosByEntityQuery(entityType, entityId));
         return Ok(photos);
     }
 
@@ -37,7 +42,9 @@ public class PhotosController(IPhotoService photoService) : BaseController
             };
 
             await using var stream = request.File.OpenReadStream();
-            var photo = await photoService.UploadPhotoAsync(dto, stream, request.File.FileName);
+            var photo = await mediator.Send(
+                new UploadPhotoCommand(dto, stream, request.File.FileName)
+            );
             return Ok(photo);
         }
         catch (ArgumentException ex)
@@ -51,7 +58,7 @@ public class PhotosController(IPhotoService photoService) : BaseController
     {
         try
         {
-            await photoService.DeleteAsync(id);
+            await mediator.Send(new DeletePhotoCommand(id));
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -63,7 +70,7 @@ public class PhotosController(IPhotoService photoService) : BaseController
     [HttpPost("sync")]
     public async Task<ActionResult> SyncPendingPhotos()
     {
-        await photoService.SyncPendingPhotosAsync();
+        await mediator.Send(new SyncPendingPhotosCommand());
         return Ok(new { message = "Photo sync completed" });
     }
 }

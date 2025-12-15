@@ -1,22 +1,27 @@
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Auth.Commands.Login;
+using AgroLink.Application.Features.Auth.Commands.Register;
+using AgroLink.Application.Features.Auth.Queries.GetUserProfile;
+using AgroLink.Application.Features.Auth.Queries.ValidateToken;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+// Added this using directive
+// Added this using directive
 
 namespace AgroLink.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(
-    IAuthService authService,
-    ITokenExtractionService tokenExtractionService
-) : ControllerBase
+public class AuthController(ITokenExtractionService tokenExtractionService, IMediator mediator)
+    : ControllerBase
 {
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
-        var result = await authService.LoginAsync(dto);
+        var result = await mediator.Send(new LoginCommand(dto));
         if (result == null)
         {
             return Unauthorized("Invalid credentials");
@@ -30,7 +35,7 @@ public class AuthController(
     {
         try
         {
-            var result = await authService.RegisterUserAsync(request);
+            var result = await mediator.Send(new RegisterCommand(request));
             return CreatedAtAction(nameof(GetProfile), new { id = result.User.Id }, result);
         }
         catch (ArgumentException ex)
@@ -49,7 +54,7 @@ public class AuthController(
             return Unauthorized();
         }
 
-        var user = await authService.GetUserProfileAsync(token);
+        var user = await mediator.Send(new GetUserProfileQuery(token));
         if (user == null)
         {
             return Unauthorized();
@@ -63,7 +68,7 @@ public class AuthController(
         [FromBody] ValidateTokenRequest request
     )
     {
-        var result = await authService.ValidateTokenResponseAsync(request.Token);
+        var result = await mediator.Send(new ValidateTokenQuery(request.Token));
         return Ok(result);
     }
 

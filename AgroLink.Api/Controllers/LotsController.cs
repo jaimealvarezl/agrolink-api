@@ -1,31 +1,37 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Lots.Commands.Create;
+using AgroLink.Application.Features.Lots.Commands.Delete;
+using AgroLink.Application.Features.Lots.Commands.Move;
+using AgroLink.Application.Features.Lots.Commands.Update;
+using AgroLink.Application.Features.Lots.Queries.GetAll;
+using AgroLink.Application.Features.Lots.Queries.GetById;
+using AgroLink.Application.Features.Lots.Queries.GetByPaddock;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class LotsController(ILotService lotService) : BaseController
+public class LotsController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetAll()
     {
-        var lots = await lotService.GetAllAsync();
+        var lots = await mediator.Send(new GetAllLotsQuery());
         return Ok(lots);
     }
 
     [HttpGet("paddock/{paddockId}")]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetByPaddock(int paddockId)
     {
-        var lots = await lotService.GetByPaddockAsync(paddockId);
+        var lots = await mediator.Send(new GetLotsByPaddockQuery(paddockId));
         return Ok(lots);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<LotDto>> GetById(int id)
     {
-        var lot = await lotService.GetByIdAsync(id);
+        var lot = await mediator.Send(new GetLotByIdQuery(id));
         if (lot == null)
         {
             return NotFound();
@@ -45,7 +51,7 @@ public class LotsController(ILotService lotService) : BaseController
                 PaddockId = request.PaddockId,
                 Status = request.Status,
             };
-            var lot = await lotService.CreateAsync(dto);
+            var lot = await mediator.Send(new CreateLotCommand(dto));
             return CreatedAtAction(nameof(GetById), new { id = lot.Id }, lot);
         }
         catch (ArgumentException ex)
@@ -65,7 +71,7 @@ public class LotsController(ILotService lotService) : BaseController
                 PaddockId = request.PaddockId,
                 Status = request.Status,
             };
-            var lot = await lotService.UpdateAsync(id, dto);
+            var lot = await mediator.Send(new UpdateLotCommand(id, dto));
             return Ok(lot);
         }
         catch (ArgumentException ex)
@@ -79,7 +85,7 @@ public class LotsController(ILotService lotService) : BaseController
     {
         try
         {
-            await lotService.DeleteAsync(id);
+            await mediator.Send(new DeleteLotCommand(id));
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -94,11 +100,8 @@ public class LotsController(ILotService lotService) : BaseController
         try
         {
             var userId = GetCurrentUserId();
-            var lot = await lotService.MoveLotAsync(
-                id,
-                request.ToPaddockId,
-                request.Reason,
-                userId
+            var lot = await mediator.Send(
+                new MoveLotCommand(id, request.ToPaddockId, request.Reason, userId)
             );
             return Ok(lot);
         }

@@ -1,24 +1,29 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Checklists.Commands.Create;
+using AgroLink.Application.Features.Checklists.Commands.Delete;
+using AgroLink.Application.Features.Checklists.Commands.Update;
+using AgroLink.Application.Features.Checklists.Queries.GetAll;
+using AgroLink.Application.Features.Checklists.Queries.GetById;
+using AgroLink.Application.Features.Checklists.Queries.GetByScope;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class ChecklistsController(IChecklistService checklistService) : BaseController
+public class ChecklistsController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetAll()
     {
-        var checklists = await checklistService.GetAllAsync();
+        var checklists = await mediator.Send(new GetAllChecklistsQuery());
         return Ok(checklists);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ChecklistDto>> GetById(int id)
     {
-        var checklist = await checklistService.GetByIdAsync(id);
+        var checklist = await mediator.Send(new GetChecklistByIdQuery(id));
         if (checklist == null)
         {
             return NotFound();
@@ -33,7 +38,7 @@ public class ChecklistsController(IChecklistService checklistService) : BaseCont
         int scopeId
     )
     {
-        var checklists = await checklistService.GetByScopeAsync(scopeType, scopeId);
+        var checklists = await mediator.Send(new GetChecklistsByScopeQuery(scopeType, scopeId));
         return Ok(checklists);
     }
 
@@ -43,7 +48,7 @@ public class ChecklistsController(IChecklistService checklistService) : BaseCont
         try
         {
             var userId = GetCurrentUserId();
-            var checklist = await checklistService.CreateAsync(dto, userId);
+            var checklist = await mediator.Send(new CreateChecklistCommand(dto, userId));
             return CreatedAtAction(nameof(GetById), new { id = checklist.Id }, checklist);
         }
         catch (ArgumentException ex)
@@ -57,7 +62,7 @@ public class ChecklistsController(IChecklistService checklistService) : BaseCont
     {
         try
         {
-            var checklist = await checklistService.UpdateAsync(id, dto);
+            var checklist = await mediator.Send(new UpdateChecklistCommand(id, dto));
             return Ok(checklist);
         }
         catch (ArgumentException ex)
@@ -71,7 +76,7 @@ public class ChecklistsController(IChecklistService checklistService) : BaseCont
     {
         try
         {
-            await checklistService.DeleteAsync(id);
+            await mediator.Send(new DeleteChecklistCommand(id));
             return NoContent();
         }
         catch (ArgumentException ex)
