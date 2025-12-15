@@ -1,6 +1,5 @@
 using AgroLink.Application.Interfaces;
 using AgroLink.Application.Services;
-using AgroLink.Domain.Interfaces;
 using Shouldly;
 
 namespace AgroLink.Tests.Services;

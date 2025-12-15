@@ -1,37 +1,45 @@
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
-using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class MovementRepository : Repository<Movement>, IMovementRepository
+public class MovementRepository(AgroLinkDbContext context) : IMovementRepository
 {
-    public MovementRepository(AgroLinkDbContext context)
-        : base(context) { }
-
-    public async Task<IEnumerable<Movement>> GetByEntityAsync(string entityType, int entityId)
-    {
-        return await _dbSet
-            .Where(m => m.EntityType == entityType && m.EntityId == entityId)
-            .OrderByDescending(m => m.At)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Movement>> GetAnimalHistoryAsync(int animalId)
-    {
-        return await GetByEntityAsync("ANIMAL", animalId);
-    }
-
-    public async Task<IEnumerable<Movement>> GetByDateRangeAsync(
-        DateTime startDate,
-        DateTime endDate
+    public async Task<IEnumerable<Movement>> GetMovementsByEntityAsync(
+        string entityType,
+        int entityId
     )
     {
-        return await _dbSet
-            .Where(m => m.At >= startDate && m.At <= endDate)
-            .OrderByDescending(m => m.At)
+        return await context
+            .Movements.Where(m => m.EntityType == entityType && m.EntityId == entityId)
             .ToListAsync();
+    }
+
+    public async Task AddMovementAsync(Movement movement)
+    {
+        context.Movements.Add(movement);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<User?> GetUserByIdAsync(int userId)
+    {
+        return await context.Users.FindAsync(userId);
+    }
+
+    public async Task<Animal?> GetAnimalByIdAsync(int animalId)
+    {
+        return await context.Animals.FindAsync(animalId);
+    }
+
+    public async Task<Lot?> GetLotByIdAsync(int lotId)
+    {
+        return await context.Lots.FindAsync(lotId);
+    }
+
+    public async Task<Paddock?> GetPaddockByIdAsync(int paddockId)
+    {
+        return await context.Paddocks.FindAsync(paddockId);
     }
 }

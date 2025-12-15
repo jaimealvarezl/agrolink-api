@@ -1,11 +1,10 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Infrastructure.Data;
+using AgroLink.Application.Interfaces; // For IPhotoRepository
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity;
 
-public class GetPhotosByEntityQueryHandler(AgroLinkDbContext context)
+public class GetPhotosByEntityQueryHandler(IPhotoRepository photoRepository)
     : IRequestHandler<GetPhotosByEntityQuery, IEnumerable<PhotoDto>>
 {
     public async Task<IEnumerable<PhotoDto>> Handle(
@@ -13,9 +12,10 @@ public class GetPhotosByEntityQueryHandler(AgroLinkDbContext context)
         CancellationToken cancellationToken
     )
     {
-        var photos = await context
-            .Photos.Where(p => p.EntityType == request.EntityType && p.EntityId == request.EntityId)
-            .ToListAsync(cancellationToken);
+        var photos = await photoRepository.GetPhotosByEntityAsync(
+            request.EntityType,
+            request.EntityId
+        );
 
         return photos
             .Select(p => new PhotoDto

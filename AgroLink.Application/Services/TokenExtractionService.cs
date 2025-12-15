@@ -1,5 +1,4 @@
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
 
 namespace AgroLink.Application.Services;
 

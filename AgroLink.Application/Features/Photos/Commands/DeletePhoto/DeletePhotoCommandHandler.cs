@@ -1,22 +1,14 @@
-using AgroLink.Infrastructure.Data;
-using Amazon.S3;
+using AgroLink.Application.Interfaces; // For IPhotoRepository, IAwsS3Service
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace AgroLink.Application.Features.Photos.Commands.DeletePhoto;
 
-public class DeletePhotoCommandHandler(
-    AgroLinkDbContext context,
-    IAmazonS3 s3Client,
-    IConfiguration configuration
-) : IRequestHandler<DeletePhotoCommand, Unit>
+public class DeletePhotoCommandHandler(IPhotoRepository photoRepository, IAwsS3Service awsS3Service)
+    : IRequestHandler<DeletePhotoCommand, Unit>
 {
-    private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
-
     public async Task<Unit> Handle(DeletePhotoCommand request, CancellationToken cancellationToken)
     {
-        var photo = await context.Photos.FindAsync(request.Id);
+        var photo = await photoRepository.GetPhotoByIdAsync(request.Id);
         if (photo == null)
         {
             throw new ArgumentException("Photo not found");
@@ -28,7 +20,7 @@ public class DeletePhotoCommandHandler(
             try
             {
                 var key = ExtractKeyFromUrl(photo.UriRemote);
-                await s3Client.DeleteObjectAsync(_bucketName, key, cancellationToken);
+                await awsS3Service.DeleteFileAsync(key);
             }
             catch (Exception ex)
             {
@@ -36,8 +28,7 @@ public class DeletePhotoCommandHandler(
             }
         }
 
-        context.Photos.Remove(photo);
-        await context.SaveChangesAsync(cancellationToken);
+        await photoRepository.DeletePhotoAsync(photo);
 
         return Unit.Value;
     }

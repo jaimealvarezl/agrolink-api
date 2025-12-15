@@ -1,10 +1,9 @@
-using AgroLink.Infrastructure.Data;
+using AgroLink.Application.Interfaces; // For IPhotoRepository
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Application.Features.Photos.Commands.SyncPendingPhotos;
 
-public class SyncPendingPhotosCommandHandler(AgroLinkDbContext context)
+public class SyncPendingPhotosCommandHandler(IPhotoRepository photoRepository)
     : IRequestHandler<SyncPendingPhotosCommand, Unit>
 {
     public async Task<Unit> Handle(
@@ -12,9 +11,7 @@ public class SyncPendingPhotosCommandHandler(AgroLinkDbContext context)
         CancellationToken cancellationToken
     )
     {
-        var pendingPhotos = await context
-            .Photos.Where(p => !p.Uploaded)
-            .ToListAsync(cancellationToken);
+        var pendingPhotos = await photoRepository.GetPendingPhotosAsync();
 
         foreach (var photo in pendingPhotos)
         {
@@ -24,15 +21,13 @@ public class SyncPendingPhotosCommandHandler(AgroLinkDbContext context)
                 // Implementation depends on how local files are stored
                 // For now, we'll just mark as attempted
                 photo.UpdatedAt = DateTime.UtcNow;
-                context.Photos.Update(photo);
+                await photoRepository.UpdatePhotoAsync(photo);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to sync photo {photo.Id}: {ex.Message}");
             }
         }
-
-        await context.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

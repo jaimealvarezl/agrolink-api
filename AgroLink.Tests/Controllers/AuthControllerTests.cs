@@ -1,7 +1,11 @@
 using AgroLink.Api.Controllers;
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Auth.Commands.Login;
+using AgroLink.Application.Features.Auth.Commands.Register;
+using AgroLink.Application.Features.Auth.Queries.GetUserProfile;
+using AgroLink.Application.Features.Auth.Queries.ValidateToken;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -15,15 +19,12 @@ public class AuthControllerTests
     [SetUp]
     public void Setup()
     {
-        _authServiceMock = new Mock<IAuthService>();
+        _mediatorMock = new Mock<IMediator>();
         _tokenExtractionServiceMock = new Mock<ITokenExtractionService>();
-        _controller = new AuthController(
-            _authServiceMock.Object,
-            _tokenExtractionServiceMock.Object
-        );
+        _controller = new AuthController(_tokenExtractionServiceMock.Object, _mediatorMock.Object);
     }
 
-    private Mock<IAuthService> _authServiceMock = null!;
+    private Mock<IMediator> _mediatorMock = null!;
     private Mock<ITokenExtractionService> _tokenExtractionServiceMock = null!;
     private AuthController _controller = null!;
 
@@ -45,7 +46,17 @@ public class AuthControllerTests
             ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
 
-        _authServiceMock.Setup(x => x.LoginAsync(loginDto)).ReturnsAsync(authResponse);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<LoginCommand>(c =>
+                        c.LoginDto.Email == loginDto.Email
+                        && c.LoginDto.Password == loginDto.Password
+                    ),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(authResponse);
 
         // Act
         var result = await _controller.Login(loginDto);
@@ -64,7 +75,17 @@ public class AuthControllerTests
         // Arrange
         var loginDto = new LoginDto { Email = "test@example.com", Password = "wrongpassword" };
 
-        _authServiceMock.Setup(x => x.LoginAsync(loginDto)).ReturnsAsync((AuthResponseDto?)null);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<LoginCommand>(c =>
+                        c.LoginDto.Email == loginDto.Email
+                        && c.LoginDto.Password == loginDto.Password
+                    ),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync((AuthResponseDto?)null);
 
         // Act
         var result = await _controller.Login(loginDto);
@@ -104,7 +125,16 @@ public class AuthControllerTests
             ExpiresAt = DateTime.UtcNow.AddDays(7),
         };
 
-        _authServiceMock.Setup(x => x.RegisterUserAsync(request)).ReturnsAsync(authResponse);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<RegisterCommand>(c =>
+                        c.Request.Email == request.Email && c.Request.Password == request.Password
+                    ),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(authResponse);
 
         // Act
         var result = await _controller.Register(request);
@@ -129,8 +159,15 @@ public class AuthControllerTests
             Password = "password123",
         };
 
-        _authServiceMock
-            .Setup(x => x.RegisterUserAsync(request))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<RegisterCommand>(c =>
+                        c.Request.Email == request.Email && c.Request.Password == request.Password
+                    ),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ThrowsAsync(new ArgumentException("User with this email already exists"));
 
         // Act
@@ -160,7 +197,14 @@ public class AuthControllerTests
             .Setup(x => x.ExtractTokenFromHeader(It.IsAny<string>()))
             .Returns("valid-token");
 
-        _authServiceMock.Setup(x => x.GetUserProfileAsync("valid-token")).ReturnsAsync(userDto);
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetUserProfileQuery>(q => q.Token == "valid-token"),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(userDto);
 
         // Setup HTTP context
         var httpContext = new DefaultHttpContext();
@@ -205,8 +249,13 @@ public class AuthControllerTests
             .Setup(x => x.ExtractTokenFromHeader(It.IsAny<string>()))
             .Returns("valid-token");
 
-        _authServiceMock
-            .Setup(x => x.GetUserProfileAsync("valid-token"))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<GetUserProfileQuery>(q => q.Token == "valid-token"),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync((UserDto?)null);
 
         // Setup HTTP context
@@ -229,8 +278,13 @@ public class AuthControllerTests
         var request = new ValidateTokenRequest { Token = "valid-token" };
         var response = new ValidateTokenResponse { Valid = true };
 
-        _authServiceMock
-            .Setup(x => x.ValidateTokenResponseAsync("valid-token"))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<ValidateTokenQuery>(q => q.Token == "valid-token"),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(response);
 
         // Act
@@ -250,8 +304,13 @@ public class AuthControllerTests
         var request = new ValidateTokenRequest { Token = "invalid-token" };
         var response = new ValidateTokenResponse { Valid = false };
 
-        _authServiceMock
-            .Setup(x => x.ValidateTokenResponseAsync("invalid-token"))
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<ValidateTokenQuery>(q => q.Token == "invalid-token"),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(response);
 
         // Act

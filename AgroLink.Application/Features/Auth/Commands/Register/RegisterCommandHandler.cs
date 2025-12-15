@@ -1,29 +1,22 @@
-using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces; // For IAuthRepository and IJwtTokenService
 using AgroLink.Domain.Entities;
-using AgroLink.Infrastructure.Data;
+using BCrypt.Net; // For HashPassword
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AgroLink.Application.Features.Auth.Commands.Register;
 
-public class RegisterCommandHandler(AgroLinkDbContext context, IConfiguration configuration)
-    : IRequestHandler<RegisterCommand, AuthResponseDto>
+public class RegisterCommandHandler(
+    IAuthRepository authRepository,
+    IJwtTokenService jwtTokenService
+) : IRequestHandler<RegisterCommand, AuthResponseDto>
 {
     public async Task<AuthResponseDto> Handle(
         RegisterCommand request,
         CancellationToken cancellationToken
     )
     {
-        var existingUser = await context.Users.FirstOrDefaultAsync(
-            u => u.Email == request.Request.Email,
-            cancellationToken
-        );
+        var existingUser = await authRepository.GetUserByEmailAsync(request.Request.Email);
         if (existingUser != null)
         {
             throw new ArgumentException("User with this email already exists");
@@ -33,13 +26,12 @@ public class RegisterCommandHandler(AgroLinkDbContext context, IConfiguration co
         {
             Name = request.Request.Name,
             Email = request.Request.Email,
-            PasswordHash = HashPassword(request.Request.Password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Request.Password),
             Role = request.Request.Role ?? "USER",
             IsActive = true,
         };
 
-        context.Users.Add(user);
-        await context.SaveChangesAsync(cancellationToken);
+        await authRepository.AddUserAsync(user);
 
         var registeredUserDto = new UserDto
         {
@@ -51,7 +43,7 @@ public class RegisterCommandHandler(AgroLinkDbContext context, IConfiguration co
             CreatedAt = user.CreatedAt,
         };
 
-        var token = GenerateJwtToken(registeredUserDto);
+        var token = jwtTokenService.GenerateToken(registeredUserDto);
 
         return new AuthResponseDto
         {
@@ -59,36 +51,5 @@ public class RegisterCommandHandler(AgroLinkDbContext context, IConfiguration co
             User = registeredUserDto,
             ExpiresAt = DateTime.UtcNow.AddDays(7),
         };
-    }
-
-    private string GenerateJwtToken(UserDto user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity([
-                new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
-                new Claim("email", user.Email),
-                new Claim("role", user.Role),
-                new Claim("name", user.Name),
-            ]),
-            Expires = DateTime.UtcNow.AddDays(7),
-            Issuer = configuration["Jwt:Issuer"],
-            Audience = configuration["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature
-            ),
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    private static string HashPassword(string password)
-    {
-        return BCrypt.Net.BCrypt.HashPassword(password);
     }
 }

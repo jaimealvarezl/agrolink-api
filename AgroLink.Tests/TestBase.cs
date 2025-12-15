@@ -4,7 +4,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
-using AgroLink.Infrastructure.Services;
+using AgroLink.Infrastructure.Services; // Added
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,14 +37,25 @@ public abstract class TestBase
         services.AddScoped<IOwnerRepository, OwnerRepository>();
         services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();
         services.AddScoped<IChecklistRepository, ChecklistRepository>();
-        services.AddScoped<IMovementRepository, MovementRepository>();
-        services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
-        services.AddScoped<IChecklistService, ChecklistService>();
-        services.AddScoped<IMovementService, MovementService>();
-        services.AddScoped<IPhotoService, PhotoService>();
-        services.AddScoped<IAuthService, AuthService>();
+        // Add new CQRS-related repositories and services
+        services.AddScoped<AgroLink.Application.Interfaces.IPhotoRepository, PhotoRepository>(); // Explicitly use Application interface
+        services.AddScoped<
+            AgroLink.Application.Interfaces.IMovementRepository,
+            MovementRepository
+        >(); // Explicitly use Application interface
+        services.AddScoped<IAuthRepository, AuthRepository>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IAwsS3Service, AwsS3Service>();
+
+        // Add ChecklistService (as it still exists)
+        services.AddScoped<ITokenExtractionService, TokenExtractionService>();
+
+        // Add MediatR
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(typeof(AgroLink.Application.DTOs.AnimalDto).Assembly)
+        );
 
         return services.BuildServiceProvider();
     }

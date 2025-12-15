@@ -1,16 +1,15 @@
 using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Movements.Commands.CreateMovement;
-using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity; // Added this using directive
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+
+// Added this using directive
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class MovementsController(IMovementService movementService, IMediator mediator)
-    : BaseController
+public class MovementsController(IMediator mediator) : BaseController
 {
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<MovementDto>>> GetByEntity(

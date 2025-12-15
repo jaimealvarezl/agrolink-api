@@ -1,34 +1,44 @@
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
-using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class PhotoRepository : Repository<Photo>, IPhotoRepository
+public class PhotoRepository(AgroLinkDbContext context) : IPhotoRepository
 {
-    public PhotoRepository(AgroLinkDbContext context)
-        : base(context) { }
-
-    public async Task<IEnumerable<Photo>> GetByEntityAsync(string entityType, int entityId)
+    public async Task AddPhotoAsync(Photo photo)
     {
-        return await _dbSet
-            .Where(p => p.EntityType == entityType && p.EntityId == entityId)
-            .OrderByDescending(p => p.CreatedAt)
+        context.Photos.Add(photo);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Photo>> GetPhotosByEntityAsync(string entityType, int entityId)
+    {
+        return await context
+            .Photos.Where(p => p.EntityType == entityType && p.EntityId == entityId)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Photo>> GetPendingUploadsAsync()
+    public async Task<Photo?> GetPhotoByIdAsync(int id)
     {
-        return await _dbSet.Where(p => !p.Uploaded).OrderBy(p => p.CreatedAt).ToListAsync();
+        return await context.Photos.FindAsync(id);
     }
 
-    public async Task<IEnumerable<Photo>> GetByEntityTypeAsync(string entityType)
+    public async Task DeletePhotoAsync(Photo photo)
     {
-        return await _dbSet
-            .Where(p => p.EntityType == entityType)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
+        context.Photos.Remove(photo);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task UpdatePhotoAsync(Photo photo)
+    {
+        context.Photos.Update(photo);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Photo>> GetPendingPhotosAsync()
+    {
+        return await context.Photos.Where(p => !p.Uploaded).ToListAsync();
     }
 }

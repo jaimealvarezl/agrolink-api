@@ -1,19 +1,11 @@
-using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Entities;
-using AgroLink.Infrastructure.Data;
+using AgroLink.Application.Interfaces; // For IAuthRepository and IJwtTokenService
+using BCrypt.Net; // For VerifyPassword
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AgroLink.Application.Features.Auth.Commands.Login;
 
-public class LoginCommandHandler(AgroLinkDbContext context, IConfiguration configuration)
+public class LoginCommandHandler(IAuthRepository authRepository, IJwtTokenService jwtTokenService)
     : IRequestHandler<LoginCommand, AuthResponseDto?>
 {
     public async Task<AuthResponseDto?> Handle(
@@ -21,25 +13,21 @@ public class LoginCommandHandler(AgroLinkDbContext context, IConfiguration confi
         CancellationToken cancellationToken
     )
     {
-        var user = await context.Users.FirstOrDefaultAsync(
-            u => u.Email == request.LoginDto.Email && u.IsActive,
-            cancellationToken
-        );
-        if (user == null)
+        var user = await authRepository.GetUserByEmailAsync(request.LoginDto.Email);
+        if (user == null || !user.IsActive)
         {
             return null;
         }
 
-        if (!VerifyPassword(request.LoginDto.Password, user.PasswordHash))
+        if (!BCrypt.Net.BCrypt.Verify(request.LoginDto.Password, user.PasswordHash))
         {
             return null;
         }
 
         user.LastLoginAt = DateTime.UtcNow;
-        context.Users.Update(user);
-        await context.SaveChangesAsync(cancellationToken);
+        await authRepository.UpdateUserAsync(user);
 
-        var token = GenerateJwtToken(user);
+        var token = jwtTokenService.GenerateToken(user);
         var expiresAt = DateTime.UtcNow.AddDays(7); // Token expires in 7 days
 
         return new AuthResponseDto
@@ -57,36 +45,5 @@ public class LoginCommandHandler(AgroLinkDbContext context, IConfiguration confi
             },
             ExpiresAt = expiresAt,
         };
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"] ?? "default-key");
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity([
-                new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
-                new Claim("email", user.Email),
-                new Claim("role", user.Role),
-                new Claim("name", user.Name),
-            ]),
-            Expires = DateTime.UtcNow.AddDays(7),
-            Issuer = configuration["Jwt:Issuer"],
-            Audience = configuration["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature
-            ),
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    private static bool VerifyPassword(string password, string hash)
-    {
-        return BCrypt.Net.BCrypt.Verify(password, hash);
     }
 }

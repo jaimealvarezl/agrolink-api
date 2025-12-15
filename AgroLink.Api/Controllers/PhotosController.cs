@@ -3,16 +3,16 @@ using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Photos.Commands.DeletePhoto;
 using AgroLink.Application.Features.Photos.Commands.SyncPendingPhotos;
 using AgroLink.Application.Features.Photos.Commands.UploadPhoto;
-using AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity; // Added this using directive
-using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Interfaces;
+using AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+
+// Added this using directive
 
 namespace AgroLink.Api.Controllers;
 
 [Route("api/[controller]")]
-public class PhotosController(IPhotoService photoService, IMediator mediator) : BaseController
+public class PhotosController(IMediator mediator) : BaseController
 {
     [HttpGet("entity/{entityType}/{entityId}")]
     public async Task<ActionResult<IEnumerable<PhotoDto>>> GetByEntity(

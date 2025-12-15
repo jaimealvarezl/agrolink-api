@@ -1,10 +1,7 @@
 using AgroLink.Api.Controllers;
 using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Paddocks.Commands.Create;
-using AgroLink.Application.Features.Paddocks.Commands.Delete;
-using AgroLink.Application.Features.Paddocks.Commands.Update;
 using AgroLink.Application.Features.Paddocks.Queries.GetAll;
-using AgroLink.Application.Features.Paddocks.Queries.GetByFarm;
 using AgroLink.Application.Features.Paddocks.Queries.GetById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

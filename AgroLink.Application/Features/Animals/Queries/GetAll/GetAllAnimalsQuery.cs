@@ -1,4 +1,5 @@
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -51,7 +52,7 @@ public class GetAllAnimalsQueryHandler(
                 }
             }
 
-            var photos = await photoRepository.GetByEntityAsync("ANIMAL", animal.Id);
+            var photos = await photoRepository.GetPhotosByEntityAsync("ANIMAL", animal.Id);
             var photoDtos = photos
                 .Select(p => new PhotoDto
                 {

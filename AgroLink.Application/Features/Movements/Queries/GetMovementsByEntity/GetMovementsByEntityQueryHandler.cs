@@ -1,12 +1,11 @@
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces; // For IMovementRepository
 using AgroLink.Domain.Entities;
-using AgroLink.Infrastructure.Data;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
 
-public class GetMovementsByEntityQueryHandler(AgroLinkDbContext context)
+public class GetMovementsByEntityQueryHandler(IMovementRepository movementRepository)
     : IRequestHandler<GetMovementsByEntityQuery, IEnumerable<MovementDto>>
 {
     public async Task<IEnumerable<MovementDto>> Handle(
@@ -14,11 +13,10 @@ public class GetMovementsByEntityQueryHandler(AgroLinkDbContext context)
         CancellationToken cancellationToken
     )
     {
-        var movements = await context
-            .Movements.Where(m =>
-                m.EntityType == request.EntityType && m.EntityId == request.EntityId
-            )
-            .ToListAsync(cancellationToken);
+        var movements = await movementRepository.GetMovementsByEntityAsync(
+            request.EntityType,
+            request.EntityId
+        );
         var result = new List<MovementDto>();
 
         foreach (var movement in movements)
@@ -31,7 +29,7 @@ public class GetMovementsByEntityQueryHandler(AgroLinkDbContext context)
 
     private async Task<MovementDto> MapToDtoAsync(Movement movement)
     {
-        var user = await context.Users.FindAsync(movement.UserId);
+        var user = await movementRepository.GetUserByIdAsync(movement.UserId);
 
         string? entityName = null;
         string? fromName = null;
@@ -40,12 +38,12 @@ public class GetMovementsByEntityQueryHandler(AgroLinkDbContext context)
         // Get entity name
         if (movement.EntityType == "ANIMAL")
         {
-            var animal = await context.Animals.FindAsync(movement.EntityId);
+            var animal = await movementRepository.GetAnimalByIdAsync(movement.EntityId);
             entityName = animal?.Tag;
         }
         else if (movement.EntityType == "LOT")
         {
-            var lot = await context.Lots.FindAsync(movement.EntityId);
+            var lot = await movementRepository.GetLotByIdAsync(movement.EntityId);
             entityName = lot?.Name;
         }
 
@@ -54,12 +52,12 @@ public class GetMovementsByEntityQueryHandler(AgroLinkDbContext context)
         {
             if (movement.EntityType == "ANIMAL")
             {
-                var lot = await context.Lots.FindAsync(movement.FromId.Value);
+                var lot = await movementRepository.GetLotByIdAsync(movement.FromId.Value);
                 fromName = lot?.Name;
             }
             else if (movement.EntityType == "LOT")
             {
-                var paddock = await context.Paddocks.FindAsync(movement.FromId.Value);
+                var paddock = await movementRepository.GetPaddockByIdAsync(movement.FromId.Value);
                 fromName = paddock?.Name;
             }
         }
@@ -69,12 +67,12 @@ public class GetMovementsByEntityQueryHandler(AgroLinkDbContext context)
         {
             if (movement.EntityType == "ANIMAL")
             {
-                var lot = await context.Lots.FindAsync(movement.ToId.Value);
+                var lot = await movementRepository.GetLotByIdAsync(movement.ToId.Value);
                 toName = lot?.Name;
             }
             else if (movement.EntityType == "LOT")
             {
-                var paddock = await context.Paddocks.FindAsync(movement.ToId.Value);
+                var paddock = await movementRepository.GetPaddockByIdAsync(movement.ToId.Value);
                 toName = paddock?.Name;
             }
         }

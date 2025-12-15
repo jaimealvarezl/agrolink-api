@@ -11,7 +11,7 @@ public class GetAnimalsByLotQueryHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    IPhotoRepository photoRepository
+    AgroLink.Application.Interfaces.IPhotoRepository photoRepository
 ) : IRequestHandler<GetAnimalsByLotQuery, IEnumerable<AnimalDto>>
 {
     public async Task<IEnumerable<AnimalDto>> Handle(
@@ -51,7 +51,7 @@ public class GetAnimalsByLotQueryHandler(
                 }
             }
 
-            var photos = await photoRepository.GetByEntityAsync("ANIMAL", animal.Id);
+            var photos = await photoRepository.GetPhotosByEntityAsync("ANIMAL", animal.Id);
             var photoDtos = photos
                 .Select(p => new PhotoDto
                 {

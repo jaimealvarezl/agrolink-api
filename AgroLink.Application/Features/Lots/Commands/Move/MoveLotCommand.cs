@@ -11,7 +11,7 @@ public record MoveLotCommand(int LotId, int ToPaddockId, string? Reason, int Use
 public class MoveLotCommandHandler(
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
-    IMovementRepository movementRepository
+    AgroLink.Application.Interfaces.IMovementRepository movementRepository
 ) : IRequestHandler<MoveLotCommand, LotDto>
 {
     public async Task<LotDto> Handle(MoveLotCommand request, CancellationToken cancellationToken)
@@ -40,7 +40,7 @@ public class MoveLotCommandHandler(
             UserId = request.UserId,
         };
 
-        await movementRepository.AddAsync(movement);
+        await movementRepository.AddMovementAsync(movement);
 
         var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
 

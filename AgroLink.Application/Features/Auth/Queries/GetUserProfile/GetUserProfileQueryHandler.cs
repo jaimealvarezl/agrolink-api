@@ -1,13 +1,13 @@
-using System.IdentityModel.Tokens.Jwt;
 using AgroLink.Application.DTOs;
-using AgroLink.Infrastructure.Data;
+using AgroLink.Application.Interfaces; // For IAuthRepository and IJwtTokenService
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Application.Features.Auth.Queries.GetUserProfile;
 
-public class GetUserProfileQueryHandler(AgroLinkDbContext context)
-    : IRequestHandler<GetUserProfileQuery, UserDto?>
+public class GetUserProfileQueryHandler(
+    IAuthRepository authRepository,
+    IJwtTokenService jwtTokenService
+) : IRequestHandler<GetUserProfileQuery, UserDto?>
 {
     public async Task<UserDto?> Handle(
         GetUserProfileQuery request,
@@ -16,16 +16,13 @@ public class GetUserProfileQueryHandler(AgroLinkDbContext context)
     {
         try
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwt = tokenHandler.ReadJwtToken(request.Token);
-
-            var userIdClaim = jwt.Claims.FirstOrDefault(x => x.Type == "userid");
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            var userDtoFromToken = jwtTokenService.GetUserFromToken(request.Token);
+            if (userDtoFromToken == null)
             {
                 return null;
             }
 
-            var user = await context.Users.FindAsync(userId);
+            var user = await authRepository.GetUserByIdAsync(userDtoFromToken.Id);
             if (user == null || !user.IsActive)
             {
                 return null;
