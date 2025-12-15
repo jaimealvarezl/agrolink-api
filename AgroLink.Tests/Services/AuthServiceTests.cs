@@ -2,7 +2,7 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AgroLink.Core.DTOs;
+using AgroLink.Application.DTOs;
 using AgroLink.Core.Entities;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Services;

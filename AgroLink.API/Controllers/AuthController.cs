@@ -1,4 +1,5 @@
-using AgroLink.Core.DTOs;
+using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

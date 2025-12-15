@@ -1,4 +1,4 @@
-namespace AgroLink.Core.Interfaces;
+namespace AgroLink.Application.Interfaces;
 
 public interface ITokenExtractionService
 {

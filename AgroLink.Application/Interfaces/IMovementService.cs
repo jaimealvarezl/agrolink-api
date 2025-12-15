@@ -1,6 +1,6 @@
-using AgroLink.Core.DTOs;
+using AgroLink.Application.DTOs;
 
-namespace AgroLink.Core.Interfaces;
+namespace AgroLink.Application.Interfaces;
 
 public interface IMovementService
 {

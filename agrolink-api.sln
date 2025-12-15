@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Infrastructure", "AgroLink.Infrastructure\AgroLink.Infrastructure.csproj", "{C2BE58EB-DD7E-4C1C-9D24-227ABBC7EEE6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Tests", "AgroLink.Tests\AgroLink.Tests.csproj", "{F5798DFA-44C4-4734-8745-07EA76A8F158}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgroLink.Application", "AgroLink.Application\AgroLink.Application.csproj", "{A65515D6-3B30-4B5D-8EDF-5B81B6F0F3CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{F5798DFA-44C4-4734-8745-07EA76A8F158}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5798DFA-44C4-4734-8745-07EA76A8F158}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5798DFA-44C4-4734-8745-07EA76A8F158}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A65515D6-3B30-4B5D-8EDF-5B81B6F0F3CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A65515D6-3B30-4B5D-8EDF-5B81B6F0F3CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A65515D6-3B30-4B5D-8EDF-5B81B6F0F3CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A65515D6-3B30-4B5D-8EDF-5B81B6F0F3CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

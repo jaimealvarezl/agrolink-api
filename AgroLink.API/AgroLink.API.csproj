@@ -24,5 +24,6 @@
   <ItemGroup>
     <ProjectReference Include="..\AgroLink.Core\AgroLink.Core.csproj" />
     <ProjectReference Include="..\AgroLink.Infrastructure\AgroLink.Infrastructure.csproj" />
+    <ProjectReference Include="..\AgroLink.Application\AgroLink.Application.csproj" />
   </ItemGroup>
 </Project>

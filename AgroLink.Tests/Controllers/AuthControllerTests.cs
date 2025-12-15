@@ -1,5 +1,6 @@
 using AgroLink.API.Controllers;
-using AgroLink.Core.DTOs;
+using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
