@@ -1,12 +1,8 @@
-using System;
-using System.Linq;
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Infrastructure.Tests.Services;

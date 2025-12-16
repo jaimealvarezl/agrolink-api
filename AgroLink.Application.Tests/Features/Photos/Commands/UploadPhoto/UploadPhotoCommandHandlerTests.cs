@@ -1,13 +1,8 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Photos.Commands.UploadPhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Photos.Commands.UploadPhoto;
@@ -51,8 +46,13 @@ public class UploadPhotoCommandHandlerTests
             UriLocal = $"local/animal/1/{fileName}",
         };
 
-_photoRepositoryMock.Setup(r => r.AddPhotoAsync(It.IsAny<Photo>())).Callback<Photo>(p => p.Id = photo.Id).Returns(Task.CompletedTask);
-        _photoRepositoryMock.Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>())).Returns(Task.CompletedTask);
+        _photoRepositoryMock
+            .Setup(r => r.AddPhotoAsync(It.IsAny<Photo>()))
+            .Callback<Photo>(p => p.Id = photo.Id)
+            .Returns(Task.CompletedTask);
+        _photoRepositoryMock
+            .Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>()))
+            .Returns(Task.CompletedTask);
         _awsS3ServiceMock
             .Setup(s =>
                 s.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>())
@@ -100,7 +100,10 @@ _photoRepositoryMock.Setup(r => r.AddPhotoAsync(It.IsAny<Photo>())).Callback<Pho
             UriLocal = $"local/animal/1/{fileName}",
         };
 
-_photoRepositoryMock.Setup(r => r.AddPhotoAsync(It.IsAny<Photo>())).Callback<Photo>(p => p.Id = photo.Id).Returns(Task.CompletedTask);
+        _photoRepositoryMock
+            .Setup(r => r.AddPhotoAsync(It.IsAny<Photo>()))
+            .Callback<Photo>(p => p.Id = photo.Id)
+            .Returns(Task.CompletedTask);
         _photoRepositoryMock
             .Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>()))
             .Returns(Task.CompletedTask);

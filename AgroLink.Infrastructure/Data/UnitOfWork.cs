@@ -1,5 +1,4 @@
 using AgroLink.Domain.Interfaces;
-using System.Threading.Tasks;
 
 namespace AgroLink.Infrastructure.Data
 {

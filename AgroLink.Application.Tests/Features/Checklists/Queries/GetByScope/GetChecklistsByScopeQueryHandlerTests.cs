@@ -1,15 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using AgroLink.Application.DTOs;
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetByScope;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetByScope;
@@ -21,7 +15,7 @@ public class GetChecklistsByScopeQueryHandlerTests
     private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
     private Mock<IUserRepository> _userRepositoryMock = null!;
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<AgroLink.Application.Interfaces.IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private GetChecklistsByScopeQueryHandler _handler = null!;
@@ -33,7 +27,7 @@ public class GetChecklistsByScopeQueryHandlerTests
         _checklistItemRepositoryMock = new Mock<IRepository<ChecklistItem>>();
         _userRepositoryMock = new Mock<IUserRepository>();
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _photoRepositoryMock = new Mock<AgroLink.Application.Interfaces.IPhotoRepository>();
+        _photoRepositoryMock = new Mock<IPhotoRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _handler = new GetChecklistsByScopeQueryHandler(
@@ -81,11 +75,7 @@ public class GetChecklistsByScopeQueryHandlerTests
             .ReturnsAsync(checklists);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
         _checklistItemRepositoryMock
-            .Setup(r =>
-                r.FindAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<Func<ChecklistItem, bool>>>()
-                )
-            )
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem>());
         _photoRepositoryMock
             .Setup(r => r.GetPhotosByEntityAsync(It.IsAny<string>(), It.IsAny<int>()))

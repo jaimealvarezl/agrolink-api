@@ -3,8 +3,10 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Checklists.Commands.Delete;
 
-public class DeleteChecklistCommandHandler(IChecklistRepository checklistRepository, IUnitOfWork unitOfWork)
-    : IRequestHandler<DeleteChecklistCommand, Unit>
+public class DeleteChecklistCommandHandler(
+    IChecklistRepository checklistRepository,
+    IUnitOfWork unitOfWork
+) : IRequestHandler<DeleteChecklistCommand, Unit>
 {
     public async Task<Unit> Handle(
         DeleteChecklistCommand request,

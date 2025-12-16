@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Photos.Queries.GetPhotosByEntity;

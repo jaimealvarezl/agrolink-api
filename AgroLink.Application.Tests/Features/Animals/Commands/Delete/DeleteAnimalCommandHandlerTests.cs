@@ -18,7 +18,10 @@ public class DeleteAnimalCommandHandlerTests
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new DeleteAnimalCommandHandler(_animalRepositoryMock.Object, _unitOfWorkMock.Object);
+        _handler = new DeleteAnimalCommandHandler(
+            _animalRepositoryMock.Object,
+            _unitOfWorkMock.Object
+        );
     }
 
     [Test]

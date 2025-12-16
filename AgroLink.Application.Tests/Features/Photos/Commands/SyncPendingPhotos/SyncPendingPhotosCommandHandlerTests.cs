@@ -40,7 +40,9 @@ public class SyncPendingPhotosCommandHandlerTests
         };
 
         _photoRepositoryMock.Setup(r => r.GetPendingPhotosAsync()).ReturnsAsync(pendingPhotos);
-        _photoRepositoryMock.Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>())).Returns(Task.CompletedTask);
+        _photoRepositoryMock
+            .Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);

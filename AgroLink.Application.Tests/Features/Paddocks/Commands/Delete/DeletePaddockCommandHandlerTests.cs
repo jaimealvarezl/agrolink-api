@@ -18,7 +18,10 @@ public class DeletePaddockCommandHandlerTests
     {
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new DeletePaddockCommandHandler(_paddockRepositoryMock.Object, _unitOfWorkMock.Object);
+        _handler = new DeletePaddockCommandHandler(
+            _paddockRepositoryMock.Object,
+            _unitOfWorkMock.Object
+        );
     }
 
     [Test]

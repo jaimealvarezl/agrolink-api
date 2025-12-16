@@ -73,7 +73,7 @@ public class GetMovementsByEntityQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        
+
         // Latest movement (Movement 2)
         var first = result.First();
         first.EntityType.ShouldBe(entityType);
