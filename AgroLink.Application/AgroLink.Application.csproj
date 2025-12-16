@@ -4,7 +4,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MediatR" Version="14.0.0" />
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -1,14 +1,14 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IAuthRepository and IJwtTokenService
+using AgroLink.Application.Interfaces; // For IAuthRepository, IJwtTokenService, IPasswordHasher
 using AgroLink.Domain.Entities;
-using BCrypt.Net; // For HashPassword
 using MediatR;
 
 namespace AgroLink.Application.Features.Auth.Commands.Register;
 
 public class RegisterCommandHandler(
     IAuthRepository authRepository,
-    IJwtTokenService jwtTokenService
+    IJwtTokenService jwtTokenService,
+    IPasswordHasher passwordHasher
 ) : IRequestHandler<RegisterCommand, AuthResponseDto>
 {
     public async Task<AuthResponseDto> Handle(
@@ -26,7 +26,7 @@ public class RegisterCommandHandler(
         {
             Name = request.Request.Name,
             Email = request.Request.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Request.Password),
+            PasswordHash = passwordHasher.HashPassword(request.Request.Password),
             Role = request.Request.Role ?? "USER",
             IsActive = true,
         };

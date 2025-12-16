@@ -53,6 +53,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAwsS3Service, AwsS3Service>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>(); // Registered new IPasswordHasher
 builder.Services.AddScoped<ITokenExtractionService, TokenExtractionService>();
 
 // MediatR

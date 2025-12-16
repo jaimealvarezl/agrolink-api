@@ -48,6 +48,7 @@ public abstract class TestBase
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAwsS3Service, AwsS3Service>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>(); // Registered new IPasswordHasher
 
         // Add ChecklistService (as it still exists)
         services.AddScoped<ITokenExtractionService, TokenExtractionService>();

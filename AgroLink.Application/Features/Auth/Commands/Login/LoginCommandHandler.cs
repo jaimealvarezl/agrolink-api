@@ -1,12 +1,14 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IAuthRepository and IJwtTokenService
-using BCrypt.Net; // For VerifyPassword
+using AgroLink.Application.Interfaces; // For IAuthRepository, IJwtTokenService, IPasswordHasher
 using MediatR;
 
 namespace AgroLink.Application.Features.Auth.Commands.Login;
 
-public class LoginCommandHandler(IAuthRepository authRepository, IJwtTokenService jwtTokenService)
-    : IRequestHandler<LoginCommand, AuthResponseDto?>
+public class LoginCommandHandler(
+    IAuthRepository authRepository,
+    IJwtTokenService jwtTokenService,
+    IPasswordHasher passwordHasher
+) : IRequestHandler<LoginCommand, AuthResponseDto?>
 {
     public async Task<AuthResponseDto?> Handle(
         LoginCommand request,
@@ -19,7 +21,7 @@ public class LoginCommandHandler(IAuthRepository authRepository, IJwtTokenServic
             return null;
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(request.LoginDto.Password, user.PasswordHash))
+        if (!passwordHasher.VerifyPassword(request.LoginDto.Password, user.PasswordHash))
         {
             return null;
         }
