@@ -41,7 +41,7 @@ public class UpdateFarmCommandHandlerTests
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _farmRepositoryMock.Setup(r => r.Update(farm));
-        _farmRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _farmRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

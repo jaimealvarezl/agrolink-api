@@ -34,6 +34,7 @@ public class UpdateFarmCommandHandler(IFarmRepository farmRepository)
         farm.UpdatedAt = DateTime.UtcNow;
 
         farmRepository.Update(farm);
+        await farmRepository.SaveChangesAsync();
 
         return new FarmDto
         {

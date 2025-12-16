@@ -29,7 +29,7 @@ public class DeletePaddockCommandHandlerTests
 
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
         _paddockRepositoryMock.Setup(r => r.Remove(paddock));
-        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);

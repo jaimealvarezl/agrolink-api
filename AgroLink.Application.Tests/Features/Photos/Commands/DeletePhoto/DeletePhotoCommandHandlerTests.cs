@@ -34,8 +34,7 @@ public class DeletePhotoCommandHandlerTests
 
         _photoRepositoryMock.Setup(r => r.GetPhotoByIdAsync(photoId)).ReturnsAsync(photo);
         _awsS3ServiceMock
-            .Setup(s => s.DeleteFileAsync(It.IsAny<string>()))
-            .Returns(Task.CompletedTask);
+            .Setup(s => s.DeleteFileAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _photoRepositoryMock.Setup(r => r.DeletePhotoAsync(photo)).Returns(Task.CompletedTask);
 
         // Act

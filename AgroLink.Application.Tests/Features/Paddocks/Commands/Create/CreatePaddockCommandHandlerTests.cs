@@ -42,7 +42,7 @@ public class CreatePaddockCommandHandlerTests
         _paddockRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Paddock>()))
             .Callback<Paddock>(p => p.Id = paddock.Id); // Simulate DB ID generation
-        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farm.Id)).ReturnsAsync(farm);
 
         // Act

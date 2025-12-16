@@ -19,6 +19,7 @@ public class CreateFarmCommandHandler(IFarmRepository farmRepository)
         var farm = new Farm { Name = dto.Name, Location = dto.Location };
 
         await farmRepository.AddAsync(farm);
+        await farmRepository.SaveChangesAsync();
 
         return new FarmDto
         {

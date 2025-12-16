@@ -29,7 +29,7 @@ public class DeleteFarmCommandHandlerTests
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _farmRepositoryMock.Setup(r => r.Remove(farm));
-        _farmRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _farmRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);

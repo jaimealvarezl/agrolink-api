@@ -43,7 +43,7 @@ public class UpdatePaddockCommandHandlerTests
 
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
         _paddockRepositoryMock.Setup(r => r.Update(paddock));
-        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(newFarm.Id)).ReturnsAsync(newFarm);
 
         // Act

@@ -49,7 +49,7 @@ public class UpdateLotCommandHandlerTests
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _lotRepositoryMock.Setup(r => r.Update(lot));
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(newPaddock.Id)).ReturnsAsync(newPaddock);
 
         // Act

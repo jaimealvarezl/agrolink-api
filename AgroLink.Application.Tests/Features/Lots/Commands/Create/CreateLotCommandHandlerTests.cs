@@ -48,7 +48,7 @@ public class CreateLotCommandHandlerTests
         _lotRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Lot>()))
             .Callback<Lot>(l => l.Id = lot.Id); // Simulate DB ID generation
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddock.Id)).ReturnsAsync(paddock);
 
         // Act

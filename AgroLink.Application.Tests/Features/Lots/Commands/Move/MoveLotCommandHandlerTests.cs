@@ -48,7 +48,7 @@ public class MoveLotCommandHandlerTests
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _lotRepositoryMock.Setup(r => r.Update(lot));
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _movementRepositoryMock
             .Setup(r => r.AddMovementAsync(It.IsAny<Movement>()))
             .Returns(Task.CompletedTask);

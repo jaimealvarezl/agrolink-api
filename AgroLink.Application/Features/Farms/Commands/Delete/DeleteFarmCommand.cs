@@ -17,5 +17,6 @@ public class DeleteFarmCommandHandler(IFarmRepository farmRepository)
         }
 
         farmRepository.Remove(farm);
+        await farmRepository.SaveChangesAsync();
     }
 }
