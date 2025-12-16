@@ -1,6 +1,8 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IAuthRepository, IJwtTokenService, IPasswordHasher
+using AgroLink.Application.Interfaces;
 using MediatR;
+
+// For IAuthRepository, IJwtTokenService, IPasswordHasher
 
 namespace AgroLink.Application.Features.Auth.Commands.Login;
 

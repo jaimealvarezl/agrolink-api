@@ -1,9 +1,7 @@
-using System.IO;
-using System.Threading.Tasks;
 using AgroLink.Application.Interfaces;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Microsoft.Extensions.Configuration; // Added
+using Microsoft.Extensions.Configuration;
 
 namespace AgroLink.Infrastructure.Services;
 

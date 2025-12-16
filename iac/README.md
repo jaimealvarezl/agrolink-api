@@ -148,7 +148,7 @@ Database connection for local app:
 
 ## ⚠️ IMPORTANT: Database Migrations
 
-**Migrations are handled by GitHub Actions CI/CD**, not during Lambda startup. 
+**Migrations are handled by GitHub Actions CI/CD**, not during Lambda startup.
 
 **Ensure `Database.Migrate()` is removed from `Program.cs`** to prevent Lambda initialization timeouts.
 
@@ -215,7 +215,6 @@ using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using System.Text.Json;
 
-// In your Startup/Program.cs or configuration setup
 public class SecretsManagerConfigurationProvider
 {
     private readonly IAmazonSecretsManager _secretsManager;
@@ -236,20 +235,20 @@ public class SecretsManagerConfigurationProvider
 
         var response = await _secretsManager.GetSecretValueAsync(request);
         var secretJson = JsonDocument.Parse(response.SecretString);
-        
+
         // Use the ready-to-use connection string
         if (secretJson.RootElement.TryGetProperty("connectionString", out var connStr))
         {
             return connStr.GetString();
         }
-        
+
         // Fallback: Build it from individual fields
         var host = secretJson.RootElement.GetProperty("host").GetString();
         var port = secretJson.RootElement.GetProperty("port").GetInt32();
         var database = secretJson.RootElement.GetProperty("database").GetString();
         var username = secretJson.RootElement.GetProperty("username").GetString();
         var password = secretJson.RootElement.GetProperty("password").GetString();
-        
+
         return $"Host={host};Port={port};Username={username};Password={password};Database={database}";
     }
 }

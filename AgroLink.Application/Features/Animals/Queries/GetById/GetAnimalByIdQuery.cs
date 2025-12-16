@@ -1,4 +1,5 @@
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -11,7 +12,7 @@ public class GetAnimalByIdQueryHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    AgroLink.Application.Interfaces.IPhotoRepository photoRepository
+    IPhotoRepository photoRepository
 ) : IRequestHandler<GetAnimalByIdQuery, AnimalDto?>
 {
     public async Task<AnimalDto?> Handle(

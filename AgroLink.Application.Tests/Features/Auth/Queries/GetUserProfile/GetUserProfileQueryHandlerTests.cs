@@ -1,11 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
 using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Auth.Queries.GetUserProfile;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Auth.Queries.GetUserProfile;
@@ -41,8 +38,8 @@ public class GetUserProfileQueryHandlerTests
             Name = "Test User",
             Email = "test@example.com",
             IsActive = true,
-            CreatedAt = System.DateTime.UtcNow,
-            LastLoginAt = System.DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            LastLoginAt = DateTime.UtcNow,
         };
 
         _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns(userDtoFromToken);

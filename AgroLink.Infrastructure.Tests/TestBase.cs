@@ -1,13 +1,16 @@
+using AgroLink.Application.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Application.Services;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
-using AgroLink.Infrastructure.Services; // Added
-using MediatR; // Added for MediatR configuration
+using AgroLink.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
+// Added
+// Added for MediatR configuration
 
 namespace AgroLink.Infrastructure.Tests; // Changed namespace
 
@@ -41,11 +44,8 @@ public abstract class TestBase
         services.AddScoped<IUserRepository, UserRepository>();
 
         // Add new CQRS-related repositories and services
-        services.AddScoped<AgroLink.Application.Interfaces.IPhotoRepository, PhotoRepository>(); // Explicitly use Application interface
-        services.AddScoped<
-            AgroLink.Application.Interfaces.IMovementRepository,
-            MovementRepository
-        >(); // Explicitly use Application interface
+        services.AddScoped<IPhotoRepository, PhotoRepository>(); // Explicitly use Application interface
+        services.AddScoped<IMovementRepository, MovementRepository>(); // Explicitly use Application interface
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAwsS3Service, AwsS3Service>();
@@ -55,9 +55,7 @@ public abstract class TestBase
         services.AddScoped<ITokenExtractionService, TokenExtractionService>();
 
         // Add MediatR
-        services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(typeof(AgroLink.Application.DTOs.AnimalDto).Assembly)
-        );
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AnimalDto).Assembly));
 
         return services.BuildServiceProvider();
     }

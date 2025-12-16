@@ -1,6 +1,3 @@
-using System.IO;
-using System.Threading.Tasks;
-
 namespace AgroLink.Application.Interfaces;
 
 public interface IAwsS3Service

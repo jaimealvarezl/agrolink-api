@@ -1,7 +1,9 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IPhotoRepository, IAwsS3Service
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using MediatR;
+
+// For IPhotoRepository, IAwsS3Service
 
 namespace AgroLink.Application.Features.Photos.Commands.UploadPhoto;
 

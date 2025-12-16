@@ -33,7 +33,6 @@ output "rds_endpoint" {
   value       = aws_rds_cluster.serverless_db.endpoint
 }
 
-// Static website hosting disabled on SPA bucket; served via CloudFront
 output "spa_distribution_domain_name" {
   description = "CloudFront domain name for the SPA"
   value       = aws_cloudfront_distribution.s3_distribution.domain_name

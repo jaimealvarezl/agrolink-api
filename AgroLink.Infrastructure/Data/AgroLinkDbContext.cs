@@ -24,7 +24,6 @@ public class AgroLinkDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure Farm
         modelBuilder.Entity<Farm>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -33,7 +32,6 @@ public class AgroLinkDbContext : DbContext
             entity.HasIndex(e => e.Name);
         });
 
-        // Configure Paddock
         modelBuilder.Entity<Paddock>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -46,7 +44,6 @@ public class AgroLinkDbContext : DbContext
             entity.HasIndex(e => e.Name);
         });
 
-        // Configure Lot
         modelBuilder.Entity<Lot>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -60,7 +57,6 @@ public class AgroLinkDbContext : DbContext
             entity.HasIndex(e => e.Name);
         });
 
-        // Configure Animal
         modelBuilder.Entity<Animal>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -93,7 +89,6 @@ public class AgroLinkDbContext : DbContext
             entity.HasIndex(e => e.Name);
         });
 
-        // Configure Owner
         modelBuilder.Entity<Owner>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -102,7 +97,6 @@ public class AgroLinkDbContext : DbContext
             entity.HasIndex(e => e.Name);
         });
 
-        // Configure AnimalOwner (Junction table)
         modelBuilder.Entity<AnimalOwner>(entity =>
         {
             entity.HasKey(e => new { e.AnimalId, e.OwnerId });
@@ -121,7 +115,6 @@ public class AgroLinkDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure Movement
         modelBuilder.Entity<Movement>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -137,7 +130,6 @@ public class AgroLinkDbContext : DbContext
             entity.HasIndex(e => new { e.EntityType, e.EntityId });
         });
 
-        // Configure Checklist
         modelBuilder.Entity<Checklist>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -158,7 +150,6 @@ public class AgroLinkDbContext : DbContext
             });
         });
 
-        // Configure ChecklistItem
         modelBuilder.Entity<ChecklistItem>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -178,7 +169,6 @@ public class AgroLinkDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure Photo
         modelBuilder.Entity<Photo>(entity =>
         {
             entity.HasKey(e => e.Id);

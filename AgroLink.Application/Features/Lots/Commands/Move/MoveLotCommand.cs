@@ -1,4 +1,5 @@
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -11,7 +12,7 @@ public record MoveLotCommand(int LotId, int ToPaddockId, string? Reason, int Use
 public class MoveLotCommandHandler(
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
-    AgroLink.Application.Interfaces.IMovementRepository movementRepository
+    IMovementRepository movementRepository
 ) : IRequestHandler<MoveLotCommand, LotDto>
 {
     public async Task<LotDto> Handle(MoveLotCommand request, CancellationToken cancellationToken)

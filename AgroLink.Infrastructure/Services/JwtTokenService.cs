@@ -51,13 +51,11 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
         {
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            // Check if token can be read (basic format validation)
             if (!tokenHandler.CanReadToken(token))
             {
                 return false;
             }
 
-            // Try to read the token to ensure it's properly formatted
             try
             {
                 tokenHandler.ReadJwtToken(token);
@@ -109,18 +107,15 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
                 return null;
             }
 
-            // In a real application, you might fetch the user from the database
-            // here to ensure the user is still active and valid.
-            // For this example, we'll just reconstruct the DTO from token claims.
             return new UserDto
             {
                 Id = userId,
                 Name = jwt.Claims.FirstOrDefault(x => x.Type == "name")?.Value ?? "",
                 Email = jwt.Claims.FirstOrDefault(x => x.Type == "email")?.Value ?? "",
                 Role = jwt.Claims.FirstOrDefault(x => x.Type == "role")?.Value ?? "",
-                IsActive = true, // Assuming active if token is valid
-                CreatedAt = DateTime.MinValue, // Not available in token
-                LastLoginAt = DateTime.MinValue, // Not available in token
+                IsActive = true,
+                CreatedAt = DateTime.MinValue,
+                LastLoginAt = DateTime.MinValue,
             };
         }
         catch

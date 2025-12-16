@@ -1,4 +1,5 @@
 using AgroLink.Application.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -12,7 +13,7 @@ public class UpdateAnimalCommandHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    AgroLink.Application.Interfaces.IPhotoRepository photoRepository
+    IPhotoRepository photoRepository
 ) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(

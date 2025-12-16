@@ -1,5 +1,5 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IJwtTokenService
+using AgroLink.Application.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Auth.Queries.ValidateToken;

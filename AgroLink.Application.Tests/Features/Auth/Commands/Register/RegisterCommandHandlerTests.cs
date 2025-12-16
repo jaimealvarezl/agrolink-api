@@ -1,12 +1,8 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Auth.Commands.Register;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Auth.Commands.Register;

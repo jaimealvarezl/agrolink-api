@@ -1,6 +1,8 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IAuthRepository and IJwtTokenService
+using AgroLink.Application.Interfaces;
 using MediatR;
+
+// For IAuthRepository and IJwtTokenService
 
 namespace AgroLink.Application.Features.Auth.Queries.GetUserProfile;
 

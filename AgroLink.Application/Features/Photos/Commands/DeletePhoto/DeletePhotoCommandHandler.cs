@@ -1,5 +1,7 @@
-using AgroLink.Application.Interfaces; // For IPhotoRepository, IAwsS3Service
+using AgroLink.Application.Interfaces;
 using MediatR;
+
+// For IPhotoRepository, IAwsS3Service
 
 namespace AgroLink.Application.Features.Photos.Commands.DeletePhoto;
 

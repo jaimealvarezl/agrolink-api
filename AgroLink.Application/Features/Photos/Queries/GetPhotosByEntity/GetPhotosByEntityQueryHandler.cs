@@ -1,6 +1,8 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IPhotoRepository
+using AgroLink.Application.Interfaces;
 using MediatR;
+
+// For IPhotoRepository
 
 namespace AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity;
 

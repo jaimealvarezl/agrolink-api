@@ -1,7 +1,9 @@
 using AgroLink.Application.DTOs;
-using AgroLink.Application.Interfaces; // For IMovementRepository
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using MediatR;
+
+// For IMovementRepository
 
 namespace AgroLink.Application.Features.Movements.Commands.CreateMovement;
 

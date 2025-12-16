@@ -1,6 +1,4 @@
-using System;
 using AgroLink.Domain.Entities;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Domain.Tests.Entities;

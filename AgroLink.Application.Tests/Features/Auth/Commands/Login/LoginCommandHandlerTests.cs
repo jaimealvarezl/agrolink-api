@@ -1,11 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
 using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Auth.Commands.Login;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Auth.Commands.Login;
@@ -62,7 +59,7 @@ public class LoginCommandHandlerTests
         result.Token.ShouldBe(authResponseToken);
         result.User.Email.ShouldBe(user.Email);
         _authRepositoryMock.Verify(
-            r => r.UpdateUserAsync(It.Is<User>(u => u.LastLoginAt != default(System.DateTime))),
+            r => r.UpdateUserAsync(It.Is<User>(u => u.LastLoginAt != default(DateTime))),
             Times.Once
         );
     }

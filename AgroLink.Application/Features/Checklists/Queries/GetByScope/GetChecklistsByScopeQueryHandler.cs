@@ -11,7 +11,7 @@ public class GetChecklistsByScopeQueryHandler(
     IRepository<ChecklistItem> checklistItemRepository, // Using generic repository for ChecklistItem
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
-    AgroLink.Application.Interfaces.IPhotoRepository photoRepository,
+    IPhotoRepository photoRepository,
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository
 ) : IRequestHandler<GetChecklistsByScopeQuery, IEnumerable<ChecklistDto>>

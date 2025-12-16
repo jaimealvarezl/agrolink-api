@@ -1,5 +1,4 @@
 using AgroLink.Application.Interfaces;
-using BCrypt.Net;
 
 namespace AgroLink.Infrastructure.Services;
 
