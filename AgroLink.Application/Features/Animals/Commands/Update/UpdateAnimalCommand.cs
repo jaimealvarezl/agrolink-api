@@ -13,7 +13,8 @@ public class UpdateAnimalCommandHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    IPhotoRepository photoRepository
+    IPhotoRepository photoRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(
@@ -53,7 +54,7 @@ public class UpdateAnimalCommandHandler(
             await animalOwnerRepository.AddAsync(animalOwner);
         }
 
-        await animalRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         var lot = await lotRepository.GetByIdAsync(animal.LotId);
         var mother = animal.MotherId.HasValue

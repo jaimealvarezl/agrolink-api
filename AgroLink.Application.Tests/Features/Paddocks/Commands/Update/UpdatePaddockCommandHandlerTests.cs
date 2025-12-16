@@ -12,6 +12,7 @@ public class UpdatePaddockCommandHandlerTests
 {
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private UpdatePaddockCommandHandler _handler = null!;
 
     [SetUp]
@@ -19,9 +20,11 @@ public class UpdatePaddockCommandHandlerTests
     {
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _farmRepositoryMock = new Mock<IFarmRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new UpdatePaddockCommandHandler(
             _paddockRepositoryMock.Object,
-            _farmRepositoryMock.Object
+            _farmRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -43,7 +46,7 @@ public class UpdatePaddockCommandHandlerTests
 
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
         _paddockRepositoryMock.Setup(r => r.Update(paddock));
-        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(newFarm.Id)).ReturnsAsync(newFarm);
 
         // Act
@@ -56,7 +59,7 @@ public class UpdatePaddockCommandHandlerTests
         result.FarmId.ShouldBe(updatePaddockDto.FarmId.Value);
         result.FarmName.ShouldBe(newFarm.Name);
         _paddockRepositoryMock.Verify(r => r.Update(paddock), Times.Once);
-        _paddockRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -75,6 +78,6 @@ public class UpdatePaddockCommandHandlerTests
         );
         exception.Message.ShouldBe("Paddock not found");
         _paddockRepositoryMock.Verify(r => r.Update(It.IsAny<Paddock>()), Times.Never);
-        _paddockRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

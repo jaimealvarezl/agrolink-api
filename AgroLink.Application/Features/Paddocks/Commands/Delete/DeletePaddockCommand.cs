@@ -5,7 +5,7 @@ namespace AgroLink.Application.Features.Paddocks.Commands.Delete;
 
 public record DeletePaddockCommand(int Id) : IRequest;
 
-public class DeletePaddockCommandHandler(IPaddockRepository paddockRepository)
+public class DeletePaddockCommandHandler(IPaddockRepository paddockRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<DeletePaddockCommand>
 {
     public async Task Handle(DeletePaddockCommand request, CancellationToken cancellationToken)
@@ -17,5 +17,6 @@ public class DeletePaddockCommandHandler(IPaddockRepository paddockRepository)
         }
 
         paddockRepository.Remove(paddock);
+        await unitOfWork.SaveChangesAsync();
     }
 }

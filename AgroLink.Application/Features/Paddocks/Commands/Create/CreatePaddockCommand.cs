@@ -9,7 +9,8 @@ public record CreatePaddockCommand(CreatePaddockDto Dto) : IRequest<PaddockDto>;
 
 public class CreatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
-    IFarmRepository farmRepository
+    IFarmRepository farmRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<CreatePaddockCommand, PaddockDto>
 {
     public async Task<PaddockDto> Handle(
@@ -21,6 +22,7 @@ public class CreatePaddockCommandHandler(
         var paddock = new Paddock { Name = dto.Name, FarmId = dto.FarmId };
 
         await paddockRepository.AddAsync(paddock);
+        await unitOfWork.SaveChangesAsync();
 
         var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
 

@@ -8,7 +8,8 @@ public record UpdateLotCommand(int Id, UpdateLotDto Dto) : IRequest<LotDto>;
 
 public class UpdateLotCommandHandler(
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateLotCommand, LotDto>
 {
     public async Task<LotDto> Handle(UpdateLotCommand request, CancellationToken cancellationToken)
@@ -38,6 +39,7 @@ public class UpdateLotCommandHandler(
         lot.UpdatedAt = DateTime.UtcNow;
 
         lotRepository.Update(lot);
+        await unitOfWork.SaveChangesAsync();
 
         var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
 

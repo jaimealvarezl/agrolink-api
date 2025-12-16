@@ -144,7 +144,7 @@ public class AnimalRepositoryTests : TestBase
 
         // Act
         await _repository.AddAsync(animal);
-        await _repository.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         // Assert
         var result = await _repository.GetByIdAsync(animal.Id);
@@ -165,7 +165,7 @@ public class AnimalRepositoryTests : TestBase
         animal.Name = "Updated Name";
         animal.UpdatedAt = DateTime.UtcNow;
         _repository.Update(animal);
-        await _repository.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         // Assert
         var result = await _repository.GetByIdAsync(animal.Id);
@@ -184,7 +184,7 @@ public class AnimalRepositoryTests : TestBase
 
         // Act
         _repository.Remove(animal);
-        await _repository.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         // Assert
         var result = await _repository.GetByIdAsync(animal.Id);

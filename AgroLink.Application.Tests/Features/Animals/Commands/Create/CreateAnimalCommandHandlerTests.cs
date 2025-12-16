@@ -14,6 +14,7 @@ public class CreateAnimalCommandHandlerTests
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private CreateAnimalCommandHandler _handler = null!;
 
     [SetUp]
@@ -23,11 +24,13 @@ public class CreateAnimalCommandHandlerTests
         _lotRepositoryMock = new Mock<ILotRepository>();
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new CreateAnimalCommandHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _ownerRepositoryMock.Object,
-            _animalOwnerRepositoryMock.Object
+            _animalOwnerRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -59,13 +62,12 @@ public class CreateAnimalCommandHandlerTests
         _animalRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Animal>()))
             .Callback<Animal>(a => a.Id = animal.Id); // Simulate DB ID generation
-        _animalRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
         _ownerRepositoryMock.Setup(r => r.GetByIdAsync(owner.Id)).ReturnsAsync(owner);
         _animalOwnerRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<AnimalOwner>()))
             .Returns(Task.CompletedTask);
-        _animalOwnerRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1); // Added
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _animalOwnerRepositoryMock
             .Setup(r => r.GetByAnimalIdAsync(animal.Id))
             .ReturnsAsync(
@@ -91,8 +93,7 @@ public class CreateAnimalCommandHandlerTests
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerName.ShouldBe(owner.Name);
         _animalRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Animal>()), Times.Once);
-        _animalRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once); // Changed to Once
         _animalOwnerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<AnimalOwner>()), Times.Once);
-        _animalOwnerRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once); // Added
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
     }
 }

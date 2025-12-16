@@ -5,7 +5,7 @@ namespace AgroLink.Application.Features.Lots.Commands.Delete;
 
 public record DeleteLotCommand(int Id) : IRequest;
 
-public class DeleteLotCommandHandler(ILotRepository lotRepository)
+public class DeleteLotCommandHandler(ILotRepository lotRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteLotCommand>
 {
     public async Task Handle(DeleteLotCommand request, CancellationToken cancellationToken)
@@ -17,5 +17,6 @@ public class DeleteLotCommandHandler(ILotRepository lotRepository)
         }
 
         lotRepository.Remove(lot);
+        await unitOfWork.SaveChangesAsync();
     }
 }

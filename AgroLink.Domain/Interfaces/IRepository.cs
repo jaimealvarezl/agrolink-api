@@ -18,5 +18,4 @@ public interface IRepository<T>
     Task<int> CountAsync();
     Task<int> CountAsync(Expression<Func<T, bool>> predicate);
     Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
-    Task<int> SaveChangesAsync();
 }

@@ -13,7 +13,8 @@ public class UpdateChecklistCommandHandler(
     IAnimalRepository animalRepository,
     IPhotoRepository photoRepository,
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateChecklistCommand, ChecklistDto>
 {
     public async Task<ChecklistDto> Handle(
@@ -55,7 +56,7 @@ public class UpdateChecklistCommandHandler(
             await checklistItemRepository.AddAsync(item);
         }
 
-        await checklistRepository.SaveChangesAsync(); // Save all changes
+        await unitOfWork.SaveChangesAsync(); // Save all changes
         return await MapToDtoAsync(checklist);
     }
 

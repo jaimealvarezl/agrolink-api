@@ -11,13 +11,15 @@ namespace AgroLink.Application.Tests.Features.Farms.Commands.Create;
 public class CreateFarmCommandHandlerTests
 {
     private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private CreateFarmCommandHandler _handler = null!;
 
     [SetUp]
     public void Setup()
     {
         _farmRepositoryMock = new Mock<IFarmRepository>();
-        _handler = new CreateFarmCommandHandler(_farmRepositoryMock.Object);
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _handler = new CreateFarmCommandHandler(_farmRepositoryMock.Object, _unitOfWorkMock.Object);
     }
 
     [Test]
@@ -36,7 +38,7 @@ public class CreateFarmCommandHandlerTests
         _farmRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
             .Callback<Farm>(f => f.Id = farm.Id); // Simulate DB ID generation
-        _farmRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -46,6 +48,6 @@ public class CreateFarmCommandHandlerTests
         result.Id.ShouldBe(farm.Id);
         result.Name.ShouldBe(farm.Name);
         _farmRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Farm>()), Times.Once);
-        _farmRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 }

@@ -10,13 +10,15 @@ namespace AgroLink.Application.Tests.Features.Farms.Commands.Delete;
 public class DeleteFarmCommandHandlerTests
 {
     private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private DeleteFarmCommandHandler _handler = null!;
 
     [SetUp]
     public void Setup()
     {
         _farmRepositoryMock = new Mock<IFarmRepository>();
-        _handler = new DeleteFarmCommandHandler(_farmRepositoryMock.Object);
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _handler = new DeleteFarmCommandHandler(_farmRepositoryMock.Object, _unitOfWorkMock.Object);
     }
 
     [Test]
@@ -29,7 +31,7 @@ public class DeleteFarmCommandHandlerTests
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _farmRepositoryMock.Setup(r => r.Remove(farm));
-        _farmRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
@@ -37,7 +39,7 @@ public class DeleteFarmCommandHandlerTests
         // Assert
         _farmRepositoryMock.Verify(r => r.GetByIdAsync(farmId), Times.Once);
         _farmRepositoryMock.Verify(r => r.Remove(farm), Times.Once);
-        _farmRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -55,6 +57,6 @@ public class DeleteFarmCommandHandlerTests
         );
         exception.Message.ShouldBe("Farm not found");
         _farmRepositoryMock.Verify(r => r.Remove(It.IsAny<Farm>()), Times.Never);
-        _farmRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

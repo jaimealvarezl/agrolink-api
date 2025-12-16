@@ -12,6 +12,7 @@ public class CreatePaddockCommandHandlerTests
 {
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private CreatePaddockCommandHandler _handler = null!;
 
     [SetUp]
@@ -19,9 +20,11 @@ public class CreatePaddockCommandHandlerTests
     {
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _farmRepositoryMock = new Mock<IFarmRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new CreatePaddockCommandHandler(
             _paddockRepositoryMock.Object,
-            _farmRepositoryMock.Object
+            _farmRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -42,7 +45,7 @@ public class CreatePaddockCommandHandlerTests
         _paddockRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Paddock>()))
             .Callback<Paddock>(p => p.Id = paddock.Id); // Simulate DB ID generation
-        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farm.Id)).ReturnsAsync(farm);
 
         // Act
@@ -54,6 +57,6 @@ public class CreatePaddockCommandHandlerTests
         result.Name.ShouldBe(paddock.Name);
         result.FarmName.ShouldBe(farm.Name);
         _paddockRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Paddock>()), Times.Once);
-        _paddockRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 }

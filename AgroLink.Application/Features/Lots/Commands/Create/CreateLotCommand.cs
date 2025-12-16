@@ -9,7 +9,8 @@ public record CreateLotCommand(CreateLotDto Dto) : IRequest<LotDto>;
 
 public class CreateLotCommandHandler(
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateLotCommand, LotDto>
 {
     public async Task<LotDto> Handle(CreateLotCommand request, CancellationToken cancellationToken)
@@ -23,6 +24,7 @@ public class CreateLotCommandHandler(
         };
 
         await lotRepository.AddAsync(lot);
+        await unitOfWork.SaveChangesAsync();
 
         var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
 

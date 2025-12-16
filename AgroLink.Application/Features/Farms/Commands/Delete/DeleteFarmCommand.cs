@@ -5,7 +5,7 @@ namespace AgroLink.Application.Features.Farms.Commands.Delete;
 
 public record DeleteFarmCommand(int Id) : IRequest;
 
-public class DeleteFarmCommandHandler(IFarmRepository farmRepository)
+public class DeleteFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteFarmCommand>
 {
     public async Task Handle(DeleteFarmCommand request, CancellationToken cancellationToken)
@@ -17,6 +17,6 @@ public class DeleteFarmCommandHandler(IFarmRepository farmRepository)
         }
 
         farmRepository.Remove(farm);
-        await farmRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 }

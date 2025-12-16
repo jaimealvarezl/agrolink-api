@@ -13,7 +13,8 @@ public class CreateChecklistCommandHandler(
     IAnimalRepository animalRepository,
     IPhotoRepository photoRepository,
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateChecklistCommand, ChecklistDto>
 {
     public async Task<ChecklistDto> Handle(
@@ -32,7 +33,7 @@ public class CreateChecklistCommandHandler(
         };
 
         await checklistRepository.AddAsync(checklist);
-        await checklistRepository.SaveChangesAsync(); // Save checklist to get its Id
+        await unitOfWork.SaveChangesAsync(); // Save checklist to get its Id
 
         // Add checklist items
         foreach (var itemDto in dto.Items)
@@ -48,7 +49,7 @@ public class CreateChecklistCommandHandler(
             await checklistItemRepository.AddAsync(item);
         }
 
-        await checklistItemRepository.SaveChangesAsync(); // Save items
+        await unitOfWork.SaveChangesAsync(); // Save items
         return await MapToDtoAsync(checklist);
     }
 

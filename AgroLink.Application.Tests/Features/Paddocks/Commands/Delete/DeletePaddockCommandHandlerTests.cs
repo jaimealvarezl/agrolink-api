@@ -10,13 +10,15 @@ namespace AgroLink.Application.Tests.Features.Paddocks.Commands.Delete;
 public class DeletePaddockCommandHandlerTests
 {
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private DeletePaddockCommandHandler _handler = null!;
 
     [SetUp]
     public void Setup()
     {
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _handler = new DeletePaddockCommandHandler(_paddockRepositoryMock.Object);
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _handler = new DeletePaddockCommandHandler(_paddockRepositoryMock.Object, _unitOfWorkMock.Object);
     }
 
     [Test]
@@ -29,7 +31,7 @@ public class DeletePaddockCommandHandlerTests
 
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
         _paddockRepositoryMock.Setup(r => r.Remove(paddock));
-        _paddockRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
@@ -37,7 +39,7 @@ public class DeletePaddockCommandHandlerTests
         // Assert
         _paddockRepositoryMock.Verify(r => r.GetByIdAsync(paddockId), Times.Once);
         _paddockRepositoryMock.Verify(r => r.Remove(paddock), Times.Once);
-        _paddockRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -55,6 +57,6 @@ public class DeletePaddockCommandHandlerTests
         );
         exception.Message.ShouldBe("Paddock not found");
         _paddockRepositoryMock.Verify(r => r.Remove(It.IsAny<Paddock>()), Times.Never);
-        _paddockRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

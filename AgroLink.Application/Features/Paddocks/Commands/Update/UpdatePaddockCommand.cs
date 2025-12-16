@@ -8,7 +8,8 @@ public record UpdatePaddockCommand(int Id, UpdatePaddockDto Dto) : IRequest<Padd
 
 public class UpdatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
-    IFarmRepository farmRepository
+    IFarmRepository farmRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdatePaddockCommand, PaddockDto>
 {
     public async Task<PaddockDto> Handle(
@@ -36,6 +37,7 @@ public class UpdatePaddockCommandHandler(
         paddock.UpdatedAt = DateTime.UtcNow;
 
         paddockRepository.Update(paddock);
+        await unitOfWork.SaveChangesAsync();
 
         var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
 

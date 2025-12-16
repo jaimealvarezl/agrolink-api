@@ -6,7 +6,7 @@ namespace AgroLink.Application.Features.Farms.Commands.Update;
 
 public record UpdateFarmCommand(int Id, UpdateFarmDto Dto) : IRequest<FarmDto>;
 
-public class UpdateFarmCommandHandler(IFarmRepository farmRepository)
+public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateFarmCommand, FarmDto>
 {
     public async Task<FarmDto> Handle(
@@ -34,7 +34,7 @@ public class UpdateFarmCommandHandler(IFarmRepository farmRepository)
         farm.UpdatedAt = DateTime.UtcNow;
 
         farmRepository.Update(farm);
-        await farmRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         return new FarmDto
         {

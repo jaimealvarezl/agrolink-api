@@ -12,6 +12,7 @@ public class CreateLotCommandHandlerTests
 {
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private CreateLotCommandHandler _handler = null!;
 
     [SetUp]
@@ -19,9 +20,11 @@ public class CreateLotCommandHandlerTests
     {
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new CreateLotCommandHandler(
             _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
+            _paddockRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -48,7 +51,7 @@ public class CreateLotCommandHandlerTests
         _lotRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Lot>()))
             .Callback<Lot>(l => l.Id = lot.Id); // Simulate DB ID generation
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddock.Id)).ReturnsAsync(paddock);
 
         // Act
@@ -60,6 +63,6 @@ public class CreateLotCommandHandlerTests
         result.Name.ShouldBe(lot.Name);
         result.PaddockName.ShouldBe(paddock.Name);
         _lotRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Lot>()), Times.Once);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 }

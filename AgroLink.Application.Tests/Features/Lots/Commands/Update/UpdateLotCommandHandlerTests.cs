@@ -12,6 +12,7 @@ public class UpdateLotCommandHandlerTests
 {
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private UpdateLotCommandHandler _handler = null!;
 
     [SetUp]
@@ -19,9 +20,11 @@ public class UpdateLotCommandHandlerTests
     {
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new UpdateLotCommandHandler(
             _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
+            _paddockRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -49,7 +52,7 @@ public class UpdateLotCommandHandlerTests
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _lotRepositoryMock.Setup(r => r.Update(lot));
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(newPaddock.Id)).ReturnsAsync(newPaddock);
 
         // Act
@@ -63,7 +66,7 @@ public class UpdateLotCommandHandlerTests
         result.Status.ShouldBe(updateLotDto.Status);
         result.PaddockName.ShouldBe(newPaddock.Name);
         _lotRepositoryMock.Verify(r => r.Update(lot), Times.Once);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -82,6 +85,6 @@ public class UpdateLotCommandHandlerTests
         );
         exception.Message.ShouldBe("Lot not found");
         _lotRepositoryMock.Verify(r => r.Update(It.IsAny<Lot>()), Times.Never);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

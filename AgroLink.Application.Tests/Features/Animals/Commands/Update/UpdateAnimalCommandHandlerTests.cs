@@ -16,6 +16,7 @@ public class UpdateAnimalCommandHandlerTests
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
     private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private UpdateAnimalCommandHandler _handler = null!;
 
     [SetUp]
@@ -26,12 +27,14 @@ public class UpdateAnimalCommandHandlerTests
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
         _photoRepositoryMock = new Mock<IPhotoRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new UpdateAnimalCommandHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
-            _photoRepositoryMock.Object
+            _photoRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -63,7 +66,7 @@ public class UpdateAnimalCommandHandlerTests
         var owner = new Owner { Id = 1, Name = "Test Owner" };
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _animalRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
         _ownerRepositoryMock.Setup(r => r.GetByIdAsync(owner.Id)).ReturnsAsync(owner);
         _animalOwnerRepositoryMock
@@ -99,7 +102,7 @@ public class UpdateAnimalCommandHandlerTests
         result.Status.ShouldBe(updateAnimalDto.Status);
         result.Owners.Count.ShouldBe(1);
         _animalRepositoryMock.Verify(r => r.Update(animal), Times.Once);
-        _animalRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         _animalOwnerRepositoryMock.Verify(r => r.RemoveByAnimalIdAsync(animalId), Times.Once);
         _animalOwnerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<AnimalOwner>()), Times.Once);
     }
@@ -120,6 +123,6 @@ public class UpdateAnimalCommandHandlerTests
         );
         exception.Message.ShouldBe("Animal not found");
         _animalRepositoryMock.Verify(r => r.Update(It.IsAny<Animal>()), Times.Never);
-        _animalRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

@@ -10,13 +10,15 @@ namespace AgroLink.Application.Tests.Features.Lots.Commands.Delete;
 public class DeleteLotCommandHandlerTests
 {
     private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private DeleteLotCommandHandler _handler = null!;
 
     [SetUp]
     public void Setup()
     {
         _lotRepositoryMock = new Mock<ILotRepository>();
-        _handler = new DeleteLotCommandHandler(_lotRepositoryMock.Object);
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _handler = new DeleteLotCommandHandler(_lotRepositoryMock.Object, _unitOfWorkMock.Object);
     }
 
     [Test]
@@ -29,7 +31,7 @@ public class DeleteLotCommandHandlerTests
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _lotRepositoryMock.Setup(r => r.Remove(lot));
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
@@ -37,7 +39,7 @@ public class DeleteLotCommandHandlerTests
         // Assert
         _lotRepositoryMock.Verify(r => r.GetByIdAsync(lotId), Times.Once);
         _lotRepositoryMock.Verify(r => r.Remove(lot), Times.Once);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -55,6 +57,6 @@ public class DeleteLotCommandHandlerTests
         );
         exception.Message.ShouldBe("Lot not found");
         _lotRepositoryMock.Verify(r => r.Remove(It.IsAny<Lot>()), Times.Never);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

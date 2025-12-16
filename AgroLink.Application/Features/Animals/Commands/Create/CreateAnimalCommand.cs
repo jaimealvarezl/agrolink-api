@@ -11,7 +11,8 @@ public class CreateAnimalCommandHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
-    IAnimalOwnerRepository animalOwnerRepository
+    IAnimalOwnerRepository animalOwnerRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(
@@ -34,7 +35,7 @@ public class CreateAnimalCommandHandler(
         };
 
         await animalRepository.AddAsync(animal);
-        await animalRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         // Add owners
         foreach (var ownerDto in dto.Owners)
@@ -48,7 +49,7 @@ public class CreateAnimalCommandHandler(
             await animalOwnerRepository.AddAsync(animalOwner);
         }
 
-        await animalRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         // Map to DTO (duplicated logic from Query for independence)
         var lot = await lotRepository.GetByIdAsync(animal.LotId);

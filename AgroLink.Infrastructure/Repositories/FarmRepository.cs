@@ -5,11 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class FarmRepository : Repository<Farm>, IFarmRepository
+public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(context), IFarmRepository
 {
-    public FarmRepository(AgroLinkDbContext context)
-        : base(context) { }
-
     public async Task<IEnumerable<Farm>> GetFarmsWithPaddocksAsync()
     {
         return await _dbSet.Include(f => f.Paddocks).ToListAsync();

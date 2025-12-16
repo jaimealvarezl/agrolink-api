@@ -10,13 +10,15 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Delete;
 public class DeleteAnimalCommandHandlerTests
 {
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private DeleteAnimalCommandHandler _handler = null!;
 
     [SetUp]
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new DeleteAnimalCommandHandler(_animalRepositoryMock.Object);
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _handler = new DeleteAnimalCommandHandler(_animalRepositoryMock.Object, _unitOfWorkMock.Object);
     }
 
     [Test]
@@ -29,7 +31,7 @@ public class DeleteAnimalCommandHandlerTests
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
         _animalRepositoryMock.Setup(r => r.Remove(animal));
-        _animalRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
@@ -37,7 +39,7 @@ public class DeleteAnimalCommandHandlerTests
         // Assert
         _animalRepositoryMock.Verify(r => r.GetByIdAsync(animalId), Times.Once);
         _animalRepositoryMock.Verify(r => r.Remove(animal), Times.Once);
-        _animalRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -55,6 +57,6 @@ public class DeleteAnimalCommandHandlerTests
         );
         exception.Message.ShouldBe("Animal not found");
         _animalRepositoryMock.Verify(r => r.Remove(It.IsAny<Animal>()), Times.Never);
-        _animalRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

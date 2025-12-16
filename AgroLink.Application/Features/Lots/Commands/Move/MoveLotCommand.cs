@@ -12,7 +12,8 @@ public record MoveLotCommand(int LotId, int ToPaddockId, string? Reason, int Use
 public class MoveLotCommandHandler(
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
-    IMovementRepository movementRepository
+    IMovementRepository movementRepository,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<MoveLotCommand, LotDto>
 {
     public async Task<LotDto> Handle(MoveLotCommand request, CancellationToken cancellationToken)
@@ -42,6 +43,7 @@ public class MoveLotCommandHandler(
         };
 
         await movementRepository.AddMovementAsync(movement);
+        await unitOfWork.SaveChangesAsync();
 
         var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
 

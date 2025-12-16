@@ -81,9 +81,4 @@ public class Repository<T> : IRepository<T>
     {
         return await _dbSet.AnyAsync(predicate);
     }
-
-    public virtual async Task<int> SaveChangesAsync()
-    {
-        return await _context.SaveChangesAsync();
-    }
 }

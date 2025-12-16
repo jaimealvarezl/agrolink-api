@@ -73,11 +73,19 @@ public class GetMovementsByEntityQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        result.First().EntityType.ShouldBe(entityType);
-        result.First().EntityName.ShouldBe(animal.Tag);
-        result.First().FromName.ShouldBe(lotFrom.Name);
-        result.First().ToName.ShouldBe(lotTo.Name);
-        result.First().UserName.ShouldBe(user.Name);
+        
+        // Latest movement (Movement 2)
+        var first = result.First();
+        first.EntityType.ShouldBe(entityType);
+        first.EntityName.ShouldBe(animal.Tag);
+        first.FromName.ShouldBe(lotTo.Name); // From Lot To (20)
+        first.ToName.ShouldBe("Lot Final"); // To Lot Final (30)
+        first.UserName.ShouldBe(user.Name);
+
+        // Oldest movement (Movement 1)
+        var last = result.Last();
+        last.FromName.ShouldBe(lotFrom.Name); // From Lot From (10)
+        last.ToName.ShouldBe(lotTo.Name); // To Lot To (20)
     }
 
     [Test]

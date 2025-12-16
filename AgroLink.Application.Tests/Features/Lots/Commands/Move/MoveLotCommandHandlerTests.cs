@@ -13,6 +13,7 @@ public class MoveLotCommandHandlerTests
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private MoveLotCommandHandler _handler = null!;
 
     [SetUp]
@@ -21,10 +22,12 @@ public class MoveLotCommandHandlerTests
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _movementRepositoryMock = new Mock<IMovementRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new MoveLotCommandHandler(
             _lotRepositoryMock.Object,
             _paddockRepositoryMock.Object,
-            _movementRepositoryMock.Object
+            _movementRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -48,7 +51,7 @@ public class MoveLotCommandHandlerTests
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _lotRepositoryMock.Setup(r => r.Update(lot));
-        _lotRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _movementRepositoryMock
             .Setup(r => r.AddMovementAsync(It.IsAny<Movement>()))
             .Returns(Task.CompletedTask);
@@ -63,7 +66,7 @@ public class MoveLotCommandHandlerTests
         result.PaddockId.ShouldBe(toPaddockId);
         result.PaddockName.ShouldBe(paddockTo.Name);
         _lotRepositoryMock.Verify(r => r.Update(lot), Times.Once);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         _movementRepositoryMock.Verify(
             r =>
                 r.AddMovementAsync(
@@ -95,7 +98,7 @@ public class MoveLotCommandHandlerTests
         );
         exception.Message.ShouldBe("Lot not found");
         _lotRepositoryMock.Verify(r => r.Update(It.IsAny<Lot>()), Times.Never);
-        _lotRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
         _movementRepositoryMock.Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Never);
     }
 }

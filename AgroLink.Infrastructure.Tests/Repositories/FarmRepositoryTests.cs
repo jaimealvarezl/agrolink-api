@@ -133,7 +133,7 @@ public class FarmRepositoryTests : TestBase
 
         // Act
         await _repository.AddAsync(farm);
-        await _repository.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         // Assert
         var result = await _repository.GetByIdAsync(farm.Id);
@@ -151,7 +151,7 @@ public class FarmRepositoryTests : TestBase
         farm.Name = "Updated Name";
         farm.UpdatedAt = DateTime.UtcNow;
         _repository.Update(farm);
-        await _repository.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         // Assert
         var result = await _repository.GetByIdAsync(farm.Id);
@@ -167,7 +167,7 @@ public class FarmRepositoryTests : TestBase
 
         // Act
         _repository.Remove(farm);
-        await _repository.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         // Assert
         var result = await _repository.GetByIdAsync(farm.Id);

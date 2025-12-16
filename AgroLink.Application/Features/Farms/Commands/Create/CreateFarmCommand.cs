@@ -7,7 +7,7 @@ namespace AgroLink.Application.Features.Farms.Commands.Create;
 
 public record CreateFarmCommand(CreateFarmDto Dto) : IRequest<FarmDto>;
 
-public class CreateFarmCommandHandler(IFarmRepository farmRepository)
+public class CreateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<CreateFarmCommand, FarmDto>
 {
     public async Task<FarmDto> Handle(
@@ -19,7 +19,7 @@ public class CreateFarmCommandHandler(IFarmRepository farmRepository)
         var farm = new Farm { Name = dto.Name, Location = dto.Location };
 
         await farmRepository.AddAsync(farm);
-        await farmRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
 
         return new FarmDto
         {

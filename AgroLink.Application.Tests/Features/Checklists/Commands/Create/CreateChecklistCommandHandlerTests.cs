@@ -24,6 +24,7 @@ public class CreateChecklistCommandHandlerTests
     private Mock<AgroLink.Application.Interfaces.IPhotoRepository> _photoRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private CreateChecklistCommandHandler _handler = null!;
 
     [SetUp]
@@ -36,6 +37,7 @@ public class CreateChecklistCommandHandlerTests
         _photoRepositoryMock = new Mock<AgroLink.Application.Interfaces.IPhotoRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new CreateChecklistCommandHandler(
             _checklistRepositoryMock.Object,
             _checklistItemRepositoryMock.Object,
@@ -43,7 +45,8 @@ public class CreateChecklistCommandHandlerTests
             _animalRepositoryMock.Object,
             _photoRepositoryMock.Object,
             _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
+            _paddockRepositoryMock.Object,
+            _unitOfWorkMock.Object
         );
     }
 
@@ -89,11 +92,10 @@ public class CreateChecklistCommandHandlerTests
         _checklistRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Checklist>()))
             .Callback<Checklist>(c => c.Id = checklist.Id);
-        _checklistRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _checklistItemRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<ChecklistItem>()))
             .Returns(Task.CompletedTask);
-        _checklistItemRepositoryMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _checklistItemRepositoryMock
             .Setup(r =>
@@ -122,8 +124,7 @@ public class CreateChecklistCommandHandlerTests
         result.ScopeName.ShouldBe(lot.Name);
         result.Items.Count.ShouldBe(1);
         _checklistRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Checklist>()), Times.Once);
-        _checklistRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         _checklistItemRepositoryMock.Verify(r => r.AddAsync(It.IsAny<ChecklistItem>()), Times.Once);
-        _checklistItemRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
     }
 }
