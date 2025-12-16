@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
 
-namespace AgroLink.Tests.Controllers;
+namespace AgroLink.Api.Tests.Controllers;
 
 [TestFixture]
 public class FarmsControllerTests

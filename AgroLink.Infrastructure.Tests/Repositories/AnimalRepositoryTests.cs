@@ -2,9 +2,10 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
+using AgroLink.Infrastructure.Tests; // Added
 using Shouldly;
 
-namespace AgroLink.Tests.Repositories;
+namespace AgroLink.Infrastructure.Tests.Repositories; // Changed namespace
 
 [TestFixture]
 public class AnimalRepositoryTests : TestBase

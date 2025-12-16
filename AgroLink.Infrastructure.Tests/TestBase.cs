@@ -5,10 +5,11 @@ using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services; // Added
+using MediatR; // Added for MediatR configuration
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AgroLink.Tests;
+namespace AgroLink.Infrastructure.Tests; // Changed namespace
 
 public abstract class TestBase
 {

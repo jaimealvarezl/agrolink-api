@@ -2,7 +2,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Application.Services;
 using Shouldly;
 
-namespace AgroLink.Tests.Services;
+namespace AgroLink.Infrastructure.Tests.Services;
 
 [TestFixture]
 public class TokenExtractionServiceTests
