@@ -176,6 +176,14 @@ jobs:
             echo "   Security Groups: $SG_COUNT"
           fi
 
+      - name: Wait for Database Availability
+        run: |
+          echo "⏳ Waiting for database cluster 'agrolink-pg-cluster' to be available..."
+          aws rds wait db-cluster-available \
+            --db-cluster-identifier agrolink-pg-cluster \
+            --region "${AWS_REGION}"
+          echo "✅ Database is available!"
+
       - name: Invoke migration Lambda
         run: |
           echo "🚀 Invoking migration Lambda function..."
