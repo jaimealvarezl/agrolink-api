@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AgroLink.Application\AgroLink.Application.csproj" />
+    <ProjectReference Include="..\..\src\AgroLink.Domain\AgroLink.Domain.csproj" />
   </ItemGroup>
 </Project>
