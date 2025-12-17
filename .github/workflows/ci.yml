@@ -30,6 +30,7 @@ jobs:
               - 'src/**'
               - 'tests/**'
               - '*.sln'
+              - '.editorconfig'
               - 'Directory.Build.props'
               - 'global.json'
               - '**/*.md'
