@@ -1,4 +1,4 @@
-namespace AgroLink.Application.DTOs;
+namespace AgroLink.Application.Features.Photos.DTOs;
 
 public class PhotoDto
 {

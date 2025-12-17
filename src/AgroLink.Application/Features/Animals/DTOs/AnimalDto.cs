@@ -1,4 +1,6 @@
-namespace AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Photos.DTOs;
+
+namespace AgroLink.Application.Features.Animals.DTOs;
 
 public class AnimalDto
 {

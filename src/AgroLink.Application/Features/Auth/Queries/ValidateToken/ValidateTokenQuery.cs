@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Auth.DTOs;
 using MediatR;
 
 namespace AgroLink.Application.Features.Auth.Queries.ValidateToken;

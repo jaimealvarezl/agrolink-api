@@ -1,7 +1,7 @@
 using AgroLink.Api.Controllers;
-using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Auth.Commands.Login;
 using AgroLink.Application.Features.Auth.Commands.Register;
+using AgroLink.Application.Features.Auth.DTOs;
 using AgroLink.Application.Features.Auth.Queries.GetUserProfile;
 using AgroLink.Application.Features.Auth.Queries.ValidateToken;
 using AgroLink.Application.Interfaces;

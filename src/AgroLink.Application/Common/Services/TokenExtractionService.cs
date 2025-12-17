@@ -1,6 +1,6 @@
 using AgroLink.Application.Interfaces;
 
-namespace AgroLink.Application.Services;
+namespace AgroLink.Application.Common.Services;
 
 public class TokenExtractionService : ITokenExtractionService
 {

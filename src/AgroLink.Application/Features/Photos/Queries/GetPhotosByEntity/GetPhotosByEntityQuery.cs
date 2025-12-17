@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Photos.DTOs;
 using MediatR;
 
 namespace AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity;

@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using AgroLink.Api.Controllers;
-using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Lots.Commands.Create;
 using AgroLink.Application.Features.Lots.Commands.Move;
+using AgroLink.Application.Features.Lots.DTOs;
 using AgroLink.Application.Features.Lots.Queries.GetAll;
 using AgroLink.Application.Features.Lots.Queries.GetById;
 using AgroLink.Application.Features.Lots.Queries.GetByPaddock;

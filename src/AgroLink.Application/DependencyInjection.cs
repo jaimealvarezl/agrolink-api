@@ -1,6 +1,6 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Common.Services;
+using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
-using AgroLink.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AgroLink.Application;

@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Paddocks.DTOs;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 

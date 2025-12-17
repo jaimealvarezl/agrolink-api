@@ -1,4 +1,5 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;

@@ -1,8 +1,8 @@
-using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.Commands.Delete;
 using AgroLink.Application.Features.Animals.Commands.Move;
 using AgroLink.Application.Features.Animals.Commands.Update;
+using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;

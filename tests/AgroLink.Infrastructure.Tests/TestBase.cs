@@ -1,6 +1,6 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Common.Services;
+using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
-using AgroLink.Application.Services;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;

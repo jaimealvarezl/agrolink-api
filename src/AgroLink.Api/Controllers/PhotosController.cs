@@ -1,8 +1,8 @@
 using AgroLink.Api.DTOs;
-using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Photos.Commands.DeletePhoto;
 using AgroLink.Application.Features.Photos.Commands.SyncPendingPhotos;
 using AgroLink.Application.Features.Photos.Commands.UploadPhoto;
+using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Features.Photos.Queries.GetPhotosByEntity;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

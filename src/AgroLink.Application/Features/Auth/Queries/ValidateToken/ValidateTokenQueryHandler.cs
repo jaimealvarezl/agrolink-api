@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Auth.DTOs;
 using AgroLink.Application.Interfaces;
 using MediatR;
 
@@ -7,7 +7,7 @@ namespace AgroLink.Application.Features.Auth.Queries.ValidateToken;
 public class ValidateTokenQueryHandler(IJwtTokenService jwtTokenService)
     : IRequestHandler<ValidateTokenQuery, ValidateTokenResponse>
 {
-    public Task<ValidateTokenResponse> Handle( // Removed async
+    public Task<ValidateTokenResponse> Handle(
         ValidateTokenQuery request,
         CancellationToken cancellationToken
     )

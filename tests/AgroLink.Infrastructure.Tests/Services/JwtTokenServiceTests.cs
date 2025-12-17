@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Auth.DTOs;
 using AgroLink.Domain.Entities;
 using AgroLink.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;

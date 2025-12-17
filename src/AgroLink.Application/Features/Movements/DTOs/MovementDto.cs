@@ -1,4 +1,4 @@
-namespace AgroLink.Application.DTOs;
+namespace AgroLink.Application.Features.Movements.DTOs;
 
 public class MovementDto
 {

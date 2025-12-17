@@ -1,6 +1,6 @@
 using AgroLink.Api.Controllers;
-using AgroLink.Application.DTOs;
 using AgroLink.Application.Features.Paddocks.Commands.Create;
+using AgroLink.Application.Features.Paddocks.DTOs;
 using AgroLink.Application.Features.Paddocks.Queries.GetAll;
 using AgroLink.Application.Features.Paddocks.Queries.GetById;
 using MediatR;

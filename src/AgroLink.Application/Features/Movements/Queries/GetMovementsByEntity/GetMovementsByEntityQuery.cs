@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Movements.DTOs;
 using MediatR;
 
 namespace AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;

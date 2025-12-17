@@ -1,4 +1,4 @@
-using AgroLink.Application.DTOs;
+using AgroLink.Application.Features.Checklists.DTOs;
 using MediatR;
 
 namespace AgroLink.Application.Features.Checklists.Queries.GetAll;
