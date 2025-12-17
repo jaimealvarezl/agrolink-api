@@ -1,0 +1,103 @@
+using AgroLink.Application.Features.Animals.Queries.GetByLot;
+using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Entities;
+using AgroLink.Domain.Interfaces;
+using Moq;
+using Shouldly;
+
+namespace AgroLink.Application.Tests.Features.Animals.Queries.GetByLot;
+
+[TestFixture]
+public class GetAnimalsByLotQueryHandlerTests
+{
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private GetAnimalsByLotQueryHandler _handler = null!;
+
+    [SetUp]
+    public void Setup()
+    {
+        _animalRepositoryMock = new Mock<IAnimalRepository>();
+        _lotRepositoryMock = new Mock<ILotRepository>();
+        _ownerRepositoryMock = new Mock<IOwnerRepository>();
+        _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
+        _photoRepositoryMock = new Mock<IPhotoRepository>();
+        _handler = new GetAnimalsByLotQueryHandler(
+            _animalRepositoryMock.Object,
+            _lotRepositoryMock.Object,
+            _ownerRepositoryMock.Object,
+            _animalOwnerRepositoryMock.Object,
+            _photoRepositoryMock.Object
+        );
+    }
+
+    [Test]
+    public async Task Handle_ExistingLotWithAnimals_ReturnsAnimalsDto()
+    {
+        // Arrange
+        var lotId = 1;
+        var query = new GetAnimalsByLotQuery(lotId);
+        var animals = new List<Animal>
+        {
+            new Animal
+            {
+                Id = 1,
+                Tag = "A001",
+                Name = "Animal 1",
+                LotId = lotId,
+                CreatedAt = DateTime.UtcNow,
+                Status = "ACTIVE",
+            },
+            new Animal
+            {
+                Id = 2,
+                Tag = "A002",
+                Name = "Animal 2",
+                LotId = lotId,
+                CreatedAt = DateTime.UtcNow,
+                Status = "ACTIVE",
+            },
+        };
+        var lot = new Lot { Id = lotId, Name = "Test Lot" };
+
+        _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId)).ReturnsAsync(animals);
+        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _animalOwnerRepositoryMock
+            .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<AnimalOwner>());
+        _photoRepositoryMock
+            .Setup(r => r.GetPhotosByEntityAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .ReturnsAsync(new List<Photo>());
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Count().ShouldBe(2);
+        result.All(a => a.LotId == lotId).ShouldBeTrue();
+        result.First().LotName.ShouldBe(lot.Name);
+    }
+
+    [Test]
+    public async Task Handle_ExistingLotWithNoAnimals_ReturnsEmptyList()
+    {
+        // Arrange
+        var lotId = 1;
+        var query = new GetAnimalsByLotQuery(lotId);
+        var lot = new Lot { Id = lotId, Name = "Test Lot" };
+
+        _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId)).ReturnsAsync(new List<Animal>());
+        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.ShouldBeEmpty();
+    }
+}

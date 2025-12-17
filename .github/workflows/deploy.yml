@@ -123,13 +123,13 @@ jobs:
           echo "🗄️ Generating migration bundle..."
           dotnet restore
           dotnet build agrolink-api.sln --configuration Release --no-restore
-          dotnet build AgroLink.API/AgroLink.API.csproj --configuration Release --no-restore
+          dotnet build src/AgroLink.Api/AgroLink.Api.csproj --configuration Release --no-restore
 
-          cd AgroLink.Infrastructure
+          cd src/AgroLink.Infrastructure
           dotnet ef migrations bundle \
-            --startup-project ../AgroLink.API/AgroLink.API.csproj \
+            --startup-project ../AgroLink.Api/AgroLink.Api.csproj \
             --configuration Release \
-            --output ../migrations-bundle \
+            --output ../../migrations-bundle \
             --self-contained \
             --runtime linux-x64 \
             --verbose
@@ -281,17 +281,17 @@ jobs:
         run: |
           echo "📦 Packaging Lambda function..."
           dotnet restore
-          dotnet lambda package -pl ./AgroLink.API AspNetCoreFunction.zip
+          dotnet lambda package -pl ./src/AgroLink.Api AspNetCoreFunction.zip
           echo "✅ Lambda package created: AspNetCoreFunction.zip"
 
       - name: Deploy Lambda function
         run: |
           echo "🚀 Deploying Lambda function..."
           dotnet lambda deploy-function \
-            --project-location ./AgroLink.API \
+            --project-location ./src/AgroLink.Api \
             --function-name AgroLinkAPI-AspNetCoreFunction \
             --function-runtime dotnet8 \
-            --function-handler AgroLink.API \
+            --function-handler AgroLink.Api \
             --package AspNetCoreFunction.zip \
             --region ${{ env.AWS_REGION }}
           echo "✅ Lambda function deployed successfully!"

@@ -27,16 +27,15 @@ jobs:
         with:
           filters: |
             csharp:
-              - '**/*.cs'
-              - '**/*.csproj'
-              - '**/*.sln'
-              - '**/*.json'
+              - 'src/**'
+              - 'tests/**'
+              - '*.sln'
+              - '.editorconfig'
+              - 'Directory.Build.props'
+              - 'global.json'
               - '**/*.md'
-              - '**/.github/**'
+              - '.github/**'
               - '!iac/**'
-              - '!*.tf'
-              - '!*.tfvars'
-              - '!.terraform/**'
             terraform:
               - 'iac/**/*.tf'
               - 'iac/**/*.tfvars'
@@ -105,8 +104,10 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            */bin/
-            */obj/
+            src/*/bin/
+            src/*/obj/
+            tests/*/bin/
+            tests/*/obj/
           retention-days: 1
 
   test:
@@ -138,24 +139,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Run unit tests
+      - name: Run tests
         run: |
-          echo "🧪 Running unit tests..."
-          dotnet test ./AgroLink.Tests/AgroLink.Tests.csproj \
+          echo "🧪 Running tests..."
+          dotnet test agrolink-api.sln \
             --configuration Release \
             --verbosity normal \
-            --logger "trx;LogFileName=unit-test-results.trx" \
+            --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage"
-          echo "✅ Unit tests passed!"
-
-      - name: Run integration tests
-        run: |
-          echo "🧪 Running integration tests (E2E)..."
-          dotnet test ./AgroLink.IntegrationTests/AgroLink.IntegrationTests.csproj \
-            --configuration Release \
-            --verbosity normal \
-            --logger "trx;LogFileName=integration-test-results.trx"
-          echo "✅ Integration tests passed!"
+          echo "✅ Tests passed!"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

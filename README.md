@@ -20,29 +20,35 @@ AgroLink is designed to help farmers in Boaco, Nicaragua manage their cattle ope
 ### Project Structure
 ```
 AgroLink.API/              # Presentation Layer (ASP.NET Core Web API)
-├── Controllers/           # API Controllers
+├── Controllers/           # API Controllers, orchestrates commands and queries
 ├── DTOs/                  # API-specific Data Transfer Objects
-├── Program.cs             # Application startup and configuration
+├── Program.cs             # Application startup and Dependency Injection configuration
 └── appsettings.json      # Configuration files
 
-AgroLink.Core/             # Domain Layer (Core Business Logic)
-├── Entities/              # Domain entities
-├── DTOs/                  # Shared Data Transfer Objects
-└── Interfaces/            # Service and repository interfaces
+AgroLink.Application/      # Application Layer (CQRS and Application-specific Logic)
+├── DTOs/                  # Application-specific Data Transfer Objects (for commands, queries, responses)
+├── Features/              # Commands, Queries, and their Handlers (organized by feature)
+│   ├── Auth/              #   ├── Commands/Login, Register, etc.
+│   └── Animals/           #   └── Queries/GetById, GetAll, etc.
+├── Interfaces/            # Defines interfaces for specific repositories and external services (implemented in Infrastructure)
+└── Services/              # Application services (e.g., TokenExtractionService - not part of CQRS handlers)
 
-AgroLink.Infrastructure/   # Infrastructure Layer
-├── Data/                  # Entity Framework DbContext
-├── Repositories/          # Repository implementations
-├── Services/              # Business logic services
+AgroLink.Domain/           # Domain Layer (Core Business Logic)
+├── Entities/              # Domain entities
+├── Interfaces/            # Defines generic repository interfaces and core domain service interfaces
+└── Exceptions/            # Custom domain exceptions (if any)
+
+AgroLink.Infrastructure/   # Infrastructure Layer (Implementations of Interfaces, Data Access, External Services)
+├── Data/                  # Entity Framework DbContext and migrations
+├── Repositories/          # Implementations of repository interfaces defined in Domain and Application
+├── Services/              # Implementations of external service interfaces defined in Application (e.g., JWT token, AWS S3)
 └── Migrations/            # Database migrations
 
 AgroLink.Tests/            # Unit Tests
-└── [Test files]           # NUnit test classes
+└── [Test files]           # NUnit test classes for Application and Domain logic
 
 AgroLink.IntegrationTests/ # Integration Tests
-└── [Test files]           # Integration test classes
-
-TestProject1/              # Additional Tests
+└── [Test files]           # Integration test classes for API and Infrastructure components
 ```
 
 ### Technology Stack
