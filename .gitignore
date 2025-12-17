@@ -5,3 +5,5 @@ riderModule.iml
 /_ReSharper.Caches/
 .idea
 agrolink-api.sln.DotSettings.user
+**/TestResults/
+TestResults/
