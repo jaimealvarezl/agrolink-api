@@ -27,16 +27,14 @@ jobs:
         with:
           filters: |
             csharp:
-              - '**/*.cs'
-              - '**/*.csproj'
-              - '**/*.sln'
-              - '**/*.json'
+              - 'src/**'
+              - 'tests/**'
+              - '*.sln'
+              - 'Directory.Build.props'
+              - 'global.json'
               - '**/*.md'
-              - '**/.github/**'
+              - '.github/**'
               - '!iac/**'
-              - '!*.tf'
-              - '!*.tfvars'
-              - '!.terraform/**'
             terraform:
               - 'iac/**/*.tf'
               - 'iac/**/*.tfvars'
