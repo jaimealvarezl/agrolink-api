@@ -134,6 +134,14 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         Resource = "*"
       },
       {
+        Sid    = "RDSReadAccess",
+        Effect = "Allow",
+        Action = [
+          "rds:DescribeDBClusters"
+        ],
+        Resource = "*"
+      },
+      {
         Sid    = "STSGetCallerIdentity",
         Effect = "Allow",
         Action = [
