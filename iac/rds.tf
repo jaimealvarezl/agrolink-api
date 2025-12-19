@@ -14,7 +14,7 @@ resource "aws_rds_cluster" "serverless_db" {
   deletion_protection     = true
   serverlessv2_scaling_configuration {
     max_capacity = 2.0 # ACU (Aurora Capacity Units)
-    min_capacity = 0.0 # Keep minimum capacity to avoid unexpected pauses during migrations
+     min_capacity = 0.0
   }
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
