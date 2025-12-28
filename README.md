@@ -445,7 +445,15 @@ Farm: "Finca San José"
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 📚 Additional Resources
+## Database Migrations
+
+To apply the database migrations locally, ensure your infrastructure is running and execute:
+
+```bash
+ASPNETCORE_ENVIRONMENT=Development dotnet ef database update --project src/AgroLink.Infrastructure --startup-project src/AgroLink.Api
+```
+
+## Documentation
 
 - [Clean Architecture Guidelines](docs/clean-architecture.md) - Architecture documentation
 - [Testing Guidelines](docs/testing.md) - Testing best practices
