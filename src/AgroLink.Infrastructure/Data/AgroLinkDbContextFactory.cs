@@ -19,7 +19,7 @@ public class AgroLinkDbContextFactory : IDesignTimeDbContextFactory<AgroLinkDbCo
         // This will be replaced with the actual connection string when the bundle runs
         var connectionString =
             Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-            ?? "Host=localhost;Database=agrolink;Username=postgres;Password=postgres";
+            ?? "Host=localhost;Database=agrolinkdb;Username=agrolinkadmin;Password=agrolinkpassword";
 
         optionsBuilder.UseNpgsql(connectionString);
 

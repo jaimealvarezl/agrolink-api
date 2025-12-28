@@ -4,6 +4,7 @@ using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
+using Amazon.S3;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,31 @@ public static class DependencyInjection
         services.AddDbContext<AgroLinkDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
         );
+
+        // AWS S3 / MinIO Configuration
+        services.AddSingleton<IAmazonS3>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var awsSection = config.GetSection("AWS");
+            var serviceUrl = awsSection["ServiceUrl"];
+            var accessKey = awsSection["AccessKey"];
+            var secretKey = awsSection["SecretKey"];
+            bool.TryParse(awsSection["ForcePathStyle"], out var forcePathStyle);
+
+            var s3Config = new AmazonS3Config();
+            if (!string.IsNullOrEmpty(serviceUrl))
+            {
+                s3Config.ServiceURL = serviceUrl;
+                s3Config.ForcePathStyle = forcePathStyle;
+            }
+
+            if (!string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey))
+            {
+                return new AmazonS3Client(accessKey, secretKey, s3Config);
+            }
+
+            return new AmazonS3Client(s3Config);
+        });
 
         // Generic Repositories
         services.AddScoped<IRepository<Farm>, Repository<Farm>>();
