@@ -58,6 +58,9 @@ public class UploadPhotoCommandHandlerTests
                 s.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>())
             )
             .Returns(Task.CompletedTask);
+        _awsS3ServiceMock
+            .Setup(s => s.GetFileUrl(It.IsAny<string>()))
+            .Returns("https://mock-s3-url.com/photo.jpg");
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
