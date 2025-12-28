@@ -17,6 +17,7 @@ public class MoveAnimalCommandHandlerTests
     private Mock<IMovementRepository> _movementRepositoryMock = null!;
     private Mock<IPhotoRepository> _photoRepositoryMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private MoveAnimalCommandHandler _handler = null!;
 
     [SetUp]
@@ -29,6 +30,8 @@ public class MoveAnimalCommandHandlerTests
         _movementRepositoryMock = new Mock<IMovementRepository>();
         _photoRepositoryMock = new Mock<IPhotoRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
+
         _handler = new MoveAnimalCommandHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
@@ -36,7 +39,8 @@ public class MoveAnimalCommandHandlerTests
             _animalOwnerRepositoryMock.Object,
             _movementRepositoryMock.Object,
             _photoRepositoryMock.Object,
-            _unitOfWorkMock.Object
+            _unitOfWorkMock.Object,
+            _currentUserServiceMock.Object
         );
     }
 
@@ -48,7 +52,7 @@ public class MoveAnimalCommandHandlerTests
         var fromLotId = 1;
         var toLotId = 2;
         var userId = 1;
-        var command = new MoveAnimalCommand(animalId, fromLotId, toLotId, "Test Reason", userId);
+        var command = new MoveAnimalCommand(animalId, fromLotId, toLotId, "Test Reason");
         var animal = new Animal
         {
             Id = animalId,
@@ -62,6 +66,7 @@ public class MoveAnimalCommandHandlerTests
         var lotTo = new Lot { Id = toLotId, Name = "Lot To" };
         var owner = new Owner { Id = 1, Name = "Test Owner" };
 
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(fromLotId)).ReturnsAsync(lotFrom);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(toLotId)).ReturnsAsync(lotTo);
@@ -105,8 +110,9 @@ public class MoveAnimalCommandHandlerTests
         var fromLotId = 1;
         var toLotId = 2;
         var userId = 1;
-        var command = new MoveAnimalCommand(animalId, fromLotId, toLotId, "Test Reason", userId);
+        var command = new MoveAnimalCommand(animalId, fromLotId, toLotId, "Test Reason");
 
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync((Animal?)null);
 
         // Act & Assert
@@ -117,5 +123,24 @@ public class MoveAnimalCommandHandlerTests
         _animalRepositoryMock.Verify(r => r.Update(It.IsAny<Animal>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
         _movementRepositoryMock.Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_UnauthenticatedUser_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange
+        var animalId = 1;
+        var fromLotId = 1;
+        var toLotId = 2;
+        var command = new MoveAnimalCommand(animalId, fromLotId, toLotId, "Test Reason");
+
+        _currentUserServiceMock
+            .Setup(s => s.GetRequiredUserId())
+            .Throws(new UnauthorizedAccessException());
+
+        // Act & Assert
+        await Should.ThrowAsync<UnauthorizedAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
     }
 }

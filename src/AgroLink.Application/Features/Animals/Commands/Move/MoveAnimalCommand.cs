@@ -9,13 +9,8 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Commands.Move;
 
-public record MoveAnimalCommand(
-    int AnimalId,
-    int FromLotId,
-    int ToLotId,
-    string? Reason,
-    int UserId
-) : IRequest<AnimalDto>;
+public record MoveAnimalCommand(int AnimalId, int FromLotId, int ToLotId, string? Reason)
+    : IRequest<AnimalDto>;
 
 public class MoveAnimalCommandHandler(
     IAnimalRepository animalRepository,
@@ -24,7 +19,8 @@ public class MoveAnimalCommandHandler(
     IAnimalOwnerRepository animalOwnerRepository,
     IMovementRepository movementRepository, // Assuming movement repository is needed for moving animals
     IPhotoRepository photoRepository,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<MoveAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(
@@ -32,6 +28,8 @@ public class MoveAnimalCommandHandler(
         CancellationToken cancellationToken
     )
     {
+        var userId = currentUserService.GetRequiredUserId();
+
         var animal = await animalRepository.GetByIdAsync(request.AnimalId); // Changed from request.Id
         if (animal == null)
         {
@@ -53,7 +51,7 @@ public class MoveAnimalCommandHandler(
             ToId = request.ToLotId,
             At = DateTime.UtcNow,
             Reason = request.Reason,
-            UserId = request.UserId, // Using request.UserId
+            UserId = userId,
         };
         await movementRepository.AddMovementAsync(movement);
 

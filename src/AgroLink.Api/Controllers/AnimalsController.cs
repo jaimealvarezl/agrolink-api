@@ -103,15 +103,8 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         try
         {
-            var userId = GetCurrentUserId();
             var animal = await mediator.Send(
-                new MoveAnimalCommand(
-                    id,
-                    request.FromLotId,
-                    request.ToLotId,
-                    request.Reason,
-                    userId
-                )
+                new MoveAnimalCommand(id, request.FromLotId, request.ToLotId, request.Reason)
             );
             return Ok(animal);
         }

@@ -1,5 +1,7 @@
 using System.Text;
+using AgroLink.Api.Services;
 using AgroLink.Application;
+using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddSwaggerGen(c =>
 {
     c.CustomSchemaIds(type => type.FullName);
