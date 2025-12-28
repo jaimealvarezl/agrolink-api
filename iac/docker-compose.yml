@@ -1,4 +1,26 @@
 services:
+  api:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: agrolink-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=agrolinkdb;Username=agrolinkadmin;Password=agrolinkpassword
+      - AWS__ServiceUrl=http://minio:9000
+      - AWS__AccessKey=minio
+      - AWS__SecretKey=minio12345
+      - AWS__S3BucketName=agrolink-storage-bucket
+      - AWS__ForcePathStyle=true
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
   postgres:
     image: postgres:16-alpine
     container_name: agrolink-postgres
