@@ -8,6 +8,8 @@ namespace AgroLink.Infrastructure.Services;
 public class AwsS3Service(IAmazonS3 s3Client, IConfiguration configuration) : IAwsS3Service
 {
     private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
+    private readonly string _serviceUrl =
+        configuration["AWS:ServiceUrl"] ?? "https://s3.amazonaws.com";
 
     public async Task UploadFileAsync(string key, Stream fileStream, string contentType)
     {
@@ -25,5 +27,20 @@ public class AwsS3Service(IAmazonS3 s3Client, IConfiguration configuration) : IA
     public async Task DeleteFileAsync(string key)
     {
         await s3Client.DeleteObjectAsync(_bucketName, key);
+    }
+
+    public string GetFileUrl(string key)
+    {
+        // If utilizing MinIO locally
+        if (_serviceUrl.Contains("localhost") || _serviceUrl.Contains("minio"))
+        {
+            // For local development, we need to return the localhost URL
+            // even if the internal service URL is 'http://minio:9000'
+            var publicUrl = _serviceUrl.Replace("minio", "localhost");
+            return $"{publicUrl}/{_bucketName}/{key}";
+        }
+
+        // Standard AWS S3 URL format
+        return $"https://{_bucketName}.s3.amazonaws.com/{key}";
     }
 }
