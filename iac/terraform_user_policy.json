@@ -20,7 +20,8 @@
         "wafv2:*",
         "networkmanager:*",
         "codedeploy:*",
-        "codebuild:*"
+        "codebuild:*",
+        "sts:GetCallerIdentity"
       ],
       "Resource": "*"
     },
@@ -62,6 +63,7 @@
           "iam:PassedToService": [
             "lambda.amazonaws.com",
             "apigateway.amazonaws.com",
+            "rds.amazonaws.com",
             "codebuild.amazonaws.com",
             "codedeploy.amazonaws.com",
             "cloudfront.amazonaws.com"
