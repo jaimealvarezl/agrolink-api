@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Farms.Commands.Create;
 using AgroLink.Application.Features.Farms.DTOs;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -42,7 +43,7 @@ public class CreateFarmCommandHandlerTests
         var userId = 10;
         var createFarmDto = new CreateFarmDto { Name = "Test Farm", Location = "Test Location" };
         var command = new CreateFarmCommand(createFarmDto, userId);
-
+        
         var user = new User { Id = userId, Name = "Test User" };
         var owner = new Owner { Id = 5, Name = "Test User" };
         var farm = new Farm
@@ -61,7 +62,7 @@ public class CreateFarmCommandHandlerTests
 
         _farmRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
-            .Callback<Farm>(f =>
+            .Callback<Farm>(f => 
             {
                 f.Id = farm.Id;
                 f.OwnerId = owner.Id;
@@ -77,7 +78,7 @@ public class CreateFarmCommandHandlerTests
         result.Id.ShouldBe(farm.Id);
         result.Name.ShouldBe(farm.Name);
         result.OwnerId.ShouldBe(owner.Id);
-        result.Role.ShouldBe("Owner");
+        result.Role.ShouldBe(FarmMemberRoles.Owner);
 
         _userRepositoryMock.Verify(r => r.GetByIdAsync(userId), Times.Once);
         _ownerRepositoryMock.Verify(
@@ -89,7 +90,7 @@ public class CreateFarmCommandHandlerTests
             r =>
                 r.AddAsync(
                     It.Is<FarmMember>(m =>
-                        m.FarmId == farm.Id && m.UserId == userId && m.Role == "Owner"
+                        m.FarmId == farm.Id && m.UserId == userId && m.Role == FarmMemberRoles.Owner
                     )
                 ),
             Times.Once

@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Farms.DTOs;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -43,7 +44,7 @@ public class CreateFarmCommandHandler(
         {
             Name = dto.Name,
             Location = dto.Location,
-            OwnerId = owner.Id,
+            OwnerId = owner.Id
         };
 
         await farmRepository.AddAsync(farm);
@@ -54,7 +55,7 @@ public class CreateFarmCommandHandler(
         {
             FarmId = farm.Id,
             UserId = userId,
-            Role = "Owner",
+            Role = FarmMemberRoles.Owner
         };
 
         await farmMemberRepository.AddAsync(member);

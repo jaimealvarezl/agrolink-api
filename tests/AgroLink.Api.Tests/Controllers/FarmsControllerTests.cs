@@ -6,6 +6,7 @@ using AgroLink.Application.Features.Farms.Commands.Update;
 using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Application.Features.Farms.Queries.GetAll;
 using AgroLink.Application.Features.Farms.Queries.GetById;
+using AgroLink.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -97,7 +98,7 @@ public class FarmsControllerTests
             Id = 1,
             Name = "New Farm",
             OwnerId = 5,
-            Role = "Owner",
+            Role = FarmMemberRoles.Owner
         };
 
         // Mock Controller Context with User Claims

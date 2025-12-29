@@ -1,4 +1,6 @@
+using AgroLink.Domain.Constants;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AgroLink.Domain.Entities;
 
@@ -14,7 +16,7 @@ public class FarmMember
 
     [Required]
     [MaxLength(50)]
-    public string Role { get; set; } = "Viewer"; // Owner, Admin, Editor, Viewer
+    public string Role { get; set; } = FarmMemberRoles.Viewer;
 
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 }
