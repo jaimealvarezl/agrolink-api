@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Farms.Commands.Create;
 using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Domain.Constants;
@@ -59,7 +60,7 @@ public class CreateFarmCommandHandlerTests
         _ownerRepositoryMock
             .Setup(r =>
                 r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<System.Func<Owner, bool>>>()
+                    It.IsAny<Expression<Func<Owner, bool>>>()
                 )
             )
             .ReturnsAsync((Owner?)null);
@@ -135,7 +136,7 @@ public class CreateFarmCommandHandlerTests
         _ownerRepositoryMock
             .Setup(r =>
                 r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<System.Func<Owner, bool>>>()
+                    It.IsAny<Expression<Func<Owner, bool>>>()
                 )
             )
             .ReturnsAsync(existingOwner);
@@ -171,7 +172,7 @@ public class CreateFarmCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_UserNotFound_ThrowsInvalidOperationException()
+    public async Task Handle_UserNotFound_ThrowsArgumentException()
     {
         // Arrange
         var userId = 10;
@@ -179,7 +180,7 @@ public class CreateFarmCommandHandlerTests
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () =>
+        await Should.ThrowAsync<ArgumentException>(async () =>
             await _handler.Handle(command, CancellationToken.None)
         );
     }
