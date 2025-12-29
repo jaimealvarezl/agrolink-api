@@ -3,6 +3,7 @@ using System;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgroLink.Infrastructure.Migrations
 {
     [DbContext(typeof(AgroLinkDbContext))]
-    partial class AgroLinkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229011135_AddFarmMemberAndRelationships")]
+    partial class AddFarmMemberAndRelationships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -371,15 +374,9 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Name");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
 
                     b.ToTable("Owners");
                 });
@@ -643,15 +640,6 @@ namespace AgroLink.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AgroLink.Domain.Entities.Owner", b =>
-                {
-                    b.HasOne("AgroLink.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });

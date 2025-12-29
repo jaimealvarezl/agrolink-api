@@ -31,4 +31,5 @@ public class User
     // Navigation properties
     public virtual ICollection<Movement> Movements { get; set; } = new List<Movement>();
     public virtual ICollection<Checklist> Checklists { get; set; } = new List<Checklist>();
+    public virtual ICollection<FarmMember> FarmMembers { get; set; } = new List<FarmMember>();
 }

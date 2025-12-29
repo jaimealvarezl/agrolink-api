@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AgroLink.Api.Controllers;
 using AgroLink.Application.Features.Farms.Commands.Create;
 using AgroLink.Application.Features.Farms.Commands.Delete;
@@ -5,7 +6,9 @@ using AgroLink.Application.Features.Farms.Commands.Update;
 using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Application.Features.Farms.Queries.GetAll;
 using AgroLink.Application.Features.Farms.Queries.GetById;
+using AgroLink.Domain.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
@@ -88,10 +91,32 @@ public class FarmsControllerTests
     public async Task Create_ShouldReturnCreated()
     {
         // Arrange
+        var userId = 1;
         var request = new CreateFarmRequest { Name = "New Farm" };
-        var farmDto = new FarmDto { Id = 1, Name = "New Farm" };
+        var farmDto = new FarmDto
+        {
+            Id = 1,
+            Name = "New Farm",
+            OwnerId = 5,
+            Role = FarmMemberRoles.Owner,
+        };
+
+        // Mock Controller Context with User Claims
+        var claims = new List<Claim> { new("userid", userId.ToString()) };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal },
+        };
+
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateFarmCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.Send(
+                    It.Is<CreateFarmCommand>(c => c.Dto.Name == "New Farm" && c.UserId == userId),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(farmDto);
 
         // Act

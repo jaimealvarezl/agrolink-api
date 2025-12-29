@@ -68,8 +68,9 @@ public static class DependencyInjection
         services.AddScoped<IAnimalRepository, AnimalRepository>();
         services.AddScoped<IOwnerRepository, OwnerRepository>();
         services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();
-        services.AddScoped<IChecklistRepository, ChecklistRepository>();
         services.AddScoped<IMovementRepository, MovementRepository>();
+        services.AddScoped<IChecklistRepository, ChecklistRepository>();
+        services.AddScoped<IFarmMemberRepository, FarmMemberRepository>();
         services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 

@@ -19,6 +19,7 @@ public class AgroLinkDbContext : DbContext
     public DbSet<ChecklistItem> ChecklistItems { get; set; }
     public DbSet<Photo> Photos { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<FarmMember> FarmMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -95,6 +96,7 @@ public class AgroLinkDbContext : DbContext
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.HasIndex(e => e.Name);
+            entity.HasIndex(e => e.UserId).IsUnique();
         });
 
         modelBuilder.Entity<AnimalOwner>(entity =>
