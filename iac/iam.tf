@@ -137,9 +137,25 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         Sid    = "RDSReadAccess",
         Effect = "Allow",
         Action = [
-          "rds:DescribeDBClusters"
+          "rds:DescribeDBClusters",
+          "rds:DescribeDBInstances",
+          "rds:DescribeDBClusterEndpoints",
+          "rds:ListTagsForResource"
         ],
         Resource = "*"
+      },
+      {
+        Sid    = "SecretsManagerRead",
+        Effect = "Allow",
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ],
+        Resource = [
+          aws_secretsmanager_secret.agro_link_db_connection.arn,
+          aws_secretsmanager_secret.agro_link_db_password.arn,
+          aws_secretsmanager_secret.jwt_secret_key.arn
+        ]
       },
       {
         Sid    = "STSGetCallerIdentity",

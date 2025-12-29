@@ -61,7 +61,9 @@ resource "aws_iam_role_policy" "migration_lambda_policy" {
         Effect = "Allow"
         Action = [
           "rds:DescribeDBClusters",
-          "rds:DescribeDBClusterEndpoints"
+          "rds:DescribeDBClusterEndpoints",
+          "rds:DescribeDBInstances",
+          "rds:ListTagsForResource"
         ]
         Resource = "*"
       }
