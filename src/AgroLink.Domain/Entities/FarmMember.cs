@@ -1,6 +1,5 @@
-using AgroLink.Domain.Constants;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using AgroLink.Domain.Constants;
 
 namespace AgroLink.Domain.Entities;
 

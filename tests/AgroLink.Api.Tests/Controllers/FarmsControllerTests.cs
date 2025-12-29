@@ -98,7 +98,7 @@ public class FarmsControllerTests
             Id = 1,
             Name = "New Farm",
             OwnerId = 5,
-            Role = FarmMemberRoles.Owner
+            Role = FarmMemberRoles.Owner,
         };
 
         // Mock Controller Context with User Claims

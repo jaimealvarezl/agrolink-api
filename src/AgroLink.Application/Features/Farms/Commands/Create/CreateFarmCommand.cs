@@ -37,28 +37,27 @@ public class CreateFarmCommandHandler(
         };
 
         await ownerRepository.AddAsync(owner);
-        await unitOfWork.SaveChangesAsync(); // Need ID for Farm
 
         // 3. Create Farm
         var farm = new Farm
         {
             Name = dto.Name,
             Location = dto.Location,
-            OwnerId = owner.Id
+            Owner = owner,
         };
 
         await farmRepository.AddAsync(farm);
-        await unitOfWork.SaveChangesAsync(); // Need ID for FarmMember
 
         // 4. Create FarmMember
         var member = new FarmMember
         {
-            FarmId = farm.Id,
+            Farm = farm,
             UserId = userId,
-            Role = FarmMemberRoles.Owner
+            Role = FarmMemberRoles.Owner,
         };
 
         await farmMemberRepository.AddAsync(member);
+
         await unitOfWork.SaveChangesAsync();
 
         return new FarmDto
