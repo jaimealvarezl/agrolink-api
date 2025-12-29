@@ -88,7 +88,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("Tag")
                         .IsUnique();
 
-                    b.ToTable("Animals");
+                    b.ToTable("Animals", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.AnimalOwner", b =>
@@ -110,7 +110,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("AnimalOwners");
+                    b.ToTable("AnimalOwners", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Checklist", b =>
@@ -151,7 +151,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("ScopeType", "ScopeId", "Date");
 
-                    b.ToTable("Checklists");
+                    b.ToTable("Checklists", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.ChecklistItem", b =>
@@ -189,7 +189,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("ChecklistId");
 
-                    b.ToTable("ChecklistItems");
+                    b.ToTable("ChecklistItems", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Farm", b =>
@@ -224,7 +224,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Farms");
+                    b.ToTable("Farms", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.FarmMember", b =>
@@ -255,7 +255,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FarmMembers");
+                    b.ToTable("FarmMembers", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Lot", b =>
@@ -291,7 +291,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("PaddockId");
 
-                    b.ToTable("Lots");
+                    b.ToTable("Lots", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Movement", b =>
@@ -345,7 +345,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("EntityType", "EntityId");
 
-                    b.ToTable("Movements");
+                    b.ToTable("Movements", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Owner", b =>
@@ -381,7 +381,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Owners");
+                    b.ToTable("Owners", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Paddock", b =>
@@ -412,7 +412,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Paddocks");
+                    b.ToTable("Paddocks", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Photo", b =>
@@ -462,7 +462,7 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasIndex("EntityType", "EntityId");
 
-                    b.ToTable("Photos");
+                    b.ToTable("Photos", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.User", b =>
@@ -510,7 +510,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Animal", b =>
