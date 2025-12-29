@@ -27,7 +27,7 @@ public class CreateFarmCommandHandler(
         // 1. Get User details
         var user = await userRepository.GetByIdAsync(userId);
         if (user == null)
-            throw new ArgumentException("User not found");
+            throw new InvalidOperationException($"User with ID {userId} from token not found.");
 
         // 2. Create Owner record (Legal Entity) - assuming name matches user for now if creating fresh
         var owner = new Owner

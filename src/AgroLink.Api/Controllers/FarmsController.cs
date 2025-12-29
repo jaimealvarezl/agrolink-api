@@ -32,51 +32,103 @@ public class FarmsController(IMediator mediator) : BaseController
         return Ok(farm);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<FarmDto>> Create(CreateFarmRequest request)
-    {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var dto = new CreateFarmDto { Name = request.Name, Location = request.Location };
-            var farm = await mediator.Send(new CreateFarmCommand(dto, userId));
-            return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+        [HttpPost]
 
-    [HttpPut("{id}")]
-    public async Task<ActionResult<FarmDto>> Update(int id, UpdateFarmRequest request)
-    {
-        try
-        {
-            var dto = new UpdateFarmDto { Name = request.Name, Location = request.Location };
-            var farm = await mediator.Send(new UpdateFarmCommand(id, dto));
-            return Ok(farm);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+        public async Task<ActionResult<FarmDto>> Create(CreateFarmRequest request)
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
-    {
-        try
         {
-            await mediator.Send(new DeleteFarmCommand(id));
-            return NoContent();
+
+            try
+
+            {
+
+                var userId = GetCurrentUserId();
+
+                var dto = new CreateFarmDto
+
+                {
+
+                    Name = request.Name,
+
+                    Location = request.Location
+
+                };
+
+                var farm = await mediator.Send(new CreateFarmCommand(dto, userId));
+
+                return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
+
+            }
+
+            catch (Exception ex)
+
+            {
+
+                return HandleServiceException(ex);
+
+            }
+
         }
-        catch (ArgumentException ex)
+
+    
+
+        [HttpPut("{id}")]
+
+        public async Task<ActionResult<FarmDto>> Update(int id, UpdateFarmRequest request)
+
         {
-            return BadRequest(ex.Message);
+
+            try
+
+            {
+
+                var dto = new UpdateFarmDto { Name = request.Name, Location = request.Location };
+
+                var farm = await mediator.Send(new UpdateFarmCommand(id, dto));
+
+                return Ok(farm);
+
+            }
+
+            catch (Exception ex)
+
+            {
+
+                return HandleServiceException(ex);
+
+            }
+
         }
+
+    
+
+        [HttpDelete("{id}")]
+
+        public async Task<ActionResult> Delete(int id)
+
+        {
+
+            try
+
+            {
+
+                await mediator.Send(new DeleteFarmCommand(id));
+
+                return NoContent();
+
+            }
+
+            catch (Exception ex)
+
+            {
+
+                return HandleServiceException(ex);
+
+            }
+
+        }
+
     }
-}
 
 public class CreateFarmRequest
 {

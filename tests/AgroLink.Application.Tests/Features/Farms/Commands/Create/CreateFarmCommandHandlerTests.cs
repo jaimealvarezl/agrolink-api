@@ -86,15 +86,21 @@ public class CreateFarmCommandHandlerTests
             Times.Once
         );
         _farmRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Farm>()), Times.Once);
-        _farmMemberRepositoryMock.Verify(
-            r =>
-                r.AddAsync(
-                    It.Is<FarmMember>(m =>
-                        m.FarmId == farm.Id && m.UserId == userId && m.Role == FarmMemberRoles.Owner
-                    )
-                ),
-            Times.Once
-        );
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Exactly(3));
-    }
-}
+                _farmMemberRepositoryMock.Verify(r => r.AddAsync(It.Is<FarmMember>(m => m.FarmId == farm.Id && m.UserId == userId && m.Role == FarmMemberRoles.Owner)), Times.Once);
+                _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Exactly(3));
+            }
+        
+            [Test]
+            public async Task Handle_UserNotFound_ThrowsInvalidOperationException()
+            {
+                // Arrange
+                var userId = 10;
+                var command = new CreateFarmCommand(new CreateFarmDto { Name = "Test" }, userId);
+                _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
+        
+                // Act & Assert
+                await Should.ThrowAsync<InvalidOperationException>(async () =>
+                    await _handler.Handle(command, CancellationToken.None)
+                );
+            }
+        }
