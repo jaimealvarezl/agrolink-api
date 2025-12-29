@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgroLink.Infrastructure.Migrations
 {
     [DbContext(typeof(AgroLinkDbContext))]
-    [Migration("20251229013502_AddUniqueConstraintToOwnerUserId")]
-    partial class AddUniqueConstraintToOwnerUserId
+    [Migration("20251229021431_AddFarmMembershipAndOwnerEnhancements")]
+    partial class AddFarmMembershipAndOwnerEnhancements
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
