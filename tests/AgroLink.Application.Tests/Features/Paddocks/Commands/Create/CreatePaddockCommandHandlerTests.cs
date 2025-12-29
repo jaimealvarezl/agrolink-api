@@ -49,16 +49,12 @@ public class CreatePaddockCommandHandlerTests
         {
             FarmId = farmId,
             UserId = userId,
-            Role = AgroLink.Domain.Constants.FarmMemberRoles.Owner,
+            Role = FarmMemberRoles.Owner,
         };
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _farmMemberRepositoryMock
-            .Setup(r =>
-                r.FirstOrDefaultAsync(
-                    It.IsAny<System.Linq.Expressions.Expression<System.Func<FarmMember, bool>>>()
-                )
-            )
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(member);
 
         _paddockRepositoryMock
