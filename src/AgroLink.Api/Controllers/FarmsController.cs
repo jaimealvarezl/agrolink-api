@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using AgroLink.Application.Features.Farms.Commands.Create;
 using AgroLink.Application.Features.Farms.Commands.Delete;
 using AgroLink.Application.Features.Farms.Commands.Update;
@@ -36,13 +37,9 @@ public class FarmsController(IMediator mediator) : BaseController
     {
         try
         {
-            var dto = new CreateFarmDto
-            {
-                Name = request.Name,
-                Location = request.Location,
-                OwnerId = request.OwnerId
-            };
-            var farm = await mediator.Send(new CreateFarmCommand(dto));
+            var userId = GetCurrentUserId();
+            var dto = new CreateFarmDto { Name = request.Name, Location = request.Location };
+            var farm = await mediator.Send(new CreateFarmCommand(dto, userId));
             return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
         }
         catch (ArgumentException ex)
@@ -83,9 +80,9 @@ public class FarmsController(IMediator mediator) : BaseController
 
 public class CreateFarmRequest
 {
+    [Required]
     public string Name { get; set; } = string.Empty;
     public string? Location { get; set; }
-    public int OwnerId { get; set; }
 }
 
 public class UpdateFarmRequest

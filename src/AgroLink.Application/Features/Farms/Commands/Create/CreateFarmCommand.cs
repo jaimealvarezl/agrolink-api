@@ -5,10 +5,15 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Create;
 
-public record CreateFarmCommand(CreateFarmDto Dto) : IRequest<FarmDto>;
+public record CreateFarmCommand(CreateFarmDto Dto, int UserId) : IRequest<FarmDto>;
 
-public class CreateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
-    : IRequestHandler<CreateFarmCommand, FarmDto>
+public class CreateFarmCommandHandler(
+    IFarmRepository farmRepository,
+    IOwnerRepository ownerRepository,
+    IFarmMemberRepository farmMemberRepository,
+    IUserRepository userRepository,
+    IUnitOfWork unitOfWork
+) : IRequestHandler<CreateFarmCommand, FarmDto>
 {
     public async Task<FarmDto> Handle(
         CreateFarmCommand request,
@@ -16,14 +21,43 @@ public class CreateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
     )
     {
         var dto = request.Dto;
+        var userId = request.UserId;
+
+        // 1. Get User details
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user == null)
+            throw new ArgumentException("User not found");
+
+        // 2. Create Owner record (Legal Entity) - assuming name matches user for now if creating fresh
+        var owner = new Owner
+        {
+            Name = user.Name,
+            // Phone could be copied if available
+        };
+
+        await ownerRepository.AddAsync(owner);
+        await unitOfWork.SaveChangesAsync(); // Need ID for Farm
+
+        // 3. Create Farm
         var farm = new Farm
         {
             Name = dto.Name,
             Location = dto.Location,
-            OwnerId = dto.OwnerId
+            OwnerId = owner.Id,
         };
 
         await farmRepository.AddAsync(farm);
+        await unitOfWork.SaveChangesAsync(); // Need ID for FarmMember
+
+        // 4. Create FarmMember
+        var member = new FarmMember
+        {
+            FarmId = farm.Id,
+            UserId = userId,
+            Role = "Owner",
+        };
+
+        await farmMemberRepository.AddAsync(member);
         await unitOfWork.SaveChangesAsync();
 
         return new FarmDto
@@ -32,6 +66,7 @@ public class CreateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
             Name = farm.Name,
             Location = farm.Location,
             OwnerId = farm.OwnerId,
+            Role = member.Role,
             CreatedAt = farm.CreatedAt,
         };
     }

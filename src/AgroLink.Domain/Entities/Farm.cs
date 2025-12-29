@@ -21,4 +21,5 @@ public class Farm
 
     // Navigation properties
     public virtual ICollection<Paddock> Paddocks { get; set; } = new List<Paddock>();
+    public virtual ICollection<FarmMember> Members { get; set; } = new List<FarmMember>();
 }
