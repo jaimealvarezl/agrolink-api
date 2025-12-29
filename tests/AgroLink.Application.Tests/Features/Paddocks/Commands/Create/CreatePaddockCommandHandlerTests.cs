@@ -40,19 +40,25 @@ public class CreatePaddockCommandHandlerTests
         var userId = 10;
         var farmId = 1;
         var name = "Test Paddock";
-        var command = new CreatePaddockCommand(name, farmId, userId);
+        var area = 10.5m;
+        var areaType = "Hectare";
+        var command = new CreatePaddockCommand(name, farmId, userId, area, areaType);
 
         var farm = new Farm { Id = farmId, Name = "Test Farm" };
         var member = new FarmMember
         {
             FarmId = farmId,
             UserId = userId,
-            Role = FarmMemberRoles.Owner,
+            Role = AgroLink.Domain.Constants.FarmMemberRoles.Owner,
         };
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _farmMemberRepositoryMock
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .Setup(r =>
+                r.FirstOrDefaultAsync(
+                    It.IsAny<System.Linq.Expressions.Expression<System.Func<FarmMember, bool>>>()
+                )
+            )
             .ReturnsAsync(member);
 
         _paddockRepositoryMock
@@ -68,6 +74,8 @@ public class CreatePaddockCommandHandlerTests
         result.Id.ShouldBe(1);
         result.Name.ShouldBe(name);
         result.FarmName.ShouldBe(farm.Name);
+        result.Area.ShouldBe(area);
+        result.AreaType.ShouldBe(areaType);
         _paddockRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Paddock>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
@@ -76,7 +84,7 @@ public class CreatePaddockCommandHandlerTests
     public async Task Handle_FarmNotFound_ThrowsArgumentException()
     {
         // Arrange
-        var command = new CreatePaddockCommand("Test", 99, 1);
+        var command = new CreatePaddockCommand("Test", 99, 1, null, null);
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Farm?)null);
 
         // Act & Assert
@@ -91,7 +99,7 @@ public class CreatePaddockCommandHandlerTests
         // Arrange
         var farmId = 1;
         var userId = 10;
-        var command = new CreatePaddockCommand("Test", farmId, userId);
+        var command = new CreatePaddockCommand("Test", farmId, userId, null, null);
 
         _farmRepositoryMock
             .Setup(r => r.GetByIdAsync(farmId))

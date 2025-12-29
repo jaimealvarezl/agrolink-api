@@ -9,4 +9,8 @@ public class CreatePaddockRequest
 
     [Required]
     public int FarmId { get; set; }
+
+    public decimal? Area { get; set; }
+
+    public string? AreaType { get; set; }
 }

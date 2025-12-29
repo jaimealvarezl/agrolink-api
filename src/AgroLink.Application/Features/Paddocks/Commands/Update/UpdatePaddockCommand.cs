@@ -4,7 +4,13 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Paddocks.Commands.Update;
 
-public record UpdatePaddockCommand(int Id, string? Name, int? FarmId) : IRequest<PaddockDto>;
+public record UpdatePaddockCommand(
+    int Id,
+    string? Name,
+    int? FarmId,
+    decimal? Area,
+    string? AreaType
+) : IRequest<PaddockDto>;
 
 public class UpdatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
@@ -33,6 +39,16 @@ public class UpdatePaddockCommandHandler(
             paddock.FarmId = request.FarmId.Value;
         }
 
+        if (request.Area.HasValue)
+        {
+            paddock.Area = request.Area.Value;
+        }
+
+        if (request.AreaType != null)
+        {
+            paddock.AreaType = request.AreaType;
+        }
+
         paddock.UpdatedAt = DateTime.UtcNow;
 
         paddockRepository.Update(paddock);
@@ -46,6 +62,8 @@ public class UpdatePaddockCommandHandler(
             Name = paddock.Name,
             FarmId = paddock.FarmId,
             FarmName = farm?.Name ?? "",
+            Area = paddock.Area,
+            AreaType = paddock.AreaType,
             CreatedAt = paddock.CreatedAt,
         };
     }

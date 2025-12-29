@@ -6,7 +6,13 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Paddocks.Commands.Create;
 
-public record CreatePaddockCommand(string Name, int FarmId, int UserId) : IRequest<PaddockDto>;
+public record CreatePaddockCommand(
+    string Name,
+    int FarmId,
+    int UserId,
+    decimal? Area,
+    string? AreaType
+) : IRequest<PaddockDto>;
 
 public class CreatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
@@ -44,7 +50,13 @@ public class CreatePaddockCommandHandler(
                 "User does not have permission to add paddocks to this farm."
             );
 
-        var paddock = new Paddock { Name = request.Name, FarmId = request.FarmId };
+        var paddock = new Paddock
+        {
+            Name = request.Name,
+            FarmId = request.FarmId,
+            Area = request.Area,
+            AreaType = request.AreaType,
+        };
 
         await paddockRepository.AddAsync(paddock);
         await unitOfWork.SaveChangesAsync();
@@ -55,6 +67,8 @@ public class CreatePaddockCommandHandler(
             Name = paddock.Name,
             FarmId = paddock.FarmId,
             FarmName = farm.Name,
+            Area = paddock.Area,
+            AreaType = paddock.AreaType,
             CreatedAt = paddock.CreatedAt,
         };
     }

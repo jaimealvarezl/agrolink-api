@@ -34,7 +34,9 @@ public class UpdatePaddockCommandHandlerTests
         var paddockId = 1;
         var name = "Updated Paddock";
         var farmId = 2;
-        var command = new UpdatePaddockCommand(paddockId, name, farmId);
+        var area = 20.0m;
+        var areaType = "Manzana";
+        var command = new UpdatePaddockCommand(paddockId, name, farmId, area, areaType);
         var paddock = new Paddock
         {
             Id = paddockId,
@@ -55,6 +57,8 @@ public class UpdatePaddockCommandHandlerTests
         result.Id.ShouldBe(paddockId);
         result.Name.ShouldBe(name);
         result.FarmId.ShouldBe(farmId);
+        result.Area.ShouldBe(area);
+        result.AreaType.ShouldBe(areaType);
         _paddockRepositoryMock.Verify(r => r.Update(It.IsAny<Paddock>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
@@ -63,7 +67,7 @@ public class UpdatePaddockCommandHandlerTests
     public async Task Handle_PaddockNotFound_ThrowsArgumentException()
     {
         // Arrange
-        var command = new UpdatePaddockCommand(999, "Name", 1);
+        var command = new UpdatePaddockCommand(999, "Name", 1, null, null);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Paddock?)null);
 
         // Act & Assert

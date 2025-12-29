@@ -80,15 +80,12 @@ public class PaddocksControllerTests
     public async Task Create_ShouldReturnCreated()
     {
         // Arrange
-
-        var request = new CreatePaddockRequest { Name = "New Paddock", FarmId = 1 };
-
-        var paddockDto = new PaddockDto { Id = 1, Name = "New Paddock" };
-
+        var request = new CreatePaddockRequest { Name = "New Paddock", FarmId = 1, Area = 5.5m, AreaType = "Hectare" };
+        var paddockDto = new PaddockDto { Id = 1, Name = "New Paddock", Area = 5.5m, AreaType = "Hectare" };
         _mediatorMock
             .Setup(x =>
                 x.Send(
-                    It.Is<CreatePaddockCommand>(c => c.UserId == 1),
+                    It.Is<CreatePaddockCommand>(c => c.UserId == 1 && c.Area == 5.5m),
                     It.IsAny<CancellationToken>()
                 )
             )

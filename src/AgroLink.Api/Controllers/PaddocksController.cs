@@ -46,9 +46,17 @@ public class PaddocksController(IMediator mediator) : BaseController
         try
         {
             var userId = GetCurrentUserId();
+
             var paddock = await mediator.Send(
-                new CreatePaddockCommand(request.Name, request.FarmId, userId)
+                new CreatePaddockCommand(
+                    request.Name,
+                    request.FarmId,
+                    userId,
+                    request.Area,
+                    request.AreaType
+                )
             );
+
             return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, paddock);
         }
         catch (Exception ex)
@@ -63,8 +71,15 @@ public class PaddocksController(IMediator mediator) : BaseController
         try
         {
             var paddock = await mediator.Send(
-                new UpdatePaddockCommand(id, request.Name, request.FarmId)
+                new UpdatePaddockCommand(
+                    id,
+                    request.Name,
+                    request.FarmId,
+                    request.Area,
+                    request.AreaType
+                )
             );
+
             return Ok(paddock);
         }
         catch (Exception ex)
