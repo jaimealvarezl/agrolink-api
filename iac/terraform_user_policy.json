@@ -1,0 +1,73 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InfrastructureServiceManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*",
+        "rds:*",
+        "s3:*",
+        "lambda:*",
+        "apigateway:*",
+        "cloudfront:*",
+        "route53:*",
+        "acm:*",
+        "secretsmanager:*",
+        "kms:*",
+        "logs:*",
+        "cloudwatch:*",
+        "wafv2:*",
+        "networkmanager:*",
+        "codedeploy:*",
+        "codebuild:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMAndRoleManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateUser",
+        "iam:CreateAccessKey",
+        "iam:CreateRole",
+        "iam:CreatePolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeleteUser",
+        "iam:DeleteAccessKey",
+        "iam:DeleteRole",
+        "iam:DeletePolicy",
+        "iam:DeletePolicyVersion",
+        "iam:DeleteRolePolicy",
+        "iam:DeleteUserPolicy",
+        "iam:Get*",
+        "iam:List*",
+        "iam:Update*",
+        "iam:Put*",
+        "iam:Attach*",
+        "iam:Detach*",
+        "iam:Tag*",
+        "iam:Untag*",
+        "iam:SetDefaultPolicyVersion"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ScopedPassRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "lambda.amazonaws.com",
+            "apigateway.amazonaws.com",
+            "codebuild.amazonaws.com",
+            "codedeploy.amazonaws.com",
+            "cloudfront.amazonaws.com"
+          ]
+        }
+      }
+    }
+  ]
+}
