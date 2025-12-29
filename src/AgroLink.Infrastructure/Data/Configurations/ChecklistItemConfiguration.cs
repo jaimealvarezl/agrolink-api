@@ -23,5 +23,7 @@ public class ChecklistItemConfiguration : IEntityTypeConfiguration<ChecklistItem
             .WithMany(a => a.ChecklistItems)
             .HasForeignKey(e => e.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.ChecklistId, e.AnimalId }).IsUnique();
     }
 }

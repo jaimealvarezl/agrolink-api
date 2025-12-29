@@ -22,5 +22,7 @@ public class FarmMemberConfiguration : IEntityTypeConfiguration<FarmMember>
             .WithMany(u => u.FarmMembers)
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.FarmId, e.UserId }).IsUnique();
     }
 }
