@@ -6,7 +6,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Create;
 
-public record CreateFarmCommand(CreateFarmDto Dto, int UserId) : IRequest<FarmDto>;
+public record CreateFarmCommand(string Name, string? Location, int UserId) : IRequest<FarmDto>;
 
 public class CreateFarmCommandHandler(
     IFarmRepository farmRepository,
@@ -21,7 +21,6 @@ public class CreateFarmCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var dto = request.Dto;
         var userId = request.UserId;
 
         // 1. Get User details
@@ -46,8 +45,8 @@ public class CreateFarmCommandHandler(
         // 3. Create Farm
         var farm = new Farm
         {
-            Name = dto.Name,
-            Location = dto.Location,
+            Name = request.Name,
+            Location = request.Location,
             Owner = owner,
         };
 

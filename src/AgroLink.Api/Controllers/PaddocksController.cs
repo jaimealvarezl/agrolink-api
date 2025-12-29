@@ -1,3 +1,4 @@
+using AgroLink.Api.DTOs.Paddocks;
 using AgroLink.Application.Features.Paddocks.Commands.Create;
 using AgroLink.Application.Features.Paddocks.Commands.Delete;
 using AgroLink.Application.Features.Paddocks.Commands.Update;
@@ -44,13 +45,15 @@ public class PaddocksController(IMediator mediator) : BaseController
     {
         try
         {
-            var dto = new CreatePaddockDto { Name = request.Name, FarmId = request.FarmId };
-            var paddock = await mediator.Send(new CreatePaddockCommand(dto));
+            var userId = GetCurrentUserId();
+            var paddock = await mediator.Send(
+                new CreatePaddockCommand(request.Name, request.FarmId, userId)
+            );
             return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, paddock);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -59,13 +62,14 @@ public class PaddocksController(IMediator mediator) : BaseController
     {
         try
         {
-            var dto = new UpdatePaddockDto { Name = request.Name, FarmId = request.FarmId };
-            var paddock = await mediator.Send(new UpdatePaddockCommand(id, dto));
+            var paddock = await mediator.Send(
+                new UpdatePaddockCommand(id, request.Name, request.FarmId)
+            );
             return Ok(paddock);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -77,21 +81,9 @@ public class PaddocksController(IMediator mediator) : BaseController
             await mediator.Send(new DeletePaddockCommand(id));
             return NoContent();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
-}
-
-public class CreatePaddockRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public int FarmId { get; set; }
-}
-
-public class UpdatePaddockRequest
-{
-    public string? Name { get; set; }
-    public int? FarmId { get; set; }
 }

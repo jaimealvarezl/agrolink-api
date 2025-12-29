@@ -4,7 +4,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Paddocks.Commands.Update;
 
-public record UpdatePaddockCommand(int Id, UpdatePaddockDto Dto) : IRequest<PaddockDto>;
+public record UpdatePaddockCommand(int Id, string? Name, int? FarmId) : IRequest<PaddockDto>;
 
 public class UpdatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
@@ -23,15 +23,14 @@ public class UpdatePaddockCommandHandler(
             throw new ArgumentException("Paddock not found");
         }
 
-        var dto = request.Dto;
-        if (!string.IsNullOrEmpty(dto.Name))
+        if (!string.IsNullOrEmpty(request.Name))
         {
-            paddock.Name = dto.Name;
+            paddock.Name = request.Name;
         }
 
-        if (dto.FarmId.HasValue)
+        if (request.FarmId.HasValue)
         {
-            paddock.FarmId = dto.FarmId.Value;
+            paddock.FarmId = request.FarmId.Value;
         }
 
         paddock.UpdatedAt = DateTime.UtcNow;

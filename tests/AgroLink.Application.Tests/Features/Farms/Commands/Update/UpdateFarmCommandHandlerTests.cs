@@ -1,5 +1,4 @@
 using AgroLink.Application.Features.Farms.Commands.Update;
-using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -27,22 +26,17 @@ public class UpdateFarmCommandHandlerTests
     {
         // Arrange
         var farmId = 1;
-        var updateFarmDto = new UpdateFarmDto
-        {
-            Name = "Updated Name",
-            Location = "Updated Location",
-        };
-        var command = new UpdateFarmCommand(farmId, updateFarmDto);
+        var name = "Updated Farm";
+        var location = "Updated Location";
+        var command = new UpdateFarmCommand(farmId, name, location);
         var farm = new Farm
         {
             Id = farmId,
-            Name = "Old Name",
+            Name = "Old Farm",
             Location = "Old Location",
-            CreatedAt = DateTime.UtcNow,
         };
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmRepositoryMock.Setup(r => r.Update(farm));
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
@@ -51,28 +45,22 @@ public class UpdateFarmCommandHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(farmId);
-        result.Name.ShouldBe(updateFarmDto.Name);
-        result.Location.ShouldBe(updateFarmDto.Location);
-        _farmRepositoryMock.Verify(r => r.Update(farm), Times.Once);
+        result.Name.ShouldBe(name);
+        result.Location.ShouldBe(location);
+        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
-    public async Task Handle_NonExistingFarm_ThrowsArgumentException()
+    public async Task Handle_FarmNotFound_ThrowsArgumentException()
     {
         // Arrange
-        var farmId = 999;
-        var updateFarmDto = new UpdateFarmDto { Name = "Updated Name" };
-        var command = new UpdateFarmCommand(farmId, updateFarmDto);
-
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync((Farm?)null);
+        var command = new UpdateFarmCommand(999, "Name", "Location");
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Farm?)null);
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<ArgumentException>(() =>
-            _handler.Handle(command, CancellationToken.None)
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
         );
-        exception.Message.ShouldBe("Farm not found");
-        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

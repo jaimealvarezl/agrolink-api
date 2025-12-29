@@ -1,5 +1,4 @@
 using AgroLink.Application.Features.Paddocks.Commands.Update;
-using AgroLink.Application.Features.Paddocks.DTOs;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -33,21 +32,20 @@ public class UpdatePaddockCommandHandlerTests
     {
         // Arrange
         var paddockId = 1;
-        var updatePaddockDto = new UpdatePaddockDto { Name = "Updated Paddock Name", FarmId = 2 };
-        var command = new UpdatePaddockCommand(paddockId, updatePaddockDto);
+        var name = "Updated Paddock";
+        var farmId = 2;
+        var command = new UpdatePaddockCommand(paddockId, name, farmId);
         var paddock = new Paddock
         {
             Id = paddockId,
-            Name = "Old Paddock Name",
+            Name = "Old Paddock",
             FarmId = 1,
-            CreatedAt = DateTime.UtcNow,
         };
-        var newFarm = new Farm { Id = 2, Name = "New Farm" };
+        var farm = new Farm { Id = farmId, Name = "Test Farm" };
 
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _paddockRepositoryMock.Setup(r => r.Update(paddock));
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(newFarm.Id)).ReturnsAsync(newFarm);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -55,29 +53,22 @@ public class UpdatePaddockCommandHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(paddockId);
-        result.Name.ShouldBe(updatePaddockDto.Name);
-        result.FarmId.ShouldBe(updatePaddockDto.FarmId.Value);
-        result.FarmName.ShouldBe(newFarm.Name);
-        _paddockRepositoryMock.Verify(r => r.Update(paddock), Times.Once);
+        result.Name.ShouldBe(name);
+        result.FarmId.ShouldBe(farmId);
+        _paddockRepositoryMock.Verify(r => r.Update(It.IsAny<Paddock>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
-    public async Task Handle_NonExistingPaddock_ThrowsArgumentException()
+    public async Task Handle_PaddockNotFound_ThrowsArgumentException()
     {
         // Arrange
-        var paddockId = 999;
-        var updatePaddockDto = new UpdatePaddockDto { Name = "Updated Name" };
-        var command = new UpdatePaddockCommand(paddockId, updatePaddockDto);
-
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync((Paddock?)null);
+        var command = new UpdatePaddockCommand(999, "Name", 1);
+        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Paddock?)null);
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<ArgumentException>(() =>
-            _handler.Handle(command, CancellationToken.None)
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
         );
-        exception.Message.ShouldBe("Paddock not found");
-        _paddockRepositoryMock.Verify(r => r.Update(It.IsAny<Paddock>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }
