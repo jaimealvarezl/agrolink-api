@@ -96,6 +96,7 @@ public class AgroLinkDbContext : DbContext
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.HasIndex(e => e.Name);
+            entity.HasIndex(e => e.UserId).IsUnique();
         });
 
         modelBuilder.Entity<AnimalOwner>(entity =>
