@@ -29,14 +29,19 @@ public class CreateFarmCommandHandler(
         if (user == null)
             throw new InvalidOperationException($"User with ID {userId} from token not found.");
 
-        // 2. Create Owner record (Legal Entity) - assuming name matches user for now if creating fresh
-        var owner = new Owner
-        {
-            Name = user.Name,
-            // Phone could be copied if available
-        };
+        // 2. Find or Create Owner record (Legal Entity)
+        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
 
-        await ownerRepository.AddAsync(owner);
+        if (owner == null)
+        {
+            owner = new Owner
+            {
+                Name = user.Name,
+                UserId = userId,
+                // Phone could be copied if available
+            };
+            await ownerRepository.AddAsync(owner);
+        }
 
         // 3. Create Farm
         var farm = new Farm

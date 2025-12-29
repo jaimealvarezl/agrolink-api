@@ -57,6 +57,14 @@ public class CreateFarmCommandHandlerTests
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
         _ownerRepositoryMock
+            .Setup(r =>
+                r.FirstOrDefaultAsync(
+                    It.IsAny<System.Linq.Expressions.Expression<System.Func<Owner, bool>>>()
+                )
+            )
+            .ReturnsAsync((Owner?)null);
+
+        _ownerRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Owner>()))
             .Callback<Owner>(o => o.Id = owner.Id);
 
@@ -99,6 +107,63 @@ public class CreateFarmCommandHandlerTests
                         && m.UserId == userId
                         && m.Role == FarmMemberRoles.Owner
                     )
+                ),
+            Times.Once
+        );
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_ExistingOwner_UsesExistingOwnerInsteadOfCreatingNewOne()
+    {
+        // Arrange
+        var userId = 10;
+        var createFarmDto = new CreateFarmDto { Name = "Second Farm", Location = "Location" };
+        var command = new CreateFarmCommand(createFarmDto, userId);
+
+        var user = new User { Id = userId, Name = "Test User" };
+        var existingOwner = new Owner
+        {
+            Id = 5,
+            Name = "Test User",
+            UserId = userId,
+        };
+
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        // Setup FirstOrDefaultAsync to return existing owner
+        _ownerRepositoryMock
+            .Setup(r =>
+                r.FirstOrDefaultAsync(
+                    It.IsAny<System.Linq.Expressions.Expression<System.Func<Owner, bool>>>()
+                )
+            )
+            .ReturnsAsync(existingOwner);
+
+        _farmRepositoryMock
+            .Setup(r => r.AddAsync(It.IsAny<Farm>()))
+            .Callback<Farm>(f =>
+            {
+                f.Id = 2;
+                if (f.Owner != null)
+                    f.OwnerId = f.Owner.Id;
+            });
+
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.OwnerId.ShouldBe(existingOwner.Id);
+
+        // Verify Owner was NOT added again
+        _ownerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Never);
+        _farmRepositoryMock.Verify(
+            r =>
+                r.AddAsync(
+                    It.Is<Farm>(f => f.Owner == existingOwner || f.OwnerId == existingOwner.Id)
                 ),
             Times.Once
         );

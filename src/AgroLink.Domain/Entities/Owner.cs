@@ -13,6 +13,9 @@ public class Owner
     [MaxLength(20)]
     public string? Phone { get; set; }
 
+    public int? UserId { get; set; }
+    public virtual User? User { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
