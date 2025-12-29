@@ -26,18 +26,29 @@ public class CreateFarmCommandHandlerTests
     public async Task Handle_ValidCreateFarmCommand_ReturnsFarmDto()
     {
         // Arrange
-        var createFarmDto = new CreateFarmDto { Name = "Test Farm", Location = "Test Location" };
+        var createFarmDto = new CreateFarmDto
+        {
+            Name = "Test Farm",
+            Location = "Test Location",
+            OwnerId = 1
+        };
         var command = new CreateFarmCommand(createFarmDto);
         var farm = new Farm
         {
             Id = 1,
             Name = "Test Farm",
             Location = "Test Location",
+            OwnerId = 1
         };
 
         _farmRepositoryMock
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
-            .Callback<Farm>(f => f.Id = farm.Id); // Simulate DB ID generation
+            .Callback<Farm>(f =>
+            {
+                f.Id = farm.Id;
+                // Verify mapping inside the mock callback if needed, or just rely on result check
+                f.OwnerId.ShouldBe(createFarmDto.OwnerId);
+            }); // Simulate DB ID generation
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
@@ -47,6 +58,7 @@ public class CreateFarmCommandHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(farm.Id);
         result.Name.ShouldBe(farm.Name);
+        result.OwnerId.ShouldBe(farm.OwnerId);
         _farmRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Farm>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }

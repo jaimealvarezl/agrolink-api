@@ -88,10 +88,22 @@ public class FarmsControllerTests
     public async Task Create_ShouldReturnCreated()
     {
         // Arrange
-        var request = new CreateFarmRequest { Name = "New Farm" };
-        var farmDto = new FarmDto { Id = 1, Name = "New Farm" };
+        var request = new CreateFarmRequest { Name = "New Farm", OwnerId = 1 };
+        var farmDto = new FarmDto
+        {
+            Id = 1,
+            Name = "New Farm",
+            OwnerId = 1
+        };
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateFarmCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.Send(
+                    It.Is<CreateFarmCommand>(c =>
+                        c.Dto.OwnerId == 1 && c.Dto.Name == "New Farm"
+                    ),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(farmDto);
 
         // Act

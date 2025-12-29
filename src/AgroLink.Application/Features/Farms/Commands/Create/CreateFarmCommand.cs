@@ -16,7 +16,12 @@ public class CreateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
     )
     {
         var dto = request.Dto;
-        var farm = new Farm { Name = dto.Name, Location = dto.Location };
+        var farm = new Farm
+        {
+            Name = dto.Name,
+            Location = dto.Location,
+            OwnerId = dto.OwnerId
+        };
 
         await farmRepository.AddAsync(farm);
         await unitOfWork.SaveChangesAsync();
@@ -26,6 +31,7 @@ public class CreateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
+            OwnerId = farm.OwnerId,
             CreatedAt = farm.CreatedAt,
         };
     }

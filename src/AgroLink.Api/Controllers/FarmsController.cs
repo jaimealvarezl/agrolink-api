@@ -36,7 +36,12 @@ public class FarmsController(IMediator mediator) : BaseController
     {
         try
         {
-            var dto = new CreateFarmDto { Name = request.Name, Location = request.Location };
+            var dto = new CreateFarmDto
+            {
+                Name = request.Name,
+                Location = request.Location,
+                OwnerId = request.OwnerId
+            };
             var farm = await mediator.Send(new CreateFarmCommand(dto));
             return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
         }
@@ -80,6 +85,7 @@ public class CreateFarmRequest
 {
     public string Name { get; set; } = string.Empty;
     public string? Location { get; set; }
+    public int OwnerId { get; set; }
 }
 
 public class UpdateFarmRequest
