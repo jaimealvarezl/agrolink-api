@@ -58,11 +58,7 @@ public class CreateFarmCommandHandlerTests
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
         _ownerRepositoryMock
-            .Setup(r =>
-                r.FirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<Owner, bool>>>()
-                )
-            )
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync((Owner?)null);
 
         _ownerRepositoryMock
@@ -134,11 +130,7 @@ public class CreateFarmCommandHandlerTests
 
         // Setup FirstOrDefaultAsync to return existing owner
         _ownerRepositoryMock
-            .Setup(r =>
-                r.FirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<Owner, bool>>>()
-                )
-            )
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(existingOwner);
 
         _farmRepositoryMock
@@ -172,7 +164,7 @@ public class CreateFarmCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_UserNotFound_ThrowsArgumentException()
+    public async Task Handle_UserNotFound_ThrowsUnauthorizedAccessException()
     {
         // Arrange
         var userId = 10;
@@ -180,7 +172,7 @@ public class CreateFarmCommandHandlerTests
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () =>
+        await Should.ThrowAsync<UnauthorizedAccessException>(async () =>
             await _handler.Handle(command, CancellationToken.None)
         );
     }
