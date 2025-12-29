@@ -19,6 +19,7 @@ public class AgroLinkDbContext : DbContext
     public DbSet<ChecklistItem> ChecklistItems { get; set; }
     public DbSet<Photo> Photos { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<FarmMember> FarmMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
