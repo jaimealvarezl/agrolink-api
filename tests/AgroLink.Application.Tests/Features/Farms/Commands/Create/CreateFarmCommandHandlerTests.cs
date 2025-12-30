@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Farms.Commands.Create;
-using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -42,8 +41,9 @@ public class CreateFarmCommandHandlerTests
     {
         // Arrange
         var userId = 10;
-        var createFarmDto = new CreateFarmDto { Name = "Test Farm", Location = "Test Location" };
-        var command = new CreateFarmCommand(createFarmDto, userId);
+        var name = "Test Farm";
+        var location = "Test Location";
+        var command = new CreateFarmCommand(name, location, userId);
 
         var user = new User { Id = userId, Name = "Test User" };
         var owner = new Owner { Id = 5, Name = "Test User" };
@@ -114,9 +114,9 @@ public class CreateFarmCommandHandlerTests
     public async Task Handle_ExistingOwner_UsesExistingOwnerInsteadOfCreatingNewOne()
     {
         // Arrange
-        var userId = 10;
-        var createFarmDto = new CreateFarmDto { Name = "Second Farm", Location = "Location" };
-        var command = new CreateFarmCommand(createFarmDto, userId);
+        const int userId = 10;
+        const string name = "Second Farm";
+        var command = new CreateFarmCommand(name, "Location", userId);
 
         var user = new User { Id = userId, Name = "Test User" };
         var existingOwner = new Owner
@@ -168,7 +168,7 @@ public class CreateFarmCommandHandlerTests
     {
         // Arrange
         var userId = 10;
-        var command = new CreateFarmCommand(new CreateFarmDto { Name = "Test" }, userId);
+        var command = new CreateFarmCommand("Test", null, userId);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
 
         // Act & Assert

@@ -1,0 +1,52 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'iac/**'
+      - '.github/workflows/terraform-ci.yml'
+
+jobs:
+  terraform-check:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Terraform plugins
+        uses: actions/cache@v4
+        with:
+          path: iac/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('iac/**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Terraform Format Check
+        id: fmt
+        working-directory: iac
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Format
+        if: steps.fmt.outcome == 'failure'
+        working-directory: iac
+        run: |
+          echo "❌ Terraform files are not properly formatted. Run 'terraform fmt -recursive' to fix."
+          terraform fmt -recursive -diff
+          exit 1
+
+      - name: Terraform Init
+        working-directory: iac
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: iac
+        run: terraform validate

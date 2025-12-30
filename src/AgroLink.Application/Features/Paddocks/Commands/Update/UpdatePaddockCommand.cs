@@ -1,10 +1,17 @@
 using AgroLink.Application.Features.Paddocks.DTOs;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Paddocks.Commands.Update;
 
-public record UpdatePaddockCommand(int Id, UpdatePaddockDto Dto) : IRequest<PaddockDto>;
+public record UpdatePaddockCommand(
+    int Id,
+    string? Name,
+    int? FarmId,
+    decimal? Area,
+    string? AreaType
+) : IRequest<PaddockDto>;
 
 public class UpdatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
@@ -23,15 +30,45 @@ public class UpdatePaddockCommandHandler(
             throw new ArgumentException("Paddock not found");
         }
 
-        var dto = request.Dto;
-        if (!string.IsNullOrEmpty(dto.Name))
+        if (request.Area.HasValue || !string.IsNullOrWhiteSpace(request.AreaType))
         {
-            paddock.Name = dto.Name;
+            var targetArea = request.Area ?? paddock.Area;
+            var targetAreaType = request.AreaType ?? paddock.AreaType;
+
+            if (targetArea.HasValue && string.IsNullOrWhiteSpace(targetAreaType))
+            {
+                throw new ArgumentException("AreaType is required when Area is specified.");
+            }
+
+            if (
+                !string.IsNullOrWhiteSpace(request.AreaType)
+                && !AreaTypes.All.Contains(request.AreaType)
+            )
+            {
+                throw new ArgumentException(
+                    $"Invalid AreaType. Valid values are: {string.Join(", ", AreaTypes.All)}"
+                );
+            }
         }
 
-        if (dto.FarmId.HasValue)
+        if (!string.IsNullOrEmpty(request.Name))
         {
-            paddock.FarmId = dto.FarmId.Value;
+            paddock.Name = request.Name;
+        }
+
+        if (request.FarmId.HasValue)
+        {
+            paddock.FarmId = request.FarmId.Value;
+        }
+
+        if (request.Area.HasValue)
+        {
+            paddock.Area = request.Area.Value;
+        }
+
+        if (request.AreaType != null)
+        {
+            paddock.AreaType = request.AreaType;
         }
 
         paddock.UpdatedAt = DateTime.UtcNow;
@@ -47,6 +84,8 @@ public class UpdatePaddockCommandHandler(
             Name = paddock.Name,
             FarmId = paddock.FarmId,
             FarmName = farm?.Name ?? "",
+            Area = paddock.Area,
+            AreaType = paddock.AreaType,
             CreatedAt = paddock.CreatedAt,
         };
     }

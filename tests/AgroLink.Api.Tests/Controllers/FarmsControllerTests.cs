@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AgroLink.Api.Controllers;
+using AgroLink.Api.DTOs.Farms;
 using AgroLink.Application.Features.Farms.Commands.Create;
 using AgroLink.Application.Features.Farms.Commands.Delete;
 using AgroLink.Application.Features.Farms.Commands.Update;
@@ -113,7 +114,7 @@ public class FarmsControllerTests
         _mediatorMock
             .Setup(x =>
                 x.Send(
-                    It.Is<CreateFarmCommand>(c => c.Dto.Name == "New Farm" && c.UserId == userId),
+                    It.Is<CreateFarmCommand>(c => c.Name == "New Farm" && c.UserId == userId),
                     It.IsAny<CancellationToken>()
                 )
             )

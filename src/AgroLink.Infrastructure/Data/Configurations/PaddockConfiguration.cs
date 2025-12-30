@@ -10,6 +10,8 @@ public class PaddockConfiguration : IEntityTypeConfiguration<Paddock>
     {
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
+        builder.Property(e => e.Area).HasPrecision(18, 2);
+        builder.Property(e => e.AreaType).HasMaxLength(50);
         builder
             .HasOne(e => e.Farm)
             .WithMany(f => f.Paddocks)

@@ -10,6 +10,11 @@ public class Paddock
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    public decimal? Area { get; set; }
+
+    [MaxLength(50)]
+    public string? AreaType { get; set; }
+
     public int FarmId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

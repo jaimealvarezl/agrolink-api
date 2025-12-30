@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using AgroLink.Api.Controllers;
+using AgroLink.Api.DTOs.Paddocks;
 using AgroLink.Application.Features.Paddocks.Commands.Create;
 using AgroLink.Application.Features.Paddocks.DTOs;
 using AgroLink.Application.Features.Paddocks.Queries.GetAll;
 using AgroLink.Application.Features.Paddocks.Queries.GetById;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
@@ -21,6 +24,15 @@ public class PaddocksControllerTests
     {
         _mediatorMock = new Mock<IMediator>();
         _controller = new PaddocksController(_mediatorMock.Object);
+
+        // Mock Controller Context with User Claims
+        var claims = new List<Claim> { new("userid", "1") };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal },
+        };
     }
 
     [Test]
@@ -60,24 +72,45 @@ public class PaddocksControllerTests
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        okResult.Value.ShouldBe(paddock);
+        var returnedPaddock = okResult.Value.ShouldBeOfType<PaddockDto>();
+        returnedPaddock.Id.ShouldBe(1);
     }
 
     [Test]
     public async Task Create_ShouldReturnCreated()
     {
         // Arrange
-        var request = new CreatePaddockRequest { Name = "New Paddock", FarmId = 1 };
-        var paddockDto = new PaddockDto { Id = 1, Name = "New Paddock" };
+        var request = new CreatePaddockRequest
+        {
+            Name = "New Paddock",
+            FarmId = 1,
+            Area = 5.5m,
+            AreaType = "Hectare",
+        };
+        var paddockDto = new PaddockDto
+        {
+            Id = 1,
+            Name = "New Paddock",
+            Area = 5.5m,
+            AreaType = "Hectare",
+        };
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreatePaddockCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.Send(
+                    It.Is<CreatePaddockCommand>(c => c.UserId == 1 && c.Area == 5.5m),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(paddockDto);
 
         // Act
+
         var result = await _controller.Create(request);
 
         // Assert
+
         var createdResult = result.Result.ShouldBeOfType<CreatedAtActionResult>();
+
         createdResult.Value.ShouldBe(paddockDto);
     }
 }

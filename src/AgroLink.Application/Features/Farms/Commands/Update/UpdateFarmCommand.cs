@@ -4,7 +4,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Update;
 
-public record UpdateFarmCommand(int Id, UpdateFarmDto Dto) : IRequest<FarmDto>;
+public record UpdateFarmCommand(int Id, string? Name, string? Location) : IRequest<FarmDto>;
 
 public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateFarmCommand, FarmDto>
@@ -20,15 +20,14 @@ public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
             throw new ArgumentException("Farm not found");
         }
 
-        var dto = request.Dto;
-        if (!string.IsNullOrEmpty(dto.Name))
+        if (!string.IsNullOrEmpty(request.Name))
         {
-            farm.Name = dto.Name;
+            farm.Name = request.Name;
         }
 
-        if (dto.Location != null)
+        if (request.Location != null)
         {
-            farm.Location = dto.Location;
+            farm.Location = request.Location;
         }
 
         farm.UpdatedAt = DateTime.UtcNow;
