@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'agrolink-api/src/**'
-      - 'agrolink-api/tests/**'
-      - 'agrolink-api/*.sln'
-      - 'agrolink-api/**/*.csproj'
-      - 'agrolink-api/.github/workflows/backend-ci.yml'
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '.github/workflows/backend-ci.yml'
 
 env:
   DOTNET_VERSION: '8.0.x'
@@ -39,11 +39,9 @@ jobs:
         run: dotnet restore agrolink-api.sln
 
       - name: Restore dotnet tools
-        working-directory: agrolink-api
         run: dotnet tool restore
 
       - name: Check code formatting (CSharpier)
-        working-directory: agrolink-api
         run: dotnet tool run csharpier check .
 
       - name: Build solution
