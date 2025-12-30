@@ -1,0 +1,118 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'agrolink-api/src/**'
+      - 'agrolink-api/tests/**'
+      - 'agrolink-api/*.sln'
+      - 'agrolink-api/**/*.csproj'
+      - 'agrolink-api/.github/workflows/backend-ci.yml'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-and-lint:
+    name: Build & Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore agrolink-api.sln
+
+      - name: Restore dotnet tools
+        working-directory: agrolink-api
+        run: dotnet tool restore
+
+      - name: Check code formatting (CSharpier)
+        working-directory: agrolink-api
+        run: dotnet tool run csharpier check .
+
+      - name: Build solution
+        run: dotnet build agrolink-api.sln --no-restore --configuration Release
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            **/bin/
+            **/obj/
+          retention-days: 1
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: build-and-lint
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Run tests
+        run: |
+          echo "🧪 Running tests..."
+          dotnet test agrolink-api.sln \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage"
+          echo "✅ Tests passed!"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            **/TestResults/**/*.trx
+            **/TestResults/**/coverage.cobertura.xml
+          retention-days: 7
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: '**/*test-results.trx'
+          check_name: 'Test Results'
+          comment_mode: always
+          report_individual_runs: true
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: '**/coverage.cobertura.xml'
+          fail_ci_if_error: false
