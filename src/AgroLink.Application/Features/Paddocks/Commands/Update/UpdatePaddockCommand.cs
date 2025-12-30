@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Paddocks.DTOs;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -27,6 +28,27 @@ public class UpdatePaddockCommandHandler(
         if (paddock == null)
         {
             throw new ArgumentException("Paddock not found");
+        }
+
+        if (request.Area.HasValue || !string.IsNullOrWhiteSpace(request.AreaType))
+        {
+            var targetArea = request.Area ?? paddock.Area;
+            var targetAreaType = request.AreaType ?? paddock.AreaType;
+
+            if (targetArea.HasValue && string.IsNullOrWhiteSpace(targetAreaType))
+            {
+                throw new ArgumentException("AreaType is required when Area is specified.");
+            }
+
+            if (
+                !string.IsNullOrWhiteSpace(request.AreaType)
+                && !AreaTypes.All.Contains(request.AreaType)
+            )
+            {
+                throw new ArgumentException(
+                    $"Invalid AreaType. Valid values are: {string.Join(", ", AreaTypes.All)}"
+                );
+            }
         }
 
         if (!string.IsNullOrEmpty(request.Name))

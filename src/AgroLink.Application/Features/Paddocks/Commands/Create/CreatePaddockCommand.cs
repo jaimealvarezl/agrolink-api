@@ -21,6 +21,13 @@ public class CreatePaddockCommandHandler(
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreatePaddockCommand, PaddockDto>
 {
+    private static readonly string[] _allowedRoles =
+    [
+        FarmMemberRoles.Owner,
+        FarmMemberRoles.Admin,
+        FarmMemberRoles.Editor,
+    ];
+
     public async Task<PaddockDto> Handle(
         CreatePaddockCommand request,
         CancellationToken cancellationToken
@@ -39,16 +46,25 @@ public class CreatePaddockCommandHandler(
         if (member == null)
             throw new UnauthorizedAccessException("User is not a member of this farm.");
 
-        var allowedRoles = new[]
-        {
-            FarmMemberRoles.Owner,
-            FarmMemberRoles.Admin,
-            FarmMemberRoles.Editor,
-        };
-        if (!allowedRoles.Contains(member.Role))
+        if (!_allowedRoles.Contains(member.Role))
             throw new UnauthorizedAccessException(
                 "User does not have permission to add paddocks to this farm."
             );
+
+        if (request.Area.HasValue && string.IsNullOrWhiteSpace(request.AreaType))
+        {
+            throw new ArgumentException("AreaType is required when Area is specified.");
+        }
+
+        if (
+            !string.IsNullOrWhiteSpace(request.AreaType)
+            && !AreaTypes.All.Contains(request.AreaType)
+        )
+        {
+            throw new ArgumentException(
+                $"Invalid AreaType. Valid values are: {string.Join(", ", AreaTypes.All)}"
+            );
+        }
 
         var paddock = new Paddock
         {

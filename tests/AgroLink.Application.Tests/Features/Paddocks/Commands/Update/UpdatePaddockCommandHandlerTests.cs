@@ -75,4 +75,41 @@ public class UpdatePaddockCommandHandlerTests
             await _handler.Handle(command, CancellationToken.None)
         );
     }
+
+    [Test]
+    public async Task Handle_UpdateAreaWithoutType_ThrowsArgumentException()
+    {
+        // Arrange
+        var paddockId = 1;
+        var command = new UpdatePaddockCommand(paddockId, null, null, 10.5m, null);
+        var paddock = new Paddock
+        {
+            Id = paddockId,
+            Name = "Test",
+            AreaType = null,
+        }; // Existing has no type
+
+        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task Handle_UpdateInvalidAreaType_ThrowsArgumentException()
+    {
+        // Arrange
+        var paddockId = 1;
+        var command = new UpdatePaddockCommand(paddockId, null, null, null, "InvalidType");
+        var paddock = new Paddock { Id = paddockId, Name = "Test" };
+
+        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
+        );
+    }
 }

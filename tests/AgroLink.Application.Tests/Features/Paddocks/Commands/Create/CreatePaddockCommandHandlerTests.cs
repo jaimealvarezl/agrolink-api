@@ -109,4 +109,66 @@ public class CreatePaddockCommandHandlerTests
             await _handler.Handle(command, CancellationToken.None)
         );
     }
+
+    [Test]
+    public async Task Handle_AreaProvidedWithoutType_ThrowsArgumentException()
+    {
+        // Arrange
+        const int userId = 10;
+        const int farmId = 1;
+        var command = new CreatePaddockCommand("Test", farmId, userId, 10.5m, null);
+
+        var farm = new Farm { Id = farmId, Name = "Test Farm" };
+        var member = new FarmMember
+        {
+            FarmId = farmId,
+            UserId = userId,
+            Role = AgroLink.Domain.Constants.FarmMemberRoles.Owner,
+        };
+
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _farmMemberRepositoryMock
+            .Setup(r =>
+                r.FirstOrDefaultAsync(
+                    It.IsAny<System.Linq.Expressions.Expression<System.Func<FarmMember, bool>>>()
+                )
+            )
+            .ReturnsAsync(member);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task Handle_InvalidAreaType_ThrowsArgumentException()
+    {
+        // Arrange
+        const int userId = 10;
+        const int farmId = 1;
+        var command = new CreatePaddockCommand("Test", farmId, userId, 10.5m, "InvalidType");
+
+        var farm = new Farm { Id = farmId, Name = "Test Farm" };
+        var member = new FarmMember
+        {
+            FarmId = farmId,
+            UserId = userId,
+            Role = AgroLink.Domain.Constants.FarmMemberRoles.Owner,
+        };
+
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _farmMemberRepositoryMock
+            .Setup(r =>
+                r.FirstOrDefaultAsync(
+                    It.IsAny<System.Linq.Expressions.Expression<System.Func<FarmMember, bool>>>()
+                )
+            )
+            .ReturnsAsync(member);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
+        );
+    }
 }
