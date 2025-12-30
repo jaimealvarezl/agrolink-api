@@ -43,36 +43,8 @@ jobs:
               - '*.tf'
               - '*.tfvars'
 
-  format-check:
-    name: Format Check
-    runs-on: ubuntu-latest
-    needs: check-changes
-    if: needs.check-changes.outputs.csharp == 'true'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dotnet tools
-        run: dotnet tool restore
-
-      - name: Check code formatting with CSharpier
-        run: dotnet tool run csharpier check .
-
-  build:
-    name: Build
+  build-and-lint:
+    name: Build & Format
     runs-on: ubuntu-latest
     needs: check-changes
     if: needs.check-changes.outputs.csharp == 'true'
@@ -96,25 +68,28 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+
+      - name: Check code formatting (CSharpier)
+        run: dotnet tool run csharpier check .
+
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: build-artifacts
           path: |
-            src/*/bin/
-            src/*/obj/
-            tests/*/bin/
-            tests/*/obj/
+            **/bin/
+            **/obj/
           retention-days: 1
 
   test:
     name: Tests
     runs-on: ubuntu-latest
-    needs: [check-changes, build]
+    needs: [check-changes, build-and-lint]
     if: needs.check-changes.outputs.csharp == 'true'
     permissions:
       checks: write
@@ -129,22 +104,17 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dependencies
-        run: dotnet restore
+          name: build-artifacts
 
       - name: Run tests
         run: |
           echo "🧪 Running tests..."
           dotnet test agrolink-api.sln \
             --configuration Release \
+            --no-build \
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage"
@@ -184,6 +154,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Cache Terraform plugins
+        uses: actions/cache@v4
+        with:
+          path: iac/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('iac/**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
