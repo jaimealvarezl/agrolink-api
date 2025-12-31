@@ -65,4 +65,26 @@ public class CreateLotCommandHandlerTests
         _lotRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Lot>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
+
+    [Test]
+    public async Task Handle_InvalidPaddockId_ThrowsArgumentException()
+    {
+        // Arrange
+        var createLotDto = new CreateLotDto
+        {
+            Name = "Test Lot",
+            PaddockId = 999,
+            Status = "ACTIVE",
+        };
+        var command = new CreateLotCommand(createLotDto);
+
+        _paddockRepositoryMock
+            .Setup(r => r.GetByIdAsync(createLotDto.PaddockId))
+            .ReturnsAsync((Paddock?)null);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(async () =>
+            await _handler.Handle(command, CancellationToken.None)
+        );
+    }
 }
