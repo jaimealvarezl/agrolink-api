@@ -16,6 +16,13 @@ public class CreateLotCommandHandler(
     public async Task<LotDto> Handle(CreateLotCommand request, CancellationToken cancellationToken)
     {
         var dto = request.Dto;
+
+        var paddock = await paddockRepository.GetByIdAsync(dto.PaddockId);
+        if (paddock == null)
+        {
+            throw new ArgumentException($"Paddock with ID {dto.PaddockId} not found.");
+        }
+
         var lot = new Lot
         {
             Name = dto.Name,
@@ -26,14 +33,12 @@ public class CreateLotCommandHandler(
         await lotRepository.AddAsync(lot);
         await unitOfWork.SaveChangesAsync();
 
-        var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
-
         return new LotDto
         {
             Id = lot.Id,
             Name = lot.Name,
             PaddockId = lot.PaddockId,
-            PaddockName = paddock?.Name ?? "",
+            PaddockName = paddock.Name,
             Status = lot.Status,
             CreatedAt = lot.CreatedAt,
         };
