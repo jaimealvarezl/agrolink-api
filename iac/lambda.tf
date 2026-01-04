@@ -11,12 +11,9 @@ resource "aws_lambda_function" "agro_link" {
   s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
-  dynamic "vpc_config" {
-    for_each = var.enable_lambda_vpc ? [1] : []
-    content {
-      subnet_ids         = aws_subnet.private[*].id
-      security_group_ids = [aws_security_group.lambda_sg.id]
-    }
+  vpc_config {
+    subnet_ids         = aws_subnet.private[*].id
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
 
   environment {
