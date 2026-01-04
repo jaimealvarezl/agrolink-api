@@ -37,7 +37,7 @@ variable "code_bucket_name" {
 variable "lambda_package_key" {
   description = "S3 key for the Lambda deployment package zip (real app)"
   type        = string
-  default     = "AgroLink.API/AgroLinkAPI-AspNetCoreFunction-638902830019187233.zip"
+  default     = "AgroLink.API/latest.zip"
 }
 
 variable "use_placeholder" {

@@ -291,6 +291,11 @@ jobs:
           dotnet restore
           dotnet lambda package -pl ./src/AgroLink.Api AspNetCoreFunction.zip --function-architecture arm64
           echo "✅ Lambda package created: AspNetCoreFunction.zip"
+      - name: Upload Lambda package to S3 for Terraform
+        run: |
+          aws s3 cp AspNetCoreFunction.zip s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.API/latest.zip --region ${{ env.AWS_REGION }}
+          echo "✅ Uploaded AspNetCoreFunction.zip to s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.API/latest.zip"
+
 
       - name: Deploy Lambda function
         run: |
