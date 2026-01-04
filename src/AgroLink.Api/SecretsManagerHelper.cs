@@ -31,6 +31,10 @@ public static class SecretsManagerHelper
                 if (secretJson.RootElement.TryGetProperty("connectionString", out var connStr))
                 {
                     connectionString = connStr.GetString() ?? "";
+                if (!string.IsNullOrEmpty(connectionString) && !connectionString.Contains("Timeout="))
+                {
+                    connectionString += ";Timeout=60;Command Timeout=60";
+                }
                 }
                 else
                 {
@@ -42,7 +46,7 @@ public static class SecretsManagerHelper
                     var password = secretJson.RootElement.GetProperty("password").GetString();
 
                     connectionString =
-                        $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+                        $"Host={host};Port={port};Database={database};Username={username};Password={password};Timeout=60;Command Timeout=60";
                 }
 
                 // Add to configuration
