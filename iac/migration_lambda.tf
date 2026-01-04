@@ -93,18 +93,6 @@ resource "aws_security_group" "migration_lambda_sg" {
   tags = merge(local.common_tags, { Name = "migration-lambda-sg" })
 }
 
-# Allow Lambdas to connect to RDS
-resource "aws_security_group_rule" "rds_allow_lambdas" {
-  for_each                 = toset([aws_security_group.migration_lambda_sg.id, aws_security_group.lambda_sg.id])
-  type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = each.value
-  security_group_id        = aws_security_group.rds_sg.id
-  description              = "Allow Lambda access to RDS"
-}
-
 # Migration Lambda function
 resource "aws_lambda_function" "migration" {
   function_name = "AgroLink-Migration-Function"
