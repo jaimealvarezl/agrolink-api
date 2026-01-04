@@ -1,3 +1,4 @@
+using Amazon.Lambda.AspNetCoreServer;
 using System.Text;
 using AgroLink.Api.Services;
 using AgroLink.Application;
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
