@@ -5,7 +5,7 @@ resource "aws_lambda_function" "agro_link" {
   role          = aws_iam_role.lambda_function_role.arn
   memory_size   = 512
   timeout       = 120
-  architectures = ["arm64"]
+  architectures = ["x86_64"]
 
   s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
   s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
