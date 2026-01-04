@@ -93,15 +93,16 @@ resource "aws_security_group" "migration_lambda_sg" {
   tags = merge(local.common_tags, { Name = "migration-lambda-sg" })
 }
 
-# Update RDS security group to allow migration Lambda access
-resource "aws_security_group_rule" "rds_allow_migration_lambda" {
+# Allow Lambdas to connect to RDS
+resource "aws_security_group_rule" "rds_allow_lambdas" {
+  for_each                 = toset([aws_security_group.migration_lambda_sg.id, aws_security_group.lambda_sg.id])
   type                     = "ingress"
   from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.migration_lambda_sg.id
+  source_security_group_id = each.value
   security_group_id        = aws_security_group.rds_sg.id
-  description              = "Allow migration Lambda to connect to RDS for migrations"
+  description              = "Allow Lambda access to RDS"
 }
 
 # Migration Lambda function
