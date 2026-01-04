@@ -12,7 +12,7 @@ resource "aws_lambda_function" "agro_link" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
+    subnet_ids         = [aws_subnet.private[0].id] # PIN TO AZ 0
     security_group_ids = [aws_security_group.lambda_sg.id]
   }
 

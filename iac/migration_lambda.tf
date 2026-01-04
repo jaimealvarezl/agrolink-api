@@ -110,7 +110,7 @@ resource "aws_lambda_function" "migration" {
   # Migration Lambda MUST be in VPC to access RDS
   # Always enable VPC config regardless of var.enable_lambda_vpc
   vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
+    subnet_ids         = [aws_subnet.private[0].id] # PIN TO AZ 0
     security_group_ids = [aws_security_group.migration_lambda_sg.id]
   }
 

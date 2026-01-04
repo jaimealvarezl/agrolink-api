@@ -7,21 +7,13 @@ resource "aws_vpc" "main" {
   tags = merge(local.common_tags, { Name = "main-vpc" })
 }
 
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
-  tags   = merge(local.common_tags, { Name = "main-igw" })
-}
-
 resource "aws_subnet" "private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
   cidr_block        = element(["10.0.1.0/24", "10.0.2.0/24"], count.index)
   availability_zone = element(data.aws_availability_zones.available.names, count.index)
-  
-  # Even if subnets are "public" by route, we keep this false for safety
-  map_public_ip_on_launch = false
 
-  tags = merge(local.common_tags, { Name = "app-subnet-${count.index}" })
+  tags = merge(local.common_tags, { Name = "private-subnet-${count.index}" })
 }
 
 data "aws_availability_zones" "available" {
@@ -69,7 +61,7 @@ resource "aws_security_group" "rds_sg" {
   tags = merge(local.common_tags, { Name = "rds-sg" })
 }
 
-# Security group for VPC Endpoints (S3 Gateway doesn't use this, but keeping for future use)
+# Security group for Interface VPC Endpoints (allow HTTPS from VPC)
 resource "aws_security_group" "vpce_sg" {
   vpc_id = aws_vpc.main.id
 
@@ -90,19 +82,26 @@ resource "aws_security_group" "vpce_sg" {
   tags = merge(local.common_tags, { Name = "vpce-sg" })
 }
 
-# Manage the default route table to provide internet access
+# Manage the default route table for the VPC to attach S3 Gateway endpoint
 resource "aws_default_route_table" "main" {
   default_route_table_id = aws_vpc.main.main_route_table_id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
 
   tags = merge(local.common_tags, { Name = "main-default-rt" })
 }
 
-# Gateway endpoint for S3 (FREE)
+# Interface endpoint for Secrets Manager (Pin to AZ 0 to save costs)
+resource "aws_vpc_endpoint" "secretsmanager" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.region}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private[0].id] # ONLY ONE SUBNET
+  security_group_ids  = [aws_security_group.vpce_sg.id]
+  private_dns_enabled = true
+
+  tags = merge(local.common_tags, { Name = "secretsmanager-vpce" })
+}
+
+# Gateway endpoint for S3 so private subnets can reach S3 (FREE)
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -110,4 +109,16 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = [aws_default_route_table.main.id]
 
   tags = merge(local.common_tags, { Name = "s3-gateway-endpoint" })
+}
+
+# Interface endpoint for CloudWatch Logs (Pin to AZ 0 to save costs)
+resource "aws_vpc_endpoint" "cloudwatch_logs" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.region}.logs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private[0].id] # ONLY ONE SUBNET
+  security_group_ids  = [aws_security_group.vpce_sg.id]
+  private_dns_enabled = true
+
+  tags = merge(local.common_tags, { Name = "cloudwatch-logs-vpce" })
 }
