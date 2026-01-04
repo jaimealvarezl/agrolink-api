@@ -3,7 +3,7 @@
     <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
     <PackageReference
       Include="Microsoft.Extensions.DependencyInjection.Abstractions"
       Version="10.0.1"
