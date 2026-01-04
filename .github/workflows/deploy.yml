@@ -131,7 +131,7 @@ jobs:
             --configuration Release \
             --output ../../migrations-bundle \
             --self-contained \
-            --runtime linux-x64 \
+            --runtime linux-arm64 \
             --verbose
 
           echo "✅ Migration bundle created successfully"
@@ -289,7 +289,7 @@ jobs:
         run: |
           echo "📦 Packaging Lambda function..."
           dotnet restore
-          dotnet lambda package -pl ./src/AgroLink.Api AspNetCoreFunction.zip
+          dotnet lambda package -pl ./src/AgroLink.Api AspNetCoreFunction.zip --function-architecture arm64
           echo "✅ Lambda package created: AspNetCoreFunction.zip"
 
       - name: Deploy Lambda function
