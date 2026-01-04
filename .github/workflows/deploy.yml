@@ -131,7 +131,7 @@ jobs:
             --configuration Release \
             --output ../../migrations-bundle \
             --self-contained \
-            --runtime linux-arm64 \
+            --runtime linux-x64 \
             --verbose
 
           echo "✅ Migration bundle created successfully"

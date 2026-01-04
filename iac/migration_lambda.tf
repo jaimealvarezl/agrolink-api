@@ -112,7 +112,7 @@ resource "aws_lambda_function" "migration" {
   role          = aws_iam_role.migration_lambda_role.arn
   memory_size   = 512
   timeout       = 900 # 15 minutes (max for Lambda)
-  architectures = ["arm64"]
+  architectures = ["x86_64"]
 
   # Use inline code for the migration handler
   filename         = data.archive_file.migration_lambda_zip.output_path
