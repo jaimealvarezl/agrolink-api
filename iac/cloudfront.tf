@@ -12,9 +12,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     origin_id   = "S3-${aws_s3_bucket.spa_bucket.id}"
 
     origin_access_control_id = aws_cloudfront_origin_access_control.spa_oac.id
-    s3_origin_config {
-      origin_access_identity = ""
-    }
   }
 
   aliases = [var.domain_name, "www.${var.domain_name}"]
@@ -49,9 +46,10 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.cert.arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2019"
+    acm_certificate_arn            = aws_acm_certificate.cert.arn
+    ssl_support_method             = "sni-only"
+    minimum_protocol_version       = "TLSv1.2_2019"
+    cloudfront_default_certificate = false
   }
 
   restrictions {
