@@ -4,7 +4,7 @@ resource "aws_lambda_function" "agro_link" {
   runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet8"
   role          = aws_iam_role.lambda_function_role.arn
   memory_size   = 512
-  timeout       = 120
+  timeout       = 300
   architectures = ["arm64"]
 
   s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
