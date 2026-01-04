@@ -1,5 +1,5 @@
-using Amazon.Lambda.AspNetCoreServer;
 using System.Text;
+using AgroLink.Api;
 using AgroLink.Api.Services;
 using AgroLink.Application;
 using AgroLink.Application.Interfaces;
@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load configuration from Secrets Manager if available
+await SecretsManagerHelper.LoadSecretsAsync(builder);
 
 // Add services to the container.
 builder.Services.AddControllers();
