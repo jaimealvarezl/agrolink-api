@@ -5,6 +5,7 @@ using AgroLink.Application.Features.Farms.Commands.Update;
 using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Application.Features.Farms.Queries.GetAll;
 using AgroLink.Application.Features.Farms.Queries.GetById;
+using AgroLink.Application.Features.Farms.Queries.GetFarmHierarchy;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,18 @@ public class FarmsController(IMediator mediator) : BaseController
     public async Task<ActionResult<FarmDto>> GetById(int id)
     {
         var farm = await mediator.Send(new GetFarmByIdQuery(id));
+        if (farm == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(farm);
+    }
+
+    [HttpGet("{id}/hierarchy")]
+    public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int id)
+    {
+        var farm = await mediator.Send(new GetFarmHierarchyQuery(id));
         if (farm == null)
         {
             return NotFound();

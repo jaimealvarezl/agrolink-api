@@ -16,4 +16,13 @@ public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(contex
     {
         return await _dbSet.Include(f => f.Paddocks).FirstOrDefaultAsync(f => f.Id == id);
     }
+
+    public async Task<Farm?> GetFarmHierarchyAsync(int id)
+    {
+        return await _dbSet
+            .Include(f => f.Paddocks)
+                .ThenInclude(p => p.Lots)
+                    .ThenInclude(l => l.Animals)
+            .FirstOrDefaultAsync(f => f.Id == id);
+    }
 }

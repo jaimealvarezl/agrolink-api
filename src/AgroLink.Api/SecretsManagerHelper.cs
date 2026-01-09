@@ -31,10 +31,13 @@ public static class SecretsManagerHelper
                 if (secretJson.RootElement.TryGetProperty("connectionString", out var connStr))
                 {
                     connectionString = connStr.GetString() ?? "";
-                if (!string.IsNullOrEmpty(connectionString) && !connectionString.Contains("Timeout="))
-                {
-                    connectionString += ";Timeout=60;CommandTimeout=60";
-                }
+                    if (
+                        !string.IsNullOrEmpty(connectionString)
+                        && !connectionString.Contains("Timeout=")
+                    )
+                    {
+                        connectionString += ";Timeout=60;CommandTimeout=60";
+                    }
                 }
                 else
                 {
