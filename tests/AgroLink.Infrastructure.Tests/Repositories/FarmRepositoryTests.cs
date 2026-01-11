@@ -138,7 +138,7 @@ public class FarmRepositoryTests : TestBase
         result.Id.ShouldBe(farm.Id);
         result.Paddocks.Count.ShouldBe(1);
         result.Paddocks.First().Lots.Count.ShouldBe(1);
-        result.Paddocks.First().Lots.First().Animals.Count.ShouldBe(2);
+        result.Paddocks.First().Lots.First().HeadCount.ShouldBe(2);
     }
 
     [Test]

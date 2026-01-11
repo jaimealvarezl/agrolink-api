@@ -36,7 +36,8 @@ public class FarmsController(IMediator mediator) : BaseController
     [HttpGet("{id}/hierarchy")]
     public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int id)
     {
-        var farm = await mediator.Send(new GetFarmHierarchyQuery(id));
+        var userId = GetCurrentUserId();
+        var farm = await mediator.Send(new GetFarmHierarchyQuery(id, userId));
         if (farm == null)
         {
             return NotFound();
