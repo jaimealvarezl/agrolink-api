@@ -4,5 +4,5 @@ public class LotHierarchyDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public int HeadCount { get; set; }
+    public int AnimalCount { get; set; }
 }

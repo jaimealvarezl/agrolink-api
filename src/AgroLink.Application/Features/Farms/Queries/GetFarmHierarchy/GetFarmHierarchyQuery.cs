@@ -33,8 +33,8 @@ public class GetFarmHierarchyQueryHandler(
 
         return new FarmHierarchyDto
         {
-            Id = farm.Id,
-            Name = farm.Name,
+            FarmId = farm.Id,
+            FarmName = farm.Name,
             Paddocks = farm
                 .Paddocks.Select(p => new PaddockHierarchyDto
                 {
@@ -45,7 +45,7 @@ public class GetFarmHierarchyQueryHandler(
                         {
                             Id = l.Id,
                             Name = l.Name,
-                            HeadCount = l.HeadCount,
+                            AnimalCount = l.HeadCount,
                         })
                         .ToList(),
                 })
