@@ -138,7 +138,17 @@ public class FarmRepositoryTests : TestBase
         result.Id.ShouldBe(farm.Id);
         result.Paddocks.Count.ShouldBe(1);
         result.Paddocks.First().Lots.Count.ShouldBe(1);
-        result.Paddocks.First().Lots.First().HeadCount.ShouldBe(2);
+        result.Paddocks.First().Lots.First().AnimalCount.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task GetFarmHierarchyAsync_WhenFarmDoesNotExist_ShouldReturnNull()
+    {
+        // Act
+        var result = await _repository.GetFarmHierarchyAsync(999);
+
+        // Assert
+        result.ShouldBeNull();
     }
 
     [Test]

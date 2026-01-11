@@ -33,23 +33,19 @@ public class GetFarmHierarchyQueryHandler(
 
         return new FarmHierarchyDto
         {
-            FarmId = farm.Id,
-            FarmName = farm.Name,
-            Paddocks = farm
-                .Paddocks.Select(p => new PaddockHierarchyDto
+            Id = farm.Id,
+            Name = farm.Name,
+            Paddocks = farm.Paddocks.Select(p => new PaddockHierarchyDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Lots = p.Lots.Select(l => new LotHierarchyDto
                 {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Lots = p
-                        .Lots.Select(l => new LotHierarchyDto
-                        {
-                            Id = l.Id,
-                            Name = l.Name,
-                            AnimalCount = l.HeadCount,
-                        })
-                        .ToList(),
-                })
-                .ToList(),
+                    Id = l.Id,
+                    Name = l.Name,
+                    AnimalCount = l.AnimalCount
+                }).ToList()
+            }).ToList()
         };
     }
 }

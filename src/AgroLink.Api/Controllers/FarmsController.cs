@@ -17,33 +17,54 @@ public class FarmsController(IMediator mediator) : BaseController
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FarmDto>>> GetAll()
     {
-        var farms = await mediator.Send(new GetAllFarmsQuery());
-        return Ok(farms);
+        try
+        {
+            var farms = await mediator.Send(new GetAllFarmsQuery());
+            return Ok(farms);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<FarmDto>> GetById(int id)
     {
-        var farm = await mediator.Send(new GetFarmByIdQuery(id));
-        if (farm == null)
+        try
         {
-            return NotFound();
-        }
+            var farm = await mediator.Send(new GetFarmByIdQuery(id));
+            if (farm == null)
+            {
+                return NotFound();
+            }
 
-        return Ok(farm);
+            return Ok(farm);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
     }
 
     [HttpGet("{id}/hierarchy")]
     public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int id)
     {
-        var userId = GetCurrentUserId();
-        var farm = await mediator.Send(new GetFarmHierarchyQuery(id, userId));
-        if (farm == null)
+        try
         {
-            return NotFound();
-        }
+            var userId = GetCurrentUserId();
+            var farm = await mediator.Send(new GetFarmHierarchyQuery(id, userId));
+            if (farm == null)
+            {
+                return NotFound();
+            }
 
-        return Ok(farm);
+            return Ok(farm);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
     }
 
     [HttpPost]
