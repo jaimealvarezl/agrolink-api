@@ -121,6 +121,37 @@ public class FarmRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetFarmHierarchyAsync_WhenFarmExists_ShouldReturnFarmWithHierarchy()
+    {
+        // Arrange
+        var farm = await CreateTestFarmAsync(_context, "Hierarchy Farm");
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id, "P1");
+        var lot = await CreateTestLotAsync(_context, paddock.Id, "L1");
+        await CreateTestAnimalAsync(_context, lot.Id, "A1");
+        await CreateTestAnimalAsync(_context, lot.Id, "A2");
+
+        // Act
+        var result = await _repository.GetFarmHierarchyAsync(farm.Id);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Id.ShouldBe(farm.Id);
+        result.Paddocks.Count.ShouldBe(1);
+        result.Paddocks.First().Lots.Count.ShouldBe(1);
+        result.Paddocks.First().Lots.First().AnimalCount.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task GetFarmHierarchyAsync_WhenFarmDoesNotExist_ShouldReturnNull()
+    {
+        // Act
+        var result = await _repository.GetFarmHierarchyAsync(999);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
     public async Task AddAsync_ShouldAddFarm()
     {
         // Arrange

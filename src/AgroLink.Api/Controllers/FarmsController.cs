@@ -5,6 +5,7 @@ using AgroLink.Application.Features.Farms.Commands.Update;
 using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Application.Features.Farms.Queries.GetAll;
 using AgroLink.Application.Features.Farms.Queries.GetById;
+using AgroLink.Application.Features.Farms.Queries.GetFarmHierarchy;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,20 +17,54 @@ public class FarmsController(IMediator mediator) : BaseController
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FarmDto>>> GetAll()
     {
-        var farms = await mediator.Send(new GetAllFarmsQuery());
-        return Ok(farms);
+        try
+        {
+            var farms = await mediator.Send(new GetAllFarmsQuery());
+            return Ok(farms);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<FarmDto>> GetById(int id)
     {
-        var farm = await mediator.Send(new GetFarmByIdQuery(id));
-        if (farm == null)
+        try
         {
-            return NotFound();
-        }
+            var farm = await mediator.Send(new GetFarmByIdQuery(id));
+            if (farm == null)
+            {
+                return NotFound();
+            }
 
-        return Ok(farm);
+            return Ok(farm);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
+    }
+
+    [HttpGet("{id}/hierarchy")]
+    public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int id)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var farm = await mediator.Send(new GetFarmHierarchyQuery(id, userId));
+            if (farm == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(farm);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
     }
 
     [HttpPost]
