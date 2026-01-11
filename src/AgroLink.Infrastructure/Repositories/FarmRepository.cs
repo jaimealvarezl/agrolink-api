@@ -31,12 +31,15 @@ public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(contex
                     {
                         Id = p.Id,
                         Name = p.Name,
-                                            Lots = p.Lots.Select(l => new LotHierarchy
-                                            {
-                                                Id = l.Id,
-                                                Name = l.Name,
-                                                AnimalCount = l.Animals.Count
-                                            }).ToList()                    })
+                        Lots = p
+                            .Lots.Select(l => new LotHierarchy
+                            {
+                                Id = l.Id,
+                                Name = l.Name,
+                                AnimalCount = l.Animals.Count,
+                            })
+                            .ToList(),
+                    })
                     .ToList(),
             })
             .FirstOrDefaultAsync();
