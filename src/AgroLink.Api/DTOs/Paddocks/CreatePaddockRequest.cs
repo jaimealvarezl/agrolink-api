@@ -5,10 +5,10 @@ namespace AgroLink.Api.DTOs.Paddocks;
 public class CreatePaddockRequest
 {
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; }
 
     [Required]
-    public int FarmId { get; set; }
+    public required int FarmId { get; set; }
 
     public decimal? Area { get; set; }
 

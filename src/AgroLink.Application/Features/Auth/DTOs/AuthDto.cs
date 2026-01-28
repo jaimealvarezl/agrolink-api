@@ -2,42 +2,42 @@ namespace AgroLink.Application.Features.Auth.DTOs;
 
 public class UserDto
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public required int Id { get; set; }
+    public required string Name { get; set; }
+    public required string Email { get; set; }
+    public required string Role { get; set; }
+    public required bool IsActive { get; set; }
+    public required DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 }
 
 public class LoginDto
 {
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    public required string Email { get; set; }
+    public required string Password { get; set; }
 }
 
 public class AuthResponseDto
 {
-    public string Token { get; set; } = string.Empty;
-    public UserDto User { get; set; } = new();
-    public DateTime ExpiresAt { get; set; }
+    public required string Token { get; set; }
+    public required UserDto User { get; set; }
+    public required DateTime ExpiresAt { get; set; }
 }
 
 public class RegisterRequest
 {
-    public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    public required string Name { get; set; }
+    public required string Email { get; set; }
+    public required string Password { get; set; }
     public string? Role { get; set; }
 }
 
 public class ValidateTokenRequest
 {
-    public string Token { get; set; } = string.Empty;
+    public required string Token { get; set; }
 }
 
 public class ValidateTokenResponse
 {
-    public bool Valid { get; set; }
+    public required bool Valid { get; set; }
 }

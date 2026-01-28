@@ -4,35 +4,35 @@ namespace AgroLink.Application.Features.Animals.DTOs;
 
 public class AnimalDto
 {
-    public int Id { get; set; }
-    public string Tag { get; set; } = string.Empty;
+    public required int Id { get; set; }
+    public required string Tag { get; set; }
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public string Sex { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
+    public required string Sex { get; set; }
+    public required string Status { get; set; }
     public DateTime? BirthDate { get; set; }
-    public int LotId { get; set; }
+    public required int LotId { get; set; }
     public string? LotName { get; set; }
     public int? MotherId { get; set; }
     public string? MotherTag { get; set; }
     public int? FatherId { get; set; }
     public string? FatherTag { get; set; }
-    public List<AnimalOwnerDto> Owners { get; set; } = new();
-    public List<PhotoDto> Photos { get; set; } = new();
-    public DateTime CreatedAt { get; set; }
+    public required List<AnimalOwnerDto> Owners { get; set; }
+    public required List<PhotoDto> Photos { get; set; }
+    public required DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
 
 public class CreateAnimalDto
 {
-    public string Tag { get; set; } = string.Empty;
+    public required string Tag { get; set; }
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public string Sex { get; set; } = string.Empty;
+    public required string Sex { get; set; }
     public DateTime? BirthDate { get; set; }
-    public int LotId { get; set; }
+    public required int LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
     public List<AnimalOwnerDto> Owners { get; set; } = new();
@@ -43,7 +43,7 @@ public class UpdateAnimalDto
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public string? Status { get; set; }
     public DateTime? BirthDate { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
@@ -52,19 +52,19 @@ public class UpdateAnimalDto
 
 public class AnimalOwnerDto
 {
-    public int OwnerId { get; set; }
-    public string OwnerName { get; set; } = string.Empty;
-    public decimal SharePercent { get; set; }
+    public required int OwnerId { get; set; }
+    public required string OwnerName { get; set; }
+    public required decimal SharePercent { get; set; }
 }
 
 public class AnimalGenealogyDto
 {
-    public int Id { get; set; }
-    public string Tag { get; set; } = string.Empty;
+    public required int Id { get; set; }
+    public required string Tag { get; set; }
     public string? Name { get; set; }
-    public string Sex { get; set; } = string.Empty;
+    public required string Sex { get; set; }
     public DateTime? BirthDate { get; set; }
     public AnimalGenealogyDto? Mother { get; set; }
     public AnimalGenealogyDto? Father { get; set; }
-    public List<AnimalGenealogyDto> Children { get; set; } = new();
+    public required List<AnimalGenealogyDto> Children { get; set; }
 }

@@ -4,23 +4,23 @@ namespace AgroLink.Application.Features.Checklists.DTOs;
 
 public class ChecklistDto
 {
-    public int Id { get; set; }
-    public string ScopeType { get; set; } = string.Empty;
-    public int ScopeId { get; set; }
+    public required int Id { get; set; }
+    public required string ScopeType { get; set; }
+    public required int ScopeId { get; set; }
     public string? ScopeName { get; set; }
-    public DateTime Date { get; set; }
-    public int UserId { get; set; }
-    public string UserName { get; set; } = string.Empty;
+    public required DateTime Date { get; set; }
+    public required int UserId { get; set; }
+    public required string UserName { get; set; }
     public string? Notes { get; set; }
-    public List<ChecklistItemDto> Items { get; set; } = new();
-    public List<PhotoDto> Photos { get; set; } = new();
-    public DateTime CreatedAt { get; set; }
+    public required List<ChecklistItemDto> Items { get; set; }
+    public required List<PhotoDto> Photos { get; set; }
+    public required DateTime CreatedAt { get; set; }
 }
 
 public class CreateChecklistDto
 {
-    public string ScopeType { get; set; } = string.Empty;
-    public int ScopeId { get; set; }
+    public required string ScopeType { get; set; }
+    public required int ScopeId { get; set; }
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public string? Notes { get; set; }
     public List<CreateChecklistItemDto> Items { get; set; } = new();
@@ -28,12 +28,12 @@ public class CreateChecklistDto
 
 public class ChecklistItemDto
 {
-    public int Id { get; set; }
-    public int AnimalId { get; set; }
-    public string AnimalTag { get; set; } = string.Empty;
+    public required int Id { get; set; }
+    public required int AnimalId { get; set; }
+    public required string AnimalTag { get; set; }
     public string? AnimalName { get; set; }
-    public bool Present { get; set; }
-    public string Condition { get; set; } = string.Empty;
+    public required bool Present { get; set; }
+    public required string Condition { get; set; }
     public string? Notes { get; set; }
 }
 

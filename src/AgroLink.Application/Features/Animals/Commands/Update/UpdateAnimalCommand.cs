@@ -33,7 +33,7 @@ public class UpdateAnimalCommandHandler(
         animal.Name = dto.Name ?? animal.Name;
         animal.Color = dto.Color ?? animal.Color;
         animal.Breed = dto.Breed ?? animal.Breed;
-        animal.Status = dto.Status;
+        animal.Status = dto.Status ?? animal.Status;
         animal.BirthDate = dto.BirthDate ?? animal.BirthDate;
         animal.MotherId = dto.MotherId ?? animal.MotherId;
         animal.FatherId = dto.FatherId ?? animal.FatherId;
