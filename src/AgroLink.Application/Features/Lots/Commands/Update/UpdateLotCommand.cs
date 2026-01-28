@@ -48,6 +48,7 @@ public class UpdateLotCommandHandler(
             Id = lot.Id,
             Name = lot.Name,
             PaddockId = lot.PaddockId,
+            FarmId = lot.Paddock.FarmId,
             PaddockName = paddock?.Name ?? "",
             Status = lot.Status,
             CreatedAt = lot.CreatedAt,
