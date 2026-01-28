@@ -41,7 +41,14 @@ public class PaddocksControllerTests
         // Arrange
         var paddocks = new List<PaddockDto>
         {
-            new() { Id = 1, Name = "Paddock 1" },
+            new()
+            {
+                Id = 1,
+                Name = "Paddock 1",
+                FarmId = 1,
+                FarmName = "Farm 1",
+                CreatedAt = DateTime.UtcNow,
+            },
         };
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<GetAllPaddocksQuery>(), It.IsAny<CancellationToken>()))
@@ -60,7 +67,14 @@ public class PaddocksControllerTests
     public async Task GetById_WhenPaddockExists_ShouldReturnOk()
     {
         // Arrange
-        var paddock = new PaddockDto { Id = 1, Name = "Paddock 1" };
+        var paddock = new PaddockDto
+        {
+            Id = 1,
+            Name = "Paddock 1",
+            FarmId = 1,
+            FarmName = "Farm 1",
+            CreatedAt = DateTime.UtcNow,
+        };
         _mediatorMock
             .Setup(x =>
                 x.Send(It.Is<GetPaddockByIdQuery>(q => q.Id == 1), It.IsAny<CancellationToken>())
@@ -93,6 +107,9 @@ public class PaddocksControllerTests
             Name = "New Paddock",
             Area = 5.5m,
             AreaType = "Hectare",
+            FarmId = 1,
+            FarmName = "Farm 1",
+            CreatedAt = DateTime.UtcNow,
         };
         _mediatorMock
             .Setup(x =>

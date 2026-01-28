@@ -57,6 +57,9 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = 1,
                 LotName = "Test Lot",
+                Status = "ACTIVE",
+                Owners = [],
+                Photos = [],
                 CreatedAt = DateTime.UtcNow,
             },
             new()
@@ -70,6 +73,9 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-1),
                 LotId = 1,
                 LotName = "Test Lot",
+                Status = "ACTIVE",
+                Owners = [],
+                Photos = [],
                 CreatedAt = DateTime.UtcNow,
             },
         };
@@ -104,6 +110,9 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
+            Status = "ACTIVE",
+            Owners = [],
+            Photos = [],
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -168,6 +177,9 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = lotId,
                 LotName = "Test Lot",
+                Status = "ACTIVE",
+                Owners = [],
+                Photos = [],
                 CreatedAt = DateTime.UtcNow,
             },
         };
@@ -207,7 +219,12 @@ public class AnimalsControllerTests
             LotId = 1,
             Owners = new List<AnimalOwnerDto>
             {
-                new() { OwnerId = 1, SharePercent = 100 },
+                new()
+                {
+                    OwnerId = 1,
+                    OwnerName = "Owner 1",
+                    SharePercent = 100,
+                },
             },
         };
 
@@ -222,6 +239,9 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
+            Status = "ACTIVE",
+            Owners = [],
+            Photos = [],
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -271,6 +291,9 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-3),
             LotId = 1,
             LotName = "Test Lot",
+            Status = "ACTIVE",
+            Owners = [],
+            Photos = [],
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -380,6 +403,7 @@ public class AnimalsControllerTests
             Name = "Test Animal",
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            Children = [],
         };
 
         _mediatorMock
@@ -448,6 +472,9 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 2, // Moved to new lot
             LotName = "New Lot",
+            Status = "ACTIVE",
+            Owners = [],
+            Photos = [],
             CreatedAt = DateTime.UtcNow,
         };
 

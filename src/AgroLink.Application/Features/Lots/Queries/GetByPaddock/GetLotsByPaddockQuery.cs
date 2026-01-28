@@ -24,8 +24,10 @@ public class GetLotsByPaddockQueryHandler(
             Id = l.Id,
             Name = l.Name,
             PaddockId = l.PaddockId,
+            FarmId = paddock?.FarmId ?? 0,
             PaddockName = paddock?.Name ?? "",
             Status = l.Status,
+            AnimalCount = l.Animals?.Count ?? 0,
             CreatedAt = l.CreatedAt,
         });
     }

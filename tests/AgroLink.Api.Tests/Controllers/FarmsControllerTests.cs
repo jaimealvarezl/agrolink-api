@@ -35,8 +35,22 @@ public class FarmsControllerTests
         // Arrange
         var farms = new List<FarmDto>
         {
-            new() { Id = 1, Name = "Farm 1" },
-            new() { Id = 2, Name = "Farm 2" },
+            new()
+            {
+                Id = 1,
+                Name = "Farm 1",
+                OwnerId = 1,
+                Role = "Owner",
+                CreatedAt = DateTime.UtcNow,
+            },
+            new()
+            {
+                Id = 2,
+                Name = "Farm 2",
+                OwnerId = 1,
+                Role = "Owner",
+                CreatedAt = DateTime.UtcNow,
+            },
         };
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<GetAllFarmsQuery>(), It.IsAny<CancellationToken>()))
@@ -55,7 +69,14 @@ public class FarmsControllerTests
     public async Task GetById_WhenFarmExists_ShouldReturnOk()
     {
         // Arrange
-        var farm = new FarmDto { Id = 1, Name = "Farm 1" };
+        var farm = new FarmDto
+        {
+            Id = 1,
+            Name = "Farm 1",
+            OwnerId = 1,
+            Role = "Owner",
+            CreatedAt = DateTime.UtcNow,
+        };
         _mediatorMock
             .Setup(x =>
                 x.Send(It.Is<GetFarmByIdQuery>(q => q.Id == 1), It.IsAny<CancellationToken>())
@@ -100,6 +121,7 @@ public class FarmsControllerTests
             Name = "New Farm",
             OwnerId = 5,
             Role = FarmMemberRoles.Owner,
+            CreatedAt = DateTime.UtcNow,
         };
 
         // Mock Controller Context with User Claims
@@ -133,7 +155,14 @@ public class FarmsControllerTests
     {
         // Arrange
         var request = new UpdateFarmRequest { Name = "Updated Farm" };
-        var farmDto = new FarmDto { Id = 1, Name = "Updated Farm" };
+        var farmDto = new FarmDto
+        {
+            Id = 1,
+            Name = "Updated Farm",
+            OwnerId = 1,
+            Role = "Owner",
+            CreatedAt = DateTime.UtcNow,
+        };
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<UpdateFarmCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(farmDto);

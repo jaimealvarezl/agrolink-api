@@ -40,6 +40,8 @@ public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
+            OwnerId = farm.OwnerId,
+            Role = string.Empty,
             CreatedAt = farm.CreatedAt,
         };
     }

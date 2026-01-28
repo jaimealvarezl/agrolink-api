@@ -33,6 +33,7 @@ public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
             Name = animal.Name,
             Sex = animal.Sex,
             BirthDate = animal.BirthDate,
+            Children = [],
         };
 
         if (animal.MotherId.HasValue)

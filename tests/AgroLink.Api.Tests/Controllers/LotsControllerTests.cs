@@ -43,7 +43,17 @@ public class LotsControllerTests
         // Arrange
         var lots = new List<LotDto>
         {
-            new() { Id = 1, Name = "Lot 1" },
+            new()
+            {
+                Id = 1,
+                Name = "Lot 1",
+                PaddockId = 1,
+                FarmId = 1,
+                PaddockName = "Paddock 1",
+                Status = "ACTIVE",
+                AnimalCount = 0,
+                CreatedAt = DateTime.UtcNow,
+            },
         };
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<GetAllLotsQuery>(), It.IsAny<CancellationToken>()))
@@ -62,7 +72,17 @@ public class LotsControllerTests
     public async Task GetById_WhenLotExists_ShouldReturnOk()
     {
         // Arrange
-        var lot = new LotDto { Id = 1, Name = "Lot 1" };
+        var lot = new LotDto
+        {
+            Id = 1,
+            Name = "Lot 1",
+            PaddockId = 1,
+            FarmId = 1,
+            PaddockName = "Paddock 1",
+            Status = "ACTIVE",
+            AnimalCount = 0,
+            CreatedAt = DateTime.UtcNow,
+        };
         _mediatorMock
             .Setup(x =>
                 x.Send(It.Is<GetLotByIdQuery>(q => q.Id == 1), It.IsAny<CancellationToken>())
@@ -99,7 +119,17 @@ public class LotsControllerTests
     {
         // Arrange
         var request = new CreateLotRequest { Name = "New Lot", PaddockId = 1 };
-        var lotDto = new LotDto { Id = 1, Name = "New Lot" };
+        var lotDto = new LotDto
+        {
+            Id = 1,
+            Name = "New Lot",
+            PaddockId = 1,
+            FarmId = 1,
+            PaddockName = "Paddock 1",
+            Status = "ACTIVE",
+            AnimalCount = 0,
+            CreatedAt = DateTime.UtcNow,
+        };
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateLotCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lotDto);
@@ -122,6 +152,11 @@ public class LotsControllerTests
             Id = 1,
             Name = "Lot 1",
             PaddockId = 2,
+            FarmId = 1,
+            PaddockName = "Paddock 2",
+            Status = "ACTIVE",
+            AnimalCount = 0,
+            CreatedAt = DateTime.UtcNow,
         };
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<MoveLotCommand>(), It.IsAny<CancellationToken>()))
@@ -146,6 +181,11 @@ public class LotsControllerTests
                 Id = 1,
                 Name = "Lot 1",
                 PaddockId = 1,
+                FarmId = 1,
+                PaddockName = "Paddock 1",
+                Status = "ACTIVE",
+                AnimalCount = 0,
+                CreatedAt = DateTime.UtcNow,
             },
         };
         _mediatorMock

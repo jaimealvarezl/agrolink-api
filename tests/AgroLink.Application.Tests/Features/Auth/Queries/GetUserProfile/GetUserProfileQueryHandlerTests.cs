@@ -31,7 +31,15 @@ public class GetUserProfileQueryHandlerTests
         // Arrange
         var token = "valid_jwt_token";
         var query = new GetUserProfileQuery(token);
-        var userDtoFromToken = new UserDto { Id = 1, Email = "test@example.com" };
+        var userDtoFromToken = new UserDto
+        {
+            Id = 1,
+            Email = "test@example.com",
+            Name = "Test User",
+            Role = "User",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
         var userEntity = new User
         {
             Id = 1,
@@ -79,7 +87,15 @@ public class GetUserProfileQueryHandlerTests
         // Arrange
         var token = "valid_jwt_token";
         var query = new GetUserProfileQuery(token);
-        var userDtoFromToken = new UserDto { Id = 1, Email = "test@example.com" };
+        var userDtoFromToken = new UserDto
+        {
+            Id = 1,
+            Email = "test@example.com",
+            Name = "Test User",
+            Role = "User",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
 
         _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns(userDtoFromToken);
         _authRepositoryMock
@@ -99,7 +115,15 @@ public class GetUserProfileQueryHandlerTests
         // Arrange
         var token = "valid_jwt_token";
         var query = new GetUserProfileQuery(token);
-        var userDtoFromToken = new UserDto { Id = 1, Email = "test@example.com" };
+        var userDtoFromToken = new UserDto
+        {
+            Id = 1,
+            Email = "test@example.com",
+            Name = "Test User",
+            Role = "User",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
         var inactiveUser = new User { Id = 1, IsActive = false };
 
         _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns(userDtoFromToken);

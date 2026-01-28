@@ -5,7 +5,9 @@ public class LotDto
     public required int Id { get; set; }
     public required string Name { get; set; }
     public required int PaddockId { get; set; }
+    public required int FarmId { get; set; }
     public required string PaddockName { get; set; }
+    public required string Status { get; set; }
     public required int AnimalCount { get; set; }
     public required DateTime CreatedAt { get; set; }
 }

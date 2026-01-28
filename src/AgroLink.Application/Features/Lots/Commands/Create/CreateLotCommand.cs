@@ -40,8 +40,9 @@ public class CreateLotCommandHandler(
             PaddockId = lot.PaddockId,
             PaddockName = paddock.Name,
             Status = lot.Status,
+            AnimalCount = 0,
             CreatedAt = lot.CreatedAt,
-            FarmId = lot.Paddock.FarmId,
+            FarmId = paddock.FarmId,
         };
     }
 }

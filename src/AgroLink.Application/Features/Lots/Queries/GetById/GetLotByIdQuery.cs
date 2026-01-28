@@ -26,8 +26,10 @@ public class GetLotByIdQueryHandler(
             Id = lot.Id,
             Name = lot.Name,
             PaddockId = lot.PaddockId,
+            FarmId = paddock?.FarmId ?? 0,
             PaddockName = paddock?.Name ?? "",
             Status = lot.Status,
+            AnimalCount = lot.Animals?.Count ?? 0,
             CreatedAt = lot.CreatedAt,
         };
     }

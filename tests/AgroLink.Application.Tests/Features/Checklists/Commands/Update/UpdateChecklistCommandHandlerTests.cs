@@ -131,7 +131,12 @@ public class UpdateChecklistCommandHandlerTests
     {
         // Arrange
         var checklistId = 999;
-        var updateChecklistDto = new CreateChecklistDto { Notes = "Updated Notes" };
+        var updateChecklistDto = new CreateChecklistDto
+        {
+            ScopeType = "LOT",
+            ScopeId = 1,
+            Notes = "Updated Notes",
+        };
         var command = new UpdateChecklistCommand(checklistId, updateChecklistDto);
 
         _checklistRepositoryMock

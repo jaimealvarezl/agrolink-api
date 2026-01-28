@@ -43,9 +43,15 @@ public class CreateAnimalCommandHandlerTests
             Tag = "A001",
             Name = "Test Animal",
             LotId = 1,
+            Sex = "FEMALE",
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto { OwnerId = 1, SharePercent = 100 },
+                new AnimalOwnerDto
+                {
+                    OwnerId = 1,
+                    OwnerName = "Test Owner",
+                    SharePercent = 100,
+                },
             },
         };
         var command = new CreateAnimalCommand(createAnimalDto);

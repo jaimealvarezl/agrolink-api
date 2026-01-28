@@ -49,7 +49,12 @@ public class UpdateAnimalCommandHandlerTests
             Status = "SOLD",
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto { OwnerId = 1, SharePercent = 100 },
+                new AnimalOwnerDto
+                {
+                    OwnerId = 1,
+                    OwnerName = "Test Owner",
+                    SharePercent = 100,
+                },
             },
         };
         var command = new UpdateAnimalCommand(animalId, updateAnimalDto);

@@ -42,6 +42,8 @@ public class AuthControllerTests
                 Name = "Test User",
                 Email = "test@example.com",
                 Role = "USER",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
             },
             ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
