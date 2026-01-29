@@ -122,7 +122,6 @@ jobs:
         run: |
           echo "🗄️ Generating migration bundle..."
           dotnet restore -r linux-x64
-          dotnet build agrolink-api.sln --configuration Release --no-restore -r linux-x64
           dotnet build src/AgroLink.Api/AgroLink.Api.csproj --configuration Release --no-restore -r linux-x64
 
           cd src/AgroLink.Infrastructure
