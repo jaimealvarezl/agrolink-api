@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace AgroLink.Infrastructure.Data;
 
 /// <summary>
-/// Design-time factory for EF Core migrations.
-/// This allows EF Core tools to create the DbContext without loading the startup project.
+///     Design-time factory for EF Core migrations.
+///     This allows EF Core tools to create the DbContext without loading the startup project.
 /// </summary>
 public class AgroLinkDbContextFactory : IDesignTimeDbContextFactory<AgroLinkDbContext>
 {

@@ -10,15 +10,15 @@ namespace AgroLink.Application.Tests.Features.Movements.Commands.CreateMovement;
 [TestFixture]
 public class CreateMovementCommandHandlerTests
 {
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
-    private CreateMovementCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _movementRepositoryMock = new Mock<IMovementRepository>();
         _handler = new CreateMovementCommandHandler(_movementRepositoryMock.Object);
     }
+
+    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private CreateMovementCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidCreateMovementCommand_ReturnsMovementDto()

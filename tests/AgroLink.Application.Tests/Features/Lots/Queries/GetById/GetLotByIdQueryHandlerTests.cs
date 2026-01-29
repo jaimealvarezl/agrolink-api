@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Lots.Queries.GetById;
 [TestFixture]
 public class GetLotByIdQueryHandlerTests
 {
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private GetLotByIdQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -23,6 +19,10 @@ public class GetLotByIdQueryHandlerTests
             _paddockRepositoryMock.Object
         );
     }
+
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private GetLotByIdQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingLot_ReturnsLotDto()

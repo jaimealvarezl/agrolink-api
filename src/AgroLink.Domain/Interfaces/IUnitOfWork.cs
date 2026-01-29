@@ -1,7 +1,6 @@
-namespace AgroLink.Domain.Interfaces
+namespace AgroLink.Domain.Interfaces;
+
+public interface IUnitOfWork
 {
-    public interface IUnitOfWork
-    {
-        Task<int> SaveChangesAsync();
-    }
+    Task<int> SaveChangesAsync();
 }

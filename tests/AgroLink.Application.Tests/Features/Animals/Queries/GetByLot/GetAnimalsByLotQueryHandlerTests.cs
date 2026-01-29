@@ -10,13 +10,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetByLot;
 [TestFixture]
 public class GetAnimalsByLotQueryHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private GetAnimalsByLotQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -34,6 +27,13 @@ public class GetAnimalsByLotQueryHandlerTests
         );
     }
 
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private GetAnimalsByLotQueryHandler _handler = null!;
+
     [Test]
     public async Task Handle_ExistingLotWithAnimals_ReturnsAnimalsDto()
     {
@@ -42,7 +42,7 @@ public class GetAnimalsByLotQueryHandlerTests
         var query = new GetAnimalsByLotQuery(lotId);
         var animals = new List<Animal>
         {
-            new Animal
+            new()
             {
                 Id = 1,
                 Tag = "A001",
@@ -51,7 +51,7 @@ public class GetAnimalsByLotQueryHandlerTests
                 CreatedAt = DateTime.UtcNow,
                 Status = "ACTIVE",
             },
-            new Animal
+            new()
             {
                 Id = 2,
                 Tag = "A002",

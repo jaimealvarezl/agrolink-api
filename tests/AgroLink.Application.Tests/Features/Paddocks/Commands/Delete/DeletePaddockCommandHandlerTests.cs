@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Paddocks.Commands.Delete;
 [TestFixture]
 public class DeletePaddockCommandHandlerTests
 {
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private DeletePaddockCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -23,6 +19,10 @@ public class DeletePaddockCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private DeletePaddockCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingPaddock_DeletesPaddock()

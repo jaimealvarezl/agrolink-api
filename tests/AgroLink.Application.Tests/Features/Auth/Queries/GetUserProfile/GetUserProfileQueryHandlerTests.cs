@@ -10,10 +10,6 @@ namespace AgroLink.Application.Tests.Features.Auth.Queries.GetUserProfile;
 [TestFixture]
 public class GetUserProfileQueryHandlerTests
 {
-    private Mock<IAuthRepository> _authRepositoryMock = null!;
-    private Mock<IJwtTokenService> _jwtTokenServiceMock = null!;
-    private GetUserProfileQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -24,6 +20,10 @@ public class GetUserProfileQueryHandlerTests
             _jwtTokenServiceMock.Object
         );
     }
+
+    private Mock<IAuthRepository> _authRepositoryMock = null!;
+    private Mock<IJwtTokenService> _jwtTokenServiceMock = null!;
+    private GetUserProfileQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidTokenAndUser_ReturnsUserDto()

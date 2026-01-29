@@ -10,11 +10,6 @@ namespace AgroLink.Application.Tests.Features.Auth.Commands.Login;
 [TestFixture]
 public class LoginCommandHandlerTests
 {
-    private Mock<IAuthRepository> _authRepositoryMock = null!;
-    private Mock<IJwtTokenService> _jwtTokenServiceMock = null!;
-    private Mock<IPasswordHasher> _passwordHasherMock = null!;
-    private LoginCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -27,6 +22,11 @@ public class LoginCommandHandlerTests
             _passwordHasherMock.Object
         );
     }
+
+    private Mock<IAuthRepository> _authRepositoryMock = null!;
+    private Mock<IJwtTokenService> _jwtTokenServiceMock = null!;
+    private Mock<IPasswordHasher> _passwordHasherMock = null!;
+    private LoginCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidCredentials_ReturnsAuthResponse()

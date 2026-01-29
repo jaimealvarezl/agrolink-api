@@ -10,11 +10,6 @@ namespace AgroLink.Application.Tests.Features.Lots.Commands.Update;
 [TestFixture]
 public class UpdateLotCommandHandlerTests
 {
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private UpdateLotCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -27,6 +22,11 @@ public class UpdateLotCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private UpdateLotCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidUpdateLotCommand_ReturnsLotDto()

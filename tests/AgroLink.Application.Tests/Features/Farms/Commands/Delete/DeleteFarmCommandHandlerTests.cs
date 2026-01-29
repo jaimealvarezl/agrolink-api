@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Farms.Commands.Delete;
 [TestFixture]
 public class DeleteFarmCommandHandlerTests
 {
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private DeleteFarmCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -20,6 +16,10 @@ public class DeleteFarmCommandHandlerTests
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new DeleteFarmCommandHandler(_farmRepositoryMock.Object, _unitOfWorkMock.Object);
     }
+
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private DeleteFarmCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingFarm_DeletesFarm()

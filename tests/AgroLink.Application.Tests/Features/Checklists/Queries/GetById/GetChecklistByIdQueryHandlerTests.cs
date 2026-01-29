@@ -11,15 +11,6 @@ namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetById;
 [TestFixture]
 public class GetChecklistByIdQueryHandlerTests
 {
-    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
-    private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private GetChecklistByIdQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -40,6 +31,15 @@ public class GetChecklistByIdQueryHandlerTests
             _paddockRepositoryMock.Object
         );
     }
+
+    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
+    private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
+    private Mock<IUserRepository> _userRepositoryMock = null!;
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private GetChecklistByIdQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingChecklist_ReturnsChecklistDto()

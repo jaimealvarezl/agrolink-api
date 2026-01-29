@@ -4,9 +4,7 @@ using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using Shouldly;
 
-// Added
-
-namespace AgroLink.Infrastructure.Tests.Repositories; // Changed namespace
+namespace AgroLink.Infrastructure.Tests.Repositories;
 
 [TestFixture]
 public class FarmRepositoryTests : TestBase

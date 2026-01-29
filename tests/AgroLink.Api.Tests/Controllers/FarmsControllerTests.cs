@@ -19,15 +19,15 @@ namespace AgroLink.Api.Tests.Controllers;
 [TestFixture]
 public class FarmsControllerTests
 {
-    private Mock<IMediator> _mediatorMock = null!;
-    private FarmsController _controller = null!;
-
     [SetUp]
     public void Setup()
     {
         _mediatorMock = new Mock<IMediator>();
         _controller = new FarmsController(_mediatorMock.Object);
     }
+
+    private Mock<IMediator> _mediatorMock = null!;
+    private FarmsController _controller = null!;
 
     [Test]
     public async Task GetAll_ShouldReturnOkWithFarms()

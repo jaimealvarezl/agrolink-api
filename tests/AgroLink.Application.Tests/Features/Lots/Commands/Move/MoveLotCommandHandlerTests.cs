@@ -10,12 +10,6 @@ namespace AgroLink.Application.Tests.Features.Lots.Commands.Move;
 [TestFixture]
 public class MoveLotCommandHandlerTests
 {
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private MoveLotCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -30,6 +24,12 @@ public class MoveLotCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private MoveLotCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidMoveLotCommand_ReturnsLotDto()

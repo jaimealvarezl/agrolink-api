@@ -11,13 +11,6 @@ namespace AgroLink.Application.Tests.Features.Farms.Commands.Create;
 [TestFixture]
 public class CreateFarmCommandHandlerTests
 {
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private CreateFarmCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -35,6 +28,13 @@ public class CreateFarmCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<IUserRepository> _userRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private CreateFarmCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidCreateFarmCommand_ReturnsFarmDto()
@@ -139,7 +139,9 @@ public class CreateFarmCommandHandlerTests
             {
                 f.Id = 2;
                 if (f.Owner != null)
+                {
                     f.OwnerId = f.Owner.Id;
+                }
             });
 
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);

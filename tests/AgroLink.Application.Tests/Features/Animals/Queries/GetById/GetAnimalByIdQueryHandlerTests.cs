@@ -10,13 +10,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetById;
 [TestFixture]
 public class GetAnimalByIdQueryHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private GetAnimalByIdQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -33,6 +26,13 @@ public class GetAnimalByIdQueryHandlerTests
             _photoRepositoryMock.Object
         );
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private GetAnimalByIdQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingAnimal_ReturnsAnimalDto()

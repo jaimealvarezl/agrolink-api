@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Farms.Commands.Update;
 [TestFixture]
 public class UpdateFarmCommandHandlerTests
 {
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private UpdateFarmCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -20,6 +16,10 @@ public class UpdateFarmCommandHandlerTests
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new UpdateFarmCommandHandler(_farmRepositoryMock.Object, _unitOfWorkMock.Object);
     }
+
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private UpdateFarmCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidUpdateFarmCommand_ReturnsFarmDto()

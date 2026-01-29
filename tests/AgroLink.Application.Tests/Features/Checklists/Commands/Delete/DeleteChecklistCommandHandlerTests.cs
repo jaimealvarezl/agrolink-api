@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Checklists.Commands.Delete;
 [TestFixture]
 public class DeleteChecklistCommandHandlerTests
 {
-    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private DeleteChecklistCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -23,6 +19,10 @@ public class DeleteChecklistCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private DeleteChecklistCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingChecklist_DeletesChecklist()

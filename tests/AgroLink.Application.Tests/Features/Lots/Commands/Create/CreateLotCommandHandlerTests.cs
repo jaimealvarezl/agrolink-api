@@ -10,11 +10,6 @@ namespace AgroLink.Application.Tests.Features.Lots.Commands.Create;
 [TestFixture]
 public class CreateLotCommandHandlerTests
 {
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private CreateLotCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -27,6 +22,11 @@ public class CreateLotCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private CreateLotCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidCreateLotCommand_ReturnsLotDto()

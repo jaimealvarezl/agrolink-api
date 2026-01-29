@@ -10,10 +10,6 @@ namespace AgroLink.Application.Tests.Features.Photos.Commands.UploadPhoto;
 [TestFixture]
 public class UploadPhotoCommandHandlerTests
 {
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<IAwsS3Service> _awsS3ServiceMock = null!;
-    private UploadPhotoCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -24,6 +20,10 @@ public class UploadPhotoCommandHandlerTests
             _awsS3ServiceMock.Object
         );
     }
+
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IAwsS3Service> _awsS3ServiceMock = null!;
+    private UploadPhotoCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidUploadPhotoCommand_ReturnsPhotoDto()

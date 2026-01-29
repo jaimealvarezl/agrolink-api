@@ -9,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetGenealogy;
 [TestFixture]
 public class GetAnimalGenealogyQueryHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private GetAnimalGenealogyQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _handler = new GetAnimalGenealogyQueryHandler(_animalRepositoryMock.Object);
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private GetAnimalGenealogyQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingAnimalWithGenealogy_ReturnsAnimalGenealogyDto()

@@ -12,16 +12,6 @@ namespace AgroLink.Application.Tests.Features.Checklists.Commands.Create;
 [TestFixture]
 public class CreateChecklistCommandHandlerTests
 {
-    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
-    private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private CreateChecklistCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -45,6 +35,16 @@ public class CreateChecklistCommandHandlerTests
         );
     }
 
+    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
+    private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
+    private Mock<IUserRepository> _userRepositoryMock = null!;
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private CreateChecklistCommandHandler _handler = null!;
+
     [Test]
     public async Task Handle_ValidCreateChecklistCommand_ReturnsChecklistDto()
     {
@@ -57,7 +57,7 @@ public class CreateChecklistCommandHandlerTests
             Notes = "Test Notes",
             Items = new List<CreateChecklistItemDto>
             {
-                new CreateChecklistItemDto
+                new()
                 {
                     AnimalId = 1,
                     Present = true,
@@ -97,7 +97,7 @@ public class CreateChecklistCommandHandlerTests
             .ReturnsAsync(
                 new List<ChecklistItem>
                 {
-                    new ChecklistItem { ChecklistId = checklist.Id, AnimalId = animal.Id },
+                    new() { ChecklistId = checklist.Id, AnimalId = animal.Id },
                 }
             );
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animal.Id)).ReturnsAsync(animal);

@@ -9,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Movements.Queries.GetMovementsByEn
 [TestFixture]
 public class GetMovementsByEntityQueryHandlerTests
 {
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
-    private GetMovementsByEntityQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _movementRepositoryMock = new Mock<IMovementRepository>();
         _handler = new GetMovementsByEntityQueryHandler(_movementRepositoryMock.Object);
     }
+
+    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private GetMovementsByEntityQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingEntityWithMovements_ReturnsMovementsDto()
@@ -28,7 +28,7 @@ public class GetMovementsByEntityQueryHandlerTests
         var query = new GetMovementsByEntityQuery(entityType, entityId);
         var movements = new List<Movement>
         {
-            new Movement
+            new()
             {
                 Id = 1,
                 EntityType = entityType,
@@ -38,7 +38,7 @@ public class GetMovementsByEntityQueryHandlerTests
                 At = DateTime.UtcNow,
                 UserId = 1,
             },
-            new Movement
+            new()
             {
                 Id = 2,
                 EntityType = entityType,

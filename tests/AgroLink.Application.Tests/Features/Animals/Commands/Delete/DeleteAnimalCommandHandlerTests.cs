@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Delete;
 [TestFixture]
 public class DeleteAnimalCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private DeleteAnimalCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -23,6 +19,10 @@ public class DeleteAnimalCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private DeleteAnimalCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingAnimal_DeletesAnimal()

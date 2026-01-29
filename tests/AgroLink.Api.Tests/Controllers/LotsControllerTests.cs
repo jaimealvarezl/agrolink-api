@@ -17,9 +17,6 @@ namespace AgroLink.Api.Tests.Controllers;
 [TestFixture]
 public class LotsControllerTests
 {
-    private Mock<IMediator> _mediatorMock = null!;
-    private LotsController _controller = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -36,6 +33,9 @@ public class LotsControllerTests
             HttpContext = new DefaultHttpContext { User = principal },
         };
     }
+
+    private Mock<IMediator> _mediatorMock = null!;
+    private LotsController _controller = null!;
 
     [Test]
     public async Task GetAll_ShouldReturnOk()

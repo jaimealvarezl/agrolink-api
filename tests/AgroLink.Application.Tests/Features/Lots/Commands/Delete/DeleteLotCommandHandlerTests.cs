@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Lots.Commands.Delete;
 [TestFixture]
 public class DeleteLotCommandHandlerTests
 {
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private DeleteLotCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -20,6 +16,10 @@ public class DeleteLotCommandHandlerTests
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new DeleteLotCommandHandler(_lotRepositoryMock.Object, _unitOfWorkMock.Object);
     }
+
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private DeleteLotCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingLot_DeletesLot()

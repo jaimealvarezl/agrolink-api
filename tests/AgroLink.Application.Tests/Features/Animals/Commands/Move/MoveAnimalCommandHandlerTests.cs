@@ -10,16 +10,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Move;
 [TestFixture]
 public class MoveAnimalCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private MoveAnimalCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -43,6 +33,16 @@ public class MoveAnimalCommandHandlerTests
             _currentUserServiceMock.Object
         );
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private MoveAnimalCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidMoveAnimalCommand_ReturnsAnimalDto()

@@ -8,6 +8,7 @@ namespace AgroLink.Infrastructure.Services;
 public class AwsS3Service(IAmazonS3 s3Client, IConfiguration configuration) : IAwsS3Service
 {
     private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
+
     private readonly string _serviceUrl =
         configuration["AWS:ServiceUrl"] ?? "https://s3.amazonaws.com";
 

@@ -20,9 +20,6 @@ namespace AgroLink.Api.Tests.Controllers;
 [TestFixture]
 public class AnimalsControllerTests
 {
-    private Mock<IMediator> _mediatorMock = null!;
-    private AnimalsController _controller = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -39,6 +36,9 @@ public class AnimalsControllerTests
             HttpContext = new DefaultHttpContext { User = principal },
         };
     }
+
+    private Mock<IMediator> _mediatorMock = null!;
+    private AnimalsController _controller = null!;
 
     [Test]
     public async Task GetAll_ShouldReturnOkWithAnimals()

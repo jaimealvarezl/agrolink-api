@@ -11,12 +11,6 @@ namespace AgroLink.Application.Tests.Features.Paddocks.Commands.Create;
 [TestFixture]
 public class CreatePaddockCommandHandlerTests
 {
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private CreatePaddockCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -32,6 +26,12 @@ public class CreatePaddockCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private CreatePaddockCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidCreatePaddockCommand_ReturnsPaddockDto()

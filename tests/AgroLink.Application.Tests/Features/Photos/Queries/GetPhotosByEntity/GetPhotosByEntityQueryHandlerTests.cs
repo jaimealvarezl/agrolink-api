@@ -9,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Photos.Queries.GetPhotosByEntity;
 [TestFixture]
 public class GetPhotosByEntityQueryHandlerTests
 {
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private GetPhotosByEntityQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _photoRepositoryMock = new Mock<IPhotoRepository>();
         _handler = new GetPhotosByEntityQueryHandler(_photoRepositoryMock.Object);
     }
+
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private GetPhotosByEntityQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingEntityWithPhotos_ReturnsPhotosDto()
@@ -28,7 +28,7 @@ public class GetPhotosByEntityQueryHandlerTests
         var query = new GetPhotosByEntityQuery(entityType, entityId);
         var photos = new List<Photo>
         {
-            new Photo
+            new()
             {
                 Id = 1,
                 EntityType = entityType,
@@ -36,7 +36,7 @@ public class GetPhotosByEntityQueryHandlerTests
                 UriLocal = "local/1",
                 CreatedAt = DateTime.UtcNow,
             },
-            new Photo
+            new()
             {
                 Id = 2,
                 EntityType = entityType,

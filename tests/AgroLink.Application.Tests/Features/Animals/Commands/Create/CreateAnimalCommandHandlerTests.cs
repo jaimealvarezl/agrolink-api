@@ -10,13 +10,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Create;
 [TestFixture]
 public class CreateAnimalCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private CreateAnimalCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -34,6 +27,13 @@ public class CreateAnimalCommandHandlerTests
         );
     }
 
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private CreateAnimalCommandHandler _handler = null!;
+
     [Test]
     public async Task Handle_ValidCreateAnimalCommand_ReturnsAnimalDto()
     {
@@ -46,7 +46,7 @@ public class CreateAnimalCommandHandlerTests
             Sex = "FEMALE",
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto
+                new()
                 {
                     OwnerId = 1,
                     OwnerName = "Test Owner",
@@ -79,7 +79,7 @@ public class CreateAnimalCommandHandlerTests
             .ReturnsAsync(
                 new List<AnimalOwner>
                 {
-                    new AnimalOwner
+                    new()
                     {
                         AnimalId = 1,
                         OwnerId = 1,

@@ -9,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Farms.Queries.GetAll;
 [TestFixture]
 public class GetAllFarmsQueryHandlerTests
 {
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private GetAllFarmsQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _farmRepositoryMock = new Mock<IFarmRepository>();
         _handler = new GetAllFarmsQueryHandler(_farmRepositoryMock.Object);
     }
+
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private GetAllFarmsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ReturnsAllFarms()
@@ -26,14 +26,14 @@ public class GetAllFarmsQueryHandlerTests
         var query = new GetAllFarmsQuery();
         var farms = new List<Farm>
         {
-            new Farm
+            new()
             {
                 Id = 1,
                 Name = "Farm 1",
                 Location = "Location 1",
                 CreatedAt = DateTime.UtcNow,
             },
-            new Farm
+            new()
             {
                 Id = 2,
                 Name = "Farm 2",

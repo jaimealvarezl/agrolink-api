@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Photos.Commands.DeletePhoto;
 [TestFixture]
 public class DeletePhotoCommandHandlerTests
 {
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<IAwsS3Service> _awsS3ServiceMock = null!;
-    private DeletePhotoCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -23,6 +19,10 @@ public class DeletePhotoCommandHandlerTests
             _awsS3ServiceMock.Object
         );
     }
+
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IAwsS3Service> _awsS3ServiceMock = null!;
+    private DeletePhotoCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingPhoto_DeletesPhoto()

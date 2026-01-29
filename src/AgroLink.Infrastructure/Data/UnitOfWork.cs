@@ -1,19 +1,18 @@
 using AgroLink.Domain.Interfaces;
 
-namespace AgroLink.Infrastructure.Data
+namespace AgroLink.Infrastructure.Data;
+
+public class UnitOfWork : IUnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    private readonly AgroLinkDbContext _context;
+
+    public UnitOfWork(AgroLinkDbContext context)
     {
-        private readonly AgroLinkDbContext _context;
+        _context = context;
+    }
 
-        public UnitOfWork(AgroLinkDbContext context)
-        {
-            _context = context;
-        }
-
-        public Task<int> SaveChangesAsync()
-        {
-            return _context.SaveChangesAsync();
-        }
+    public Task<int> SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
     }
 }

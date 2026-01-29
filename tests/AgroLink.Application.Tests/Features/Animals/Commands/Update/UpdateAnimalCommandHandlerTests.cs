@@ -11,14 +11,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Update;
 [TestFixture]
 public class UpdateAnimalCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private UpdateAnimalCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -38,6 +30,14 @@ public class UpdateAnimalCommandHandlerTests
         );
     }
 
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private UpdateAnimalCommandHandler _handler = null!;
+
     [Test]
     public async Task Handle_ValidUpdateAnimalCommand_ReturnsAnimalDto()
     {
@@ -49,7 +49,7 @@ public class UpdateAnimalCommandHandlerTests
             Status = "SOLD",
             Owners = new List<AnimalOwnerDto>
             {
-                new AnimalOwnerDto
+                new()
                 {
                     OwnerId = 1,
                     OwnerName = "Test Owner",
@@ -85,7 +85,7 @@ public class UpdateAnimalCommandHandlerTests
             .ReturnsAsync(
                 new List<AnimalOwner>
                 {
-                    new AnimalOwner
+                    new()
                     {
                         AnimalId = 1,
                         OwnerId = 1,

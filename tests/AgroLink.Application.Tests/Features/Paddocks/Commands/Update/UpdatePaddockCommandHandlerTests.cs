@@ -9,11 +9,6 @@ namespace AgroLink.Application.Tests.Features.Paddocks.Commands.Update;
 [TestFixture]
 public class UpdatePaddockCommandHandlerTests
 {
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private UpdatePaddockCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -26,6 +21,11 @@ public class UpdatePaddockCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private UpdatePaddockCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidUpdatePaddockCommand_ReturnsPaddockDto()

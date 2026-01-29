@@ -34,7 +34,7 @@ public class UserTests
         user.PasswordHash.ShouldBe(passwordHash);
         user.Role.ShouldBe(role);
         user.IsActive.ShouldBe(isActive);
-        user.CreatedAt.ShouldNotBe(default(DateTime));
+        user.CreatedAt.ShouldNotBe(default);
     }
 
     [Test]

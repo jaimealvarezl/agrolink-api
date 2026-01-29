@@ -37,19 +37,25 @@ public class CreatePaddockCommandHandler(
 
         var farm = await farmRepository.GetByIdAsync(request.FarmId);
         if (farm == null)
+        {
             throw new ArgumentException($"Farm with ID {request.FarmId} not found.");
+        }
 
         var member = await farmMemberRepository.FirstOrDefaultAsync(m =>
             m.FarmId == request.FarmId && m.UserId == userId
         );
 
         if (member == null)
+        {
             throw new UnauthorizedAccessException("User is not a member of this farm.");
+        }
 
         if (!_allowedRoles.Contains(member.Role))
+        {
             throw new UnauthorizedAccessException(
                 "User does not have permission to add paddocks to this farm."
             );
+        }
 
         if (request.Area.HasValue && string.IsNullOrWhiteSpace(request.AreaType))
         {

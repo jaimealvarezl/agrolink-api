@@ -9,10 +9,7 @@ using AgroLink.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-// Added
-// Added for MediatR configuration
-
-namespace AgroLink.Infrastructure.Tests; // Changed namespace
+namespace AgroLink.Infrastructure.Tests;
 
 public abstract class TestBase
 {

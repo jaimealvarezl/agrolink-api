@@ -8,15 +8,15 @@ namespace AgroLink.Application.Tests.Features.Photos.Commands.SyncPendingPhotos;
 [TestFixture]
 public class SyncPendingPhotosCommandHandlerTests
 {
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private SyncPendingPhotosCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _photoRepositoryMock = new Mock<IPhotoRepository>();
         _handler = new SyncPendingPhotosCommandHandler(_photoRepositoryMock.Object);
     }
+
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private SyncPendingPhotosCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_PendingPhotosExist_UpdatesPhotos()
@@ -25,13 +25,13 @@ public class SyncPendingPhotosCommandHandlerTests
         var command = new SyncPendingPhotosCommand();
         var pendingPhotos = new List<Photo>
         {
-            new Photo
+            new()
             {
                 Id = 1,
                 Uploaded = false,
                 CreatedAt = DateTime.UtcNow,
             },
-            new Photo
+            new()
             {
                 Id = 2,
                 Uploaded = false,

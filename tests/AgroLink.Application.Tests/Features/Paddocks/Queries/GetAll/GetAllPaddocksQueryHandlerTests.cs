@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Paddocks.Queries.GetAll;
 [TestFixture]
 public class GetAllPaddocksQueryHandlerTests
 {
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private GetAllPaddocksQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -24,6 +20,10 @@ public class GetAllPaddocksQueryHandlerTests
         );
     }
 
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private GetAllPaddocksQueryHandler _handler = null!;
+
     [Test]
     public async Task Handle_ReturnsAllPaddocks()
     {
@@ -31,14 +31,14 @@ public class GetAllPaddocksQueryHandlerTests
         var query = new GetAllPaddocksQuery();
         var paddocks = new List<Paddock>
         {
-            new Paddock
+            new()
             {
                 Id = 1,
                 Name = "Paddock 1",
                 FarmId = 1,
                 CreatedAt = DateTime.UtcNow,
             },
-            new Paddock
+            new()
             {
                 Id = 2,
                 Name = "Paddock 2",

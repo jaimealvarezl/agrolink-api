@@ -9,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Farms.Queries.GetById;
 [TestFixture]
 public class GetFarmByIdQueryHandlerTests
 {
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private GetFarmByIdQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _farmRepositoryMock = new Mock<IFarmRepository>();
         _handler = new GetFarmByIdQueryHandler(_farmRepositoryMock.Object);
     }
+
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private GetFarmByIdQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingFarm_ReturnsFarmDto()

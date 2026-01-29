@@ -12,9 +12,9 @@ namespace AgroLink.Infrastructure.Services;
 
 public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 {
-    private readonly string _jwtKey = configuration["Jwt:Key"] ?? "default-key";
-    private readonly string _jwtIssuer = configuration["Jwt:Issuer"] ?? "default-issuer";
     private readonly string _jwtAudience = configuration["Jwt:Audience"] ?? "default-audience";
+    private readonly string _jwtIssuer = configuration["Jwt:Issuer"] ?? "default-issuer";
+    private readonly string _jwtKey = configuration["Jwt:Key"] ?? "default-key";
 
     public string GenerateToken(User user)
     {
@@ -79,7 +79,7 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
                     ValidAudience = _jwtAudience,
                     ClockSkew = TimeSpan.Zero,
                 },
-                out SecurityToken validatedToken
+                out var validatedToken
             );
 
             return result != null;

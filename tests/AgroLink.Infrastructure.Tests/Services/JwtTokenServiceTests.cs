@@ -10,9 +10,6 @@ namespace AgroLink.Infrastructure.Tests.Services;
 [TestFixture]
 public class JwtTokenServiceTests
 {
-    private Mock<IConfiguration> _configurationMock = null!;
-    private JwtTokenService _service = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -25,6 +22,9 @@ public class JwtTokenServiceTests
 
         _service = new JwtTokenService(_configurationMock.Object);
     }
+
+    private Mock<IConfiguration> _configurationMock = null!;
+    private JwtTokenService _service = null!;
 
     [Test]
     public void GenerateToken_WithUserEntity_ReturnsValidJwtToken()

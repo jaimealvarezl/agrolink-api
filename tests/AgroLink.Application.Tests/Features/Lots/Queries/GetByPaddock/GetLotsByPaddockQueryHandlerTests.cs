@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Lots.Queries.GetByPaddock;
 [TestFixture]
 public class GetLotsByPaddockQueryHandlerTests
 {
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private GetLotsByPaddockQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -24,6 +20,10 @@ public class GetLotsByPaddockQueryHandlerTests
         );
     }
 
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private GetLotsByPaddockQueryHandler _handler = null!;
+
     [Test]
     public async Task Handle_ExistingPaddockWithLots_ReturnsLotsDto()
     {
@@ -32,7 +32,7 @@ public class GetLotsByPaddockQueryHandlerTests
         var query = new GetLotsByPaddockQuery(paddockId);
         var lots = new List<Lot>
         {
-            new Lot
+            new()
             {
                 Id = 1,
                 Name = "Lot 1",
@@ -40,7 +40,7 @@ public class GetLotsByPaddockQueryHandlerTests
                 Status = "ACTIVE",
                 CreatedAt = DateTime.UtcNow,
             },
-            new Lot
+            new()
             {
                 Id = 2,
                 Name = "Lot 2",

@@ -16,9 +16,6 @@ namespace AgroLink.Api.Tests.Controllers;
 [TestFixture]
 public class PaddocksControllerTests
 {
-    private Mock<IMediator> _mediatorMock = null!;
-    private PaddocksController _controller = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -34,6 +31,9 @@ public class PaddocksControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal },
         };
     }
+
+    private Mock<IMediator> _mediatorMock = null!;
+    private PaddocksController _controller = null!;
 
     [Test]
     public async Task GetAll_ShouldReturnOk()

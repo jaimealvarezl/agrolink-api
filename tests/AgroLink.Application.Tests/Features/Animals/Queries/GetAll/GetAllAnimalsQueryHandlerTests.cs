@@ -10,13 +10,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetAll;
 [TestFixture]
 public class GetAllAnimalsQueryHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private GetAllAnimalsQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -34,6 +27,13 @@ public class GetAllAnimalsQueryHandlerTests
         );
     }
 
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
+    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private GetAllAnimalsQueryHandler _handler = null!;
+
     [Test]
     public async Task Handle_ReturnsAllAnimals()
     {
@@ -41,7 +41,7 @@ public class GetAllAnimalsQueryHandlerTests
         var query = new GetAllAnimalsQuery();
         var animals = new List<Animal>
         {
-            new Animal
+            new()
             {
                 Id = 1,
                 Tag = "A001",
@@ -50,7 +50,7 @@ public class GetAllAnimalsQueryHandlerTests
                 CreatedAt = DateTime.UtcNow,
                 Status = "ACTIVE",
             },
-            new Animal
+            new()
             {
                 Id = 2,
                 Tag = "A002",

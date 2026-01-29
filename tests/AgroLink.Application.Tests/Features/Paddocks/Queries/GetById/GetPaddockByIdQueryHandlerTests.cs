@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.Paddocks.Queries.GetById;
 [TestFixture]
 public class GetPaddockByIdQueryHandlerTests
 {
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private GetPaddockByIdQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -23,6 +19,10 @@ public class GetPaddockByIdQueryHandlerTests
             _farmRepositoryMock.Object
         );
     }
+
+    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private GetPaddockByIdQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingPaddock_ReturnsPaddockDto()
