@@ -175,6 +175,15 @@ jobs:
             echo "   Security Groups: $SG_COUNT"
           fi
 
+      - name: Update migration Lambda runtime
+        run: |
+          echo "🔄 Updating migration Lambda runtime to python3.11..."
+          aws lambda update-function-configuration \
+            --function-name AgroLink-Migration-Function \
+            --runtime python3.11 \
+            --region "${AWS_REGION}"
+          echo "✅ Migration Lambda runtime updated"
+
       - name: Wait for Database Availability
         run: |
           echo "⏳ Waiting for database cluster 'agrolink-pg-cluster' to be available..."
