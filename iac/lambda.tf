@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "agro_link" {
   function_name = "AgroLinkAPI-AspNetCoreFunction"
   handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Api"
-  runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet8"
+  runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
   role          = aws_iam_role.lambda_function_role.arn
   memory_size   = 512
   timeout       = 300

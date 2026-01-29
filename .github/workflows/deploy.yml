@@ -7,7 +7,7 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 env:
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: '10.0.x'
   AWS_REGION: 'us-east-1'
   MIGRATION_S3_BUCKET: 'agrolink-lambda-code-bucket'
   MIGRATION_S3_PREFIX: 'migrations'
@@ -303,7 +303,7 @@ jobs:
           dotnet lambda deploy-function \
             --project-location ./src/AgroLink.Api \
             --function-name AgroLinkAPI-AspNetCoreFunction \
-            --function-runtime dotnet8 \
+            --function-runtime dotnet10 \
             --function-handler AgroLink.Api \
             --package AspNetCoreFunction.zip \
             --region ${{ env.AWS_REGION }}
