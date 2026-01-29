@@ -354,6 +354,29 @@ dotnet tool run csharpier check .
 - **VS Code**: Install the CSharpier extension
 - **JetBrains Rider**: Install the CSharpier plugin
 
+### Code Quality & Static Analysis
+
+This project uses **JetBrains ReSharper Global Tools** for advanced static analysis and automated code cleanup.
+
+#### Run Inspections (Static Analysis)
+This will generate a report of code smells, potential bugs, and architectural issues.
+```bash
+dotnet jb inspectcode agrolink-api.sln --output=resharper-report.xml --severity=SUGGESTION
+```
+
+#### Run Code Cleanup (Auto-format & Refactor)
+This will apply automated fixes and refactorings based on the project's style rules.
+```bash
+dotnet jb cleanupcode agrolink-api.sln
+```
+
+#### Using the Makefile
+If you have `make` installed, you can use these shortcuts:
+- `make inspect`: Run ReSharper inspections.
+- `make cleanup`: Run ReSharper code cleanup.
+- `make format`: Run CSharpier formatter.
+- `make check`: Check formatting without applying changes.
+
 ### CI/CD Pipeline
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) includes:

@@ -44,6 +44,15 @@ jobs:
       - name: Check code formatting (CSharpier)
         run: dotnet tool run csharpier check .
 
+      - name: ReSharper Code Analysis
+        run: |
+          dotnet jb inspectcode agrolink-api.sln --output=resharper-report.xml --severity=SUGGESTION
+          if grep -q 'Severity="ERROR"' resharper-report.xml; then
+            echo "❌ ReSharper found critical errors!"
+            grep 'Severity="ERROR"' resharper-report.xml
+            exit 1
+          fi
+
       - name: Build solution
         run: dotnet build agrolink-api.sln --no-restore --configuration Release
 
@@ -54,6 +63,7 @@ jobs:
           path: |
             **/bin/
             **/obj/
+            resharper-report.xml
           retention-days: 1
 
   test:
