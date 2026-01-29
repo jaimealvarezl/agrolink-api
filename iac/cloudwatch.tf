@@ -9,7 +9,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   statistic           = "Sum"
   threshold           = "0"
   alarm_description   = "Lambda function errors"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     FunctionName = aws_lambda_function.agro_link.function_name
@@ -26,7 +26,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
   statistic           = "Average"
   threshold           = "100000" # 100 seconds
   alarm_description   = "Lambda function duration too high"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     FunctionName = aws_lambda_function.agro_link.function_name
@@ -44,7 +44,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
   statistic           = "Average"
   threshold           = "80"
   alarm_description   = "RDS CPU utilization too high"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     DBClusterIdentifier = aws_rds_cluster.serverless_db.cluster_identifier
@@ -61,7 +61,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
   statistic           = "Average"
   threshold           = "100"
   alarm_description   = "RDS connection count too high"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     DBClusterIdentifier = aws_rds_cluster.serverless_db.cluster_identifier

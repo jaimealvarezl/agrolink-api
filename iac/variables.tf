@@ -83,3 +83,9 @@ variable "domain_name" {
 variable "hosted_zone_id" {
   default = "Z05293003VAY8JBOBCB8P"
 }
+
+variable "alert_email" {
+  description = "Email address to receive billing and system alerts"
+  type        = string
+  default     = "jaimealv994@gmail.com" # Defaulting to the user's email based on git log
+}
