@@ -17,6 +17,7 @@
         "kms:*",
         "logs:*",
         "cloudwatch:*",
+        "sns:*",
         "wafv2:*",
         "networkmanager:*",
         "codedeploy:*",
