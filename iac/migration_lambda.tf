@@ -252,6 +252,7 @@ def handler(event, context):
             env['ConnectionStrings__DefaultConnection'] = connection_string
             env['DOTNET_BUNDLE_EXTRACT_BASE_DIR'] = '/tmp'
             env['HOME'] = '/tmp'  # Some .NET tools also check HOME
+            env['DOTNET_SYSTEM_GLOBALIZATION_INVARIANT'] = '1' # Fix for missing libicu on Amazon Linux 2023
 
             # Execute the migration bundle
             # Add connection timeout and SSL mode to connection string if not present
