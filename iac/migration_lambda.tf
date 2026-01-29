@@ -97,7 +97,7 @@ resource "aws_security_group" "migration_lambda_sg" {
 resource "aws_lambda_function" "migration" {
   function_name = "AgroLink-Migration-Function"
   handler       = "index.handler"
-  runtime       = "python3.11"
+  runtime       = "python3.12"
   role          = aws_iam_role.migration_lambda_role.arn
   memory_size   = 512
   timeout       = 900 # 15 minutes (max for Lambda)
@@ -152,6 +152,9 @@ def handler(event, context):
     }
     """
     try:
+        print(f"OS Release:\n{subprocess.getoutput('cat /etc/os-release')}")
+        print(f"GLIBC Version:\n{subprocess.getoutput('ldd --version')}")
+
         # Get parameters from event
         s3_bucket = event.get('s3_bucket')
         s3_key = event.get('s3_key')
