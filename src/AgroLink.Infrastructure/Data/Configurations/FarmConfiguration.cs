@@ -11,6 +11,7 @@ public class FarmConfiguration : IEntityTypeConfiguration<Farm>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Location).HasMaxLength(500);
+        builder.Property(e => e.CUE).HasMaxLength(20);
         builder.HasIndex(e => e.Name);
     }
 }
