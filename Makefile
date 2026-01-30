@@ -1,4 +1,4 @@
-.PHONY: format check inspect cleanup test build
+.PHONY: format check inspect cleanup test build migrate
 
 # Variables
 SOLUTION=agrolink-api.sln
@@ -29,3 +29,7 @@ inspect:
 # ReSharper Code Cleanup (Auto-format and refactor)
 cleanup:
 	dotnet jb cleanupcode $(SOLUTION)
+
+# Apply database migrations
+migrate:
+	dotnet ef database update --project src/AgroLink.Infrastructure --startup-project src/AgroLink.Api
