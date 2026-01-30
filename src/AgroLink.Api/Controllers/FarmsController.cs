@@ -74,7 +74,7 @@ public class FarmsController(IMediator mediator) : BaseController
         {
             var userId = GetCurrentUserId();
             var farm = await mediator.Send(
-                new CreateFarmCommand(request.Name, request.Location, userId)
+                new CreateFarmCommand(request.Name, request.Location, request.CUE, userId)
             );
             return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
         }
@@ -90,7 +90,7 @@ public class FarmsController(IMediator mediator) : BaseController
         try
         {
             var farm = await mediator.Send(
-                new UpdateFarmCommand(id, request.Name, request.Location)
+                new UpdateFarmCommand(id, request.Name, request.Location, request.CUE)
             );
             return Ok(farm);
         }

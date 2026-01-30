@@ -13,6 +13,9 @@ public class Farm
     [MaxLength(500)]
     public string? Location { get; set; }
 
+    [MaxLength(20)]
+    public string? CUE { get; set; }
+
     public int OwnerId { get; set; }
     public virtual Owner? Owner { get; set; }
 

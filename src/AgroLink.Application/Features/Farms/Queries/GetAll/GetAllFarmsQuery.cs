@@ -20,6 +20,7 @@ public class GetAllFarmsQueryHandler(IFarmRepository farmRepository)
             Id = f.Id,
             Name = f.Name,
             Location = f.Location,
+            CUE = f.CUE,
             OwnerId = f.OwnerId,
             Role = string.Empty,
             CreatedAt = f.CreatedAt,

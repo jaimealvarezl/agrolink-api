@@ -25,6 +25,7 @@ public class GetFarmByIdQueryHandler(IFarmRepository farmRepository)
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
+            CUE = farm.CUE,
             OwnerId = farm.OwnerId,
             Role = string.Empty,
             CreatedAt = farm.CreatedAt,
