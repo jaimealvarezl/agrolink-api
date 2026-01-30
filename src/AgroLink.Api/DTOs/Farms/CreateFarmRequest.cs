@@ -8,4 +8,6 @@ public class CreateFarmRequest
     public required string Name { get; set; }
 
     public string? Location { get; set; }
+
+    public string? CUE { get; set; }
 }

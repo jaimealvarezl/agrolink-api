@@ -43,7 +43,7 @@ public class CreateFarmCommandHandlerTests
         var userId = 10;
         var name = "Test Farm";
         var location = "Test Location";
-        var command = new CreateFarmCommand(name, location, userId);
+        var command = new CreateFarmCommand(name, location, null, userId);
 
         var user = new User { Id = userId, Name = "Test User" };
         var owner = new Owner { Id = 5, Name = "Test User" };
@@ -116,7 +116,7 @@ public class CreateFarmCommandHandlerTests
         // Arrange
         const int userId = 10;
         const string name = "Second Farm";
-        var command = new CreateFarmCommand(name, "Location", userId);
+        var command = new CreateFarmCommand(name, "Location", null, userId);
 
         var user = new User { Id = userId, Name = "Test User" };
         var existingOwner = new Owner
@@ -170,7 +170,7 @@ public class CreateFarmCommandHandlerTests
     {
         // Arrange
         var userId = 10;
-        var command = new CreateFarmCommand("Test", null, userId);
+        var command = new CreateFarmCommand("Test", null, null, userId);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
 
         // Act & Assert

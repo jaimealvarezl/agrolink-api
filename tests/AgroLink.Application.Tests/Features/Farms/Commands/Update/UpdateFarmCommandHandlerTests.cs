@@ -28,7 +28,7 @@ public class UpdateFarmCommandHandlerTests
         var farmId = 1;
         var name = "Updated Farm";
         var location = "Updated Location";
-        var command = new UpdateFarmCommand(farmId, name, location);
+        var command = new UpdateFarmCommand(farmId, name, location, null);
         var farm = new Farm
         {
             Id = farmId,
@@ -55,7 +55,7 @@ public class UpdateFarmCommandHandlerTests
     public async Task Handle_FarmNotFound_ThrowsArgumentException()
     {
         // Arrange
-        var command = new UpdateFarmCommand(999, "Name", "Location");
+        var command = new UpdateFarmCommand(999, "Name", "Location", null);
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Farm?)null);
 
         // Act & Assert

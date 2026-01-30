@@ -6,7 +6,8 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Create;
 
-public record CreateFarmCommand(string Name, string? Location, int UserId) : IRequest<FarmDto>;
+public record CreateFarmCommand(string Name, string? Location, string? CUE, int UserId)
+    : IRequest<FarmDto>;
 
 public class CreateFarmCommandHandler(
     IFarmRepository farmRepository,
@@ -49,6 +50,7 @@ public class CreateFarmCommandHandler(
         {
             Name = request.Name,
             Location = request.Location,
+            CUE = request.CUE,
             Owner = owner,
         };
 
@@ -71,6 +73,7 @@ public class CreateFarmCommandHandler(
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
+            CUE = farm.CUE,
             OwnerId = farm.OwnerId,
             Role = member.Role,
             CreatedAt = farm.CreatedAt,

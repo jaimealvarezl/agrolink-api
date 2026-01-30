@@ -4,7 +4,8 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Update;
 
-public record UpdateFarmCommand(int Id, string? Name, string? Location) : IRequest<FarmDto>;
+public record UpdateFarmCommand(int Id, string? Name, string? Location, string? CUE)
+    : IRequest<FarmDto>;
 
 public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateFarmCommand, FarmDto>
@@ -30,6 +31,11 @@ public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
             farm.Location = request.Location;
         }
 
+        if (request.CUE != null)
+        {
+            farm.CUE = request.CUE;
+        }
+
         farm.UpdatedAt = DateTime.UtcNow;
 
         farmRepository.Update(farm);
@@ -40,6 +46,7 @@ public class UpdateFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
             Id = farm.Id,
             Name = farm.Name,
             Location = farm.Location,
+            CUE = farm.CUE,
             OwnerId = farm.OwnerId,
             Role = string.Empty,
             CreatedAt = farm.CreatedAt,
