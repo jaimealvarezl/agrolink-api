@@ -7,9 +7,8 @@ public class Animal
 {
     public int Id { get; set; }
 
-    [Required]
     [MaxLength(50)]
-    public string Cuia { get; set; } = string.Empty; // Código Único de Identificación Animal
+    public string? Cuia { get; set; } // Código Único de Identificación Animal - Optional/Nullable
 
     [Required]
     [MaxLength(50)]
