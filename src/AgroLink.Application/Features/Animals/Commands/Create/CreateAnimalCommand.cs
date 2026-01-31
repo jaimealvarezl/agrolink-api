@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Domain.Entities;
@@ -31,18 +32,22 @@ public class CreateAnimalCommandHandler(
             Color = dto.Color,
             Breed = dto.Breed,
             Sex = dto.Sex,
-            LifeStatus = ParseEnumOrDefault(dto.LifeStatus, LifeStatus.Active, nameof(LifeStatus)),
-            ProductionStatus = ParseEnumOrDefault(
+            LifeStatus = EnumParser.ParseOrDefault(
+                dto.LifeStatus,
+                LifeStatus.Active,
+                nameof(LifeStatus)
+            ),
+            ProductionStatus = EnumParser.ParseOrDefault(
                 dto.ProductionStatus,
                 ProductionStatus.Calf,
                 nameof(ProductionStatus)
             ),
-            HealthStatus = ParseEnumOrDefault(
+            HealthStatus = EnumParser.ParseOrDefault(
                 dto.HealthStatus,
                 HealthStatus.Healthy,
                 nameof(HealthStatus)
             ),
-            ReproductiveStatus = ParseEnumOrDefault(
+            ReproductiveStatus = EnumParser.ParseOrDefault(
                 dto.ReproductiveStatus,
                 ReproductiveStatus.NotApplicable,
                 nameof(ReproductiveStatus)
@@ -126,23 +131,5 @@ public class CreateAnimalCommandHandler(
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };
-    }
-
-    private static T ParseEnumOrDefault<T>(string? value, T defaultValue, string propertyName)
-        where T : struct, Enum
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return defaultValue;
-        }
-
-        if (Enum.TryParse<T>(value, true, out var result))
-        {
-            return result;
-        }
-
-        throw new ArgumentException(
-            $"Invalid {propertyName}: {value}. Allowed values: {string.Join(", ", Enum.GetNames<T>())}"
-        );
     }
 }

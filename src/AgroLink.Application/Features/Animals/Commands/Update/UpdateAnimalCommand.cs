@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
@@ -38,12 +39,12 @@ public class UpdateAnimalCommandHandler(
 
         if (!string.IsNullOrEmpty(dto.LifeStatus))
         {
-            animal.LifeStatus = ParseEnum<LifeStatus>(dto.LifeStatus, nameof(LifeStatus));
+            animal.LifeStatus = EnumParser.Parse<LifeStatus>(dto.LifeStatus, nameof(LifeStatus));
         }
 
         if (!string.IsNullOrEmpty(dto.ProductionStatus))
         {
-            animal.ProductionStatus = ParseEnum<ProductionStatus>(
+            animal.ProductionStatus = EnumParser.Parse<ProductionStatus>(
                 dto.ProductionStatus,
                 nameof(ProductionStatus)
             );
@@ -51,12 +52,15 @@ public class UpdateAnimalCommandHandler(
 
         if (!string.IsNullOrEmpty(dto.HealthStatus))
         {
-            animal.HealthStatus = ParseEnum<HealthStatus>(dto.HealthStatus, nameof(HealthStatus));
+            animal.HealthStatus = EnumParser.Parse<HealthStatus>(
+                dto.HealthStatus,
+                nameof(HealthStatus)
+            );
         }
 
         if (!string.IsNullOrEmpty(dto.ReproductiveStatus))
         {
-            animal.ReproductiveStatus = ParseEnum<ReproductiveStatus>(
+            animal.ReproductiveStatus = EnumParser.Parse<ReproductiveStatus>(
                 dto.ReproductiveStatus,
                 nameof(ReproductiveStatus)
             );
@@ -152,18 +156,5 @@ public class UpdateAnimalCommandHandler(
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };
-    }
-
-    private static T ParseEnum<T>(string value, string propertyName)
-        where T : struct, Enum
-    {
-        if (Enum.TryParse<T>(value, true, out var result))
-        {
-            return result;
-        }
-
-        throw new ArgumentException(
-            $"Invalid {propertyName}: {value}. Allowed values: {string.Join(", ", Enum.GetNames<T>())}"
-        );
     }
 }

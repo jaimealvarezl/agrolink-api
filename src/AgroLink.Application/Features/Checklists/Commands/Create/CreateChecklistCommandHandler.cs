@@ -69,7 +69,7 @@ public class CreateChecklistCommandHandler(
                 {
                     Id = item.Id,
                     AnimalId = item.AnimalId,
-                    AnimalCuia = animal?.Cuia ?? "",
+                    AnimalCuia = animal?.Cuia,
                     AnimalName = animal?.Name,
                     Present = item.Present,
                     Condition = item.Condition,
