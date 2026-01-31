@@ -31,18 +31,22 @@ public class CreateAnimalCommandHandler(
             Color = dto.Color,
             Breed = dto.Breed,
             Sex = dto.Sex,
-            LifeStatus = !string.IsNullOrEmpty(dto.LifeStatus)
-                ? Enum.Parse<LifeStatus>(dto.LifeStatus, true)
-                : LifeStatus.Active,
-            ProductionStatus = !string.IsNullOrEmpty(dto.ProductionStatus)
-                ? Enum.Parse<ProductionStatus>(dto.ProductionStatus, true)
-                : ProductionStatus.Calf,
-            HealthStatus = !string.IsNullOrEmpty(dto.HealthStatus)
-                ? Enum.Parse<HealthStatus>(dto.HealthStatus, true)
-                : HealthStatus.Healthy,
-            ReproductiveStatus = !string.IsNullOrEmpty(dto.ReproductiveStatus)
-                ? Enum.Parse<ReproductiveStatus>(dto.ReproductiveStatus, true)
-                : ReproductiveStatus.NotApplicable,
+            LifeStatus = ParseEnumOrDefault(dto.LifeStatus, LifeStatus.Active, nameof(LifeStatus)),
+            ProductionStatus = ParseEnumOrDefault(
+                dto.ProductionStatus,
+                ProductionStatus.Calf,
+                nameof(ProductionStatus)
+            ),
+            HealthStatus = ParseEnumOrDefault(
+                dto.HealthStatus,
+                HealthStatus.Healthy,
+                nameof(HealthStatus)
+            ),
+            ReproductiveStatus = ParseEnumOrDefault(
+                dto.ReproductiveStatus,
+                ReproductiveStatus.NotApplicable,
+                nameof(ReproductiveStatus)
+            ),
             BirthDate = dto.BirthDate,
             LotId = dto.LotId,
             MotherId = dto.MotherId,
@@ -122,5 +126,23 @@ public class CreateAnimalCommandHandler(
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };
+    }
+
+    private static T ParseEnumOrDefault<T>(string? value, T defaultValue, string propertyName)
+        where T : struct, Enum
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return defaultValue;
+        }
+
+        if (Enum.TryParse<T>(value, true, out var result))
+        {
+            return result;
+        }
+
+        throw new ArgumentException(
+            $"Invalid {propertyName}: {value}. Allowed values: {string.Join(", ", Enum.GetNames<T>())}"
+        );
     }
 }

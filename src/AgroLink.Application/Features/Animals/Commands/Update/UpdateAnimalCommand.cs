@@ -38,24 +38,27 @@ public class UpdateAnimalCommandHandler(
 
         if (!string.IsNullOrEmpty(dto.LifeStatus))
         {
-            animal.LifeStatus = Enum.Parse<LifeStatus>(dto.LifeStatus, true);
+            animal.LifeStatus = ParseEnum<LifeStatus>(dto.LifeStatus, nameof(LifeStatus));
         }
 
         if (!string.IsNullOrEmpty(dto.ProductionStatus))
         {
-            animal.ProductionStatus = Enum.Parse<ProductionStatus>(dto.ProductionStatus, true);
+            animal.ProductionStatus = ParseEnum<ProductionStatus>(
+                dto.ProductionStatus,
+                nameof(ProductionStatus)
+            );
         }
 
         if (!string.IsNullOrEmpty(dto.HealthStatus))
         {
-            animal.HealthStatus = Enum.Parse<HealthStatus>(dto.HealthStatus, true);
+            animal.HealthStatus = ParseEnum<HealthStatus>(dto.HealthStatus, nameof(HealthStatus));
         }
 
         if (!string.IsNullOrEmpty(dto.ReproductiveStatus))
         {
-            animal.ReproductiveStatus = Enum.Parse<ReproductiveStatus>(
+            animal.ReproductiveStatus = ParseEnum<ReproductiveStatus>(
                 dto.ReproductiveStatus,
-                true
+                nameof(ReproductiveStatus)
             );
         }
 
@@ -149,5 +152,18 @@ public class UpdateAnimalCommandHandler(
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };
+    }
+
+    private static T ParseEnum<T>(string value, string propertyName)
+        where T : struct, Enum
+    {
+        if (Enum.TryParse<T>(value, true, out var result))
+        {
+            return result;
+        }
+
+        throw new ArgumentException(
+            $"Invalid {propertyName}: {value}. Allowed values: {string.Join(", ", Enum.GetNames<T>())}"
+        );
     }
 }
