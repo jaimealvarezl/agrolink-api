@@ -5,7 +5,7 @@ namespace AgroLink.Application.Features.Animals.DTOs;
 public class AnimalDto
 {
     public required int Id { get; set; }
-    public required string Cuia { get; set; }
+    public string? Cuia { get; set; }
     public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public string? Color { get; set; }
@@ -32,7 +32,7 @@ public class AnimalDto
 
 public class CreateAnimalDto
 {
-    public required string Cuia { get; set; }
+    public string? Cuia { get; set; }
     public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public string? Color { get; set; }
@@ -77,7 +77,8 @@ public class AnimalOwnerDto
 public class AnimalGenealogyDto
 {
     public required int Id { get; set; }
-    public required string Cuia { get; set; }
+    public string? Cuia { get; set; }
+    public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public required string Sex { get; set; }
     public DateTime? BirthDate { get; set; }

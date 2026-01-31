@@ -49,7 +49,8 @@ public class AnimalsControllerTests
             new()
             {
                 Id = 1,
-                Tag = "A001",
+                TagVisual = "A001",
+                Cuia = "CUIA-A001",
                 Name = "Animal 1",
                 Color = "Brown",
                 Breed = "Holstein",
@@ -57,7 +58,10 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = 1,
                 LotName = "Test Lot",
-                Status = "ACTIVE",
+                LifeStatus = "Active",
+                ProductionStatus = "Calf",
+                HealthStatus = "Healthy",
+                ReproductiveStatus = "NotApplicable",
                 Owners = [],
                 Photos = [],
                 CreatedAt = DateTime.UtcNow,
@@ -65,7 +69,8 @@ public class AnimalsControllerTests
             new()
             {
                 Id = 2,
-                Tag = "A002",
+                TagVisual = "A002",
+                Cuia = "CUIA-A002",
                 Name = "Animal 2",
                 Color = "Black",
                 Breed = "Angus",
@@ -73,7 +78,10 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-1),
                 LotId = 1,
                 LotName = "Test Lot",
-                Status = "ACTIVE",
+                LifeStatus = "Active",
+                ProductionStatus = "Calf",
+                HealthStatus = "Healthy",
+                ReproductiveStatus = "NotApplicable",
                 Owners = [],
                 Photos = [],
                 CreatedAt = DateTime.UtcNow,
@@ -102,7 +110,8 @@ public class AnimalsControllerTests
         var animal = new AnimalDto
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
@@ -110,7 +119,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
-            Status = "ACTIVE",
+            LifeStatus = "Active",
+            ProductionStatus = "Calf",
+            HealthStatus = "Healthy",
+            ReproductiveStatus = "NotApplicable",
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
@@ -133,7 +145,7 @@ public class AnimalsControllerTests
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedAnimal = okResult.Value.ShouldBeOfType<AnimalDto>();
         returnedAnimal.Id.ShouldBe(animalId);
-        returnedAnimal.Tag.ShouldBe("A001");
+        returnedAnimal.TagVisual.ShouldBe("A001");
     }
 
     [Test]
@@ -169,7 +181,8 @@ public class AnimalsControllerTests
             new()
             {
                 Id = 1,
-                Tag = "A001",
+                TagVisual = "A001",
+                Cuia = "CUIA-A001",
                 Name = "Animal 1",
                 Color = "Brown",
                 Breed = "Holstein",
@@ -177,7 +190,10 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = lotId,
                 LotName = "Test Lot",
-                Status = "ACTIVE",
+                LifeStatus = "Active",
+                ProductionStatus = "Calf",
+                HealthStatus = "Healthy",
+                ReproductiveStatus = "NotApplicable",
                 Owners = [],
                 Photos = [],
                 CreatedAt = DateTime.UtcNow,
@@ -210,7 +226,8 @@ public class AnimalsControllerTests
         // Arrange
         var createDto = new CreateAnimalDto
         {
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
@@ -231,7 +248,8 @@ public class AnimalsControllerTests
         var createdAnimal = new AnimalDto
         {
             Id = 1,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
@@ -239,7 +257,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
-            Status = "ACTIVE",
+            LifeStatus = "Active",
+            ProductionStatus = "Calf",
+            HealthStatus = "Healthy",
+            ReproductiveStatus = "NotApplicable",
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
@@ -262,7 +283,7 @@ public class AnimalsControllerTests
         var createdAtActionResult = result.Result.ShouldBeOfType<CreatedAtActionResult>();
         var returnedAnimal = createdAtActionResult.Value.ShouldBeOfType<AnimalDto>();
         returnedAnimal.Id.ShouldBe(1);
-        returnedAnimal.Tag.ShouldBe("A001");
+        returnedAnimal.TagVisual.ShouldBe("A001");
     }
 
     [Test]
@@ -275,7 +296,7 @@ public class AnimalsControllerTests
             Name = "Updated Animal",
             Color = "Black",
             Breed = "Angus",
-            Status = "Active",
+            LifeStatus = "Active",
             BirthDate = DateTime.UtcNow.AddYears(-3),
             Owners = new List<AnimalOwnerDto>(),
         };
@@ -283,7 +304,8 @@ public class AnimalsControllerTests
         var updatedAnimal = new AnimalDto
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Updated Animal",
             Color = "Black",
             Breed = "Angus",
@@ -291,7 +313,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-3),
             LotId = 1,
             LotName = "Test Lot",
-            Status = "ACTIVE",
+            LifeStatus = "Active",
+            ProductionStatus = "Calf",
+            HealthStatus = "Healthy",
+            ReproductiveStatus = "NotApplicable",
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
@@ -399,7 +424,8 @@ public class AnimalsControllerTests
         var genealogy = new AnimalGenealogyDto
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
@@ -423,7 +449,7 @@ public class AnimalsControllerTests
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedGenealogy = okResult.Value.ShouldBeOfType<AnimalGenealogyDto>();
         returnedGenealogy.Id.ShouldBe(animalId);
-        returnedGenealogy.Tag.ShouldBe("A001");
+        returnedGenealogy.TagVisual.ShouldBe("A001");
     }
 
     [Test]
@@ -464,7 +490,8 @@ public class AnimalsControllerTests
         var movedAnimal = new AnimalDto
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
@@ -472,7 +499,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 2, // Moved to new lot
             LotName = "New Lot",
-            Status = "ACTIVE",
+            LifeStatus = "Active",
+            ProductionStatus = "Calf",
+            HealthStatus = "Healthy",
+            ReproductiveStatus = "NotApplicable",
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
