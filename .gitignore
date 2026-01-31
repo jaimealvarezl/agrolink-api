@@ -406,6 +406,10 @@ FodyWeavers.xsd
 *.sln.iml
 .idea/
 
+# Incorrectly named directories created by tooling
+**/bin\\Debug/
+
+
 ##
 ## Visual studio for Mac
 ##
