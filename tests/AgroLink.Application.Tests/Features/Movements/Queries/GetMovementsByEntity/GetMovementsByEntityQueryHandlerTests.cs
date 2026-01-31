@@ -50,7 +50,12 @@ public class GetMovementsByEntityQueryHandlerTests
             },
         };
         var user = new User { Id = 1, Name = "Test User" };
-        var animal = new Animal { Id = entityId, TagVisual = "TestAnimal", Cuia = "CUIA-Test" };
+        var animal = new Animal
+        {
+            Id = entityId,
+            TagVisual = "TestAnimal",
+            Cuia = "CUIA-Test",
+        };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
 

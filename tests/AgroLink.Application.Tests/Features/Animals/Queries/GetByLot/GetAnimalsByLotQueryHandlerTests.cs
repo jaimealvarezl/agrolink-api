@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -50,7 +51,7 @@ public class GetAnimalsByLotQueryHandlerTests
                 Name = "Animal 1",
                 LotId = lotId,
                 CreatedAt = DateTime.UtcNow,
-                LifeStatus = Domain.Enums.LifeStatus.Active,
+                LifeStatus = LifeStatus.Active,
             },
             new()
             {
@@ -60,7 +61,7 @@ public class GetAnimalsByLotQueryHandlerTests
                 Name = "Animal 2",
                 LotId = lotId,
                 CreatedAt = DateTime.UtcNow,
-                LifeStatus = Domain.Enums.LifeStatus.Active,
+                LifeStatus = LifeStatus.Active,
             },
         };
         var lot = new Lot { Id = lotId, Name = "Test Lot" };

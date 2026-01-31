@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Commands.Move;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -61,7 +62,7 @@ public class MoveAnimalCommandHandlerTests
             Name = "Test Animal",
             LotId = fromLotId,
             CreatedAt = DateTime.UtcNow,
-            LifeStatus = Domain.Enums.LifeStatus.Active,
+            LifeStatus = LifeStatus.Active,
         };
         var lotFrom = new Lot { Id = fromLotId, Name = "Lot From" };
         var lotTo = new Lot { Id = toLotId, Name = "Lot To" };

@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -48,7 +49,7 @@ public class GetAnimalByIdQueryHandlerTests
             Name = "Animal 1",
             LotId = 1,
             CreatedAt = DateTime.UtcNow,
-            LifeStatus = Domain.Enums.LifeStatus.Active,
+            LifeStatus = LifeStatus.Active,
         };
         var lot = new Lot { Id = 1, Name = "Test Lot" };
 

@@ -37,16 +37,27 @@ public class UpdateAnimalCommandHandler(
         animal.Breed = dto.Breed ?? animal.Breed;
 
         if (!string.IsNullOrEmpty(dto.LifeStatus))
+        {
             animal.LifeStatus = Enum.Parse<LifeStatus>(dto.LifeStatus, true);
+        }
+
         if (!string.IsNullOrEmpty(dto.ProductionStatus))
+        {
             animal.ProductionStatus = Enum.Parse<ProductionStatus>(dto.ProductionStatus, true);
+        }
+
         if (!string.IsNullOrEmpty(dto.HealthStatus))
+        {
             animal.HealthStatus = Enum.Parse<HealthStatus>(dto.HealthStatus, true);
+        }
+
         if (!string.IsNullOrEmpty(dto.ReproductiveStatus))
+        {
             animal.ReproductiveStatus = Enum.Parse<ReproductiveStatus>(
                 dto.ReproductiveStatus,
                 true
             );
+        }
 
         animal.BirthDate = dto.BirthDate ?? animal.BirthDate;
         animal.MotherId = dto.MotherId ?? animal.MotherId;

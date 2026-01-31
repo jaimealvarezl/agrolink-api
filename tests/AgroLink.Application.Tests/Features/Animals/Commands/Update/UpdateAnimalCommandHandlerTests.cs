@@ -2,6 +2,7 @@ using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -65,7 +66,7 @@ public class UpdateAnimalCommandHandlerTests
             Cuia = "CUIA-A001",
             Name = "Old Name",
             LotId = 1,
-            LifeStatus = Domain.Enums.LifeStatus.Active,
+            LifeStatus = LifeStatus.Active,
             CreatedAt = DateTime.UtcNow,
         };
         var lot = new Lot { Id = 1, Name = "Test Lot" };

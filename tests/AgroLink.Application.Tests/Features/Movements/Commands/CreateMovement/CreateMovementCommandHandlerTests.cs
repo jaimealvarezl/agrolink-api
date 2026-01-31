@@ -47,7 +47,12 @@ public class CreateMovementCommandHandlerTests
             UserId = userId,
         };
         var user = new User { Id = userId, Name = "Test User" };
-        var animal = new Animal { Id = 1, TagVisual = "Animal1", Cuia = "CUIA-1" };
+        var animal = new Animal
+        {
+            Id = 1,
+            TagVisual = "Animal1",
+            Cuia = "CUIA-1",
+        };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
 
