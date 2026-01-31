@@ -80,7 +80,8 @@ public class CreateChecklistCommandHandlerTests
         var animal = new Animal
         {
             Id = 1,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Animal 1",
         };
 

@@ -39,8 +39,8 @@ public class AnimalRepository : Repository<Animal>, IAnimalRepository
             .ToListAsync();
     }
 
-    public async Task<Animal?> GetByTagAsync(string tag)
+    public async Task<Animal?> GetByCuiaAsync(string cuia)
     {
-        return await _dbSet.FirstOrDefaultAsync(a => a.Tag == tag);
+        return await _dbSet.FirstOrDefaultAsync(a => a.Cuia == cuia);
     }
 }

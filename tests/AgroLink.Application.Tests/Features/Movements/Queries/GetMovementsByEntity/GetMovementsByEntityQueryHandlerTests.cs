@@ -50,7 +50,12 @@ public class GetMovementsByEntityQueryHandlerTests
             },
         };
         var user = new User { Id = 1, Name = "Test User" };
-        var animal = new Animal { Id = entityId, Tag = "TestAnimal" };
+        var animal = new Animal
+        {
+            Id = entityId,
+            TagVisual = "TestAnimal",
+            Cuia = "CUIA-Test",
+        };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
 
@@ -77,7 +82,7 @@ public class GetMovementsByEntityQueryHandlerTests
         // Latest movement (Movement 2)
         var first = result.First();
         first.EntityType.ShouldBe(entityType);
-        first.EntityName.ShouldBe(animal.Tag);
+        first.EntityName.ShouldBe(animal.TagVisual);
         first.FromName.ShouldBe(lotTo.Name); // From Lot To (20)
         first.ToName.ShouldBe("Lot Final"); // To Lot Final (30)
         first.UserName.ShouldBe(user.Name);

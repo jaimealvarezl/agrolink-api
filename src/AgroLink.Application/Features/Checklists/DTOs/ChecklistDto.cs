@@ -30,7 +30,7 @@ public class ChecklistItemDto
 {
     public required int Id { get; set; }
     public required int AnimalId { get; set; }
-    public required string AnimalTag { get; set; }
+    public string? AnimalCuia { get; set; }
     public string? AnimalName { get; set; }
     public required bool Present { get; set; }
     public required string Condition { get; set; }

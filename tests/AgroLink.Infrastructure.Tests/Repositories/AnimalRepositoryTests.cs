@@ -40,7 +40,7 @@ public class AnimalRepositoryTests : TestBase
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animal.Id);
-        result.Tag.ShouldBe("A001");
+        result.TagVisual.ShouldBe("A001");
         result.Name.ShouldBe("Test Animal");
     }
 
@@ -95,7 +95,7 @@ public class AnimalRepositoryTests : TestBase
     }
 
     [Test]
-    public async Task GetByTagAsync_WhenTagExists_ShouldReturnAnimal()
+    public async Task GetByCuiaAsync_WhenCuiaExists_ShouldReturnAnimal()
     {
         // Arrange
         var farm = await CreateTestFarmAsync(_context);
@@ -104,19 +104,19 @@ public class AnimalRepositoryTests : TestBase
         var animal = await CreateTestAnimalAsync(_context, lot.Id);
 
         // Act
-        var result = await _repository.GetByTagAsync("A001");
+        var result = await _repository.GetByCuiaAsync("CUIA-A001");
 
         // Assert
         result.ShouldNotBeNull();
-        result.Tag.ShouldBe("A001");
+        result.Cuia.ShouldBe("CUIA-A001");
         result.Id.ShouldBe(animal.Id);
     }
 
     [Test]
-    public async Task GetByTagAsync_WhenTagDoesNotExist_ShouldReturnNull()
+    public async Task GetByCuiaAsync_WhenCuiaDoesNotExist_ShouldReturnNull()
     {
         // Act
-        var result = await _repository.GetByTagAsync("NONEXISTENT");
+        var result = await _repository.GetByCuiaAsync("NONEXISTENT");
 
         // Assert
         result.ShouldBeNull();
@@ -132,7 +132,8 @@ public class AnimalRepositoryTests : TestBase
 
         var animal = new Animal
         {
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
@@ -149,7 +150,7 @@ public class AnimalRepositoryTests : TestBase
         // Assert
         var result = await _repository.GetByIdAsync(animal.Id);
         result.ShouldNotBeNull();
-        result.Tag.ShouldBe("A001");
+        result.TagVisual.ShouldBe("A001");
     }
 
     [Test]
@@ -204,7 +205,8 @@ public class AnimalRepositoryTests : TestBase
 
         var child1 = new Animal
         {
-            Tag = "C001",
+            TagVisual = "C001",
+            Cuia = "CUIA-C001",
             Name = "Child 1",
             Color = "Brown",
             Breed = "Holstein",
@@ -218,7 +220,8 @@ public class AnimalRepositoryTests : TestBase
 
         var child2 = new Animal
         {
-            Tag = "C002",
+            TagVisual = "C002",
+            Cuia = "CUIA-C002",
             Name = "Child 2",
             Color = "Black",
             Breed = "Holstein",

@@ -2,6 +2,7 @@ using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -46,7 +47,7 @@ public class UpdateAnimalCommandHandlerTests
         var updateAnimalDto = new UpdateAnimalDto
         {
             Name = "Updated Name",
-            Status = "SOLD",
+            LifeStatus = "Sold",
             Owners = new List<AnimalOwnerDto>
             {
                 new()
@@ -61,10 +62,11 @@ public class UpdateAnimalCommandHandlerTests
         var animal = new Animal
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Old Name",
             LotId = 1,
-            Status = "ACTIVE",
+            LifeStatus = LifeStatus.Active,
             CreatedAt = DateTime.UtcNow,
         };
         var lot = new Lot { Id = 1, Name = "Test Lot" };
@@ -104,7 +106,7 @@ public class UpdateAnimalCommandHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
         result.Name.ShouldBe(updateAnimalDto.Name);
-        result.Status.ShouldBe(updateAnimalDto.Status);
+        result.LifeStatus.ShouldBe(updateAnimalDto.LifeStatus);
         result.Owners.Count.ShouldBe(1);
         _animalRepositoryMock.Verify(r => r.Update(animal), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);

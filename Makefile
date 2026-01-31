@@ -28,7 +28,7 @@ inspect:
 
 # ReSharper Code Cleanup (Auto-format and refactor)
 cleanup:
-	dotnet jb cleanupcode $(SOLUTION)
+	dotnet jb cleanupcode $(SOLUTION) --exclude="**/TestResults/**;**/bin/**;**/obj/**"
 
 # Apply database migrations
 migrate:

@@ -5,19 +5,25 @@ namespace AgroLink.Application.Features.Animals.DTOs;
 public class AnimalDto
 {
     public required int Id { get; set; }
-    public required string Tag { get; set; }
+    public string? Cuia { get; set; }
+    public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required string Sex { get; set; }
-    public required string Status { get; set; }
+
+    public required string LifeStatus { get; set; }
+    public required string ProductionStatus { get; set; }
+    public required string HealthStatus { get; set; }
+    public required string ReproductiveStatus { get; set; }
+
     public DateTime? BirthDate { get; set; }
     public required int LotId { get; set; }
     public string? LotName { get; set; }
     public int? MotherId { get; set; }
-    public string? MotherTag { get; set; }
+    public string? MotherCuia { get; set; }
     public int? FatherId { get; set; }
-    public string? FatherTag { get; set; }
+    public string? FatherCuia { get; set; }
     public required List<AnimalOwnerDto> Owners { get; set; }
     public required List<PhotoDto> Photos { get; set; }
     public required DateTime CreatedAt { get; set; }
@@ -26,11 +32,16 @@ public class AnimalDto
 
 public class CreateAnimalDto
 {
-    public required string Tag { get; set; }
+    public string? Cuia { get; set; }
+    public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required string Sex { get; set; }
+    public string? LifeStatus { get; set; }
+    public string? ProductionStatus { get; set; }
+    public string? HealthStatus { get; set; }
+    public string? ReproductiveStatus { get; set; }
     public DateTime? BirthDate { get; set; }
     public required int LotId { get; set; }
     public int? MotherId { get; set; }
@@ -41,9 +52,15 @@ public class CreateAnimalDto
 public class UpdateAnimalDto
 {
     public string? Name { get; set; }
+    public string? TagVisual { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public string? Status { get; set; }
+
+    public string? LifeStatus { get; set; }
+    public string? ProductionStatus { get; set; }
+    public string? HealthStatus { get; set; }
+    public string? ReproductiveStatus { get; set; }
+
     public DateTime? BirthDate { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
@@ -60,7 +77,8 @@ public class AnimalOwnerDto
 public class AnimalGenealogyDto
 {
     public required int Id { get; set; }
-    public required string Tag { get; set; }
+    public string? Cuia { get; set; }
+    public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public required string Sex { get; set; }
     public DateTime? BirthDate { get; set; }

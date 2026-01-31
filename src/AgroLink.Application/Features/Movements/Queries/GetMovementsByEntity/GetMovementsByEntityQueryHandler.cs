@@ -41,7 +41,7 @@ public class GetMovementsByEntityQueryHandler(IMovementRepository movementReposi
         if (movement.EntityType == "ANIMAL")
         {
             var animal = await movementRepository.GetAnimalByIdAsync(movement.EntityId);
-            entityName = animal?.Tag;
+            entityName = animal?.TagVisual;
         }
         else if (movement.EntityType == "LOT")
         {

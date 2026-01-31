@@ -46,7 +46,7 @@ public class GetChecklistByIdQueryHandler(
                 {
                     Id = item.Id,
                     AnimalId = item.AnimalId,
-                    AnimalTag = animal?.Tag ?? "",
+                    AnimalCuia = animal?.Cuia,
                     AnimalName = animal?.Name,
                     Present = item.Present,
                     Condition = item.Condition,
