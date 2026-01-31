@@ -40,7 +40,8 @@ public class CreateAnimalCommandHandlerTests
         // Arrange
         var createAnimalDto = new CreateAnimalDto
         {
-            Tag = "A001",
+            Cuia = "A001",
+            TagVisual = "V001",
             Name = "Test Animal",
             LotId = 1,
             Sex = "FEMALE",
@@ -58,7 +59,8 @@ public class CreateAnimalCommandHandlerTests
         var animal = new Animal
         {
             Id = 1,
-            Tag = "A001",
+            Cuia = "A001",
+            TagVisual = "V001",
             Name = "Test Animal",
             LotId = 1,
         };
@@ -94,7 +96,7 @@ public class CreateAnimalCommandHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animal.Id);
-        result.Tag.ShouldBe(animal.Tag);
+        result.Cuia.ShouldBe(animal.Cuia);
         result.LotName.ShouldBe(lot.Name);
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerName.ShouldBe(owner.Name);

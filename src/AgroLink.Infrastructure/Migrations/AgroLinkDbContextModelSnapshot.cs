@@ -44,8 +44,23 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Cuia")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<int?>("FatherId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("HealthStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("LifeStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("LotId")
                         .HasColumnType("integer");
@@ -57,17 +72,22 @@ namespace AgroLink.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("ProductionStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ReproductiveStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("Sex")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Tag")
+                    b.Property<string>("TagVisual")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -77,6 +97,9 @@ namespace AgroLink.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Cuia")
+                        .IsUnique();
+
                     b.HasIndex("FatherId");
 
                     b.HasIndex("LotId");
@@ -84,9 +107,6 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("MotherId");
 
                     b.HasIndex("Name");
-
-                    b.HasIndex("Tag")
-                        .IsUnique();
 
                     b.ToTable("Animals");
                 });
