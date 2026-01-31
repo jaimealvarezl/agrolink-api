@@ -31,10 +31,18 @@ public class CreateAnimalCommandHandler(
             Color = dto.Color,
             Breed = dto.Breed,
             Sex = dto.Sex,
-            LifeStatus = !string.IsNullOrEmpty(dto.LifeStatus) ? Enum.Parse<LifeStatus>(dto.LifeStatus, true) : LifeStatus.Active,
-            ProductionStatus = !string.IsNullOrEmpty(dto.ProductionStatus) ? Enum.Parse<ProductionStatus>(dto.ProductionStatus, true) : ProductionStatus.Calf,
-            HealthStatus = !string.IsNullOrEmpty(dto.HealthStatus) ? Enum.Parse<HealthStatus>(dto.HealthStatus, true) : HealthStatus.Healthy,
-            ReproductiveStatus = !string.IsNullOrEmpty(dto.ReproductiveStatus) ? Enum.Parse<ReproductiveStatus>(dto.ReproductiveStatus, true) : ReproductiveStatus.NotApplicable,
+            LifeStatus = !string.IsNullOrEmpty(dto.LifeStatus)
+                ? Enum.Parse<LifeStatus>(dto.LifeStatus, true)
+                : LifeStatus.Active,
+            ProductionStatus = !string.IsNullOrEmpty(dto.ProductionStatus)
+                ? Enum.Parse<ProductionStatus>(dto.ProductionStatus, true)
+                : ProductionStatus.Calf,
+            HealthStatus = !string.IsNullOrEmpty(dto.HealthStatus)
+                ? Enum.Parse<HealthStatus>(dto.HealthStatus, true)
+                : HealthStatus.Healthy,
+            ReproductiveStatus = !string.IsNullOrEmpty(dto.ReproductiveStatus)
+                ? Enum.Parse<ReproductiveStatus>(dto.ReproductiveStatus, true)
+                : ReproductiveStatus.NotApplicable,
             BirthDate = dto.BirthDate,
             LotId = dto.LotId,
             MotherId = dto.MotherId,

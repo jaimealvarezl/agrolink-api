@@ -4,5 +4,5 @@ public enum HealthStatus
 {
     Healthy,
     Sick,
-    InTreatment
+    InTreatment,
 }

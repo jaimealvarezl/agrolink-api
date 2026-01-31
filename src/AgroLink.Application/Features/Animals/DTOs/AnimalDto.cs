@@ -11,12 +11,12 @@ public class AnimalDto
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required string Sex { get; set; }
-    
+
     public required string LifeStatus { get; set; }
     public required string ProductionStatus { get; set; }
     public required string HealthStatus { get; set; }
     public required string ReproductiveStatus { get; set; }
-    
+
     public DateTime? BirthDate { get; set; }
     public required int LotId { get; set; }
     public string? LotName { get; set; }
@@ -55,12 +55,12 @@ public class UpdateAnimalDto
     public string? TagVisual { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    
+
     public string? LifeStatus { get; set; }
     public string? ProductionStatus { get; set; }
     public string? HealthStatus { get; set; }
     public string? ReproductiveStatus { get; set; }
-    
+
     public DateTime? BirthDate { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
