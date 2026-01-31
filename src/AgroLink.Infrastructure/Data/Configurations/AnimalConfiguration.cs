@@ -10,7 +10,7 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
     {
         builder.HasKey(e => e.Id);
 
-        builder.Property(e => e.Cuia).IsRequired().HasMaxLength(50);
+        builder.Property(e => e.Cuia).IsRequired(false).HasMaxLength(50);
         builder.Property(e => e.TagVisual).IsRequired().HasMaxLength(50);
 
         builder.Property(e => e.Name).HasMaxLength(200);
@@ -41,7 +41,6 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .HasForeignKey(e => e.FatherId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(e => e.Cuia).IsUnique();
         builder.HasIndex(e => e.Name);
     }
 }
