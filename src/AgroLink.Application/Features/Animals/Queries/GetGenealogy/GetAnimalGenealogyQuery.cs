@@ -29,7 +29,7 @@ public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
         var genealogy = new AnimalGenealogyDto
         {
             Id = animal.Id,
-            Tag = animal.Tag,
+            Cuia = animal.Cuia,
             Name = animal.Name,
             Sex = animal.Sex,
             BirthDate = animal.BirthDate,

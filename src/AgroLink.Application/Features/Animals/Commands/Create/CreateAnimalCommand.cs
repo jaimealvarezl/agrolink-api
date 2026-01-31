@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -24,11 +25,16 @@ public class CreateAnimalCommandHandler(
         var dto = request.Dto;
         var animal = new Animal
         {
-            Tag = dto.Tag,
+            Cuia = dto.Cuia,
+            TagVisual = dto.TagVisual,
             Name = dto.Name,
             Color = dto.Color,
             Breed = dto.Breed,
             Sex = dto.Sex,
+            LifeStatus = !string.IsNullOrEmpty(dto.LifeStatus) ? Enum.Parse<LifeStatus>(dto.LifeStatus, true) : LifeStatus.Active,
+            ProductionStatus = !string.IsNullOrEmpty(dto.ProductionStatus) ? Enum.Parse<ProductionStatus>(dto.ProductionStatus, true) : ProductionStatus.Calf,
+            HealthStatus = !string.IsNullOrEmpty(dto.HealthStatus) ? Enum.Parse<HealthStatus>(dto.HealthStatus, true) : HealthStatus.Healthy,
+            ReproductiveStatus = !string.IsNullOrEmpty(dto.ReproductiveStatus) ? Enum.Parse<ReproductiveStatus>(dto.ReproductiveStatus, true) : ReproductiveStatus.NotApplicable,
             BirthDate = dto.BirthDate,
             LotId = dto.LotId,
             MotherId = dto.MotherId,
@@ -86,19 +92,23 @@ public class CreateAnimalCommandHandler(
         return new AnimalDto
         {
             Id = animal.Id,
-            Tag = animal.Tag,
+            Cuia = animal.Cuia,
+            TagVisual = animal.TagVisual,
             Name = animal.Name,
             Color = animal.Color,
             Breed = animal.Breed,
             Sex = animal.Sex,
-            Status = animal.Status,
+            LifeStatus = animal.LifeStatus.ToString(),
+            ProductionStatus = animal.ProductionStatus.ToString(),
+            HealthStatus = animal.HealthStatus.ToString(),
+            ReproductiveStatus = animal.ReproductiveStatus.ToString(),
             BirthDate = animal.BirthDate,
             LotId = animal.LotId,
             LotName = lot?.Name,
             MotherId = animal.MotherId,
-            MotherTag = mother?.Tag,
+            MotherCuia = mother?.Cuia,
             FatherId = animal.FatherId,
-            FatherTag = father?.Tag,
+            FatherCuia = father?.Cuia,
             Owners = ownerDtos,
             Photos = photoDtos,
             CreatedAt = animal.CreatedAt,

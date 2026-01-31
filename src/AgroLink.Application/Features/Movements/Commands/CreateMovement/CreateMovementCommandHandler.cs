@@ -43,7 +43,7 @@ public class CreateMovementCommandHandler(IMovementRepository movementRepository
         if (movement.EntityType == "ANIMAL")
         {
             var animal = await movementRepository.GetAnimalByIdAsync(movement.EntityId);
-            entityName = animal?.Tag;
+            entityName = animal?.Cuia;
         }
         else if (movement.EntityType == "LOT")
         {

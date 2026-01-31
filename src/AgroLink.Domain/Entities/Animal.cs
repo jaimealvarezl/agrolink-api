@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AgroLink.Domain.Enums;
 
 namespace AgroLink.Domain.Entities;
 
@@ -8,7 +9,11 @@ public class Animal
 
     [Required]
     [MaxLength(50)]
-    public string Tag { get; set; } = string.Empty; // Unique identifier tag
+    public string Cuia { get; set; } = string.Empty; // Código Único de Identificación Animal
+
+    [Required]
+    [MaxLength(50)]
+    public string TagVisual { get; set; } = string.Empty;
 
     [MaxLength(200)]
     public string? Name { get; set; }
@@ -23,9 +28,10 @@ public class Animal
     [MaxLength(10)]
     public string Sex { get; set; } = string.Empty; // MALE, FEMALE
 
-    [Required]
-    [MaxLength(50)]
-    public string Status { get; set; } = "ACTIVE"; // ACTIVE, SOLD, DEAD, MISSING
+    public LifeStatus LifeStatus { get; set; } = LifeStatus.Active;
+    public ProductionStatus ProductionStatus { get; set; } = ProductionStatus.Calf;
+    public HealthStatus HealthStatus { get; set; } = HealthStatus.Healthy;
+    public ReproductiveStatus ReproductiveStatus { get; set; } = ReproductiveStatus.NotApplicable;
 
     public DateTime? BirthDate { get; set; }
     public int LotId { get; set; }

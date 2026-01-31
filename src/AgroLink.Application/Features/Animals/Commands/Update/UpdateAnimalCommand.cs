@@ -2,6 +2,7 @@ using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -31,9 +32,19 @@ public class UpdateAnimalCommandHandler(
 
         var dto = request.Dto;
         animal.Name = dto.Name ?? animal.Name;
+        animal.TagVisual = dto.TagVisual ?? animal.TagVisual;
         animal.Color = dto.Color ?? animal.Color;
         animal.Breed = dto.Breed ?? animal.Breed;
-        animal.Status = dto.Status ?? animal.Status;
+        
+        if (!string.IsNullOrEmpty(dto.LifeStatus))
+            animal.LifeStatus = Enum.Parse<LifeStatus>(dto.LifeStatus, true);
+        if (!string.IsNullOrEmpty(dto.ProductionStatus))
+            animal.ProductionStatus = Enum.Parse<ProductionStatus>(dto.ProductionStatus, true);
+        if (!string.IsNullOrEmpty(dto.HealthStatus))
+            animal.HealthStatus = Enum.Parse<HealthStatus>(dto.HealthStatus, true);
+        if (!string.IsNullOrEmpty(dto.ReproductiveStatus))
+            animal.ReproductiveStatus = Enum.Parse<ReproductiveStatus>(dto.ReproductiveStatus, true);
+
         animal.BirthDate = dto.BirthDate ?? animal.BirthDate;
         animal.MotherId = dto.MotherId ?? animal.MotherId;
         animal.FatherId = dto.FatherId ?? animal.FatherId;
@@ -102,19 +113,23 @@ public class UpdateAnimalCommandHandler(
         return new AnimalDto
         {
             Id = animal.Id,
-            Tag = animal.Tag,
+            Cuia = animal.Cuia,
+            TagVisual = animal.TagVisual,
             Name = animal.Name,
             Color = animal.Color,
             Breed = animal.Breed,
             Sex = animal.Sex,
-            Status = animal.Status,
+            LifeStatus = animal.LifeStatus.ToString(),
+            ProductionStatus = animal.ProductionStatus.ToString(),
+            HealthStatus = animal.HealthStatus.ToString(),
+            ReproductiveStatus = animal.ReproductiveStatus.ToString(),
             BirthDate = animal.BirthDate,
             LotId = animal.LotId,
             LotName = lot?.Name,
             MotherId = animal.MotherId,
-            MotherTag = mother?.Tag,
+            MotherCuia = mother?.Cuia,
             FatherId = animal.FatherId,
-            FatherTag = father?.Tag,
+            FatherCuia = father?.Cuia,
             Owners = ownerDtos,
             Photos = photoDtos,
             CreatedAt = animal.CreatedAt,
