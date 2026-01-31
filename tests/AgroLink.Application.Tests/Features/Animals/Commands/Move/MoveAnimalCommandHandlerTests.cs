@@ -56,11 +56,12 @@ public class MoveAnimalCommandHandlerTests
         var animal = new Animal
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Test Animal",
             LotId = fromLotId,
             CreatedAt = DateTime.UtcNow,
-            Status = "ACTIVE",
+            LifeStatus = Domain.Enums.LifeStatus.Active,
         };
         var lotFrom = new Lot { Id = fromLotId, Name = "Lot From" };
         var lotTo = new Lot { Id = toLotId, Name = "Lot To" };

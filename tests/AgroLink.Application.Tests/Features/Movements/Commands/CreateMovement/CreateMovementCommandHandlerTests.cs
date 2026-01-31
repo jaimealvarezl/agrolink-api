@@ -47,7 +47,7 @@ public class CreateMovementCommandHandlerTests
             UserId = userId,
         };
         var user = new User { Id = userId, Name = "Test User" };
-        var animal = new Animal { Id = 1, Tag = "Animal1" };
+        var animal = new Animal { Id = 1, TagVisual = "Animal1", Cuia = "CUIA-1" };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
 
@@ -66,7 +66,7 @@ public class CreateMovementCommandHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(movement.Id);
         result.EntityType.ShouldBe(createMovementDto.EntityType);
-        result.EntityName.ShouldBe(animal.Tag);
+        result.EntityName.ShouldBe(animal.TagVisual);
         result.FromName.ShouldBe(lotFrom.Name);
         result.ToName.ShouldBe(lotTo.Name);
         result.UserName.ShouldBe(user.Name);

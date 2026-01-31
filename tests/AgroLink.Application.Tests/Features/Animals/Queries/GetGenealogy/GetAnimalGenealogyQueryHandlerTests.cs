@@ -29,7 +29,8 @@ public class GetAnimalGenealogyQueryHandlerTests
         var child = new Animal
         {
             Id = 3,
-            Tag = "C001",
+            TagVisual = "C001",
+            Cuia = "CUIA-C001",
             Name = "Child",
             Sex = "F",
             BirthDate = DateTime.Now.AddYears(-1),
@@ -37,7 +38,8 @@ public class GetAnimalGenealogyQueryHandlerTests
         var mother = new Animal
         {
             Id = 2,
-            Tag = "M001",
+            TagVisual = "M001",
+            Cuia = "CUIA-M001",
             Name = "Mother",
             Sex = "F",
             BirthDate = DateTime.Now.AddYears(-5),
@@ -46,7 +48,8 @@ public class GetAnimalGenealogyQueryHandlerTests
         var father = new Animal
         {
             Id = 4,
-            Tag = "F001",
+            TagVisual = "F001",
+            Cuia = "CUIA-F001",
             Name = "Father",
             Sex = "M",
             BirthDate = DateTime.Now.AddYears(-6),
@@ -54,7 +57,8 @@ public class GetAnimalGenealogyQueryHandlerTests
         var animal = new Animal
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Animal",
             Sex = "M",
             BirthDate = DateTime.Now.AddYears(-2),

@@ -119,7 +119,8 @@ public abstract class TestBase
     {
         var animal = new Animal
         {
-            Tag = tag,
+            TagVisual = tag,
+            Cuia = "CUIA-" + tag,
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",

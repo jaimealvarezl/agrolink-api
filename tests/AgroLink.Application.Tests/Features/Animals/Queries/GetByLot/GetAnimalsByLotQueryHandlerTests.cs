@@ -45,20 +45,22 @@ public class GetAnimalsByLotQueryHandlerTests
             new()
             {
                 Id = 1,
-                Tag = "A001",
+                TagVisual = "A001",
+                Cuia = "CUIA-A001",
                 Name = "Animal 1",
                 LotId = lotId,
                 CreatedAt = DateTime.UtcNow,
-                Status = "ACTIVE",
+                LifeStatus = Domain.Enums.LifeStatus.Active,
             },
             new()
             {
                 Id = 2,
-                Tag = "A002",
+                TagVisual = "A002",
+                Cuia = "CUIA-A002",
                 Name = "Animal 2",
                 LotId = lotId,
                 CreatedAt = DateTime.UtcNow,
-                Status = "ACTIVE",
+                LifeStatus = Domain.Enums.LifeStatus.Active,
             },
         };
         var lot = new Lot { Id = lotId, Name = "Test Lot" };

@@ -44,20 +44,22 @@ public class GetAllAnimalsQueryHandlerTests
             new()
             {
                 Id = 1,
-                Tag = "A001",
+                TagVisual = "A001",
+                Cuia = "CUIA-A001",
                 Name = "Animal 1",
                 LotId = 1,
                 CreatedAt = DateTime.UtcNow,
-                Status = "ACTIVE",
+                LifeStatus = Domain.Enums.LifeStatus.Active,
             },
             new()
             {
                 Id = 2,
-                Tag = "A002",
+                TagVisual = "A002",
+                Cuia = "CUIA-A002",
                 Name = "Animal 2",
                 LotId = 2,
                 CreatedAt = DateTime.UtcNow,
-                Status = "ACTIVE",
+                LifeStatus = Domain.Enums.LifeStatus.Active,
             },
         };
         var lot1 = new Lot { Id = 1, Name = "Lot 1" };
@@ -79,7 +81,7 @@ public class GetAllAnimalsQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        result.First().Tag.ShouldBe("A001");
+        result.First().TagVisual.ShouldBe("A001");
         result.First().LotName.ShouldBe("Lot 1");
     }
 

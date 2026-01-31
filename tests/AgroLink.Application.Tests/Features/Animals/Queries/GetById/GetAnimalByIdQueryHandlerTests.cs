@@ -43,11 +43,12 @@ public class GetAnimalByIdQueryHandlerTests
         var animal = new Animal
         {
             Id = animalId,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Animal 1",
             LotId = 1,
             CreatedAt = DateTime.UtcNow,
-            Status = "ACTIVE",
+            LifeStatus = Domain.Enums.LifeStatus.Active,
         };
         var lot = new Lot { Id = 1, Name = "Test Lot" };
 
@@ -66,7 +67,7 @@ public class GetAnimalByIdQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
-        result.Tag.ShouldBe(animal.Tag);
+        result.TagVisual.ShouldBe(animal.TagVisual);
         result.LotName.ShouldBe(lot.Name);
     }
 

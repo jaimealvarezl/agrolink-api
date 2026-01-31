@@ -61,7 +61,8 @@ public class GetChecklistByIdQueryHandlerTests
         var animal = new Animal
         {
             Id = 1,
-            Tag = "A001",
+            TagVisual = "A001",
+            Cuia = "CUIA-A001",
             Name = "Animal 1",
         };
         var checklistItem = new ChecklistItem
@@ -91,7 +92,7 @@ public class GetChecklistByIdQueryHandlerTests
         result.Id.ShouldBe(checklistId);
         result.ScopeName.ShouldBe(lot.Name);
         result.Items.Count.ShouldBe(1);
-        result.Items.First().AnimalTag.ShouldBe(animal.Tag);
+        result.Items.First().AnimalCuia.ShouldBe(animal.Cuia);
     }
 
     [Test]
