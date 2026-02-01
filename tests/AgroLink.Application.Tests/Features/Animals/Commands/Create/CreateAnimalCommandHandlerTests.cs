@@ -48,29 +48,29 @@ public class CreateAnimalCommandHandlerTests
     public async Task Handle_ValidCreateAnimalCommand_ReturnsAnimalDto()
     {
         // Arrange
-        const int farmId = 10;
-        const int userId = 5;
+        var farmId = 10;
+        var userId = 5;
         var createAnimalDto = new CreateAnimalDto
         {
             Cuia = "A001",
             TagVisual = "V001",
             Name = "Test Animal",
             LotId = 1,
-            Sex = "FEMALE",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Heifer,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.Open,
-            Owners =
-            [
-                new AnimalOwnerDto
+            Owners = new List<AnimalOwnerDto>
+            {
+                new()
                 {
                     OwnerId = 1,
                     OwnerName = "Test Owner",
                     SharePercent = 100,
                 },
-            ],
+            },
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -136,7 +136,7 @@ public class CreateAnimalCommandHandlerTests
         {
             LotId = 999,
             TagVisual = "V001",
-            Sex = "FEMALE",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Calf,
@@ -162,7 +162,7 @@ public class CreateAnimalCommandHandlerTests
         {
             LotId = 1,
             TagVisual = "V001",
-            Sex = "FEMALE",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Calf,
@@ -198,7 +198,7 @@ public class CreateAnimalCommandHandlerTests
             LotId = 1,
             Cuia = "A001",
             TagVisual = "V001",
-            Sex = "FEMALE",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Calf,
@@ -237,7 +237,7 @@ public class CreateAnimalCommandHandlerTests
         {
             LotId = 1,
             TagVisual = "V001",
-            Sex = "MALE",
+            Sex = Sex.Male,
             ProductionStatus = ProductionStatus.Bull,
             ReproductiveStatus = ReproductiveStatus.Pregnant, // Inconsistent
             BirthDate = DateTime.UtcNow.AddYears(-2),
@@ -273,7 +273,7 @@ public class CreateAnimalCommandHandlerTests
         {
             LotId = 1,
             TagVisual = "V001",
-            Sex = "FEMALE",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Calf,

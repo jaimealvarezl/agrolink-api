@@ -76,7 +76,7 @@ public class UpdateAnimalCommandHandlerTests
             Cuia = "CUIA-A001",
             Name = "Old Name",
             LotId = 1,
-            Sex = "FEMALE",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Milking,

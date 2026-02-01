@@ -16,7 +16,7 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
         builder.Property(e => e.Name).HasMaxLength(200);
         builder.Property(e => e.Color).HasMaxLength(100);
         builder.Property(e => e.Breed).HasMaxLength(100);
-        builder.Property(e => e.Sex).IsRequired().HasMaxLength(10);
+        builder.Property(e => e.Sex).HasConversion<string>().HasMaxLength(10);
 
         builder.Property(e => e.LifeStatus).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.ProductionStatus).HasConversion<string>().HasMaxLength(50);

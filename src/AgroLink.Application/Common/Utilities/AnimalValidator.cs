@@ -5,20 +5,18 @@ namespace AgroLink.Application.Common.Utilities;
 public static class AnimalValidator
 {
     public static void ValidateStatusConsistency(
-        string sex,
+        Sex sex,
         ProductionStatus productionStatus,
         ReproductiveStatus reproductiveStatus
     )
     {
-        var sexUpper = sex.ToUpper();
-
         // Consistency check for ProductionStatus vs Sex
         if (
             (
                 productionStatus == ProductionStatus.Bull
                 || productionStatus == ProductionStatus.Steer
             )
-            && sexUpper != "MALE"
+            && sex != Sex.Male
         )
         {
             throw new ArgumentException(
@@ -32,7 +30,7 @@ public static class AnimalValidator
                 || productionStatus == ProductionStatus.Milking
                 || productionStatus == ProductionStatus.Dry
             )
-            && sexUpper != "FEMALE"
+            && sex != Sex.Female
         )
         {
             throw new ArgumentException(
@@ -41,14 +39,14 @@ public static class AnimalValidator
         }
 
         // Consistency check for ReproductiveStatus vs Sex
-        if (sexUpper == "MALE" && reproductiveStatus != ReproductiveStatus.NotApplicable)
+        if (sex == Sex.Male && reproductiveStatus != ReproductiveStatus.NotApplicable)
         {
             throw new ArgumentException(
                 "MALE animals must have ReproductiveStatus set to NotApplicable."
             );
         }
 
-        if (reproductiveStatus == ReproductiveStatus.Pregnant && sexUpper != "FEMALE")
+        if (reproductiveStatus == ReproductiveStatus.Pregnant && sex != Sex.Female)
         {
             throw new ArgumentException(
                 "Only FEMALE animals can have ReproductiveStatus 'Pregnant'."
