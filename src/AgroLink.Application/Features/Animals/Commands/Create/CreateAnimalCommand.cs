@@ -48,29 +48,12 @@ public class CreateAnimalCommandHandler(
             throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
-        // 3. Parse and Validate Statuses
-        var lifeStatus = EnumParser.ParseOrDefault(
-            dto.LifeStatus,
-            LifeStatus.Active,
-            nameof(LifeStatus)
-        );
-        var productionStatus = EnumParser.ParseOrDefault(
+        // 3. Validate Status Consistency
+        AnimalValidator.ValidateStatusConsistency(
+            dto.Sex,
             dto.ProductionStatus,
-            ProductionStatus.Calf,
-            nameof(ProductionStatus)
+            dto.ReproductiveStatus
         );
-        var healthStatus = EnumParser.ParseOrDefault(
-            dto.HealthStatus,
-            HealthStatus.Healthy,
-            nameof(HealthStatus)
-        );
-        var reproductiveStatus = EnumParser.ParseOrDefault(
-            dto.ReproductiveStatus,
-            ReproductiveStatus.NotApplicable,
-            nameof(ReproductiveStatus)
-        );
-
-        AnimalValidator.ValidateStatusConsistency(dto.Sex, productionStatus, reproductiveStatus);
 
         // 4. Ensure CUIA (if provided) is unique within the Farm
         if (!string.IsNullOrEmpty(dto.Cuia))
@@ -96,10 +79,10 @@ public class CreateAnimalCommandHandler(
             Color = dto.Color,
             Breed = dto.Breed,
             Sex = dto.Sex,
-            LifeStatus = lifeStatus,
-            ProductionStatus = productionStatus,
-            HealthStatus = healthStatus,
-            ReproductiveStatus = reproductiveStatus,
+            LifeStatus = dto.LifeStatus,
+            ProductionStatus = dto.ProductionStatus,
+            HealthStatus = dto.HealthStatus,
+            ReproductiveStatus = dto.ReproductiveStatus,
             BirthDate = dto.BirthDate,
             LotId = dto.LotId,
             MotherId = dto.MotherId,
@@ -161,10 +144,10 @@ public class CreateAnimalCommandHandler(
             Color = animal.Color,
             Breed = animal.Breed,
             Sex = animal.Sex,
-            LifeStatus = animal.LifeStatus.ToString(),
-            ProductionStatus = animal.ProductionStatus.ToString(),
-            HealthStatus = animal.HealthStatus.ToString(),
-            ReproductiveStatus = animal.ReproductiveStatus.ToString(),
+            LifeStatus = animal.LifeStatus,
+            ProductionStatus = animal.ProductionStatus,
+            HealthStatus = animal.HealthStatus,
+            ReproductiveStatus = animal.ReproductiveStatus,
             BirthDate = animal.BirthDate,
             LotId = animal.LotId,
             LotName = lot.Name,

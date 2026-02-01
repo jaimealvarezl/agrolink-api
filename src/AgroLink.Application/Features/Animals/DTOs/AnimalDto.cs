@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Photos.DTOs;
+using AgroLink.Domain.Enums;
 
 namespace AgroLink.Application.Features.Animals.DTOs;
 
@@ -12,10 +13,10 @@ public class AnimalDto
     public string? Breed { get; set; }
     public required string Sex { get; set; }
 
-    public required string LifeStatus { get; set; }
-    public required string ProductionStatus { get; set; }
-    public required string HealthStatus { get; set; }
-    public required string ReproductiveStatus { get; set; }
+    public required LifeStatus LifeStatus { get; set; }
+    public required ProductionStatus ProductionStatus { get; set; }
+    public required HealthStatus HealthStatus { get; set; }
+    public required ReproductiveStatus ReproductiveStatus { get; set; }
 
     public required DateTime BirthDate { get; set; }
     public required int LotId { get; set; }
@@ -38,10 +39,10 @@ public class CreateAnimalDto
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required string Sex { get; set; }
-    public string? LifeStatus { get; set; }
-    public string? ProductionStatus { get; set; }
-    public string? HealthStatus { get; set; }
-    public string? ReproductiveStatus { get; set; }
+    public required LifeStatus LifeStatus { get; set; }
+    public required ProductionStatus ProductionStatus { get; set; }
+    public required HealthStatus HealthStatus { get; set; }
+    public required ReproductiveStatus ReproductiveStatus { get; set; }
     public required DateTime BirthDate { get; set; }
     public required int LotId { get; set; }
     public int? MotherId { get; set; }
@@ -58,10 +59,10 @@ public class UpdateAnimalDto
     public string? Breed { get; set; }
     public string? Sex { get; set; }
 
-    public string? LifeStatus { get; set; }
-    public string? ProductionStatus { get; set; }
-    public string? HealthStatus { get; set; }
-    public string? ReproductiveStatus { get; set; }
+    public LifeStatus? LifeStatus { get; set; }
+    public ProductionStatus? ProductionStatus { get; set; }
+    public HealthStatus? HealthStatus { get; set; }
+    public ReproductiveStatus? ReproductiveStatus { get; set; }
 
     public DateTime? BirthDate { get; set; }
     public int? LotId { get; set; }

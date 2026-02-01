@@ -105,34 +105,10 @@ public class UpdateAnimalCommandHandler(
         animal.Breed = dto.Breed ?? animal.Breed;
         animal.Sex = dto.Sex ?? animal.Sex;
 
-        if (!string.IsNullOrEmpty(dto.LifeStatus))
-        {
-            animal.LifeStatus = EnumParser.Parse<LifeStatus>(dto.LifeStatus, nameof(LifeStatus));
-        }
-
-        if (!string.IsNullOrEmpty(dto.ProductionStatus))
-        {
-            animal.ProductionStatus = EnumParser.Parse<ProductionStatus>(
-                dto.ProductionStatus,
-                nameof(ProductionStatus)
-            );
-        }
-
-        if (!string.IsNullOrEmpty(dto.HealthStatus))
-        {
-            animal.HealthStatus = EnumParser.Parse<HealthStatus>(
-                dto.HealthStatus,
-                nameof(HealthStatus)
-            );
-        }
-
-        if (!string.IsNullOrEmpty(dto.ReproductiveStatus))
-        {
-            animal.ReproductiveStatus = EnumParser.Parse<ReproductiveStatus>(
-                dto.ReproductiveStatus,
-                nameof(ReproductiveStatus)
-            );
-        }
+        animal.LifeStatus = dto.LifeStatus ?? animal.LifeStatus;
+        animal.ProductionStatus = dto.ProductionStatus ?? animal.ProductionStatus;
+        animal.HealthStatus = dto.HealthStatus ?? animal.HealthStatus;
+        animal.ReproductiveStatus = dto.ReproductiveStatus ?? animal.ReproductiveStatus;
 
         // Validate consistency of the final state
         AnimalValidator.ValidateStatusConsistency(
@@ -224,10 +200,10 @@ public class UpdateAnimalCommandHandler(
             Color = animal.Color,
             Breed = animal.Breed,
             Sex = animal.Sex,
-            LifeStatus = animal.LifeStatus.ToString(),
-            ProductionStatus = animal.ProductionStatus.ToString(),
-            HealthStatus = animal.HealthStatus.ToString(),
-            ReproductiveStatus = animal.ReproductiveStatus.ToString(),
+            LifeStatus = animal.LifeStatus,
+            ProductionStatus = animal.ProductionStatus,
+            HealthStatus = animal.HealthStatus,
+            ReproductiveStatus = animal.ReproductiveStatus,
             BirthDate = animal.BirthDate,
             LotId = animal.LotId,
             LotName = lot?.Name,
