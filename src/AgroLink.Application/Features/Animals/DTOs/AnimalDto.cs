@@ -17,7 +17,7 @@ public class AnimalDto
     public required string HealthStatus { get; set; }
     public required string ReproductiveStatus { get; set; }
 
-    public DateTime? BirthDate { get; set; }
+    public required DateTime BirthDate { get; set; }
     public required int LotId { get; set; }
     public string? LotName { get; set; }
     public int? MotherId { get; set; }
@@ -42,7 +42,7 @@ public class CreateAnimalDto
     public string? ProductionStatus { get; set; }
     public string? HealthStatus { get; set; }
     public string? ReproductiveStatus { get; set; }
-    public DateTime? BirthDate { get; set; }
+    public required DateTime BirthDate { get; set; }
     public required int LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
@@ -84,7 +84,7 @@ public class AnimalGenealogyDto
     public required string TagVisual { get; set; }
     public string? Name { get; set; }
     public required string Sex { get; set; }
-    public DateTime? BirthDate { get; set; }
+    public required DateTime BirthDate { get; set; }
     public AnimalGenealogyDto? Mother { get; set; }
     public AnimalGenealogyDto? Father { get; set; }
     public required List<AnimalGenealogyDto> Children { get; set; }

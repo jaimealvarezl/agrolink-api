@@ -32,7 +32,7 @@ public class Animal
     public HealthStatus HealthStatus { get; set; } = HealthStatus.Healthy;
     public ReproductiveStatus ReproductiveStatus { get; set; } = ReproductiveStatus.NotApplicable;
 
-    public DateTime? BirthDate { get; set; }
+    public DateTime BirthDate { get; set; }
     public int LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
