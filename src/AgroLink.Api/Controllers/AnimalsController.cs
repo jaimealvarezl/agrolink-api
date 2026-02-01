@@ -6,7 +6,10 @@ using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
+using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
+using AgroLink.Application.Features.Animals.Queries.GetPagedList;
+using AgroLink.Application.Common.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,10 +25,30 @@ public class AnimalsController(IMediator mediator) : BaseController
         return Ok(animals);
     }
 
+    [HttpGet("search")]
+    public async Task<ActionResult<PagedResult<AnimalListDto>>> GetPagedList(
+        [FromQuery] GetAnimalsPagedListQuery query)
+    {
+        var result = await mediator.Send(query);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<AnimalDto>> GetById(int id)
     {
         var animal = await mediator.Send(new GetAnimalByIdQuery(id));
+        if (animal == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(animal);
+    }
+
+    [HttpGet("{id}/details")]
+    public async Task<ActionResult<AnimalDetailDto>> GetDetail(int id)
+    {
+        var animal = await mediator.Send(new GetAnimalDetailQuery(id));
         if (animal == null)
         {
             return NotFound();
