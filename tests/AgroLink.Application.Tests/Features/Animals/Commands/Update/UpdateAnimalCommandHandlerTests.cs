@@ -131,8 +131,14 @@ public class UpdateAnimalCommandHandlerTests
         result.Id.ShouldBe(animalId);
         result.Name.ShouldBe(updateAnimalDto.Name);
         result.LifeStatus.ShouldBe(updateAnimalDto.LifeStatus);
+        result.Owners.Count.ShouldBe(1);
+        result.Owners[0].OwnerId.ShouldBe(1);
+        result.Owners[0].OwnerName.ShouldBe(owner.Name);
+
         _animalRepositoryMock.Verify(r => r.Update(animal), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _animalOwnerRepositoryMock.Verify(r => r.RemoveByAnimalIdAsync(animalId), Times.Once);
+        _animalOwnerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<AnimalOwner>()), Times.Once);
     }
 
     [Test]

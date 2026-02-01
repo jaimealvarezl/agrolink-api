@@ -117,7 +117,12 @@ public class CreateAnimalCommandHandlerTests
         result.ShouldNotBeNull();
         result.Cuia.ShouldBe(createAnimalDto.Cuia);
         result.LotName.ShouldBe(lot.Name);
+        result.Owners.Count.ShouldBe(1);
+        result.Owners[0].OwnerId.ShouldBe(1);
+        result.Owners[0].OwnerName.ShouldBe(owner.Name);
+
         _animalRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Animal>()), Times.Once);
+        _animalOwnerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<AnimalOwner>()), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
     }
 
