@@ -50,8 +50,11 @@ public class CreateMovementCommandHandlerTests
         var animal = new Animal
         {
             Id = 1,
-            TagVisual = "Animal1",
+            TagVisual = "V001",
             Cuia = "CUIA-1",
+            Name = "Test Animal",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LotId = 1,
         };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };

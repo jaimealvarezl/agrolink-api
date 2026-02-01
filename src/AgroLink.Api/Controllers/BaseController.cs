@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,7 @@ public abstract class BaseController : ControllerBase
         {
             ArgumentException => BadRequest(ex.Message),
             UnauthorizedAccessException => Unauthorized(ex.Message),
+            ForbiddenAccessException => Forbid(ex.Message),
             _ => StatusCode(500, "An unexpected error occurred"),
         };
     }

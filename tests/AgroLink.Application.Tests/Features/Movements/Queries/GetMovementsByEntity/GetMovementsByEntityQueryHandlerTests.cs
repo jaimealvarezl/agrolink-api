@@ -52,9 +52,11 @@ public class GetMovementsByEntityQueryHandlerTests
         var user = new User { Id = 1, Name = "Test User" };
         var animal = new Animal
         {
-            Id = entityId,
-            TagVisual = "TestAnimal",
+            Id = 1,
+            TagVisual = "V001",
             Cuia = "CUIA-Test",
+            Name = "Test Animal",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
         };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };

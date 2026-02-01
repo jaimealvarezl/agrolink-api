@@ -5,11 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class LotRepository : Repository<Lot>, ILotRepository
+public class LotRepository(AgroLinkDbContext context) : Repository<Lot>(context), ILotRepository
 {
-    public LotRepository(AgroLinkDbContext context)
-        : base(context) { }
-
     public async Task<IEnumerable<Lot>> GetByPaddockIdAsync(int paddockId)
     {
         return await _dbSet.Where(l => l.PaddockId == paddockId).ToListAsync();
@@ -18,5 +15,10 @@ public class LotRepository : Repository<Lot>, ILotRepository
     public async Task<Lot?> GetLotWithAnimalsAsync(int id)
     {
         return await _dbSet.Include(l => l.Animals).FirstOrDefaultAsync(l => l.Id == id);
+    }
+
+    public async Task<Lot?> GetLotWithPaddockAsync(int id)
+    {
+        return await _dbSet.Include(l => l.Paddock).FirstOrDefaultAsync(l => l.Id == id);
     }
 }

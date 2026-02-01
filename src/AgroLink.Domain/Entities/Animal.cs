@@ -24,15 +24,14 @@ public class Animal
     public string? Breed { get; set; }
 
     [Required]
-    [MaxLength(10)]
-    public string Sex { get; set; } = string.Empty; // MALE, FEMALE
+    public Sex Sex { get; set; }
 
     public LifeStatus LifeStatus { get; set; } = LifeStatus.Active;
     public ProductionStatus ProductionStatus { get; set; } = ProductionStatus.Calf;
     public HealthStatus HealthStatus { get; set; } = HealthStatus.Healthy;
     public ReproductiveStatus ReproductiveStatus { get; set; } = ReproductiveStatus.NotApplicable;
 
-    public DateTime? BirthDate { get; set; }
+    public DateTime BirthDate { get; set; }
     public int LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }

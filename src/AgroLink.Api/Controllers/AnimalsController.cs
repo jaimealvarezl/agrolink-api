@@ -61,9 +61,9 @@ public class AnimalsController(IMediator mediator) : BaseController
             var animal = await mediator.Send(new CreateAnimalCommand(dto));
             return CreatedAtAction(nameof(GetById), new { id = animal.Id }, animal);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -75,9 +75,9 @@ public class AnimalsController(IMediator mediator) : BaseController
             var animal = await mediator.Send(new UpdateAnimalCommand(id, dto));
             return Ok(animal);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -89,9 +89,9 @@ public class AnimalsController(IMediator mediator) : BaseController
             await mediator.Send(new DeleteAnimalCommand(id));
             return NoContent();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -108,9 +108,9 @@ public class AnimalsController(IMediator mediator) : BaseController
             );
             return Ok(animal);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 }

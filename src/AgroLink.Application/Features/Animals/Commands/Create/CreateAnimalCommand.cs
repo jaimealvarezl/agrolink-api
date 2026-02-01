@@ -1,8 +1,9 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
-using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -15,6 +16,8 @@ public class CreateAnimalCommandHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
+    IFarmMemberRepository farmMemberRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateAnimalCommand, AnimalDto>
 {
@@ -24,6 +27,49 @@ public class CreateAnimalCommandHandler(
     )
     {
         var dto = request.Dto;
+
+        // 1. Ensure Lot exists and get FarmId
+        var lot = await lotRepository.GetLotWithPaddockAsync(dto.LotId);
+        if (lot == null)
+        {
+            throw new ArgumentException($"Lot with ID {dto.LotId} not found.");
+        }
+
+        var farmId = lot.Paddock.FarmId;
+
+        // 2. Ensure user has permissions on the Farm
+        var userId = currentUserService.GetRequiredUserId();
+        var isMember = await farmMemberRepository.ExistsAsync(fm =>
+            fm.FarmId == farmId && fm.UserId == userId
+        );
+        if (!isMember)
+        {
+            throw new ForbiddenAccessException("User does not have permission for this Farm.");
+        }
+
+        // 3. Validate Status Consistency
+        AnimalValidator.ValidateStatusConsistency(
+            dto.Sex,
+            dto.ProductionStatus,
+            dto.ReproductiveStatus
+        );
+
+        // 4. Ensure CUIA (if provided) is unique within the Farm
+        if (!string.IsNullOrEmpty(dto.Cuia))
+        {
+            var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(dto.Cuia, farmId);
+            if (!isUnique)
+            {
+                throw new ArgumentException($"CUIA '{dto.Cuia}' already exists in this Farm.");
+            }
+        }
+
+        // 5. Ensure at least one owner is provided
+        if (dto.Owners == null || dto.Owners.Count == 0)
+        {
+            throw new ArgumentException("At least one owner is required for an animal.");
+        }
+
         var animal = new Animal
         {
             Cuia = dto.Cuia,
@@ -32,26 +78,10 @@ public class CreateAnimalCommandHandler(
             Color = dto.Color,
             Breed = dto.Breed,
             Sex = dto.Sex,
-            LifeStatus = EnumParser.ParseOrDefault(
-                dto.LifeStatus,
-                LifeStatus.Active,
-                nameof(LifeStatus)
-            ),
-            ProductionStatus = EnumParser.ParseOrDefault(
-                dto.ProductionStatus,
-                ProductionStatus.Calf,
-                nameof(ProductionStatus)
-            ),
-            HealthStatus = EnumParser.ParseOrDefault(
-                dto.HealthStatus,
-                HealthStatus.Healthy,
-                nameof(HealthStatus)
-            ),
-            ReproductiveStatus = EnumParser.ParseOrDefault(
-                dto.ReproductiveStatus,
-                ReproductiveStatus.NotApplicable,
-                nameof(ReproductiveStatus)
-            ),
+            LifeStatus = dto.LifeStatus,
+            ProductionStatus = dto.ProductionStatus,
+            HealthStatus = dto.HealthStatus,
+            ReproductiveStatus = dto.ReproductiveStatus,
             BirthDate = dto.BirthDate,
             LotId = dto.LotId,
             MotherId = dto.MotherId,
@@ -75,8 +105,7 @@ public class CreateAnimalCommandHandler(
 
         await unitOfWork.SaveChangesAsync();
 
-        // Map to DTO (duplicated logic from Query for independence)
-        var lot = await lotRepository.GetByIdAsync(animal.LotId);
+        // Map to DTO
         var mother = animal.MotherId.HasValue
             ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
             : null;
@@ -103,7 +132,6 @@ public class CreateAnimalCommandHandler(
             }
         }
 
-        // Newly created animal won't have photos yet, so empty list
         var photoDtos = new List<PhotoDto>();
 
         return new AnimalDto
@@ -115,13 +143,13 @@ public class CreateAnimalCommandHandler(
             Color = animal.Color,
             Breed = animal.Breed,
             Sex = animal.Sex,
-            LifeStatus = animal.LifeStatus.ToString(),
-            ProductionStatus = animal.ProductionStatus.ToString(),
-            HealthStatus = animal.HealthStatus.ToString(),
-            ReproductiveStatus = animal.ReproductiveStatus.ToString(),
+            LifeStatus = animal.LifeStatus,
+            ProductionStatus = animal.ProductionStatus,
+            HealthStatus = animal.HealthStatus,
+            ReproductiveStatus = animal.ReproductiveStatus,
             BirthDate = animal.BirthDate,
             LotId = animal.LotId,
-            LotName = lot?.Name,
+            LotName = lot.Name,
             MotherId = animal.MotherId,
             MotherCuia = mother?.Cuia,
             FatherId = animal.FatherId,

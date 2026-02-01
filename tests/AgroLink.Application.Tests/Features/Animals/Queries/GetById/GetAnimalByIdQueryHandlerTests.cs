@@ -39,7 +39,7 @@ public class GetAnimalByIdQueryHandlerTests
     public async Task Handle_ExistingAnimal_ReturnsAnimalDto()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
         var query = new GetAnimalByIdQuery(animalId);
         var animal = new Animal
         {
@@ -47,6 +47,7 @@ public class GetAnimalByIdQueryHandlerTests
             TagVisual = "A001",
             Cuia = "CUIA-A001",
             Name = "Animal 1",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             CreatedAt = DateTime.UtcNow,
             LifeStatus = LifeStatus.Active,
@@ -76,7 +77,7 @@ public class GetAnimalByIdQueryHandlerTests
     public async Task Handle_NonExistingAnimal_ReturnsNull()
     {
         // Arrange
-        var animalId = 999;
+        const int animalId = 999;
         var query = new GetAnimalByIdQuery(animalId);
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync((Animal?)null);
