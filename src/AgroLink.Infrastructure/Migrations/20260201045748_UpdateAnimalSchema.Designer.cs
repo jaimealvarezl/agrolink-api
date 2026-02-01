@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgroLink.Infrastructure.Migrations
 {
     [DbContext(typeof(AgroLinkDbContext))]
-    [Migration("20260201041004_MakeBirthDateRequired")]
-    partial class MakeBirthDateRequired
+    [Migration("20260201045748_UpdateAnimalSchema")]
+    partial class UpdateAnimalSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
