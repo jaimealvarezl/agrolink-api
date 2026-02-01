@@ -4,7 +4,6 @@ using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
-using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -57,6 +56,7 @@ public class CreateAnimalCommandHandlerTests
             Name = "Test Animal",
             LotId = 1,
             Sex = "FEMALE",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = "Active",
             ProductionStatus = "Heifer",
             ReproductiveStatus = "Open",
@@ -135,6 +135,7 @@ public class CreateAnimalCommandHandlerTests
             LotId = 999,
             TagVisual = "V001",
             Sex = "FEMALE",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -156,6 +157,7 @@ public class CreateAnimalCommandHandlerTests
             LotId = 1,
             TagVisual = "V001",
             Sex = "FEMALE",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -187,6 +189,7 @@ public class CreateAnimalCommandHandlerTests
             Cuia = "A001",
             TagVisual = "V001",
             Sex = "FEMALE",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -223,6 +226,7 @@ public class CreateAnimalCommandHandlerTests
             Sex = "MALE",
             ProductionStatus = "Bull",
             ReproductiveStatus = "Pregnant", // Inconsistent
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -238,7 +242,7 @@ public class CreateAnimalCommandHandlerTests
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(true);
 
-                // Act & Assert
+        // Act & Assert
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
@@ -254,6 +258,7 @@ public class CreateAnimalCommandHandlerTests
             LotId = 1,
             TagVisual = "V001",
             Sex = "FEMALE",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             Owners = [], // Empty list
         };
         var command = new CreateAnimalCommand(createAnimalDto);

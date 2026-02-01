@@ -60,6 +60,7 @@ public class MoveAnimalCommandHandlerTests
             TagVisual = "A001",
             Cuia = "CUIA-A001",
             Name = "Test Animal",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = fromLotId,
             CreatedAt = DateTime.UtcNow,
             LifeStatus = LifeStatus.Active,

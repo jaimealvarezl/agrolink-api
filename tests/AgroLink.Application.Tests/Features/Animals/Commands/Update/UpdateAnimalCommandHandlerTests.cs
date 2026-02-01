@@ -75,6 +75,7 @@ public class UpdateAnimalCommandHandlerTests
             TagVisual = "A001",
             Cuia = "CUIA-A001",
             Name = "Old Name",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             Sex = "FEMALE",
             LifeStatus = LifeStatus.Active,
@@ -164,7 +165,12 @@ public class UpdateAnimalCommandHandlerTests
         // Arrange
         var animalId = 1;
         var command = new UpdateAnimalCommand(animalId, new UpdateAnimalDto());
-        var animal = new Animal { Id = animalId, LotId = 1 };
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+        };
         var lot = new Lot
         {
             Id = 1,
@@ -191,16 +197,29 @@ public class UpdateAnimalCommandHandlerTests
         const int animalId = 1;
         var updateAnimalDto = new UpdateAnimalDto { Owners = new List<AnimalOwnerDto>() };
         var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
-        var animal = new Animal { Id = animalId, LotId = 1 };
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+        };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock.Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>())).ReturnsAsync(true);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("At least one owner is required");
     }
 }

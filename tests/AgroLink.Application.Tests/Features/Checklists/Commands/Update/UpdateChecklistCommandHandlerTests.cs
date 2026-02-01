@@ -81,9 +81,10 @@ public class UpdateChecklistCommandHandlerTests
         var animal = new Animal
         {
             Id = 1,
-            TagVisual = "A001",
+            TagVisual = "V001",
             Cuia = "CUIA-A001",
-            Name = "Animal 1",
+            Name = "Test Animal",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
         };
         var existingItems = new List<ChecklistItem>
         {

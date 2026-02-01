@@ -35,6 +35,7 @@ public class CreateAnimalCommandHandler(
         {
             throw new ArgumentException($"Lot with ID {dto.LotId} not found.");
         }
+
         var farmId = lot.Paddock.FarmId;
 
         // 2. Ensure user has permissions on the Farm

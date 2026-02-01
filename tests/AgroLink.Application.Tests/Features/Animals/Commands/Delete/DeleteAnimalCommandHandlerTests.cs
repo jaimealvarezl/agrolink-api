@@ -47,6 +47,7 @@ public class DeleteAnimalCommandHandlerTests
         {
             Id = animalId,
             LotId = 1,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
         };
         var lot = new Lot
@@ -94,7 +95,12 @@ public class DeleteAnimalCommandHandlerTests
         // Arrange
         var animalId = 1;
         var command = new DeleteAnimalCommand(animalId);
-        var animal = new Animal { Id = animalId, LotId = 1 };
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+        };
         var lot = new Lot
         {
             Id = 1,
