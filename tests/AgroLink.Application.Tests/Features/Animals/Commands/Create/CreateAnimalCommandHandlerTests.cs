@@ -1,12 +1,11 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
-using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
-using System.Linq.Expressions;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.Create;
 
@@ -124,12 +123,19 @@ public class CreateAnimalCommandHandlerTests
     public async Task Handle_LotNotFound_ThrowsArgumentException()
     {
         // Arrange
-        var createAnimalDto = new CreateAnimalDto { LotId = 999, TagVisual = "V001", Sex = "FEMALE" };
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 999,
+            TagVisual = "V001",
+            Sex = "FEMALE",
+        };
         var command = new CreateAnimalCommand(createAnimalDto);
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(999)).ReturnsAsync((Lot?)null);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("Lot with ID 999 not found");
     }
 
@@ -137,9 +143,18 @@ public class CreateAnimalCommandHandlerTests
     public async Task Handle_UserNotMemberOfFarm_ThrowsArgumentException()
     {
         // Arrange
-        var createAnimalDto = new CreateAnimalDto { LotId = 1, TagVisual = "V001", Sex = "FEMALE" };
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            TagVisual = "V001",
+            Sex = "FEMALE",
+        };
         var command = new CreateAnimalCommand(createAnimalDto);
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
 
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
@@ -148,7 +163,9 @@ public class CreateAnimalCommandHandlerTests
             .ReturnsAsync(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("User does not have permission");
     }
 
@@ -156,17 +173,33 @@ public class CreateAnimalCommandHandlerTests
     public async Task Handle_CuiaNotUniqueInFarm_ThrowsArgumentException()
     {
         // Arrange
-        var createAnimalDto = new CreateAnimalDto { LotId = 1, Cuia = "A001", TagVisual = "V001", Sex = "FEMALE" };
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            Cuia = "A001",
+            TagVisual = "V001",
+            Sex = "FEMALE",
+        };
         var command = new CreateAnimalCommand(createAnimalDto);
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
 
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock.Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>())).ReturnsAsync(true);
-        _animalRepositoryMock.Setup(r => r.IsCuiaUniqueInFarmAsync("A001", 10, null)).ReturnsAsync(false);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r => r.IsCuiaUniqueInFarmAsync("A001", 10, null))
+            .ReturnsAsync(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("already exists in this Farm");
     }
 
@@ -180,17 +213,25 @@ public class CreateAnimalCommandHandlerTests
             TagVisual = "V001",
             Sex = "MALE",
             ProductionStatus = "Bull",
-            ReproductiveStatus = "Pregnant" // Inconsistent
+            ReproductiveStatus = "Pregnant", // Inconsistent
         };
         var command = new CreateAnimalCommand(createAnimalDto);
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
 
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock.Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>())).ReturnsAsync(true);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("ReproductiveStatus set to NotApplicable");
     }
 }

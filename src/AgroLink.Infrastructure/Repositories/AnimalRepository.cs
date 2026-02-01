@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class AnimalRepository(AgroLinkDbContext context) : Repository<Animal>(context), IAnimalRepository
+public class AnimalRepository(AgroLinkDbContext context)
+    : Repository<Animal>(context),
+        IAnimalRepository
 {
     public async Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId)
     {
@@ -41,7 +43,11 @@ public class AnimalRepository(AgroLinkDbContext context) : Repository<Animal>(co
         return await _dbSet.FirstOrDefaultAsync(a => a.Cuia == cuia);
     }
 
-    public async Task<bool> IsCuiaUniqueInFarmAsync(string cuia, int farmId, int? excludeAnimalId = null)
+    public async Task<bool> IsCuiaUniqueInFarmAsync(
+        string cuia,
+        int farmId,
+        int? excludeAnimalId = null
+    )
     {
         var query = _dbSet.Where(a => a.Cuia == cuia && a.Lot.Paddock.FarmId == farmId);
 

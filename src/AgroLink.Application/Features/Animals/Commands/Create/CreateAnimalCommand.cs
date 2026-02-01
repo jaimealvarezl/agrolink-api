@@ -48,7 +48,11 @@ public class CreateAnimalCommandHandler(
         }
 
         // 3. Parse and Validate Statuses
-        var lifeStatus = EnumParser.ParseOrDefault(dto.LifeStatus, LifeStatus.Active, nameof(LifeStatus));
+        var lifeStatus = EnumParser.ParseOrDefault(
+            dto.LifeStatus,
+            LifeStatus.Active,
+            nameof(LifeStatus)
+        );
         var productionStatus = EnumParser.ParseOrDefault(
             dto.ProductionStatus,
             ProductionStatus.Calf,
@@ -103,7 +107,9 @@ public class CreateAnimalCommandHandler(
         {
             var animalOwner = new AnimalOwner
             {
-                AnimalId = animal.Id, OwnerId = ownerDto.OwnerId, SharePercent = ownerDto.SharePercent,
+                AnimalId = animal.Id,
+                OwnerId = ownerDto.OwnerId,
+                SharePercent = ownerDto.SharePercent,
             };
             await animalOwnerRepository.AddAsync(animalOwner);
         }
@@ -129,7 +135,9 @@ public class CreateAnimalCommandHandler(
                 ownerDtos.Add(
                     new AnimalOwnerDto
                     {
-                        OwnerId = owner.OwnerId, OwnerName = ownerEntity.Name, SharePercent = owner.SharePercent,
+                        OwnerId = owner.OwnerId,
+                        OwnerName = ownerEntity.Name,
+                        SharePercent = owner.SharePercent,
                     }
                 );
             }

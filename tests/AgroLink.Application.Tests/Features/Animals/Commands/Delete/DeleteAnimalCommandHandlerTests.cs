@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Commands.Delete;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -5,7 +6,6 @@ using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
-using System.Linq.Expressions;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.Delete;
 
@@ -42,8 +42,17 @@ public class DeleteAnimalCommandHandlerTests
         // Arrange
         var animalId = 1;
         var command = new DeleteAnimalCommand(animalId);
-        var animal = new Animal { Id = animalId, LotId = 1, LifeStatus = LifeStatus.Active };
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            LifeStatus = LifeStatus.Active,
+        };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
@@ -85,7 +94,11 @@ public class DeleteAnimalCommandHandlerTests
         var animalId = 1;
         var command = new DeleteAnimalCommand(animalId);
         var animal = new Animal { Id = animalId, LotId = 1 };
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
@@ -95,7 +108,9 @@ public class DeleteAnimalCommandHandlerTests
             .ReturnsAsync(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("User does not have permission");
     }
 }

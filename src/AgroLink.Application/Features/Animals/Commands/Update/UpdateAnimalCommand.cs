@@ -39,6 +39,7 @@ public class UpdateAnimalCommandHandler(
         {
             throw new InvalidOperationException("Current lot not found.");
         }
+
         var farmId = currentLot.Paddock.FarmId;
 
         // Ensure user has permissions
@@ -61,6 +62,7 @@ public class UpdateAnimalCommandHandler(
             {
                 throw new ArgumentException($"Lot with ID {dto.LotId.Value} not found.");
             }
+
             if (newLot.Paddock.FarmId != farmId)
             {
                 // Verify access to the new farm if it's different
@@ -69,21 +71,30 @@ public class UpdateAnimalCommandHandler(
                 );
                 if (!isMemberNewFarm)
                 {
-                    throw new ArgumentException("User does not have permission for the target Farm.");
+                    throw new ArgumentException(
+                        "User does not have permission for the target Farm."
+                    );
                 }
+
                 farmId = newLot.Paddock.FarmId; // Update farmId context for subsequent validations
             }
+
             animal.LotId = dto.LotId.Value;
         }
 
         // Validate CUIA uniqueness if changing
         if (!string.IsNullOrEmpty(dto.Cuia) && dto.Cuia != animal.Cuia)
         {
-            var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(dto.Cuia, farmId, animal.Id);
+            var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(
+                dto.Cuia,
+                farmId,
+                animal.Id
+            );
             if (!isUnique)
             {
                 throw new ArgumentException($"CUIA '{dto.Cuia}' already exists in this Farm.");
             }
+
             animal.Cuia = dto.Cuia;
         }
 

@@ -14,7 +14,10 @@ public static class AnimalValidator
 
         // Consistency check for ProductionStatus vs Sex
         if (
-            (productionStatus == ProductionStatus.Bull || productionStatus == ProductionStatus.Steer)
+            (
+                productionStatus == ProductionStatus.Bull
+                || productionStatus == ProductionStatus.Steer
+            )
             && sexUpper != "MALE"
         )
         {
@@ -28,7 +31,8 @@ public static class AnimalValidator
                 productionStatus == ProductionStatus.Heifer
                 || productionStatus == ProductionStatus.Milking
                 || productionStatus == ProductionStatus.Dry
-            ) && sexUpper != "FEMALE"
+            )
+            && sexUpper != "FEMALE"
         )
         {
             throw new ArgumentException(
@@ -46,7 +50,9 @@ public static class AnimalValidator
 
         if (reproductiveStatus == ReproductiveStatus.Pregnant && sexUpper != "FEMALE")
         {
-            throw new ArgumentException("Only FEMALE animals can have ReproductiveStatus 'Pregnant'.");
+            throw new ArgumentException(
+                "Only FEMALE animals can have ReproductiveStatus 'Pregnant'."
+            );
         }
     }
 }
