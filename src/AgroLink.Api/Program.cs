@@ -14,7 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 await SecretsManagerHelper.LoadSecretsAsync(builder);
 
 // Add services to the container.
-builder.Services.AddControllers()
+builder
+    .Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

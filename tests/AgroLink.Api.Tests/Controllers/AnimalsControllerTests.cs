@@ -9,6 +9,7 @@ using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
+using AgroLink.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -58,10 +59,10 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = 1,
                 LotName = "Test Lot",
-                LifeStatus = "Active",
-                ProductionStatus = "Calf",
-                HealthStatus = "Healthy",
-                ReproductiveStatus = "NotApplicable",
+                LifeStatus = LifeStatus.Active,
+                ProductionStatus = ProductionStatus.Calf,
+                HealthStatus = HealthStatus.Healthy,
+                ReproductiveStatus = ReproductiveStatus.NotApplicable,
                 Owners = [],
                 Photos = [],
                 CreatedAt = DateTime.UtcNow,
@@ -78,10 +79,10 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-1),
                 LotId = 1,
                 LotName = "Test Lot",
-                LifeStatus = "Active",
-                ProductionStatus = "Calf",
-                HealthStatus = "Healthy",
-                ReproductiveStatus = "NotApplicable",
+                LifeStatus = LifeStatus.Active,
+                ProductionStatus = ProductionStatus.Calf,
+                HealthStatus = HealthStatus.Healthy,
+                ReproductiveStatus = ReproductiveStatus.NotApplicable,
                 Owners = [],
                 Photos = [],
                 CreatedAt = DateTime.UtcNow,
@@ -106,7 +107,7 @@ public class AnimalsControllerTests
     public async Task GetById_WhenAnimalExists_ShouldReturnOkWithAnimal()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
         var animal = new AnimalDto
         {
             Id = animalId,
@@ -119,10 +120,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
-            LifeStatus = "Active",
-            ProductionStatus = "Calf",
-            HealthStatus = "Healthy",
-            ReproductiveStatus = "NotApplicable",
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
@@ -152,7 +153,7 @@ public class AnimalsControllerTests
     public async Task GetById_WhenAnimalDoesNotExist_ShouldReturnNotFound()
     {
         // Arrange
-        var animalId = 999;
+        const int animalId = 999;
 
         _mediatorMock
             .Setup(x =>
@@ -175,7 +176,7 @@ public class AnimalsControllerTests
     public async Task GetByLot_ShouldReturnOkWithAnimals()
     {
         // Arrange
-        var lotId = 1;
+        const int lotId = 1;
         var animals = new List<AnimalDto>
         {
             new()
@@ -190,10 +191,10 @@ public class AnimalsControllerTests
                 BirthDate = DateTime.UtcNow.AddYears(-2),
                 LotId = lotId,
                 LotName = "Test Lot",
-                LifeStatus = "Active",
-                ProductionStatus = "Calf",
-                HealthStatus = "Healthy",
-                ReproductiveStatus = "NotApplicable",
+                LifeStatus = LifeStatus.Active,
+                ProductionStatus = ProductionStatus.Calf,
+                HealthStatus = HealthStatus.Healthy,
+                ReproductiveStatus = ReproductiveStatus.NotApplicable,
                 Owners = [],
                 Photos = [],
                 CreatedAt = DateTime.UtcNow,
@@ -233,16 +234,20 @@ public class AnimalsControllerTests
             Breed = "Holstein",
             Sex = "Female",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             LotId = 1,
-            Owners = new List<AnimalOwnerDto>
-            {
-                new()
+            Owners =
+            [
+                new AnimalOwnerDto
                 {
                     OwnerId = 1,
                     OwnerName = "Owner 1",
                     SharePercent = 100,
                 },
-            },
+            ],
         };
 
         var createdAnimal = new AnimalDto
@@ -257,10 +262,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             LotName = "Test Lot",
-            LifeStatus = "Active",
-            ProductionStatus = "Calf",
-            HealthStatus = "Healthy",
-            ReproductiveStatus = "NotApplicable",
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
@@ -290,15 +295,23 @@ public class AnimalsControllerTests
     public async Task Update_WhenAnimalExists_ShouldReturnOkWithUpdatedAnimal()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
         var updateDto = new UpdateAnimalDto
         {
             Name = "Updated Animal",
             Color = "Black",
             Breed = "Angus",
-            LifeStatus = "Active",
+            LifeStatus = LifeStatus.Active,
             BirthDate = DateTime.UtcNow.AddYears(-3),
-            Owners = new List<AnimalOwnerDto>(),
+            Owners =
+            [
+                new AnimalOwnerDto
+                {
+                    OwnerId = 1,
+                    OwnerName = "Owner 1",
+                    SharePercent = 100,
+                },
+            ],
         };
 
         var updatedAnimal = new AnimalDto
@@ -313,10 +326,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-3),
             LotId = 1,
             LotName = "Test Lot",
-            LifeStatus = "Active",
-            ProductionStatus = "Calf",
-            HealthStatus = "Healthy",
-            ReproductiveStatus = "NotApplicable",
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,
@@ -346,11 +359,19 @@ public class AnimalsControllerTests
     public async Task Update_WhenAnimalDoesNotExist_ShouldReturnNotFound()
     {
         // Arrange
-        var animalId = 999;
+        const int animalId = 999;
         var updateDto = new UpdateAnimalDto
         {
             Name = "Updated Animal",
-            Owners = new List<AnimalOwnerDto>(),
+            Owners =
+            [
+                new AnimalOwnerDto
+                {
+                    OwnerId = 1,
+                    OwnerName = "Owner 1",
+                    SharePercent = 100,
+                },
+            ],
         };
 
         _mediatorMock
@@ -374,7 +395,7 @@ public class AnimalsControllerTests
     public async Task Delete_WhenAnimalExists_ShouldReturnNoContent()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
 
         _mediatorMock
             .Setup(x =>
@@ -397,7 +418,7 @@ public class AnimalsControllerTests
     public async Task Delete_WhenAnimalDoesNotExist_ShouldReturnNotFound()
     {
         // Arrange
-        var animalId = 999;
+        const int animalId = 999;
 
         _mediatorMock
             .Setup(x =>
@@ -420,7 +441,7 @@ public class AnimalsControllerTests
     public async Task GetGenealogy_WhenAnimalExists_ShouldReturnOkWithGenealogy()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
         var genealogy = new AnimalGenealogyDto
         {
             Id = animalId,
@@ -456,7 +477,7 @@ public class AnimalsControllerTests
     public async Task GetGenealogy_WhenAnimalDoesNotExist_ShouldReturnNotFound()
     {
         // Arrange
-        var animalId = 999;
+        const int animalId = 999;
 
         _mediatorMock
             .Setup(x =>
@@ -479,7 +500,7 @@ public class AnimalsControllerTests
     public async Task MoveAnimal_WithValidData_ShouldReturnOkWithMovedAnimal()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
         var moveRequest = new MoveAnimalRequest
         {
             FromLotId = 1,
@@ -499,10 +520,10 @@ public class AnimalsControllerTests
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 2, // Moved to new lot
             LotName = "New Lot",
-            LifeStatus = "Active",
-            ProductionStatus = "Calf",
-            HealthStatus = "Healthy",
-            ReproductiveStatus = "NotApplicable",
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
             Photos = [],
             CreatedAt = DateTime.UtcNow,

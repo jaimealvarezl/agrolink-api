@@ -4,6 +4,7 @@ using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -47,8 +48,8 @@ public class CreateAnimalCommandHandlerTests
     public async Task Handle_ValidCreateAnimalCommand_ReturnsAnimalDto()
     {
         // Arrange
-        var farmId = 10;
-        var userId = 5;
+        const int farmId = 10;
+        const int userId = 5;
         var createAnimalDto = new CreateAnimalDto
         {
             Cuia = "A001",
@@ -57,18 +58,19 @@ public class CreateAnimalCommandHandlerTests
             LotId = 1,
             Sex = "FEMALE",
             BirthDate = DateTime.UtcNow.AddYears(-2),
-            LifeStatus = "Active",
-            ProductionStatus = "Heifer",
-            ReproductiveStatus = "Open",
-            Owners = new List<AnimalOwnerDto>
-            {
-                new()
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Heifer,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.Open,
+            Owners =
+            [
+                new AnimalOwnerDto
                 {
                     OwnerId = 1,
                     OwnerName = "Test Owner",
                     SharePercent = 100,
                 },
-            },
+            ],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -136,6 +138,10 @@ public class CreateAnimalCommandHandlerTests
             TagVisual = "V001",
             Sex = "FEMALE",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -158,6 +164,10 @@ public class CreateAnimalCommandHandlerTests
             TagVisual = "V001",
             Sex = "FEMALE",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -190,6 +200,10 @@ public class CreateAnimalCommandHandlerTests
             TagVisual = "V001",
             Sex = "FEMALE",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -224,9 +238,11 @@ public class CreateAnimalCommandHandlerTests
             LotId = 1,
             TagVisual = "V001",
             Sex = "MALE",
-            ProductionStatus = "Bull",
-            ReproductiveStatus = "Pregnant", // Inconsistent
+            ProductionStatus = ProductionStatus.Bull,
+            ReproductiveStatus = ReproductiveStatus.Pregnant, // Inconsistent
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            HealthStatus = HealthStatus.Healthy,
             Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -259,6 +275,10 @@ public class CreateAnimalCommandHandlerTests
             TagVisual = "V001",
             Sex = "FEMALE",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners = [], // Empty list
         };
         var command = new CreateAnimalCommand(createAnimalDto);

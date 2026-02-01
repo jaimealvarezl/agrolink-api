@@ -51,13 +51,13 @@ public class UpdateAnimalCommandHandlerTests
     public async Task Handle_ValidUpdateAnimalCommand_ReturnsAnimalDto()
     {
         // Arrange
-        var animalId = 1;
-        var farmId = 10;
-        var userId = 5;
+        const int animalId = 1;
+        const int farmId = 10;
+        const int userId = 5;
         var updateAnimalDto = new UpdateAnimalDto
         {
             Name = "Updated Name",
-            LifeStatus = "Sold",
+            LifeStatus = LifeStatus.Sold,
             Owners = new List<AnimalOwnerDto>
             {
                 new()
@@ -75,9 +75,9 @@ public class UpdateAnimalCommandHandlerTests
             TagVisual = "A001",
             Cuia = "CUIA-A001",
             Name = "Old Name",
-            BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = 1,
             Sex = "FEMALE",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Milking,
             ReproductiveStatus = ReproductiveStatus.Open,
@@ -131,7 +131,7 @@ public class UpdateAnimalCommandHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
         result.Name.ShouldBe(updateAnimalDto.Name);
-        result.LifeStatus.ShouldBe(updateAnimalDto.LifeStatus);
+        result.LifeStatus.ShouldBe(updateAnimalDto.LifeStatus!.Value);
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerId.ShouldBe(1);
         result.Owners[0].OwnerName.ShouldBe(owner.Name);
@@ -146,7 +146,7 @@ public class UpdateAnimalCommandHandlerTests
     public async Task Handle_NonExistingAnimal_ThrowsArgumentException()
     {
         // Arrange
-        var animalId = 999;
+        const int animalId = 999;
         var updateAnimalDto = new UpdateAnimalDto { Name = "Updated Name" };
         var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
 
@@ -163,7 +163,7 @@ public class UpdateAnimalCommandHandlerTests
     public async Task Handle_NoPermission_ThrowsForbiddenAccessException()
     {
         // Arrange
-        var animalId = 1;
+        const int animalId = 1;
         var command = new UpdateAnimalCommand(animalId, new UpdateAnimalDto());
         var animal = new Animal
         {
