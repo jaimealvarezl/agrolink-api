@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
@@ -39,7 +40,6 @@ public class UpdateAnimalCommandHandler(
         {
             throw new InvalidOperationException("Current lot not found.");
         }
-
         var farmId = currentLot.Paddock.FarmId;
 
         // Ensure user has permissions
@@ -49,7 +49,7 @@ public class UpdateAnimalCommandHandler(
         );
         if (!isMember)
         {
-            throw new ArgumentException("User does not have permission for this Farm.");
+            throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
         var dto = request.Dto;
@@ -62,7 +62,6 @@ public class UpdateAnimalCommandHandler(
             {
                 throw new ArgumentException($"Lot with ID {dto.LotId.Value} not found.");
             }
-
             if (newLot.Paddock.FarmId != farmId)
             {
                 // Verify access to the new farm if it's different
@@ -71,14 +70,12 @@ public class UpdateAnimalCommandHandler(
                 );
                 if (!isMemberNewFarm)
                 {
-                    throw new ArgumentException(
+                    throw new ForbiddenAccessException(
                         "User does not have permission for the target Farm."
                     );
                 }
-
                 farmId = newLot.Paddock.FarmId; // Update farmId context for subsequent validations
             }
-
             animal.LotId = dto.LotId.Value;
         }
 

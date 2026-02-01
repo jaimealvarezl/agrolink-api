@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
@@ -152,7 +153,7 @@ public class UpdateAnimalCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_NoPermission_ThrowsArgumentException()
+    public async Task Handle_NoPermission_ThrowsForbiddenAccessException()
     {
         // Arrange
         var animalId = 1;
@@ -172,9 +173,8 @@ public class UpdateAnimalCommandHandlerTests
             .ReturnsAsync(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+        await Should.ThrowAsync<ForbiddenAccessException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        ex.Message.ShouldContain("User does not have permission");
     }
 }

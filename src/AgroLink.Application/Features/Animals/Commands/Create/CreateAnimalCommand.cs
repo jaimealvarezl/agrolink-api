@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
@@ -34,7 +35,6 @@ public class CreateAnimalCommandHandler(
         {
             throw new ArgumentException($"Lot with ID {dto.LotId} not found.");
         }
-
         var farmId = lot.Paddock.FarmId;
 
         // 2. Ensure user has permissions on the Farm
@@ -44,7 +44,7 @@ public class CreateAnimalCommandHandler(
         );
         if (!isMember)
         {
-            throw new ArgumentException("User does not have permission for this Farm.");
+            throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
         // 3. Parse and Validate Statuses

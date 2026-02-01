@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -36,7 +37,7 @@ public class DeleteAnimalCommandHandler(
         );
         if (!isMember)
         {
-            throw new ArgumentException("User does not have permission for this Farm.");
+            throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
         // Soft delete via LifeStatus
