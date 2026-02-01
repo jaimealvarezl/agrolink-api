@@ -46,7 +46,7 @@ public class CreateAnimalDto
     public required int LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
-    public List<AnimalOwnerDto> Owners { get; set; } = new();
+    public required List<AnimalOwnerDto> Owners { get; set; }
 }
 
 public class UpdateAnimalDto
@@ -67,7 +67,7 @@ public class UpdateAnimalDto
     public int? LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
-    public List<AnimalOwnerDto> Owners { get; set; } = new();
+    public List<AnimalOwnerDto>? Owners { get; set; }
 }
 
 public class AnimalOwnerDto

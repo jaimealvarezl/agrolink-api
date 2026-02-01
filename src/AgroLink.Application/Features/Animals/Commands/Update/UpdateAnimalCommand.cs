@@ -145,8 +145,13 @@ public class UpdateAnimalCommandHandler(
         animalRepository.Update(animal);
 
         // Update owners if provided
-        if (dto.Owners != null && dto.Owners.Count != 0)
+        if (dto.Owners != null)
         {
+            if (dto.Owners.Count == 0)
+            {
+                throw new ArgumentException("At least one owner is required for an animal.");
+            }
+
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id);
 
             foreach (var ownerDto in dto.Owners)

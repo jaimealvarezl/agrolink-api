@@ -81,6 +81,12 @@ public class CreateAnimalCommandHandler(
             }
         }
 
+        // 5. Ensure at least one owner is provided
+        if (dto.Owners == null || dto.Owners.Count == 0)
+        {
+            throw new ArgumentException("At least one owner is required for an animal.");
+        }
+
         var animal = new Animal
         {
             Cuia = dto.Cuia,

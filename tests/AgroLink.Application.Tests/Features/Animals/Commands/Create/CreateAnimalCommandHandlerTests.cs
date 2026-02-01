@@ -130,6 +130,7 @@ public class CreateAnimalCommandHandlerTests
             LotId = 999,
             TagVisual = "V001",
             Sex = "FEMALE",
+            Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(999)).ReturnsAsync((Lot?)null);
@@ -150,6 +151,7 @@ public class CreateAnimalCommandHandlerTests
             LotId = 1,
             TagVisual = "V001",
             Sex = "FEMALE",
+            Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -180,6 +182,7 @@ public class CreateAnimalCommandHandlerTests
             Cuia = "A001",
             TagVisual = "V001",
             Sex = "FEMALE",
+            Owners = [],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -215,6 +218,38 @@ public class CreateAnimalCommandHandlerTests
             Sex = "MALE",
             ProductionStatus = "Bull",
             ReproductiveStatus = "Pregnant", // Inconsistent
+            Owners = [],
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
+
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+
+                // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("ReproductiveStatus set to NotApplicable");
+    }
+
+    [Test]
+    public async Task Handle_EmptyOwnersList_ThrowsArgumentException()
+    {
+        // Arrange
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            TagVisual = "V001",
+            Sex = "FEMALE",
+            Owners = [], // Empty list
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -233,6 +268,6 @@ public class CreateAnimalCommandHandlerTests
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        ex.Message.ShouldContain("ReproductiveStatus set to NotApplicable");
+        ex.Message.ShouldContain("At least one owner is required");
     }
 }
