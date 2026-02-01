@@ -247,4 +247,78 @@ public class AnimalRepositoryTests : TestBase
         motherChildren.All(c => c.MotherId == mother.Id).ShouldBeTrue();
         fatherChildren.All(c => c.FatherId == father.Id).ShouldBeTrue();
     }
+
+    [Test]
+    public async Task GetPagedListAsync_ShouldFilterAndPaginate()
+    {
+        // Arrange
+        var farm = await CreateTestFarmAsync(_context);
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id);
+        var lot = await CreateTestLotAsync(_context, paddock.Id);
+
+        // Animal 1: Sick, Pregnant
+        var a1 = await CreateTestAnimalAsync(_context, lot.Id, "A1");
+        a1.HealthStatus = HealthStatus.Sick;
+        a1.ReproductiveStatus = ReproductiveStatus.Pregnant;
+
+        // Animal 2: Missing
+        var a2 = await CreateTestAnimalAsync(_context, lot.Id, "A2");
+        a2.LifeStatus = LifeStatus.Missing;
+
+        // Animal 3: Healthy
+        var a3 = await CreateTestAnimalAsync(_context, lot.Id, "A3");
+
+        await _context.SaveChangesAsync();
+
+        // Act - Filter Sick
+        var sickResult = await _repository.GetPagedListAsync(farm.Id, 1, 10, isSick: true);
+        sickResult.Items.Count().ShouldBe(1);
+        sickResult.Items.First().TagVisual.ShouldBe("A1");
+
+        // Act - Filter Missing
+        var missingResult = await _repository.GetPagedListAsync(farm.Id, 1, 10, isMissing: true);
+        missingResult.Items.Count().ShouldBe(1);
+        missingResult.Items.First().TagVisual.ShouldBe("A2");
+
+        // Act - Search
+        var searchResult = await _repository.GetPagedListAsync(farm.Id, 1, 10, searchTerm: "A3");
+        searchResult.Items.Count().ShouldBe(1);
+        searchResult.Items.First().TagVisual.ShouldBe("A3");
+    }
+
+    [Test]
+    public async Task GetAnimalDetailsAsync_ShouldReturnDetailsWithIncludes()
+    {
+        // Arrange
+        var farm = await CreateTestFarmAsync(_context);
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id);
+        var lot = await CreateTestLotAsync(_context, paddock.Id);
+
+        var mother = await CreateTestAnimalAsync(_context, lot.Id, "M1");
+        var father = await CreateTestAnimalAsync(_context, lot.Id, "F1");
+        var child = await CreateTestAnimalAsync(_context, lot.Id, "C1");
+
+        child.MotherId = mother.Id;
+        child.FatherId = father.Id;
+
+        var owner = await CreateTestOwnerAsync(_context, "Owner1");
+        child.AnimalOwners.Add(new AnimalOwner { OwnerId = owner.Id, SharePercent = 50 });
+
+        child.Photos.Add(new Photo { UriRemote = "http://photo.com", EntityType = "ANIMAL", UriLocal = "local" });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetAnimalDetailsAsync(child.Id);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Mother.ShouldNotBeNull();
+        result.Mother.TagVisual.ShouldBe("M1");
+        result.Father.ShouldNotBeNull();
+        result.Father.TagVisual.ShouldBe("F1");
+        result.AnimalOwners.Count.ShouldBe(1);
+        result.Photos.Count.ShouldBe(1);
+        result.Lot.ShouldNotBeNull();
+    }
 }
