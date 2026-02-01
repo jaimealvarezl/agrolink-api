@@ -10,9 +10,7 @@ namespace AgroLink.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Animals_Cuia",
-                table: "Animals");
+            migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_Animals_Cuia\";");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Cuia",
