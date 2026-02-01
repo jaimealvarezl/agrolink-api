@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -32,7 +33,7 @@ public class GetAnimalGenealogyQueryHandlerTests
             TagVisual = "C001",
             Cuia = "CUIA-C001",
             Name = "Child",
-            Sex = "F",
+            Sex = Sex.Female,
             BirthDate = DateTime.Now.AddYears(-1),
         };
         var mother = new Animal
@@ -41,7 +42,7 @@ public class GetAnimalGenealogyQueryHandlerTests
             TagVisual = "M001",
             Cuia = "CUIA-M001",
             Name = "Mother",
-            Sex = "F",
+            Sex = Sex.Female,
             BirthDate = DateTime.Now.AddYears(-5),
             Children = new List<Animal> { child },
         };
@@ -51,7 +52,7 @@ public class GetAnimalGenealogyQueryHandlerTests
             TagVisual = "F001",
             Cuia = "CUIA-F001",
             Name = "Father",
-            Sex = "M",
+            Sex = Sex.Male,
             BirthDate = DateTime.Now.AddYears(-6),
         };
         var animal = new Animal
@@ -60,7 +61,7 @@ public class GetAnimalGenealogyQueryHandlerTests
             TagVisual = "A001",
             Cuia = "CUIA-A001",
             Name = "Animal",
-            Sex = "M",
+            Sex = Sex.Male,
             BirthDate = DateTime.Now.AddYears(-2),
             MotherId = mother.Id,
             FatherId = father.Id,

@@ -11,7 +11,7 @@ public class AnimalDto
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public required string Sex { get; set; }
+    public required Sex Sex { get; set; }
 
     public required LifeStatus LifeStatus { get; set; }
     public required ProductionStatus ProductionStatus { get; set; }
@@ -38,7 +38,7 @@ public class CreateAnimalDto
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public required string Sex { get; set; }
+    public required Sex Sex { get; set; }
     public required LifeStatus LifeStatus { get; set; }
     public required ProductionStatus ProductionStatus { get; set; }
     public required HealthStatus HealthStatus { get; set; }
@@ -57,7 +57,7 @@ public class UpdateAnimalDto
     public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
-    public string? Sex { get; set; }
+    public Sex? Sex { get; set; }
 
     public LifeStatus? LifeStatus { get; set; }
     public ProductionStatus? ProductionStatus { get; set; }

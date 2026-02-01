@@ -8,51 +8,56 @@ namespace AgroLink.Application.Tests.Common.Utilities;
 public class AnimalValidatorTests
 {
     [Test]
-    [TestCase("MALE", ProductionStatus.Bull, ReproductiveStatus.NotApplicable)]
-    [TestCase("MALE", ProductionStatus.Steer, ReproductiveStatus.NotApplicable)]
-    [TestCase("FEMALE", ProductionStatus.Heifer, ReproductiveStatus.Open)]
-    [TestCase("FEMALE", ProductionStatus.Milking, ReproductiveStatus.Pregnant)]
-    [TestCase("FEMALE", ProductionStatus.Dry, ReproductiveStatus.Open)]
-    [TestCase("FEMALE", ProductionStatus.Calf, ReproductiveStatus.NotApplicable)]
+    [TestCase(Sex.Male, ProductionStatus.Bull, ReproductiveStatus.NotApplicable)]
+    [TestCase(Sex.Male, ProductionStatus.Steer, ReproductiveStatus.NotApplicable)]
+    [TestCase(Sex.Female, ProductionStatus.Heifer, ReproductiveStatus.Open)]
+    [TestCase(Sex.Female, ProductionStatus.Milking, ReproductiveStatus.Pregnant)]
+    [TestCase(Sex.Female, ProductionStatus.Dry, ReproductiveStatus.Open)]
+    [TestCase(Sex.Female, ProductionStatus.Calf, ReproductiveStatus.NotApplicable)]
     public void ValidateStatusConsistency_ValidCombinations_DoesNotThrow(
-        string sex,
+        Sex sex,
         ProductionStatus prod,
         ReproductiveStatus repro
     )
     {
         // Act & Assert
+
         Should.NotThrow(() => AnimalValidator.ValidateStatusConsistency(sex, prod, repro));
     }
 
     [Test]
-    [TestCase("FEMALE", ProductionStatus.Bull, ReproductiveStatus.Open)]
-    [TestCase("FEMALE", ProductionStatus.Steer, ReproductiveStatus.Open)]
+    [TestCase(Sex.Female, ProductionStatus.Bull, ReproductiveStatus.Open)]
+    [TestCase(Sex.Female, ProductionStatus.Steer, ReproductiveStatus.Open)]
     public void ValidateStatusConsistency_MaleOnlyProductionStatusForFemale_ThrowsArgumentException(
-        string sex,
+        Sex sex,
         ProductionStatus prod,
         ReproductiveStatus repro
     )
     {
         // Act & Assert
+
         var ex = Should.Throw<ArgumentException>(() =>
             AnimalValidator.ValidateStatusConsistency(sex, prod, repro)
         );
+
         ex.Message.ShouldContain("only valid for MALE");
     }
 
     [Test]
-    [TestCase("MALE", ProductionStatus.Heifer, ReproductiveStatus.NotApplicable)]
-    [TestCase("MALE", ProductionStatus.Milking, ReproductiveStatus.NotApplicable)]
+    [TestCase(Sex.Male, ProductionStatus.Heifer, ReproductiveStatus.NotApplicable)]
+    [TestCase(Sex.Male, ProductionStatus.Milking, ReproductiveStatus.NotApplicable)]
     public void ValidateStatusConsistency_FemaleOnlyProductionStatusForMale_ThrowsArgumentException(
-        string sex,
+        Sex sex,
         ProductionStatus prod,
         ReproductiveStatus repro
     )
     {
         // Act & Assert
+
         var ex = Should.Throw<ArgumentException>(() =>
             AnimalValidator.ValidateStatusConsistency(sex, prod, repro)
         );
+
         ex.Message.ShouldContain("only valid for FEMALE");
     }
 
@@ -60,13 +65,15 @@ public class AnimalValidatorTests
     public void ValidateStatusConsistency_MalePregnant_ThrowsArgumentException()
     {
         // Act & Assert
+
         var ex = Should.Throw<ArgumentException>(() =>
             AnimalValidator.ValidateStatusConsistency(
-                "MALE",
+                Sex.Male,
                 ProductionStatus.Bull,
                 ReproductiveStatus.Pregnant
             )
         );
+
         ex.Message.ShouldContain("ReproductiveStatus set to NotApplicable");
     }
 
@@ -74,9 +81,10 @@ public class AnimalValidatorTests
     public void ValidateStatusConsistency_FemalePregnantProductionStatusCheck_DoesNotThrowIfFemale()
     {
         // Act & Assert
+
         Should.NotThrow(() =>
             AnimalValidator.ValidateStatusConsistency(
-                "FEMALE",
+                Sex.Female,
                 ProductionStatus.Heifer,
                 ReproductiveStatus.Pregnant
             )

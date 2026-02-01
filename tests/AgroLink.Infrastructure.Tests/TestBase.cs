@@ -2,6 +2,7 @@ using AgroLink.Application.Common.Services;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
@@ -124,7 +125,7 @@ public abstract class TestBase
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
-            Sex = "Female",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = lotId,
             CreatedAt = DateTime.UtcNow,

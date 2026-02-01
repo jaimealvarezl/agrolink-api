@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
@@ -137,7 +138,7 @@ public class AnimalRepositoryTests : TestBase
             Name = "Test Animal",
             Color = "Brown",
             Breed = "Holstein",
-            Sex = "Female",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
             LotId = lot.Id,
             CreatedAt = DateTime.UtcNow,
@@ -210,7 +211,7 @@ public class AnimalRepositoryTests : TestBase
             Name = "Child 1",
             Color = "Brown",
             Breed = "Holstein",
-            Sex = "Female",
+            Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddMonths(-6),
             LotId = lot.Id,
             MotherId = mother.Id,
@@ -225,7 +226,7 @@ public class AnimalRepositoryTests : TestBase
             Name = "Child 2",
             Color = "Black",
             Breed = "Holstein",
-            Sex = "Male",
+            Sex = Sex.Male,
             BirthDate = DateTime.UtcNow.AddMonths(-3),
             LotId = lot.Id,
             MotherId = mother.Id,
