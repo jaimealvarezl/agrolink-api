@@ -6,4 +6,5 @@ public enum LifeStatus
     Sold,
     Dead,
     Missing,
+    Deleted,
 }

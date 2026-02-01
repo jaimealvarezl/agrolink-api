@@ -51,10 +51,12 @@ public class CreateAnimalDto
 
 public class UpdateAnimalDto
 {
-    public string? Name { get; set; }
+    public string? Cuia { get; set; }
     public string? TagVisual { get; set; }
+    public string? Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
+    public string? Sex { get; set; }
 
     public string? LifeStatus { get; set; }
     public string? ProductionStatus { get; set; }
@@ -62,6 +64,7 @@ public class UpdateAnimalDto
     public string? ReproductiveStatus { get; set; }
 
     public DateTime? BirthDate { get; set; }
+    public int? LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
     public List<AnimalOwnerDto> Owners { get; set; } = new();

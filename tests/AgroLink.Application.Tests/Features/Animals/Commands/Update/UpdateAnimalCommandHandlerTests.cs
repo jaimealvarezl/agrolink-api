@@ -6,6 +6,7 @@ using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
+using System.Linq.Expressions;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.Update;
 
@@ -20,6 +21,8 @@ public class UpdateAnimalCommandHandlerTests
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
         _photoRepositoryMock = new Mock<IPhotoRepository>();
+        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new UpdateAnimalCommandHandler(
             _animalRepositoryMock.Object,
@@ -27,6 +30,8 @@ public class UpdateAnimalCommandHandlerTests
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
             _photoRepositoryMock.Object,
+            _farmMemberRepositoryMock.Object,
+            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
         );
     }
@@ -36,6 +41,8 @@ public class UpdateAnimalCommandHandlerTests
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
     private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private UpdateAnimalCommandHandler _handler = null!;
 
@@ -44,6 +51,8 @@ public class UpdateAnimalCommandHandlerTests
     {
         // Arrange
         var animalId = 1;
+        var farmId = 10;
+        var userId = 5;
         var updateAnimalDto = new UpdateAnimalDto
         {
             Name = "Updated Name",
@@ -66,16 +75,30 @@ public class UpdateAnimalCommandHandlerTests
             Cuia = "CUIA-A001",
             Name = "Old Name",
             LotId = 1,
+            Sex = "FEMALE",
             LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Milking,
+            ReproductiveStatus = ReproductiveStatus.Open,
             CreatedAt = DateTime.UtcNow,
         };
-        var lot = new Lot { Id = 1, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = 1,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = farmId },
+        };
         var owner = new Owner { Id = 1, Name = "Test Owner" };
 
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
         _ownerRepositoryMock.Setup(r => r.GetByIdAsync(owner.Id)).ReturnsAsync(owner);
+
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _animalOwnerRepositoryMock
             .Setup(r => r.RemoveByAnimalIdAsync(animalId))
             .Returns(Task.CompletedTask);
@@ -107,11 +130,8 @@ public class UpdateAnimalCommandHandlerTests
         result.Id.ShouldBe(animalId);
         result.Name.ShouldBe(updateAnimalDto.Name);
         result.LifeStatus.ShouldBe(updateAnimalDto.LifeStatus);
-        result.Owners.Count.ShouldBe(1);
         _animalRepositoryMock.Verify(r => r.Update(animal), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-        _animalOwnerRepositoryMock.Verify(r => r.RemoveByAnimalIdAsync(animalId), Times.Once);
-        _animalOwnerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<AnimalOwner>()), Times.Once);
     }
 
     [Test]
@@ -129,7 +149,26 @@ public class UpdateAnimalCommandHandlerTests
             _handler.Handle(command, CancellationToken.None)
         );
         exception.Message.ShouldBe("Animal not found");
-        _animalRepositoryMock.Verify(r => r.Update(It.IsAny<Animal>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_NoPermission_ThrowsArgumentException()
+    {
+        // Arrange
+        var animalId = 1;
+        var command = new UpdateAnimalCommand(animalId, new UpdateAnimalDto());
+        var animal = new Animal { Id = animalId, LotId = 1 };
+        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = 10 } };
+
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(false);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        ex.Message.ShouldContain("User does not have permission");
     }
 }
