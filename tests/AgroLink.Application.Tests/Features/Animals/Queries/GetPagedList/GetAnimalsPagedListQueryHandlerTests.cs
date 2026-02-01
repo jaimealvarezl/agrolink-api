@@ -10,9 +10,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetPagedList;
 [TestFixture]
 public class GetAnimalsPagedListQueryHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private GetAnimalsPagedListQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -20,20 +17,14 @@ public class GetAnimalsPagedListQueryHandlerTests
         _handler = new GetAnimalsPagedListQueryHandler(_animalRepositoryMock.Object);
     }
 
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private GetAnimalsPagedListQueryHandler _handler = null!;
+
     [Test]
     public async Task Handle_WithFilters_ReturnsFilteredPagedResult()
     {
         // Arrange
-        var query = new GetAnimalsPagedListQuery(
-            FarmId: 1,
-            Page: 1,
-            PageSize: 10,
-            LotId: 2,
-            SearchTerm: "Test",
-            IsSick: true,
-            IsPregnant: true,
-            IsMissing: false
-        );
+        var query = new GetAnimalsPagedListQuery(1, 1, 10, 2, "Test", true, true, false);
 
         var animals = new List<Animal>
         {
@@ -44,21 +35,23 @@ public class GetAnimalsPagedListQueryHandlerTests
                 Name = "TestCow",
                 Lot = new Lot { Name = "Lot A" },
                 HealthStatus = HealthStatus.Sick,
-                ReproductiveStatus = ReproductiveStatus.Pregnant
-            }
+                ReproductiveStatus = ReproductiveStatus.Pregnant,
+            },
         };
 
         _animalRepositoryMock
-            .Setup(r => r.GetPagedListAsync(
-                query.FarmId,
-                query.Page,
-                query.PageSize,
-                query.LotId,
-                query.SearchTerm,
-                query.IsSick,
-                query.IsPregnant,
-                query.IsMissing
-            ))
+            .Setup(r =>
+                r.GetPagedListAsync(
+                    query.FarmId,
+                    query.Page,
+                    query.PageSize,
+                    query.LotId,
+                    query.SearchTerm,
+                    query.IsSick,
+                    query.IsPregnant,
+                    query.IsMissing
+                )
+            )
             .ReturnsAsync((animals, 1));
 
         // Act
@@ -74,16 +67,20 @@ public class GetAnimalsPagedListQueryHandlerTests
         dto.IsPregnant.ShouldBeTrue();
         dto.IsMissing.ShouldBeFalse();
         dto.LotName.ShouldBe("Lot A");
-        
-        _animalRepositoryMock.Verify(r => r.GetPagedListAsync(
-             query.FarmId,
-             query.Page,
-             query.PageSize,
-             query.LotId,
-             query.SearchTerm,
-             query.IsSick,
-             query.IsPregnant,
-             query.IsMissing
-        ), Times.Once);
+
+        _animalRepositoryMock.Verify(
+            r =>
+                r.GetPagedListAsync(
+                    query.FarmId,
+                    query.Page,
+                    query.PageSize,
+                    query.LotId,
+                    query.SearchTerm,
+                    query.IsSick,
+                    query.IsPregnant,
+                    query.IsMissing
+                ),
+            Times.Once
+        );
     }
 }

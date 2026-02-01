@@ -1,6 +1,5 @@
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Domain.Entities;
-using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -10,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetDetail;
 [TestFixture]
 public class GetAnimalDetailQueryHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private GetAnimalDetailQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _handler = new GetAnimalDetailQueryHandler(_animalRepositoryMock.Object);
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private GetAnimalDetailQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingAnimal_ReturnsDetailDto()
@@ -37,17 +36,16 @@ public class GetAnimalDetailQueryHandlerTests
             Father = new Animal { TagVisual = "F1", Name = "Dad" },
             AnimalOwners = new List<AnimalOwner>
             {
-                new() { Owner = new Owner { Name = "John Doe" }, SharePercent = 100 }
+                new()
+                {
+                    Owner = new Owner { Name = "John Doe" },
+                    SharePercent = 100,
+                },
             },
-            Photos = new List<Photo>
-            {
-                new() { UriRemote = "http://example.com/photo.jpg" }
-            }
+            Photos = new List<Photo> { new() { UriRemote = "http://example.com/photo.jpg" } },
         };
 
-        _animalRepositoryMock
-            .Setup(r => r.GetAnimalDetailsAsync(1))
-            .ReturnsAsync(animal);
+        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(1)).ReturnsAsync(animal);
 
         // Act
         var result = await _handler.Handle(new GetAnimalDetailQuery(1), CancellationToken.None);
@@ -66,12 +64,10 @@ public class GetAnimalDetailQueryHandlerTests
     [Test]
     public async Task Handle_NonExistingAnimal_ReturnsNull()
     {
-         _animalRepositoryMock
-            .Setup(r => r.GetAnimalDetailsAsync(99))
-            .ReturnsAsync((Animal?)null);
-            
-         var result = await _handler.Handle(new GetAnimalDetailQuery(99), CancellationToken.None);
-         
-         result.ShouldBeNull();
+        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(99)).ReturnsAsync((Animal?)null);
+
+        var result = await _handler.Handle(new GetAnimalDetailQuery(99), CancellationToken.None);
+
+        result.ShouldBeNull();
     }
 }

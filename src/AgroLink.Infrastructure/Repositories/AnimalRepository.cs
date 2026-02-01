@@ -73,7 +73,7 @@ public class AnimalRepository(AgroLinkDbContext context)
     {
         var query = _dbSet
             .Include(a => a.Lot)
-            .ThenInclude(l => l.Paddock)
+                .ThenInclude(l => l.Paddock)
             .Include(a => a.Photos)
             .Where(a => a.Lot.Paddock.FarmId == farmId);
 
@@ -87,8 +87,14 @@ public class AnimalRepository(AgroLinkDbContext context)
             var term = searchTerm.ToLower();
             query = query.Where(a =>
                 a.TagVisual.Contains(term, StringComparison.InvariantCultureIgnoreCase)
-                || (a.Name != null && a.Name.Contains(term, StringComparison.InvariantCultureIgnoreCase))
-                || (a.Cuia != null && a.Cuia.Contains(term, StringComparison.InvariantCultureIgnoreCase))
+                || (
+                    a.Name != null
+                    && a.Name.Contains(term, StringComparison.InvariantCultureIgnoreCase)
+                )
+                || (
+                    a.Cuia != null
+                    && a.Cuia.Contains(term, StringComparison.InvariantCultureIgnoreCase)
+                )
             );
         }
 
@@ -104,7 +110,7 @@ public class AnimalRepository(AgroLinkDbContext context)
 
         if (isMissing)
         {
-            query = query.Where(a  => a.LifeStatus == LifeStatus.Missing);
+            query = query.Where(a => a.LifeStatus == LifeStatus.Missing);
         }
 
         var totalCount = await query.CountAsync();
@@ -125,7 +131,7 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.Mother)
             .Include(a => a.Father)
             .Include(a => a.AnimalOwners)
-            .ThenInclude(ao => ao.Owner)
+                .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
             .FirstOrDefaultAsync(a => a.Id == id);
     }

@@ -51,7 +51,7 @@ public class GetAnimalDetailQueryHandler(IAnimalRepository animalRepository)
                     SharePercent = ao.SharePercent,
                 })
                 .ToList(),
-            PrimaryPhotoUrl = animal.Photos.FirstOrDefault()?.UriRemote
+            PrimaryPhotoUrl = animal.Photos.FirstOrDefault()?.UriRemote,
         };
     }
 }

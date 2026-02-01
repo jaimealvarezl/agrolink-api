@@ -1,5 +1,3 @@
-using AgroLink.Domain.Enums;
-
 namespace AgroLink.Application.Features.Animals.DTOs;
 
 public class AnimalListDto
@@ -9,7 +7,7 @@ public class AnimalListDto
     public string? Name { get; set; }
     public string? PhotoUrl { get; set; }
     public required string LotName { get; set; }
-    
+
     // Status Flags
     public bool IsSick { get; set; }
     public bool IsPregnant { get; set; }

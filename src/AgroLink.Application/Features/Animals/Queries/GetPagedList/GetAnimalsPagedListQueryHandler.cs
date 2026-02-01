@@ -34,14 +34,9 @@ public class GetAnimalsPagedListQueryHandler(IAnimalRepository animalRepository)
             LotName = a.Lot.Name,
             IsSick = a.HealthStatus == HealthStatus.Sick,
             IsPregnant = a.ReproductiveStatus == ReproductiveStatus.Pregnant,
-            IsMissing = a.LifeStatus == LifeStatus.Missing
+            IsMissing = a.LifeStatus == LifeStatus.Missing,
         });
 
-        return new PagedResult<AnimalListDto>(
-            dtos,
-            totalCount,
-            request.Page,
-            request.PageSize
-        );
+        return new PagedResult<AnimalListDto>(dtos, totalCount, request.Page, request.PageSize);
     }
 }

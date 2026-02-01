@@ -304,7 +304,14 @@ public class AnimalRepositoryTests : TestBase
         var owner = await CreateTestOwnerAsync(_context, "Owner1");
         child.AnimalOwners.Add(new AnimalOwner { OwnerId = owner.Id, SharePercent = 50 });
 
-        child.Photos.Add(new Photo { UriRemote = "http://photo.com", EntityType = "ANIMAL", UriLocal = "local" });
+        child.Photos.Add(
+            new Photo
+            {
+                UriRemote = "http://photo.com",
+                EntityType = "ANIMAL",
+                UriLocal = "local",
+            }
+        );
 
         await _context.SaveChangesAsync();
 

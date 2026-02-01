@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.Commands.Delete;
 using AgroLink.Application.Features.Animals.Commands.Move;
@@ -9,7 +10,6 @@ using AgroLink.Application.Features.Animals.Queries.GetByLot;
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
-using AgroLink.Application.Common.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,7 +27,8 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("search")]
     public async Task<ActionResult<PagedResult<AnimalListDto>>> GetPagedList(
-        [FromQuery] GetAnimalsPagedListQuery query)
+        [FromQuery] GetAnimalsPagedListQuery query
+    )
     {
         var result = await mediator.Send(query);
         return Ok(result);
