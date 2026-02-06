@@ -84,16 +84,15 @@ public class AnimalRepository(AgroLinkDbContext context)
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = searchTerm.ToLower();
             query = query.Where(a =>
-                a.TagVisual.Contains(term, StringComparison.InvariantCultureIgnoreCase)
+                a.TagVisual.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
                 || (
                     a.Name != null
-                    && a.Name.Contains(term, StringComparison.InvariantCultureIgnoreCase)
+                    && a.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
                 )
                 || (
                     a.Cuia != null
-                    && a.Cuia.Contains(term, StringComparison.InvariantCultureIgnoreCase)
+                    && a.Cuia.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
                 )
             );
         }

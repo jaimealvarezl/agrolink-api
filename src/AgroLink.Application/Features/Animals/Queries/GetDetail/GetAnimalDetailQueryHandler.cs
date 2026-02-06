@@ -41,8 +41,8 @@ public class GetAnimalDetailQueryHandler(IAnimalRepository animalRepository)
             ProductionStatus = animal.ProductionStatus,
             HealthStatus = animal.HealthStatus,
             ReproductiveStatus = animal.ReproductiveStatus,
-            MotherName = animal.Mother?.Name ?? animal.Mother?.TagVisual,
-            FatherName = animal.Father?.Name ?? animal.Father?.TagVisual,
+            MotherName = animal.Mother is { } mother ? mother.Name ?? mother.TagVisual : null,
+            FatherName = animal.Father is { } father ? father.Name ?? father.TagVisual : null,
             Owners = animal
                 .AnimalOwners.Select(ao => new AnimalOwnerDto
                 {
