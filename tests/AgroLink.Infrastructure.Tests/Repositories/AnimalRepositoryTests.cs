@@ -284,6 +284,16 @@ public class AnimalRepositoryTests : TestBase
         var searchResult = await _repository.GetPagedListAsync(farm.Id, 1, 10, searchTerm: "A3");
         searchResult.Items.Count().ShouldBe(1);
         searchResult.Items.First().TagVisual.ShouldBe("A3");
+
+        // Act - Case Insensitive Search
+        var caseInsensitiveResult = await _repository.GetPagedListAsync(
+            farm.Id,
+            1,
+            10,
+            searchTerm: "a3"
+        );
+        caseInsensitiveResult.Items.Count().ShouldBe(1);
+        caseInsensitiveResult.Items.First().TagVisual.ShouldBe("A3");
     }
 
     [Test]
