@@ -24,7 +24,7 @@ public class GetAnimalsPagedListQueryHandlerTests
     public async Task Handle_WithFilters_ReturnsFilteredPagedResult()
     {
         // Arrange
-        var query = new GetAnimalsPagedListQuery(1, 1, 10, 2, "Test", true, true, false);
+        var query = new GetAnimalsPagedListQuery(1, 1, 10, 2, "Test", true, true);
 
         var animals = new List<Animal>
         {

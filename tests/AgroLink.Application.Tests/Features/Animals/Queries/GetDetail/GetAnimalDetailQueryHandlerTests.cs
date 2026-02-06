@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Shouldly;
@@ -69,5 +70,55 @@ public class GetAnimalDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAnimalDetailQuery(99), CancellationToken.None);
 
         result.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Handle_AnimalBornAlmostAMonthAgo_ReturnsZeroMonths()
+    {
+        // Arrange
+        // Born 20 days ago (should be 0 months old)
+        var birthDate = DateTime.UtcNow.AddDays(-20);
+        var animal = new Animal
+        {
+            Id = 2,
+            TagVisual = "Calf",
+            BirthDate = birthDate,
+            Sex = Sex.Female,
+            Lot = new Lot { Name = "Nursery" },
+        };
+
+        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(2)).ReturnsAsync(animal);
+
+        // Act
+        var result = await _handler.Handle(new GetAnimalDetailQuery(2), CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.AgeInMonths.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task Handle_AnimalBornOneMonthAndOneDayAgo_ReturnsOneMonth()
+    {
+        // Arrange
+        // Born 1 month and 1 day ago
+        var birthDate = DateTime.UtcNow.AddMonths(-1).AddDays(-1);
+        var animal = new Animal
+        {
+            Id = 3,
+            TagVisual = "Calf2",
+            BirthDate = birthDate,
+            Sex = Sex.Male,
+            Lot = new Lot { Name = "Nursery" },
+        };
+
+        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(3)).ReturnsAsync(animal);
+
+        // Act
+        var result = await _handler.Handle(new GetAnimalDetailQuery(3), CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.AgeInMonths.ShouldBe(1);
     }
 }
