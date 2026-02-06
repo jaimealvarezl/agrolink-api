@@ -19,10 +19,14 @@ public class GetAnimalDetailQueryHandler(IAnimalRepository animalRepository)
             return null;
         }
 
+        var now = DateTime.UtcNow;
         var ageInMonths =
-            (DateTime.UtcNow.Year - animal.BirthDate.Year) * 12
-            + DateTime.UtcNow.Month
-            - animal.BirthDate.Month;
+            (now.Year - animal.BirthDate.Year) * 12 + now.Month - animal.BirthDate.Month;
+
+        if (now.Day < animal.BirthDate.Day)
+        {
+            ageInMonths--;
+        }
 
         return new AnimalDetailDto
         {
