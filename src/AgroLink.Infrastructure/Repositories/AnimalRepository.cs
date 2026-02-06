@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -57,5 +58,80 @@ public class AnimalRepository(AgroLinkDbContext context)
         }
 
         return !await query.AnyAsync();
+    }
+
+    public async Task<(IEnumerable<Animal> Items, int TotalCount)> GetPagedListAsync(
+        int farmId,
+        int page,
+        int pageSize,
+        int? lotId = null,
+        string? searchTerm = null,
+        bool isSick = false,
+        bool isPregnant = false,
+        bool isMissing = false
+    )
+    {
+        var query = _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
+            .Include(a => a.Photos)
+            .Where(a => a.Lot.Paddock.FarmId == farmId);
+
+        if (lotId.HasValue)
+        {
+            query = query.Where(a => a.LotId == lotId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(a =>
+                a.TagVisual.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
+                || (
+                    a.Name != null
+                    && a.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
+                )
+                || (
+                    a.Cuia != null
+                    && a.Cuia.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
+                )
+            );
+        }
+
+        if (isSick)
+        {
+            query = query.Where(a => a.HealthStatus == HealthStatus.Sick);
+        }
+
+        if (isPregnant)
+        {
+            query = query.Where(a => a.ReproductiveStatus == ReproductiveStatus.Pregnant);
+        }
+
+        if (isMissing)
+        {
+            query = query.Where(a => a.LifeStatus == LifeStatus.Missing);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderBy(a => a.TagVisual)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<Animal?> GetAnimalDetailsAsync(int id)
+    {
+        return await _dbSet
+            .Include(a => a.Lot)
+            .Include(a => a.Mother)
+            .Include(a => a.Father)
+            .Include(a => a.AnimalOwners)
+                .ThenInclude(ao => ao.Owner)
+            .Include(a => a.Photos)
+            .FirstOrDefaultAsync(a => a.Id == id);
     }
 }

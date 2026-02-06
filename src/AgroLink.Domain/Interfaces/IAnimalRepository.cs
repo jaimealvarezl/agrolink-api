@@ -10,4 +10,17 @@ public interface IAnimalRepository : IRepository<Animal>
     Task<IEnumerable<Animal>> GetChildrenAsync(int parentId);
     Task<Animal?> GetByCuiaAsync(string cuia);
     Task<bool> IsCuiaUniqueInFarmAsync(string cuia, int farmId, int? excludeAnimalId = null);
+
+    Task<(IEnumerable<Animal> Items, int TotalCount)> GetPagedListAsync(
+        int farmId,
+        int page,
+        int pageSize,
+        int? lotId = null,
+        string? searchTerm = null,
+        bool isSick = false,
+        bool isPregnant = false,
+        bool isMissing = false
+    );
+
+    Task<Animal?> GetAnimalDetailsAsync(int id);
 }
