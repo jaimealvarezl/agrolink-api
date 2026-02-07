@@ -3,8 +3,8 @@ namespace AgroLink.Application.Features.Animals.DTOs;
 public class AnimalListDto
 {
     public required int Id { get; set; }
-    public required string TagVisual { get; set; }
-    public string? Name { get; set; }
+    public string? TagVisual { get; set; }
+    public required string Name { get; set; }
     public string? PhotoUrl { get; set; }
     public required string LotName { get; set; }
 

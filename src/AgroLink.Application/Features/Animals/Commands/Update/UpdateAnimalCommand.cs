@@ -4,6 +4,7 @@ using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -98,6 +99,9 @@ public class UpdateAnimalCommandHandler(
             animal.Cuia = dto.Cuia;
         }
 
+        var oldStatus = animal.LifeStatus;
+        var oldName = animal.Name;
+
         animal.Name = dto.Name ?? animal.Name;
         animal.TagVisual = dto.TagVisual ?? animal.TagVisual;
         animal.Color = dto.Color ?? animal.Color;
@@ -108,6 +112,27 @@ public class UpdateAnimalCommandHandler(
         animal.ProductionStatus = dto.ProductionStatus ?? animal.ProductionStatus;
         animal.HealthStatus = dto.HealthStatus ?? animal.HealthStatus;
         animal.ReproductiveStatus = dto.ReproductiveStatus ?? animal.ReproductiveStatus;
+
+        // Validate Name uniqueness if name changed OR if animal became active/missing
+        var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
+        var nameChanged = dto.Name != null && dto.Name != oldName;
+        var becameActive =
+            !activeStatuses.Contains(oldStatus) && activeStatuses.Contains(animal.LifeStatus);
+
+        if (nameChanged || becameActive)
+        {
+            var isUnique = await animalRepository.IsNameUniqueInFarmAsync(
+                animal.Name,
+                farmId,
+                animal.Id
+            );
+            if (!isUnique)
+            {
+                throw new ArgumentException(
+                    $"Animal with name '{animal.Name}' already exists in this Farm."
+                );
+            }
+        }
 
         // Validate consistency of the final state
         AnimalValidator.ValidateStatusConsistency(

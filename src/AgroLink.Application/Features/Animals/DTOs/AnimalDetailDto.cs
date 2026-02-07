@@ -5,9 +5,9 @@ namespace AgroLink.Application.Features.Animals.DTOs;
 public class AnimalDetailDto
 {
     public required int Id { get; set; }
-    public required string TagVisual { get; set; }
+    public string? TagVisual { get; set; }
     public string? Cuia { get; set; }
-    public string? Name { get; set; }
+    public required string Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required Sex Sex { get; set; }
