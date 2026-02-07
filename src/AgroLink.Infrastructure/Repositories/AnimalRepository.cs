@@ -71,7 +71,7 @@ public class AnimalRepository(AgroLinkDbContext context)
         var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
 
         var query = _dbSet.Where(a =>
-            a.Name == name
+            a.Name.ToLower() == name.ToLower()
             && a.Lot.Paddock.FarmId == farmId
             && activeStatuses.Contains(a.LifeStatus)
         );

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AgroLink.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateAnimalIdentityConstraints : Migration
+    public partial class UpdateAnimalIdentityFinal : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
