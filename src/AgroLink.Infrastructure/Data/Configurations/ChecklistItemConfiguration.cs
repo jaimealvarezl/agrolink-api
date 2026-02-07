@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -25,5 +26,7 @@ public class ChecklistItemConfiguration : IEntityTypeConfiguration<ChecklistItem
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => new { e.ChecklistId, e.AnimalId }).IsUnique();
+
+        builder.HasQueryFilter(e => e.Animal.LifeStatus != LifeStatus.Deleted);
     }
 }

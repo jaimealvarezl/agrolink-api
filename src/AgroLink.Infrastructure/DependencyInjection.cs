@@ -20,7 +20,10 @@ public static class DependencyInjection
     {
         // Database
         services.AddDbContext<AgroLinkDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+            options.UseNpgsql(
+                configuration.GetConnectionString("DefaultConnection"),
+                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+            )
         );
 
         // AWS S3 / MinIO Configuration

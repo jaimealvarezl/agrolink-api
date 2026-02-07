@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -22,5 +23,7 @@ public class AnimalOwnerConfiguration : IEntityTypeConfiguration<AnimalOwner>
             .WithMany(o => o.AnimalOwners)
             .HasForeignKey(e => e.OwnerId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(e => e.Animal.LifeStatus != LifeStatus.Deleted);
     }
 }
