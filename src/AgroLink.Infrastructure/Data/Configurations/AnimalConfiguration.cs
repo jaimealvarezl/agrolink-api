@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -43,6 +44,6 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
 
         builder.HasIndex(e => e.Name);
 
-        builder.HasQueryFilter(e => e.LifeStatus != AgroLink.Domain.Enums.LifeStatus.Deleted);
+        builder.HasQueryFilter(e => e.LifeStatus != LifeStatus.Deleted);
     }
 }

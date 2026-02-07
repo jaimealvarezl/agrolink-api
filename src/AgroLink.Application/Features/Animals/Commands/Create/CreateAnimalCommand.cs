@@ -68,7 +68,9 @@ public class CreateAnimalCommandHandler(
         var isNameUnique = await animalRepository.IsNameUniqueInFarmAsync(dto.Name, farmId);
         if (!isNameUnique)
         {
-            throw new ArgumentException($"Animal with name '{dto.Name}' already exists in this Farm.");
+            throw new ArgumentException(
+                $"Animal with name '{dto.Name}' already exists in this Farm."
+            );
         }
 
         // 6. Ensure at least one owner is provided

@@ -147,21 +147,37 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners = [new AnimalOwnerDto { OwnerId = 1, OwnerName = "Owner", SharePercent = 100 }]
+            Owners =
+            [
+                new AnimalOwnerDto
+                {
+                    OwnerId = 1,
+                    OwnerName = "Owner",
+                    SharePercent = 100,
+                },
+            ],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = farmId } };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
 
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock.Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>())).ReturnsAsync(true);
-        
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+
         _animalRepositoryMock
             .Setup(r => r.IsNameUniqueInFarmAsync("Existing Active Name", farmId, null))
             .ReturnsAsync(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
         ex.Message.ShouldContain("already exists in this Farm");
     }
 
@@ -181,22 +197,42 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners = [new AnimalOwnerDto { OwnerId = 1, OwnerName = "Owner", SharePercent = 100 }]
+            Owners =
+            [
+                new AnimalOwnerDto
+                {
+                    OwnerId = 1,
+                    OwnerName = "Owner",
+                    SharePercent = 100,
+                },
+            ],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
-        var lot = new Lot { Id = 1, Paddock = new Paddock { FarmId = farmId } };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
 
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock.Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>())).ReturnsAsync(true);
-        
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+
         // IsNameUniqueInFarmAsync will return true because the old animal is SOLD (not active/missing)
         _animalRepositoryMock
             .Setup(r => r.IsNameUniqueInFarmAsync("Old Name From Sold Animal", farmId, null))
             .ReturnsAsync(true);
-        
-        _animalRepositoryMock.Setup(r => r.IsCuiaUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())).ReturnsAsync(true);
-        _animalOwnerRepositoryMock.Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>())).ReturnsAsync(new List<AnimalOwner>());
+
+        _animalRepositoryMock
+            .Setup(r =>
+                r.IsCuiaUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
+            .ReturnsAsync(true);
+        _animalOwnerRepositoryMock
+            .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<AnimalOwner>());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -340,7 +376,9 @@ public class CreateAnimalCommandHandlerTests
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(true);
         _animalRepositoryMock
-            .Setup(r => r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>()))
+            .Setup(r =>
+                r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -380,7 +418,9 @@ public class CreateAnimalCommandHandlerTests
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(true);
         _animalRepositoryMock
-            .Setup(r => r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>()))
+            .Setup(r =>
+                r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
             .ReturnsAsync(true);
 
         // Act & Assert

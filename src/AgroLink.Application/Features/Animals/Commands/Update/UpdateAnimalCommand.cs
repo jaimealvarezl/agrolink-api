@@ -1,4 +1,3 @@
-using System.Linq;
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
@@ -116,8 +115,9 @@ public class UpdateAnimalCommandHandler(
 
         // Validate Name uniqueness if name changed OR if animal became active/missing
         var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
-        bool nameChanged = dto.Name != null && dto.Name != oldName;
-        bool becameActive = !activeStatuses.Contains(oldStatus) && activeStatuses.Contains(animal.LifeStatus);
+        var nameChanged = dto.Name != null && dto.Name != oldName;
+        var becameActive =
+            !activeStatuses.Contains(oldStatus) && activeStatuses.Contains(animal.LifeStatus);
 
         if (nameChanged || becameActive)
         {
