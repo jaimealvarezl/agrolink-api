@@ -7,8 +7,8 @@ public class AnimalDto
 {
     public required int Id { get; set; }
     public string? Cuia { get; set; }
-    public required string TagVisual { get; set; }
-    public string? Name { get; set; }
+    public string? TagVisual { get; set; }
+    public required string Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required Sex Sex { get; set; }
@@ -34,8 +34,8 @@ public class AnimalDto
 public class CreateAnimalDto
 {
     public string? Cuia { get; set; }
-    public required string TagVisual { get; set; }
-    public string? Name { get; set; }
+    public string? TagVisual { get; set; }
+    public required string Name { get; set; }
     public string? Color { get; set; }
     public string? Breed { get; set; }
     public required Sex Sex { get; set; }

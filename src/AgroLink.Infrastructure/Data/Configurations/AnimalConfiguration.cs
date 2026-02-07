@@ -11,9 +11,9 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Cuia).IsRequired(false).HasMaxLength(50);
-        builder.Property(e => e.TagVisual).IsRequired().HasMaxLength(50);
+        builder.Property(e => e.TagVisual).IsRequired(false).HasMaxLength(50);
 
-        builder.Property(e => e.Name).HasMaxLength(200);
+        builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Color).HasMaxLength(100);
         builder.Property(e => e.Breed).HasMaxLength(100);
         builder.Property(e => e.Sex).HasConversion<string>().HasMaxLength(10);
@@ -42,5 +42,7 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => e.Name);
+
+        builder.HasQueryFilter(e => e.LifeStatus != AgroLink.Domain.Enums.LifeStatus.Deleted);
     }
 }

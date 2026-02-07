@@ -50,7 +50,31 @@ public class AnimalRepository(AgroLinkDbContext context)
         int? excludeAnimalId = null
     )
     {
-        var query = _dbSet.Where(a => a.Cuia == cuia && a.Lot.Paddock.FarmId == farmId);
+        var query = _dbSet
+            .IgnoreQueryFilters()
+            .Where(a => a.Cuia == cuia && a.Lot.Paddock.FarmId == farmId);
+
+        if (excludeAnimalId.HasValue)
+        {
+            query = query.Where(a => a.Id != excludeAnimalId.Value);
+        }
+
+        return !await query.AnyAsync();
+    }
+
+    public async Task<bool> IsNameUniqueInFarmAsync(
+        string name,
+        int farmId,
+        int? excludeAnimalId = null
+    )
+    {
+        var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
+
+        var query = _dbSet.Where(a =>
+            a.Name == name
+            && a.Lot.Paddock.FarmId == farmId
+            && activeStatuses.Contains(a.LifeStatus)
+        );
 
         if (excludeAnimalId.HasValue)
         {
@@ -85,11 +109,11 @@ public class AnimalRepository(AgroLinkDbContext context)
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(a =>
-                a.TagVisual.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
-                || (
-                    a.Name != null
-                    && a.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
+                (
+                    a.TagVisual != null
+                    && a.TagVisual.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
                 )
+                || a.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
                 || (
                     a.Cuia != null
                     && a.Cuia.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
@@ -115,7 +139,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         var totalCount = await query.CountAsync();
 
         var items = await query
-            .OrderBy(a => a.TagVisual)
+            .OrderBy(a => a.Name)
+            .ThenBy(a => a.TagVisual)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

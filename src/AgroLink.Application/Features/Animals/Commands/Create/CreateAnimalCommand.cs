@@ -64,7 +64,14 @@ public class CreateAnimalCommandHandler(
             }
         }
 
-        // 5. Ensure at least one owner is provided
+        // 5. Ensure Name is unique within the Farm
+        var isNameUnique = await animalRepository.IsNameUniqueInFarmAsync(dto.Name, farmId);
+        if (!isNameUnique)
+        {
+            throw new ArgumentException($"Animal with name '{dto.Name}' already exists in this Farm.");
+        }
+
+        // 6. Ensure at least one owner is provided
         if (dto.Owners == null || dto.Owners.Count == 0)
         {
             throw new ArgumentException("At least one owner is required for an animal.");

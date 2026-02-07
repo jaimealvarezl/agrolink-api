@@ -10,12 +10,12 @@ public class Animal
     [MaxLength(50)]
     public string? Cuia { get; set; } // Código Único de Identificación Animal - Optional/Nullable
 
-    [Required]
     [MaxLength(50)]
-    public string TagVisual { get; set; } = string.Empty;
+    public string? TagVisual { get; set; }
 
+    [Required]
     [MaxLength(200)]
-    public string? Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [MaxLength(100)]
     public string? Color { get; set; }

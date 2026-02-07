@@ -98,7 +98,22 @@ public class UpdateAnimalCommandHandler(
             animal.Cuia = dto.Cuia;
         }
 
-        animal.Name = dto.Name ?? animal.Name;
+        // Validate Name uniqueness if changing
+        if (!string.IsNullOrEmpty(dto.Name) && dto.Name != animal.Name)
+        {
+            var isUnique = await animalRepository.IsNameUniqueInFarmAsync(
+                dto.Name,
+                farmId,
+                animal.Id
+            );
+            if (!isUnique)
+            {
+                throw new ArgumentException($"Animal with name '{dto.Name}' already exists in this Farm.");
+            }
+
+            animal.Name = dto.Name;
+        }
+
         animal.TagVisual = dto.TagVisual ?? animal.TagVisual;
         animal.Color = dto.Color ?? animal.Color;
         animal.Breed = dto.Breed ?? animal.Breed;
