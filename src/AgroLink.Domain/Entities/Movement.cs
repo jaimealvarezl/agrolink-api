@@ -10,18 +10,15 @@ public class Movement
     [MaxLength(20)]
     public string EntityType { get; set; } = string.Empty; // LOT, ANIMAL
 
-    [Required]
     public int EntityId { get; set; }
     public int? FromId { get; set; } // Previous location
     public int? ToId { get; set; } // New location
 
-    [Required]
     public DateTime At { get; set; } = DateTime.UtcNow;
 
     [MaxLength(500)]
     public string? Reason { get; set; }
 
-    [Required]
     public int UserId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
