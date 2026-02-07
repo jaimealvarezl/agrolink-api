@@ -15,6 +15,7 @@ public class Paddock
     [MaxLength(50)]
     public string? AreaType { get; set; }
 
+    [Required]
     public int FarmId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

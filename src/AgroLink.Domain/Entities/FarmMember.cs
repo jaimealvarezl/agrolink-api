@@ -7,9 +7,11 @@ public class FarmMember
 {
     public int Id { get; set; }
 
+    [Required]
     public int FarmId { get; set; }
     public virtual Farm Farm { get; set; } = null!;
 
+    [Required]
     public int UserId { get; set; }
     public virtual User User { get; set; } = null!;
 

@@ -16,6 +16,7 @@ public class Farm
     [MaxLength(20)]
     public string? CUE { get; set; }
 
+    [Required]
     public int OwnerId { get; set; }
     public virtual Owner? Owner { get; set; }
 

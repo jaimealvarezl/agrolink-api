@@ -26,12 +26,22 @@ public class Animal
     [Required]
     public Sex Sex { get; set; }
 
+    [Required]
     public LifeStatus LifeStatus { get; set; } = LifeStatus.Active;
+
+    [Required]
     public ProductionStatus ProductionStatus { get; set; } = ProductionStatus.Calf;
+
+    [Required]
     public HealthStatus HealthStatus { get; set; } = HealthStatus.Healthy;
+
+    [Required]
     public ReproductiveStatus ReproductiveStatus { get; set; } = ReproductiveStatus.NotApplicable;
 
+    [Required]
     public DateTime BirthDate { get; set; }
+
+    [Required]
     public int LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
