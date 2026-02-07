@@ -1,11 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AgroLink.Application.Features.Animals.DTOs;
 
 public class AnimalListDto
 {
     public required int Id { get; set; }
     public string? TagVisual { get; set; }
+
+    [Required]
     public required string Name { get; set; }
     public string? PhotoUrl { get; set; }
+
+    [Required]
     public required string LotName { get; set; }
 
     // Status Flags
