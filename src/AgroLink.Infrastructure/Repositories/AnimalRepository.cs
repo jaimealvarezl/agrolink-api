@@ -52,7 +52,10 @@ public class AnimalRepository(AgroLinkDbContext context)
     {
         var query = _dbSet
             .IgnoreQueryFilters()
-            .Where(a => a.Cuia == cuia && a.Lot.Paddock.FarmId == farmId);
+            .Where(a =>
+                string.Equals(a.Cuia, cuia, StringComparison.OrdinalIgnoreCase)
+                && a.Lot.Paddock.FarmId == farmId
+            );
 
         if (excludeAnimalId.HasValue)
         {
@@ -71,7 +74,7 @@ public class AnimalRepository(AgroLinkDbContext context)
         var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
 
         var query = _dbSet.Where(a =>
-            a.Name.ToLower() == name.ToLower()
+            string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase)
             && a.Lot.Paddock.FarmId == farmId
             && activeStatuses.Contains(a.LifeStatus)
         );
