@@ -239,14 +239,9 @@ public class AnimalsControllerTests
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
             LotId = 1,
-            Owners = new List<AnimalOwnerDto>
+            Owners = new List<AnimalOwnerCreateDto>
             {
-                new()
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner 1",
-                    SharePercent = 100,
-                },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
 
@@ -303,14 +298,9 @@ public class AnimalsControllerTests
             Breed = "Angus",
             LifeStatus = LifeStatus.Active,
             BirthDate = DateTime.UtcNow.AddYears(-3),
-            Owners = new List<AnimalOwnerDto>
+            Owners = new List<AnimalOwnerCreateDto>
             {
-                new()
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner 1",
-                    SharePercent = 100,
-                },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
 
@@ -363,14 +353,9 @@ public class AnimalsControllerTests
         var updateDto = new UpdateAnimalDto
         {
             Name = "Updated Animal",
-            Owners = new List<AnimalOwnerDto>
+            Owners = new List<AnimalOwnerCreateDto>
             {
-                new()
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner 1",
-                    SharePercent = 100,
-                },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
 

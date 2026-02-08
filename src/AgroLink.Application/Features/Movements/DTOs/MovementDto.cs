@@ -11,6 +11,7 @@ public class MovementDto
 
     [Required]
     public required int EntityId { get; set; }
+
     public string? EntityName { get; set; }
     public int? FromId { get; set; }
     public string? FromName { get; set; }
@@ -19,6 +20,7 @@ public class MovementDto
 
     [Required]
     public required DateTime At { get; set; }
+
     public string? Reason { get; set; }
 
     [Required]
@@ -38,10 +40,12 @@ public class CreateMovementDto
 
     [Required]
     public required int EntityId { get; set; }
+
     public int? FromId { get; set; }
     public int? ToId { get; set; }
 
     [Required]
     public DateTime At { get; set; } = DateTime.UtcNow;
+
     public string? Reason { get; set; }
 }

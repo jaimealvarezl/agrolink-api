@@ -8,6 +8,7 @@ public class OwnerDto
 
     [Required]
     public required string Name { get; set; }
+
     public string? Phone { get; set; }
 
     [Required]

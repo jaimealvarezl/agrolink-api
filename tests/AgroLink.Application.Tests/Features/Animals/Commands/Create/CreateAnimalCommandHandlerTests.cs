@@ -65,14 +65,9 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Heifer,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.Open,
-            Owners = new List<AnimalOwnerDto>
+            Owners = new List<AnimalOwnerCreateDto>
             {
-                new()
-                {
-                    OwnerId = 1,
-                    OwnerName = "Test Owner",
-                    SharePercent = 100,
-                },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -150,15 +145,7 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners =
-            [
-                new AnimalOwnerDto
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner",
-                    SharePercent = 100,
-                },
-            ],
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 }],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -200,15 +187,7 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners =
-            [
-                new AnimalOwnerDto
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner",
-                    SharePercent = 100,
-                },
-            ],
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 }],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -451,5 +430,49 @@ public class CreateAnimalCommandHandlerTests
             Times.Once
         );
         _farmRepositoryMock.Verify(r => r.GetByIdAsync(farmId), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_EmptyOwnersList_FarmNotFound_ThrowsArgumentException()
+    {
+        // Arrange
+        var farmId = 10;
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            TagVisual = "V001",
+            Name = "Test Animal",
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+            Owners = [], // Empty list
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
+
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync((Farm?)null);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r =>
+                r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain($"Farm with ID {farmId} not found");
     }
 }

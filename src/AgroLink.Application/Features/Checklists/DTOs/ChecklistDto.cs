@@ -12,6 +12,7 @@ public class ChecklistDto
 
     [Required]
     public required int ScopeId { get; set; }
+
     public string? ScopeName { get; set; }
 
     [Required]
@@ -22,6 +23,7 @@ public class ChecklistDto
 
     [Required]
     public required string UserName { get; set; }
+
     public string? Notes { get; set; }
 
     [Required]
@@ -44,6 +46,7 @@ public class CreateChecklistDto
 
     [Required]
     public DateTime Date { get; set; } = DateTime.UtcNow;
+
     public string? Notes { get; set; }
 
     [Required]
@@ -56,6 +59,7 @@ public class ChecklistItemDto
 
     [Required]
     public required int AnimalId { get; set; }
+
     public string? AnimalCuia { get; set; }
     public string? AnimalName { get; set; }
 
@@ -64,6 +68,7 @@ public class ChecklistItemDto
 
     [Required]
     public required string Condition { get; set; }
+
     public string? Notes { get; set; }
 }
 
@@ -77,5 +82,6 @@ public class CreateChecklistItemDto
 
     [Required]
     public string Condition { get; set; } = "OK";
+
     public string? Notes { get; set; }
 }

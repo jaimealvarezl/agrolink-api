@@ -9,6 +9,7 @@ public class AnimalListDto
 
     [Required]
     public required string Name { get; set; }
+
     public string? PhotoUrl { get; set; }
 
     [Required]

@@ -9,6 +9,7 @@ public class UploadPhotoRequest
 
     [Required]
     public required int EntityId { get; set; }
+
     public string? Description { get; set; }
 
     [Required]
