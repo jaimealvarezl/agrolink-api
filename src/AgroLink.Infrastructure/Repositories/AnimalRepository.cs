@@ -96,7 +96,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         string? searchTerm = null,
         bool isSick = false,
         bool isPregnant = false,
-        bool isMissing = false
+        bool isMissing = false,
+        Sex? sex = null
     )
     {
         var query = _dbSet
@@ -108,6 +109,11 @@ public class AnimalRepository(AgroLinkDbContext context)
         if (lotId.HasValue)
         {
             query = query.Where(a => a.LotId == lotId.Value);
+        }
+
+        if (sex.HasValue)
+        {
+            query = query.Where(a => a.Sex == sex.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))

@@ -24,7 +24,17 @@ public class GetAnimalsPagedListQueryHandlerTests
     public async Task Handle_WithFilters_ReturnsFilteredPagedResult()
     {
         // Arrange
-        var query = new GetAnimalsPagedListQuery(1, 1, 10, 2, "Test", true, true);
+        var query = new GetAnimalsPagedListQuery(
+            1,
+            1,
+            10,
+            2,
+            "Test",
+            true,
+            true,
+            false,
+            Sex.Female
+        );
 
         var animals = new List<Animal>
         {
@@ -36,6 +46,7 @@ public class GetAnimalsPagedListQueryHandlerTests
                 Lot = new Lot { Name = "Lot A" },
                 HealthStatus = HealthStatus.Sick,
                 ReproductiveStatus = ReproductiveStatus.Pregnant,
+                Sex = Sex.Female,
             },
         };
 
@@ -49,7 +60,8 @@ public class GetAnimalsPagedListQueryHandlerTests
                     query.SearchTerm,
                     query.IsSick,
                     query.IsPregnant,
-                    query.IsMissing
+                    query.IsMissing,
+                    query.Sex
                 )
             )
             .ReturnsAsync((animals, 1));
@@ -78,7 +90,8 @@ public class GetAnimalsPagedListQueryHandlerTests
                     query.SearchTerm,
                     query.IsSick,
                     query.IsPregnant,
-                    query.IsMissing
+                    query.IsMissing,
+                    query.Sex
                 ),
             Times.Once
         );

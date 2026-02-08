@@ -1,5 +1,6 @@
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Domain.Enums;
 using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetPagedList;
@@ -12,5 +13,6 @@ public record GetAnimalsPagedListQuery(
     string? SearchTerm = null,
     bool IsSick = false,
     bool IsPregnant = false,
-    bool IsMissing = false
+    bool IsMissing = false,
+    Sex? Sex = null
 ) : IRequest<PagedResult<AnimalListDto>>;

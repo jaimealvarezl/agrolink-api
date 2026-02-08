@@ -22,7 +22,8 @@ public class GetAnimalsPagedListQueryHandler(IAnimalRepository animalRepository)
             request.SearchTerm,
             request.IsSick,
             request.IsPregnant,
-            request.IsMissing
+            request.IsMissing,
+            request.Sex
         );
 
         var dtos = items.Select(a => new AnimalListDto

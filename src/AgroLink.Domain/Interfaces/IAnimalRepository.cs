@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 
 namespace AgroLink.Domain.Interfaces;
 
@@ -20,7 +21,8 @@ public interface IAnimalRepository : IRepository<Animal>
         string? searchTerm = null,
         bool isSick = false,
         bool isPregnant = false,
-        bool isMissing = false
+        bool isMissing = false,
+        Sex? sex = null
     );
 
     Task<Animal?> GetAnimalDetailsAsync(int id);

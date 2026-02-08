@@ -294,6 +294,10 @@ public class AnimalRepositoryTests : TestBase
         );
         caseInsensitiveResult.Items.Count().ShouldBe(1);
         caseInsensitiveResult.Items.First().TagVisual.ShouldBe("A3");
+
+        // Act - Filter Sex
+        var sexResult = await _repository.GetPagedListAsync(farm.Id, 1, 10, sex: Sex.Female);
+        sexResult.Items.Count().ShouldBe(3); // All test animals created by helper are Female by default
     }
 
     [Test]
