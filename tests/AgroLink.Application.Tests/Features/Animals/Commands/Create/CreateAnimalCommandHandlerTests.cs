@@ -65,14 +65,9 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Heifer,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.Open,
-            Owners = new List<AnimalOwnerDto>
+            Owners = new List<AnimalOwnerCreateDto>
             {
-                new()
-                {
-                    OwnerId = 1,
-                    OwnerName = "Test Owner",
-                    SharePercent = 100,
-                },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -152,12 +147,7 @@ public class CreateAnimalCommandHandlerTests
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners =
             [
-                new AnimalOwnerDto
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner",
-                    SharePercent = 100,
-                },
+                new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 },
             ],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
@@ -202,12 +192,7 @@ public class CreateAnimalCommandHandlerTests
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
             Owners =
             [
-                new AnimalOwnerDto
-                {
-                    OwnerId = 1,
-                    OwnerName = "Owner",
-                    SharePercent = 100,
-                },
+                new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 },
             ],
         };
         var command = new CreateAnimalCommand(createAnimalDto);

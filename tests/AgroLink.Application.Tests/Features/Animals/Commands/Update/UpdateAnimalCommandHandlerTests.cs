@@ -58,14 +58,9 @@ public class UpdateAnimalCommandHandlerTests
         {
             Name = "Updated Name",
             LifeStatus = LifeStatus.Sold,
-            Owners = new List<AnimalOwnerDto>
+            Owners = new List<AnimalOwnerCreateDto>
             {
-                new()
-                {
-                    OwnerId = 1,
-                    OwnerName = "Test Owner",
-                    SharePercent = 100,
-                },
+                new() { OwnerId = 1, SharePercent = 100 },
             },
         };
         var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
@@ -239,7 +234,7 @@ public class UpdateAnimalCommandHandlerTests
     {
         // Arrange
         const int animalId = 1;
-        var updateAnimalDto = new UpdateAnimalDto { Owners = new List<AnimalOwnerDto>() };
+        var updateAnimalDto = new UpdateAnimalDto { Owners = new List<AnimalOwnerCreateDto>() };
         var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
         var animal = new Animal
         {

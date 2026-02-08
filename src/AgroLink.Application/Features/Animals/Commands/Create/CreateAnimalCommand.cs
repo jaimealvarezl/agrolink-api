@@ -79,12 +79,7 @@ public class CreateAnimalCommandHandler(
         {
             var farm = await farmRepository.GetByIdAsync(farmId);
             dto.Owners.Add(
-                new AnimalOwnerDto
-                {
-                    OwnerId = farm!.OwnerId,
-                    OwnerName = string.Empty, // Placeholder for required field
-                    SharePercent = 100,
-                }
+                new AnimalOwnerCreateDto { OwnerId = farm!.OwnerId, SharePercent = 100 }
             );
         }
 

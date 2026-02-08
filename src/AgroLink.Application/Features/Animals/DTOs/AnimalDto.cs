@@ -86,7 +86,7 @@ public class CreateAnimalDto
     public int? FatherId { get; set; }
 
     [Required]
-    public required List<AnimalOwnerDto> Owners { get; set; }
+    public required List<AnimalOwnerCreateDto> Owners { get; set; }
 }
 
 public class UpdateAnimalDto
@@ -107,7 +107,7 @@ public class UpdateAnimalDto
     public int? LotId { get; set; }
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
-    public List<AnimalOwnerDto>? Owners { get; set; }
+    public List<AnimalOwnerCreateDto>? Owners { get; set; }
 }
 
 public class AnimalOwnerDto
@@ -117,6 +117,15 @@ public class AnimalOwnerDto
 
     [Required]
     public required string OwnerName { get; set; }
+
+    [Required]
+    public required decimal SharePercent { get; set; }
+}
+
+public class AnimalOwnerCreateDto
+{
+    [Required]
+    public required int OwnerId { get; set; }
 
     [Required]
     public required decimal SharePercent { get; set; }
