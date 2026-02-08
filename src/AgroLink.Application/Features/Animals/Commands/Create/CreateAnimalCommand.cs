@@ -80,9 +80,7 @@ public class CreateAnimalCommandHandler(
             var farm =
                 await farmRepository.GetByIdAsync(farmId)
                 ?? throw new ArgumentException($"Farm with ID {farmId} not found.");
-            dto.Owners.Add(
-                new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 }
-            );
+            dto.Owners.Add(new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 });
         }
 
         var animal = new Animal
