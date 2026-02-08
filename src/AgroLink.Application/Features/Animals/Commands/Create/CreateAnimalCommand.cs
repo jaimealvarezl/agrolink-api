@@ -14,6 +14,7 @@ public record CreateAnimalCommand(CreateAnimalDto Dto) : IRequest<AnimalDto>;
 public class CreateAnimalCommandHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
+    IFarmRepository farmRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IFarmMemberRepository farmMemberRepository,
@@ -73,10 +74,18 @@ public class CreateAnimalCommandHandler(
             );
         }
 
-        // 6. Ensure at least one owner is provided
-        if (dto.Owners == null || dto.Owners.Count == 0)
+        // 6. Ensure at least one owner is provided. If not, auto-assign Farm Owner.
+        if (dto.Owners.Count == 0)
         {
-            throw new ArgumentException("At least one owner is required for an animal.");
+            var farm = await farmRepository.GetByIdAsync(farmId);
+            dto.Owners.Add(
+                new AnimalOwnerDto
+                {
+                    OwnerId = farm!.OwnerId,
+                    OwnerName = string.Empty, // Placeholder for required field
+                    SharePercent = 100,
+                }
+            );
         }
 
         var animal = new Animal
