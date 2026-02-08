@@ -21,6 +21,7 @@ public class UserDto
 
     [Required]
     public required DateTime CreatedAt { get; set; }
+
     public DateTime? LastLoginAt { get; set; }
 }
 
@@ -58,6 +59,7 @@ public class RegisterRequest
     [Required]
     [MinLength(6)]
     public required string Password { get; set; }
+
     public string? Role { get; set; }
 }
 

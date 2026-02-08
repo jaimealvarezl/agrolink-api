@@ -14,10 +14,12 @@ public class PhotoDto
 
     [Required]
     public required string UriLocal { get; set; }
+
     public string? UriRemote { get; set; }
 
     [Required]
     public required bool Uploaded { get; set; }
+
     public string? Description { get; set; }
 
     [Required]
@@ -31,5 +33,6 @@ public class CreatePhotoDto
 
     [Required]
     public int EntityId { get; set; }
+
     public string? Description { get; set; }
 }

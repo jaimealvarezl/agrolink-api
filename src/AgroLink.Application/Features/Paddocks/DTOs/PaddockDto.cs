@@ -14,6 +14,7 @@ public class PaddockDto
 
     [Required]
     public required string FarmName { get; set; }
+
     public decimal? Area { get; set; }
     public string? AreaType { get; set; }
 

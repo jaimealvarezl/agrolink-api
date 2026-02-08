@@ -12,6 +12,7 @@ public class AnimalDto
 
     [Required]
     public required string Name { get; set; }
+
     public string? Color { get; set; }
     public string? Breed { get; set; }
 
@@ -35,6 +36,7 @@ public class AnimalDto
 
     [Required]
     public required int LotId { get; set; }
+
     public string? LotName { get; set; }
     public int? MotherId { get; set; }
     public string? MotherCuia { get; set; }
@@ -49,6 +51,7 @@ public class AnimalDto
 
     [Required]
     public required DateTime CreatedAt { get; set; }
+
     public DateTime? UpdatedAt { get; set; }
 }
 
@@ -59,6 +62,7 @@ public class CreateAnimalDto
 
     [Required]
     public required string Name { get; set; }
+
     public string? Color { get; set; }
     public string? Breed { get; set; }
 
@@ -82,6 +86,7 @@ public class CreateAnimalDto
 
     [Required]
     public required int LotId { get; set; }
+
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
 
@@ -145,6 +150,7 @@ public class AnimalGenealogyDto
 
     [Required]
     public required DateTime BirthDate { get; set; }
+
     public AnimalGenealogyDto? Mother { get; set; }
     public AnimalGenealogyDto? Father { get; set; }
 

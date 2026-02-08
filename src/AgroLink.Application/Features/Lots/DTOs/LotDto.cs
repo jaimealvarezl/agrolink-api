@@ -35,6 +35,7 @@ public class CreateLotDto
 
     [Required]
     public required int PaddockId { get; set; }
+
     public string? Status { get; set; }
 }
 

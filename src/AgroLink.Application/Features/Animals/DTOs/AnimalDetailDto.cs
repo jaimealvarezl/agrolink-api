@@ -11,6 +11,7 @@ public class AnimalDetailDto
 
     [Required]
     public required string Name { get; set; }
+
     public string? Color { get; set; }
     public string? Breed { get; set; }
 
@@ -19,6 +20,7 @@ public class AnimalDetailDto
 
     [Required]
     public required DateTime BirthDate { get; set; }
+
     public int AgeInMonths { get; set; }
 
     // Location

@@ -145,10 +145,7 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners =
-            [
-                new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 },
-            ],
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 }],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot
@@ -190,10 +187,7 @@ public class CreateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners =
-            [
-                new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 },
-            ],
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 }],
         };
         var command = new CreateAnimalCommand(createAnimalDto);
         var lot = new Lot

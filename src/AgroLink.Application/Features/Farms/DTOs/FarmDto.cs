@@ -8,6 +8,7 @@ public class FarmDto
 
     [Required]
     public required string Name { get; set; }
+
     public string? Location { get; set; }
     public string? CUE { get; set; }
 
