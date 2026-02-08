@@ -53,7 +53,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         var query = _dbSet
             .IgnoreQueryFilters()
             .Where(a =>
-                string.Equals(a.Cuia, cuia, StringComparison.OrdinalIgnoreCase)
+                a.Cuia != null
+                && a.Cuia.ToLower() == cuia.ToLower()
                 && a.Lot.Paddock.FarmId == farmId
             );
 
@@ -74,7 +75,7 @@ public class AnimalRepository(AgroLinkDbContext context)
         var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
 
         var query = _dbSet.Where(a =>
-            string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase)
+            a.Name.ToLower() == name.ToLower()
             && a.Lot.Paddock.FarmId == farmId
             && activeStatuses.Contains(a.LifeStatus)
         );
@@ -111,16 +112,11 @@ public class AnimalRepository(AgroLinkDbContext context)
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
+            var term = searchTerm.ToLower();
             query = query.Where(a =>
-                (
-                    a.TagVisual != null
-                    && a.TagVisual.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
-                )
-                || a.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
-                || (
-                    a.Cuia != null
-                    && a.Cuia.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)
-                )
+                (a.TagVisual != null && a.TagVisual.ToLower().Contains(term))
+                || a.Name.ToLower().Contains(term)
+                || (a.Cuia != null && a.Cuia.ToLower().Contains(term))
             );
         }
 
