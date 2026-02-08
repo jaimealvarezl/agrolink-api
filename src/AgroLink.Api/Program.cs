@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using AgroLink.Api;
+using AgroLink.Api.Middleware;
 using AgroLink.Api.Services;
 using AgroLink.Application;
 using AgroLink.Application.Interfaces;
@@ -72,6 +73,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
