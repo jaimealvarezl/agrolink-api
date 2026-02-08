@@ -77,9 +77,11 @@ public class CreateAnimalCommandHandler(
         // 6. Ensure at least one owner is provided. If not, auto-assign Farm Owner.
         if (dto.Owners.Count == 0)
         {
-            var farm = await farmRepository.GetByIdAsync(farmId);
+            var farm =
+                await farmRepository.GetByIdAsync(farmId)
+                ?? throw new ArgumentException($"Farm with ID {farmId} not found.");
             dto.Owners.Add(
-                new AnimalOwnerCreateDto { OwnerId = farm!.OwnerId, SharePercent = 100 }
+                new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 }
             );
         }
 
