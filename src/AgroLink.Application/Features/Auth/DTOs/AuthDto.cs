@@ -61,6 +61,12 @@ public class RegisterRequest
     public string? Role { get; set; }
 }
 
+public class UpdateProfileRequest
+{
+    [Required]
+    public required string Name { get; set; }
+}
+
 public class ValidateTokenRequest
 {
     [Required]
