@@ -19,6 +19,7 @@ public class CreateAnimalCommandHandlerTests
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
+        _farmRepositoryMock = new Mock<IFarmRepository>();
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
         _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
@@ -27,6 +28,7 @@ public class CreateAnimalCommandHandlerTests
         _handler = new CreateAnimalCommandHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
+            _farmRepositoryMock.Object,
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
             _farmMemberRepositoryMock.Object,
@@ -37,6 +39,7 @@ public class CreateAnimalCommandHandlerTests
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
     private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
@@ -389,9 +392,11 @@ public class CreateAnimalCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_EmptyOwnersList_ThrowsArgumentException()
+    public async Task Handle_EmptyOwnersList_AutoAssignsFarmOwner()
     {
         // Arrange
+        var farmId = 10;
+        var farmOwnerId = 99;
         var createAnimalDto = new CreateAnimalDto
         {
             LotId = 1,
@@ -409,10 +414,12 @@ public class CreateAnimalCommandHandlerTests
         var lot = new Lot
         {
             Id = 1,
-            Paddock = new Paddock { FarmId = 10 },
+            Paddock = new Paddock { FarmId = farmId },
         };
+        var farm = new Farm { Id = farmId, OwnerId = farmOwnerId };
 
         _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
         _farmMemberRepositoryMock
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
@@ -422,11 +429,27 @@ public class CreateAnimalCommandHandlerTests
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
             )
             .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r =>
+                r.IsCuiaUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
+            .ReturnsAsync(true);
+        _animalOwnerRepositoryMock
+            .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<AnimalOwner>());
 
-        // Act & Assert
-        var ex = await Should.ThrowAsync<ArgumentException>(() =>
-            _handler.Handle(command, CancellationToken.None)
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        _animalOwnerRepositoryMock.Verify(
+            r =>
+                r.AddAsync(
+                    It.Is<AnimalOwner>(ao => ao.OwnerId == farmOwnerId && ao.SharePercent == 100)
+                ),
+            Times.Once
         );
-        ex.Message.ShouldContain("At least one owner is required");
+        _farmRepositoryMock.Verify(r => r.GetByIdAsync(farmId), Times.Once);
     }
 }
