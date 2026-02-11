@@ -12,6 +12,8 @@ public class AnimalPhotoConfiguration : IEntityTypeConfiguration<AnimalPhoto>
 
         builder.Property(e => e.UriRemote).IsRequired().HasMaxLength(500);
 
+        builder.Property(e => e.StorageKey).IsRequired().HasMaxLength(500);
+
         builder.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
 
         builder.Property(e => e.Description).HasMaxLength(200);
@@ -23,6 +25,9 @@ public class AnimalPhotoConfiguration : IEntityTypeConfiguration<AnimalPhoto>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => e.AnimalId);
-        builder.HasIndex(e => new { e.AnimalId, e.IsProfile }).HasFilter("\"IsProfile\" = true");
+        builder
+            .HasIndex(e => new { e.AnimalId, e.IsProfile })
+            .IsUnique()
+            .HasFilter("\"IsProfile\" = true");
     }
 }

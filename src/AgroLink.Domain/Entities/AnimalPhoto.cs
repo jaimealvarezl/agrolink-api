@@ -12,6 +12,10 @@ public class AnimalPhoto
     [MaxLength(500)]
     public string UriRemote { get; set; } = string.Empty;
 
+    [Required]
+    [MaxLength(500)]
+    public string StorageKey { get; set; } = string.Empty;
+
     public bool IsProfile { get; set; }
 
     [Required]

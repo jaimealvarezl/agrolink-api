@@ -46,12 +46,11 @@ public class DeleteAnimalPhotoCommandHandler(
         }
 
         // Delete from Storage
-        if (!string.IsNullOrEmpty(photo.UriRemote))
+        if (!string.IsNullOrEmpty(photo.StorageKey))
         {
             try
             {
-                var key = ExtractKeyFromUrl(photo.UriRemote);
-                await storageService.DeleteFileAsync(key);
+                await storageService.DeleteFileAsync(photo.StorageKey);
             }
             catch (Exception ex)
             {
@@ -81,25 +80,5 @@ public class DeleteAnimalPhotoCommandHandler(
         }
 
         return Unit.Value;
-    }
-
-    private static string ExtractKeyFromUrl(string url)
-    {
-        // Simple extraction for S3/MinIO URLs
-        // Format: https://bucket.s3.amazonaws.com/key OR http://localhost:9000/bucket/key
-
-        if (url.Contains("localhost") || url.Contains("minio"))
-        {
-            // Local development format: http://localhost:9000/bucket/key
-            var uri = new Uri(url);
-            var parts = uri.AbsolutePath.TrimStart('/').Split('/', 2);
-            return parts.Length > 1 ? parts[1] : parts[0];
-        }
-        else
-        {
-            // Standard S3 format: https://bucket.s3.amazonaws.com/key
-            var uri = new Uri(url);
-            return uri.AbsolutePath.TrimStart('/');
-        }
     }
 }

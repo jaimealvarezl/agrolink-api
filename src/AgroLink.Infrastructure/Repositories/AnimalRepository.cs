@@ -157,6 +157,7 @@ public class AnimalRepository(AgroLinkDbContext context)
     {
         return await _dbSet
             .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
             .Include(a => a.Mother)
             .Include(a => a.Father)
             .Include(a => a.AnimalOwners)

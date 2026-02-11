@@ -60,6 +60,7 @@ public class UploadAnimalPhotoCommandHandler(
             Description = request.Description,
             IsProfile = isFirstPhoto,
             UriRemote = "PENDING", // Temporary
+            StorageKey = "PENDING", // Temporary
             UploadedAt = DateTime.UtcNow,
         };
 
@@ -78,6 +79,7 @@ public class UploadAnimalPhotoCommandHandler(
         {
             await storageService.UploadFileAsync(key, request.FileStream, request.ContentType);
             animalPhoto.UriRemote = storageService.GetFileUrl(key);
+            animalPhoto.StorageKey = key;
             await unitOfWork.SaveChangesAsync();
         }
         catch (Exception ex)

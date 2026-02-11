@@ -14,11 +14,6 @@ public class AnimalPhotoRepository(AgroLinkDbContext context)
         return await _dbSet.Where(p => p.AnimalId == animalId).ToListAsync();
     }
 
-    public async Task<AnimalPhoto?> GetByIdAsync(int id)
-    {
-        return await _dbSet.FirstOrDefaultAsync(p => p.Id == id);
-    }
-
     public async Task SetProfilePhotoAsync(int animalId, int photoId)
     {
         var photos = await _dbSet.Where(p => p.AnimalId == animalId).ToListAsync();
