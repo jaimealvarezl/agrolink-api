@@ -12,15 +12,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.UploadPhoto;
 [TestFixture]
 public class UploadAnimalPhotoCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<IStoragePathProvider> _pathProviderMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private UploadAnimalPhotoCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -42,6 +33,15 @@ public class UploadAnimalPhotoCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
+    private Mock<IStoragePathProvider> _pathProviderMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private UploadAnimalPhotoCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidRequest_UploadsAndReturnsDto()

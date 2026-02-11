@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.SetProfilePhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -12,13 +11,6 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.SetProfilePhoto;
 [TestFixture]
 public class SetAnimalProfilePhotoCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private SetAnimalProfilePhotoCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -36,6 +28,13 @@ public class SetAnimalProfilePhotoCommandHandlerTests
             _unitOfWorkMock.Object
         );
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private SetAnimalProfilePhotoCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidRequest_SetsProfilePhoto()

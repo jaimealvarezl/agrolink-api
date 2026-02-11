@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Domain.Enums;
 
 namespace AgroLink.Application.Features.Animals.DTOs;
