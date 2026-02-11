@@ -56,6 +56,7 @@ public class DeleteAnimalPhotoCommandHandlerTests
             Id = photoId,
             AnimalId = animalId,
             UriRemote = "http://storage.com/bucket/file.jpg",
+            StorageKey = "bucket/file.jpg",
         };
 
         _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
