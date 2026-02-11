@@ -16,11 +16,19 @@ public class AnimalPhotoRepository(AgroLinkDbContext context)
 
     public async Task SetProfilePhotoAsync(int animalId, int photoId)
     {
-        var photos = await _dbSet.Where(p => p.AnimalId == animalId).ToListAsync();
-        foreach (var photo in photos)
+
+        var currentProfiles = await _dbSet
+            .Where(p => p.AnimalId == animalId && p.IsProfile)
+            .ToListAsync();
+
+        foreach (var photo in currentProfiles)
         {
-            photo.IsProfile = photo.Id == photoId;
+            photo.IsProfile = false;
         }
+
+
+        var newProfile = await _dbSet.FindAsync(photoId);
+        newProfile?.IsProfile = true;
     }
 
     public async Task<bool> HasPhotosAsync(int animalId)

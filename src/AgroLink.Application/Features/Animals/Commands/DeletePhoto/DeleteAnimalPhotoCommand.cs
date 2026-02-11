@@ -61,23 +61,23 @@ public class DeleteAnimalPhotoCommandHandler(
         }
 
         animalPhotoRepository.Remove(photo);
-        await unitOfWork.SaveChangesAsync();
 
         // If the deleted photo was the profile photo, and there are other photos,
         // we might want to set the first remaining one as profile.
         if (photo.IsProfile)
         {
             var remainingPhotos = await animalPhotoRepository.GetByAnimalIdAsync(request.AnimalId);
-            var firstRemaining = remainingPhotos.FirstOrDefault();
+            var firstRemaining = remainingPhotos.FirstOrDefault(p => p.Id != request.PhotoId);
             if (firstRemaining != null)
             {
                 await animalPhotoRepository.SetProfilePhotoAsync(
                     request.AnimalId,
                     firstRemaining.Id
                 );
-                await unitOfWork.SaveChangesAsync();
             }
         }
+
+        await unitOfWork.SaveChangesAsync();
 
         return Unit.Value;
     }
