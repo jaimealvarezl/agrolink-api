@@ -47,7 +47,7 @@ public class AnimalDto
     public required List<AnimalOwnerDto> Owners { get; set; }
 
     [Required]
-    public required List<PhotoDto> Photos { get; set; }
+    public required List<AnimalPhotoDto> Photos { get; set; }
 
     [Required]
     public required DateTime CreatedAt { get; set; }

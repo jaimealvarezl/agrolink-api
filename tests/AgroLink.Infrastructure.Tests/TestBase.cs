@@ -46,7 +46,8 @@ public abstract class TestBase
         services.AddScoped<IMovementRepository, MovementRepository>(); // Explicitly use Application interface
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IAwsS3Service, AwsS3Service>();
+        services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IStoragePathProvider, StoragePathProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>(); // Registered new IPasswordHasher
 
         // Add ChecklistService (as it still exists)

@@ -31,7 +31,9 @@ public class GetAnimalsPagedListQueryHandler(IAnimalRepository animalRepository)
             Id = a.Id,
             TagVisual = a.TagVisual,
             Name = a.Name,
-            PhotoUrl = a.Photos.FirstOrDefault()?.UriRemote,
+            PhotoUrl =
+                a.Photos.FirstOrDefault(p => p.IsProfile)?.UriRemote
+                ?? a.Photos.FirstOrDefault()?.UriRemote,
             LotName = a.Lot.Name,
             IsSick = a.HealthStatus == HealthStatus.Sick,
             IsPregnant = a.ReproductiveStatus == ReproductiveStatus.Pregnant,

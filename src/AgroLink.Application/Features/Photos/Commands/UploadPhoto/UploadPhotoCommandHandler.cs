@@ -5,8 +5,10 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Photos.Commands.UploadPhoto;
 
-public class UploadPhotoCommandHandler(IPhotoRepository photoRepository, IAwsS3Service awsS3Service)
-    : IRequestHandler<UploadPhotoCommand, PhotoDto>
+public class UploadPhotoCommandHandler(
+    IPhotoRepository photoRepository,
+    IStorageService storageService
+) : IRequestHandler<UploadPhotoCommand, PhotoDto>
 {
     public async Task<PhotoDto> Handle(
         UploadPhotoCommand request,
@@ -30,13 +32,13 @@ public class UploadPhotoCommandHandler(IPhotoRepository photoRepository, IAwsS3S
             var key =
                 $"photos/{request.PhotoDto.EntityType.ToLower()}/{request.PhotoDto.EntityId}/{photo.Id}_{request.FileName}";
 
-            await awsS3Service.UploadFileAsync(
+            await storageService.UploadFileAsync(
                 key,
                 request.FileStream,
                 GetContentType(request.FileName)
             );
 
-            photo.UriRemote = awsS3Service.GetFileUrl(key);
+            photo.UriRemote = storageService.GetFileUrl(key);
             photo.Uploaded = true;
             photo.UpdatedAt = DateTime.UtcNow;
 

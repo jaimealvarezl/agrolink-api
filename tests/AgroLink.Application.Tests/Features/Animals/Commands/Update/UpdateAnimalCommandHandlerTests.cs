@@ -21,7 +21,7 @@ public class UpdateAnimalCommandHandlerTests
         _lotRepositoryMock = new Mock<ILotRepository>();
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
-        _photoRepositoryMock = new Mock<IPhotoRepository>();
+        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
         _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
@@ -30,7 +30,7 @@ public class UpdateAnimalCommandHandlerTests
             _lotRepositoryMock.Object,
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
-            _photoRepositoryMock.Object,
+            _animalPhotoRepositoryMock.Object,
             _farmMemberRepositoryMock.Object,
             _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
@@ -41,7 +41,7 @@ public class UpdateAnimalCommandHandlerTests
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
     private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
@@ -120,9 +120,9 @@ public class UpdateAnimalCommandHandlerTests
                     },
                 }
             );
-        _photoRepositoryMock
-            .Setup(r => r.GetPhotosByEntityAsync(It.IsAny<string>(), It.IsAny<int>()))
-            .ReturnsAsync(new List<Photo>());
+        _animalPhotoRepositoryMock
+            .Setup(r => r.GetByAnimalIdAsync(animalId))
+            .ReturnsAsync(new List<AnimalPhoto>());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

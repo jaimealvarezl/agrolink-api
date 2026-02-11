@@ -14,15 +14,15 @@ public class UploadPhotoCommandHandlerTests
     public void Setup()
     {
         _photoRepositoryMock = new Mock<IPhotoRepository>();
-        _awsS3ServiceMock = new Mock<IAwsS3Service>();
+        _storageServiceMock = new Mock<IStorageService>();
         _handler = new UploadPhotoCommandHandler(
             _photoRepositoryMock.Object,
-            _awsS3ServiceMock.Object
+            _storageServiceMock.Object
         );
     }
 
     private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<IAwsS3Service> _awsS3ServiceMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private UploadPhotoCommandHandler _handler = null!;
 
     [Test]
@@ -53,12 +53,12 @@ public class UploadPhotoCommandHandlerTests
         _photoRepositoryMock
             .Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>()))
             .Returns(Task.CompletedTask);
-        _awsS3ServiceMock
+        _storageServiceMock
             .Setup(s =>
                 s.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>())
             )
             .Returns(Task.CompletedTask);
-        _awsS3ServiceMock
+        _storageServiceMock
             .Setup(s => s.GetFileUrl(It.IsAny<string>()))
             .Returns("https://mock-s3-url.com/photo.jpg");
 
@@ -72,7 +72,7 @@ public class UploadPhotoCommandHandlerTests
         result.UriRemote.ShouldNotBeNullOrEmpty();
         result.Uploaded.ShouldBeTrue();
         _photoRepositoryMock.Verify(r => r.AddPhotoAsync(It.IsAny<Photo>()), Times.Once);
-        _awsS3ServiceMock.Verify(
+        _storageServiceMock.Verify(
             s => s.UploadFileAsync(It.IsAny<string>(), fileStream, It.IsAny<string>()),
             Times.Once
         );
@@ -110,7 +110,7 @@ public class UploadPhotoCommandHandlerTests
         _photoRepositoryMock
             .Setup(r => r.UpdatePhotoAsync(It.IsAny<Photo>()))
             .Returns(Task.CompletedTask);
-        _awsS3ServiceMock
+        _storageServiceMock
             .Setup(s =>
                 s.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>())
             )
@@ -125,7 +125,7 @@ public class UploadPhotoCommandHandlerTests
         result.UriRemote.ShouldBeNull(); // Should be null because S3 upload failed
         result.Uploaded.ShouldBeFalse(); // Should be false because S3 upload failed
         _photoRepositoryMock.Verify(r => r.AddPhotoAsync(It.IsAny<Photo>()), Times.Once);
-        _awsS3ServiceMock.Verify(
+        _storageServiceMock.Verify(
             s => s.UploadFileAsync(It.IsAny<string>(), fileStream, It.IsAny<string>()),
             Times.Once
         );

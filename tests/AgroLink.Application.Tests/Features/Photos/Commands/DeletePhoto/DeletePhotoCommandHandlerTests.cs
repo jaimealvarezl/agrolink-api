@@ -13,15 +13,15 @@ public class DeletePhotoCommandHandlerTests
     public void Setup()
     {
         _photoRepositoryMock = new Mock<IPhotoRepository>();
-        _awsS3ServiceMock = new Mock<IAwsS3Service>();
+        _storageServiceMock = new Mock<IStorageService>();
         _handler = new DeletePhotoCommandHandler(
             _photoRepositoryMock.Object,
-            _awsS3ServiceMock.Object
+            _storageServiceMock.Object
         );
     }
 
     private Mock<IPhotoRepository> _photoRepositoryMock = null!;
-    private Mock<IAwsS3Service> _awsS3ServiceMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private DeletePhotoCommandHandler _handler = null!;
 
     [Test]
@@ -33,7 +33,7 @@ public class DeletePhotoCommandHandlerTests
         var photo = new Photo { Id = photoId, UriRemote = "http://s3.aws.com/key" };
 
         _photoRepositoryMock.Setup(r => r.GetPhotoByIdAsync(photoId)).ReturnsAsync(photo);
-        _awsS3ServiceMock
+        _storageServiceMock
             .Setup(s => s.DeleteFileAsync(It.IsAny<string>()))
             .Returns(Task.CompletedTask);
         _photoRepositoryMock.Setup(r => r.DeletePhotoAsync(photo)).Returns(Task.CompletedTask);
@@ -43,7 +43,7 @@ public class DeletePhotoCommandHandlerTests
 
         // Assert
         _photoRepositoryMock.Verify(r => r.GetPhotoByIdAsync(photoId), Times.Once);
-        _awsS3ServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Once);
+        _storageServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Once);
         _photoRepositoryMock.Verify(r => r.DeletePhotoAsync(photo), Times.Once);
     }
 
@@ -62,7 +62,7 @@ public class DeletePhotoCommandHandlerTests
         );
         exception.Message.ShouldBe("Photo not found");
         _photoRepositoryMock.Verify(r => r.DeletePhotoAsync(It.IsAny<Photo>()), Times.Never);
-        _awsS3ServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Never);
+        _storageServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Never);
     }
 
     [Test]
@@ -81,7 +81,7 @@ public class DeletePhotoCommandHandlerTests
 
         // Assert
         _photoRepositoryMock.Verify(r => r.GetPhotoByIdAsync(photoId), Times.Once);
-        _awsS3ServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Never); // Should not call S3
+        _storageServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Never); // Should not call S3
         _photoRepositoryMock.Verify(r => r.DeletePhotoAsync(photo), Times.Once);
     }
 }

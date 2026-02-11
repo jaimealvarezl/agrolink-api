@@ -1,12 +1,14 @@
 using AgroLink.Application.Interfaces;
 using MediatR;
 
-// For IPhotoRepository, IAwsS3Service
+// For IPhotoRepository, IStorageService
 
 namespace AgroLink.Application.Features.Photos.Commands.DeletePhoto;
 
-public class DeletePhotoCommandHandler(IPhotoRepository photoRepository, IAwsS3Service awsS3Service)
-    : IRequestHandler<DeletePhotoCommand, Unit>
+public class DeletePhotoCommandHandler(
+    IPhotoRepository photoRepository,
+    IStorageService storageService
+) : IRequestHandler<DeletePhotoCommand, Unit>
 {
     public async Task<Unit> Handle(DeletePhotoCommand request, CancellationToken cancellationToken)
     {
@@ -22,7 +24,7 @@ public class DeletePhotoCommandHandler(IPhotoRepository photoRepository, IAwsS3S
             try
             {
                 var key = ExtractKeyFromUrl(photo.UriRemote);
-                await awsS3Service.DeleteFileAsync(key);
+                await storageService.DeleteFileAsync(key);
             }
             catch (Exception ex)
             {
