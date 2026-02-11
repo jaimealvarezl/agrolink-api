@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class AwsS3Service(IAmazonS3 s3Client, IConfiguration configuration) : IAwsS3Service
+public class S3StorageService(IAmazonS3 s3Client, IConfiguration configuration) : IStorageService
 {
     private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
 

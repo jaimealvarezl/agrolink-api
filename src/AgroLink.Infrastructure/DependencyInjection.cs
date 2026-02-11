@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Paddock>, Repository<Paddock>>();
         services.AddScoped<IRepository<Lot>, Repository<Lot>>();
         services.AddScoped<IRepository<Animal>, Repository<Animal>>();
+        services.AddScoped<IRepository<AnimalPhoto>, Repository<AnimalPhoto>>();
         services.AddScoped<IRepository<Owner>, Repository<Owner>>();
         services.AddScoped<IRepository<AnimalOwner>, Repository<AnimalOwner>>();
         services.AddScoped<IRepository<Checklist>, Repository<Checklist>>();
@@ -69,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<IPaddockRepository, PaddockRepository>();
         services.AddScoped<ILotRepository, LotRepository>();
         services.AddScoped<IAnimalRepository, AnimalRepository>();
+        services.AddScoped<IAnimalPhotoRepository, AnimalPhotoRepository>();
         services.AddScoped<IOwnerRepository, OwnerRepository>();
         services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();
         services.AddScoped<IMovementRepository, MovementRepository>();
@@ -82,7 +84,8 @@ public static class DependencyInjection
         // Infrastructure Services
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IAwsS3Service, AwsS3Service>();
+        services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IStoragePathProvider, StoragePathProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
