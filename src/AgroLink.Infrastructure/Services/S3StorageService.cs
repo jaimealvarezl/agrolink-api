@@ -2,10 +2,15 @@ using AgroLink.Application.Interfaces;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace AgroLink.Infrastructure.Services;
 
-public class S3StorageService(IAmazonS3 s3Client, IConfiguration configuration) : IStorageService
+public class S3StorageService(
+    IAmazonS3 s3Client,
+    IConfiguration configuration,
+    ILogger<S3StorageService> logger
+) : IStorageService
 {
     private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
 
@@ -14,20 +19,36 @@ public class S3StorageService(IAmazonS3 s3Client, IConfiguration configuration) 
 
     public async Task UploadFileAsync(string key, Stream fileStream, string contentType)
     {
-        var request = new PutObjectRequest
+        try
         {
-            BucketName = _bucketName,
-            Key = key,
-            InputStream = fileStream,
-            ContentType = contentType,
-        };
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = key,
+                InputStream = fileStream,
+                ContentType = contentType,
+            };
 
-        await s3Client.PutObjectAsync(request);
+            await s3Client.PutObjectAsync(request);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to upload file to S3 with key {Key}", key);
+            throw;
+        }
     }
 
     public async Task DeleteFileAsync(string key)
     {
-        await s3Client.DeleteObjectAsync(_bucketName, key);
+        try
+        {
+            await s3Client.DeleteObjectAsync(_bucketName, key);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to delete file from S3 with key {Key}", key);
+            throw;
+        }
     }
 
     public string GetFileUrl(string key)
