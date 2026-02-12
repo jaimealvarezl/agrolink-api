@@ -1,5 +1,7 @@
+using System.Text;
 using AgroLink.Infrastructure.Services;
 using Amazon.S3;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -84,5 +86,45 @@ public class S3StorageServiceTests
 
         // Assert
         url.ShouldBe("https://my-bucket.s3.amazonaws.com/f/1/a/1/photo.png");
+    }
+
+    [Test]
+    public async Task UploadFileAsync_ValidInput_CallsPutObjectAsync()
+    {
+        // Arrange
+        var configurationMock = new Mock<IConfiguration>();
+        configurationMock.Setup(c => c["AgroLink:S3BucketName"]).Returns("my-bucket");
+        configurationMock.Setup(c => c["AWS:ServiceUrl"]).Returns("https://s3.amazonaws.com");
+
+        var service = new S3StorageService(
+            _s3ClientMock.Object,
+            configurationMock.Object,
+            _loggerMock.Object
+        );
+
+        var key = "test/key.png";
+        var content = "test content";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+        var contentType = "image/png";
+        var length = stream.Length;
+
+        // Act
+        await service.UploadFileAsync(key, stream, contentType, length);
+
+        // Assert
+        _s3ClientMock.Verify(
+            s =>
+                s.PutObjectAsync(
+                    It.Is<PutObjectRequest>(r =>
+                        r.BucketName == "my-bucket"
+                        && r.Key == key
+                        && r.InputStream == stream
+                        && r.ContentType == contentType
+                        && r.AutoCloseStream == false
+                    ),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
     }
 }

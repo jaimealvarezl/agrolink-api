@@ -4,6 +4,7 @@ using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
+using Amazon;
 using Amazon.S3;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +33,7 @@ public static class DependencyInjection
             var config = sp.GetRequiredService<IConfiguration>();
             var awsSection = config.GetSection("AWS");
             var serviceUrl = awsSection["ServiceUrl"];
+            var region = awsSection["Region"];
             var accessKey = awsSection["AccessKey"];
             var secretKey = awsSection["SecretKey"];
             bool.TryParse(awsSection["ForcePathStyle"], out var forcePathStyle);
@@ -41,6 +43,11 @@ public static class DependencyInjection
             {
                 s3Config.ServiceURL = serviceUrl;
                 s3Config.ForcePathStyle = forcePathStyle;
+            }
+
+            if (!string.IsNullOrEmpty(region))
+            {
+                s3Config.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
             }
 
             if (!string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey))

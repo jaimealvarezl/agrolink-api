@@ -1,7 +1,6 @@
-using System.Text;
 using AgroLink.Application.Interfaces;
 using Amazon.S3;
-using Amazon.S3.Transfer;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -29,7 +28,7 @@ public class S3StorageService(
     )
     {
         logger.LogInformation(
-            "Uploading file to bucket {BucketName} with key {Key}, content type {ContentType} and expected size {Size}",
+            "Uploading file to bucket {BucketName} with key {Key}, content type {ContentType} and size {Size}",
             _bucketName,
             key,
             contentType,
@@ -38,45 +37,21 @@ public class S3StorageService(
 
         try
         {
-            // Read into memory to ensure we have the full content and can diagnostic it
-            using var ms = new MemoryStream();
-            await fileStream.CopyToAsync(ms);
-            ms.Position = 0;
-
-            var actualSize = ms.Length;
-            logger.LogInformation("Actual bytes read from stream: {ActualSize}", actualSize);
-
-            if (actualSize == 0)
-            {
-                throw new InvalidOperationException("Source stream is empty.");
-            }
-
-            // Diagnostic: Log the first 32 bytes to check for Base64 or corruption
-            var diagBuffer = new byte[32];
-            var read = await ms.ReadAsync(diagBuffer, 0, 32);
-            ms.Position = 0;
-            logger.LogInformation(
-                "First 32 bytes (Hex): {Hex}",
-                BitConverter.ToString(diagBuffer, 0, read)
-            );
-            logger.LogInformation(
-                "First 32 bytes (ASCII): {Text}",
-                Encoding.ASCII.GetString(diagBuffer, 0, read)
-            );
-
-            // Use TransferUtility for more robust uploads
-            var fileTransferUtility = new TransferUtility(s3Client);
-            var uploadRequest = new TransferUtilityUploadRequest
+            var putRequest = new PutObjectRequest
             {
                 BucketName = _bucketName,
                 Key = key,
-                InputStream = ms,
+                InputStream = fileStream,
                 ContentType = contentType,
+                AutoCloseStream = false, // Let the caller manage the stream lifecycle
             };
 
-            await fileTransferUtility.UploadAsync(uploadRequest);
+            // Add metadata if useful
+            putRequest.Metadata.Add("x-amz-meta-original-size", contentLength.ToString());
 
-            logger.LogInformation("S3 upload successful via TransferUtility. Key: {Key}", key);
+            await s3Client.PutObjectAsync(putRequest);
+
+            logger.LogInformation("S3 upload successful via PutObjectAsync. Key: {Key}", key);
         }
         catch (Exception ex)
         {
