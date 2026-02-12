@@ -67,8 +67,14 @@ public static class SecretsManagerHelper
         }
         catch (Exception ex)
         {
+            // Note: We keep Console.WriteLine here because this runs during startup
+            // before the logging system is fully initialized.
             Console.WriteLine($"Error loading secrets: {ex.Message}");
-            // Don't crash here, let the app fail later if connection is missing, or maybe it can fallback
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 }

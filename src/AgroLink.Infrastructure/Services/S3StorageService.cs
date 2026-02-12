@@ -19,6 +19,7 @@ public class S3StorageService(
 
     public async Task UploadFileAsync(string key, Stream fileStream, string contentType)
     {
+        logger.LogInformation("Uploading file to bucket {BucketName} with key {Key} and content type {ContentType}", _bucketName, key, contentType);
         try
         {
             var request = new PutObjectRequest
@@ -29,7 +30,8 @@ public class S3StorageService(
                 ContentType = contentType,
             };
 
-            await s3Client.PutObjectAsync(request);
+            var response = await s3Client.PutObjectAsync(request);
+            logger.LogInformation("S3 upload successful. Key: {Key}. HTTP Status: {Status}", key, response.HttpStatusCode);
         }
         catch (Exception ex)
         {
