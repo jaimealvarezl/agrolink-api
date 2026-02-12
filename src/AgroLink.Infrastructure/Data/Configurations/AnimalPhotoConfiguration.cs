@@ -26,7 +26,7 @@ public class AnimalPhotoConfiguration : IEntityTypeConfiguration<AnimalPhoto>
 
         builder.HasIndex(e => e.AnimalId);
         builder
-            .HasIndex(e => new { e.AnimalId, e.IsProfile })
+            .HasIndex(e => e.AnimalId)
             .IsUnique()
             .HasFilter("\"IsProfile\" = true");
     }
