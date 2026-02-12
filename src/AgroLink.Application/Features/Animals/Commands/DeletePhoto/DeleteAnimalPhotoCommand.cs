@@ -73,7 +73,10 @@ public class DeleteAnimalPhotoCommandHandler(
         if (photo.IsProfile)
         {
             var remainingPhotos = await animalPhotoRepository.GetByAnimalIdAsync(request.AnimalId);
-            var firstRemaining = remainingPhotos.FirstOrDefault(p => p.Id != request.PhotoId);
+            var firstRemaining = remainingPhotos
+                .OrderByDescending(p => p.UploadedAt)
+                .FirstOrDefault(p => p.Id != request.PhotoId);
+
             if (firstRemaining != null)
             {
                 await animalPhotoRepository.SetProfilePhotoAsync(
