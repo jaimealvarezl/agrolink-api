@@ -96,7 +96,13 @@ public class UploadAnimalPhotoCommandHandlerTests
         result.UriRemote.ShouldBe("http://storage.com/photo.jpg");
         result.IsProfile.ShouldBeTrue(); // First photo
         _storageServiceMock.Verify(
-            s => s.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>()),
+            s =>
+                s.UploadFileAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<Stream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<long>()
+                ),
             Times.Once
         );
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.AtLeast(2));

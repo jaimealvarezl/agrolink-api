@@ -136,7 +136,12 @@ public class UploadAnimalPhotoCommandHandler(
         try
         {
             logger.LogInformation("Uploading file to storage...");
-            await storageService.UploadFileAsync(key, request.FileStream, request.ContentType);
+            await storageService.UploadFileAsync(
+                key,
+                request.FileStream,
+                request.ContentType,
+                request.Size
+            );
 
             animalPhoto.UriRemote = storageService.GetFileUrl(key);
             animalPhoto.StorageKey = key;

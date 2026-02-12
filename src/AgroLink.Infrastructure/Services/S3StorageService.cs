@@ -18,16 +18,29 @@ public class S3StorageService(
     private readonly string _serviceUrl =
         configuration["AWS:ServiceUrl"] ?? "https://s3.amazonaws.com";
 
-    public async Task UploadFileAsync(string key, Stream fileStream, string contentType)
+    public async Task UploadFileAsync(
+        string key,
+        Stream fileStream,
+        string contentType,
+        long contentLength
+    )
     {
         logger.LogInformation(
-            "Uploading file to bucket {BucketName} with key {Key} and content type {ContentType}",
+            "Uploading file to bucket {BucketName} with key {Key}, content type {ContentType} and size {Size}",
             _bucketName,
             key,
-            contentType
+            contentType,
+            contentLength
         );
+
         try
         {
+            // Ensure stream is at the beginning if possible
+            if (fileStream.CanSeek && fileStream.Position != 0)
+            {
+                fileStream.Position = 0;
+            }
+
             var request = new PutObjectRequest
             {
                 BucketName = _bucketName,
@@ -35,6 +48,9 @@ public class S3StorageService(
                 InputStream = fileStream,
                 ContentType = contentType,
             };
+
+            // It's highly recommended to set ContentLength when using InputStream
+            request.Headers.ContentLength = contentLength;
 
             var response = await s3Client.PutObjectAsync(request);
             logger.LogInformation(
