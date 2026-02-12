@@ -23,7 +23,7 @@ public class DeletePhotoCommandHandler(
         {
             try
             {
-                var key = ExtractKeyFromUrl(photo.UriRemote);
+                var key = storageService.GetKeyFromUrl(photo.UriRemote);
                 await storageService.DeleteFileAsync(key);
             }
             catch (Exception ex)
@@ -35,11 +35,5 @@ public class DeletePhotoCommandHandler(
         await photoRepository.DeletePhotoAsync(photo);
 
         return Unit.Value;
-    }
-
-    private static string ExtractKeyFromUrl(string url)
-    {
-        var uri = new Uri(url);
-        return uri.AbsolutePath.TrimStart('/');
     }
 }

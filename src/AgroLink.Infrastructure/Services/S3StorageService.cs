@@ -44,4 +44,24 @@ public class S3StorageService(IAmazonS3 s3Client, IConfiguration configuration) 
         // Standard AWS S3 URL format
         return $"https://{_bucketName}.s3.amazonaws.com/{key}";
     }
+
+    public string GetKeyFromUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return string.Empty;
+        }
+
+        var uri = new Uri(url);
+
+        // If utilizing MinIO locally (Path Style): http://localhost:9000/bucket/key
+        if (_serviceUrl.Contains("localhost") || _serviceUrl.Contains("minio"))
+        {
+            var parts = uri.AbsolutePath.TrimStart('/').Split('/', 2);
+            return parts.Length > 1 ? parts[1] : parts[0];
+        }
+
+        // Standard AWS S3 URL format (Virtual Host Style): https://bucket.s3.amazonaws.com/key
+        return uri.AbsolutePath.TrimStart('/');
+    }
 }
