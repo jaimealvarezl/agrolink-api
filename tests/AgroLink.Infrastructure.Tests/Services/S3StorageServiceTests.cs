@@ -25,7 +25,7 @@ public class S3StorageServiceTests
     {
         // Arrange
         var configurationMock = new Mock<IConfiguration>();
-        configurationMock.Setup(c => c["AWS:S3BucketName"]).Returns("my-bucket");
+        configurationMock.Setup(c => c["AgroLink:S3BucketName"]).Returns("my-bucket");
         configurationMock.Setup(c => c["AWS:ServiceUrl"]).Returns("https://s3.amazonaws.com");
 
         var service = new S3StorageService(
@@ -47,7 +47,7 @@ public class S3StorageServiceTests
     {
         // Arrange
         var configurationMock = new Mock<IConfiguration>();
-        configurationMock.Setup(c => c["AWS:S3BucketName"]).Returns("my-bucket");
+        configurationMock.Setup(c => c["AgroLink:S3BucketName"]).Returns("my-bucket");
         configurationMock.Setup(c => c["AWS:ServiceUrl"]).Returns("http://localhost:9000");
 
         var service = new S3StorageService(
@@ -69,7 +69,7 @@ public class S3StorageServiceTests
     {
         // Arrange
         var configurationMock = new Mock<IConfiguration>();
-        configurationMock.Setup(c => c["AWS:S3BucketName"]).Returns("my-bucket");
+        configurationMock.Setup(c => c["AgroLink:S3BucketName"]).Returns("my-bucket");
         configurationMock.Setup(c => c["AWS:ServiceUrl"]).Returns("https://s3.amazonaws.com");
 
         var service = new S3StorageService(
