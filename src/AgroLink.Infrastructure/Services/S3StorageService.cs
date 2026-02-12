@@ -12,7 +12,8 @@ public class S3StorageService(
     ILogger<S3StorageService> logger
 ) : IStorageService
 {
-    private readonly string _bucketName = configuration["AWS:S3BucketName"] ?? "agrolink-photos";
+    private readonly string _bucketName =
+        configuration["AgroLink:S3BucketName"] ?? "agrolink-photos";
 
     private readonly string _serviceUrl =
         configuration["AWS:ServiceUrl"] ?? "https://s3.amazonaws.com";
