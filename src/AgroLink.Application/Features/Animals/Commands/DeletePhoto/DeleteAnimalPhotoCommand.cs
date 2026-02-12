@@ -58,7 +58,11 @@ public class DeleteAnimalPhotoCommandHandler(
             {
                 // Log and continue, as storage failure shouldn't necessarily block DB deletion
                 // but we should be careful.
-                logger.LogError(ex, "Failed to delete file from storage for photo {PhotoId}", photo.Id);
+                logger.LogError(
+                    ex,
+                    "Failed to delete file from storage for photo {PhotoId}",
+                    photo.Id
+                );
             }
         }
 

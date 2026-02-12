@@ -5,22 +5,12 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.DeletePhoto;
 
 [TestFixture]
 public class DeleteAnimalPhotoCommandHandlerTests
 {
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private Mock<ILogger<DeleteAnimalPhotoCommandHandler>> _loggerMock = null!;
-    private DeleteAnimalPhotoCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -42,6 +32,15 @@ public class DeleteAnimalPhotoCommandHandlerTests
             _loggerMock.Object
         );
     }
+
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private Mock<ILogger<DeleteAnimalPhotoCommandHandler>> _loggerMock = null!;
+    private DeleteAnimalPhotoCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidRequest_DeletesFromStorageAndDb()

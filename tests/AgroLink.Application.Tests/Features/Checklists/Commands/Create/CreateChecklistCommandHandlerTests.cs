@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Create;
 using AgroLink.Application.Features.Checklists.DTOs;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;

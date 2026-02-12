@@ -25,9 +25,6 @@ public class AnimalPhotoConfiguration : IEntityTypeConfiguration<AnimalPhoto>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => e.AnimalId);
-        builder
-            .HasIndex(e => e.AnimalId)
-            .IsUnique()
-            .HasFilter("\"IsProfile\" = true");
+        builder.HasIndex(e => e.AnimalId).IsUnique().HasFilter("\"IsProfile\" = true");
     }
 }

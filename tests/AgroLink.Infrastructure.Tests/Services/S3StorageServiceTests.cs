@@ -9,13 +9,13 @@ namespace AgroLink.Infrastructure.Tests.Services;
 [TestFixture]
 public class S3StorageServiceTests
 {
-    private Mock<IAmazonS3> _s3ClientMock = null!;
-
     [SetUp]
     public void Setup()
     {
         _s3ClientMock = new Mock<IAmazonS3>();
     }
+
+    private Mock<IAmazonS3> _s3ClientMock = null!;
 
     [Test]
     public void GetKeyFromUrl_StandardS3Url_ReturnsKey()
