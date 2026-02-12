@@ -2,6 +2,7 @@ using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 
@@ -13,7 +14,8 @@ public class DeleteAnimalPhotoCommandHandler(
     IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    ILogger<DeleteAnimalPhotoCommandHandler> logger
 ) : IRequestHandler<DeleteAnimalPhotoCommand, Unit>
 {
     public async Task<Unit> Handle(
@@ -56,7 +58,7 @@ public class DeleteAnimalPhotoCommandHandler(
             {
                 // Log and continue, as storage failure shouldn't necessarily block DB deletion
                 // but we should be careful.
-                Console.WriteLine($"Failed to delete file from storage: {ex.Message}");
+                logger.LogError(ex, "Failed to delete file from storage for photo {PhotoId}", photo.Id);
             }
         }
 

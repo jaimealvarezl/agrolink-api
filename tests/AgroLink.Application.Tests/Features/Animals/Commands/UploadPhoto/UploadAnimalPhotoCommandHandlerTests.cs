@@ -4,6 +4,7 @@ using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Shouldly;
 
@@ -12,6 +13,16 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.UploadPhoto;
 [TestFixture]
 public class UploadAnimalPhotoCommandHandlerTests
 {
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
+    private Mock<IStoragePathProvider> _pathProviderMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private Mock<ILogger<UploadAnimalPhotoCommandHandler>> _loggerMock = null!;
+    private UploadAnimalPhotoCommandHandler _handler = null!;
+
     [SetUp]
     public void Setup()
     {
@@ -22,6 +33,7 @@ public class UploadAnimalPhotoCommandHandlerTests
         _pathProviderMock = new Mock<IStoragePathProvider>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _loggerMock = new Mock<ILogger<UploadAnimalPhotoCommandHandler>>();
 
         _handler = new UploadAnimalPhotoCommandHandler(
             _animalRepositoryMock.Object,
@@ -30,18 +42,10 @@ public class UploadAnimalPhotoCommandHandlerTests
             _storageServiceMock.Object,
             _pathProviderMock.Object,
             _currentUserServiceMock.Object,
-            _unitOfWorkMock.Object
+            _unitOfWorkMock.Object,
+            _loggerMock.Object
         );
     }
-
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<IStoragePathProvider> _pathProviderMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private UploadAnimalPhotoCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidRequest_UploadsAndReturnsDto()
@@ -107,7 +111,7 @@ public class UploadAnimalPhotoCommandHandlerTests
             animalId,
             new MemoryStream(),
             "p.jpg",
-            "img",
+            "image/jpeg",
             100
         );
         var animal = new Animal
@@ -124,6 +128,30 @@ public class UploadAnimalPhotoCommandHandlerTests
 
         // Act & Assert
         await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task Handle_InvalidExtension_ThrowsArgumentException()
+    {
+        // Arrange
+        var command = new UploadAnimalPhotoCommand(1, new MemoryStream(), "file.exe", "image/jpeg", 100);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task Handle_InvalidMimeType_ThrowsArgumentException()
+    {
+        // Arrange
+        var command = new UploadAnimalPhotoCommand(1, new MemoryStream(), "file.jpg", "text/html", 100);
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
     }
