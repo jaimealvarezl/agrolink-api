@@ -1,6 +1,7 @@
+using System.Text;
 using AgroLink.Application.Interfaces;
 using Amazon.S3;
-using Amazon.S3.Model;
+using Amazon.S3.Transfer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +14,9 @@ public class S3StorageService(
 ) : IStorageService
 {
     private readonly string _bucketName =
-        configuration["AgroLink:S3BucketName"] ?? "agrolink-photos";
+        configuration["AgroLink:S3BucketName"]
+        ?? configuration["AWS:S3BucketName"]
+        ?? "agrolink-photos";
 
     private readonly string _serviceUrl =
         configuration["AWS:ServiceUrl"] ?? "https://s3.amazonaws.com";
@@ -35,13 +38,15 @@ public class S3StorageService(
 
         try
         {
+            // Read into memory to ensure we have the full content and can diagnostic it
             using var ms = new MemoryStream();
             await fileStream.CopyToAsync(ms);
             ms.Position = 0;
 
-            logger.LogInformation("Actual bytes read from stream: {ActualSize}", ms.Length);
+            var actualSize = ms.Length;
+            logger.LogInformation("Actual bytes read from stream: {ActualSize}", actualSize);
 
-            if (ms.Length == 0)
+            if (actualSize == 0)
             {
                 throw new InvalidOperationException("Source stream is empty.");
             }
@@ -50,10 +55,18 @@ public class S3StorageService(
             var diagBuffer = new byte[32];
             var read = await ms.ReadAsync(diagBuffer, 0, 32);
             ms.Position = 0;
-            logger.LogInformation("First 32 bytes (Hex): {Hex}", BitConverter.ToString(diagBuffer, 0, read));
-            logger.LogInformation("First 32 bytes (ASCII): {Text}", System.Text.Encoding.ASCII.GetString(diagBuffer, 0, read));
+            logger.LogInformation(
+                "First 32 bytes (Hex): {Hex}",
+                BitConverter.ToString(diagBuffer, 0, read)
+            );
+            logger.LogInformation(
+                "First 32 bytes (ASCII): {Text}",
+                Encoding.ASCII.GetString(diagBuffer, 0, read)
+            );
 
-            var request = new PutObjectRequest
+            // Use TransferUtility for more robust uploads
+            var fileTransferUtility = new TransferUtility(s3Client);
+            var uploadRequest = new TransferUtilityUploadRequest
             {
                 BucketName = _bucketName,
                 Key = key,
@@ -61,20 +74,18 @@ public class S3StorageService(
                 ContentType = contentType,
             };
 
-            // Set ContentLength property instead of header
-            request.Headers.ContentLength = ms.Length;
+            await fileTransferUtility.UploadAsync(uploadRequest);
 
-            var response = await s3Client.PutObjectAsync(request);
-            logger.LogInformation(
-                "S3 upload successful. Key: {Key}. HTTP Status: {Status}. ETag: {ETag}",
-                key,
-                response.HttpStatusCode,
-                response.ETag
-            );
+            logger.LogInformation("S3 upload successful via TransferUtility. Key: {Key}", key);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to upload file to S3 with key {Key} to bucket {Bucket}", key, _bucketName);
+            logger.LogError(
+                ex,
+                "Failed to upload file to S3 with key {Key} to bucket {Bucket}",
+                key,
+                _bucketName
+            );
             throw;
         }
     }
