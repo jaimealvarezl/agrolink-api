@@ -237,6 +237,30 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+# Allow Lambda to access the file storage bucket
+resource "aws_iam_role_policy" "lambda_s3_storage_access" {
+  name = "AgroLinkLambdaS3StorageAccess"
+  role = aws_iam_role.lambda_function_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          aws_s3_bucket.file_storage.arn,
+          "${aws_s3_bucket.file_storage.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # Allow Lambda to read secrets from Secrets Manager and decrypt if needed
 resource "aws_iam_role_policy" "lambda_secrets_access" {
   name = "AgroLinkLambdaSecretsAccess"

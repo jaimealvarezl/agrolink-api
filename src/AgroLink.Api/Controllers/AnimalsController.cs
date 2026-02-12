@@ -1,8 +1,11 @@
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.Commands.Delete;
+using AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 using AgroLink.Application.Features.Animals.Commands.Move;
+using AgroLink.Application.Features.Animals.Commands.SetProfilePhoto;
 using AgroLink.Application.Features.Animals.Commands.Update;
+using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
@@ -131,6 +134,62 @@ public class AnimalsController(IMediator mediator) : BaseController
                 new MoveAnimalCommand(id, request.FromLotId, request.ToLotId, request.Reason)
             );
             return Ok(animal);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
+    }
+
+    [HttpPost("{id}/photos")]
+    public async Task<ActionResult<AnimalPhotoDto>> UploadPhoto(
+        int id,
+        IFormFile file,
+        [FromForm] string? description
+    )
+    {
+        try
+        {
+            using var stream = file.OpenReadStream();
+            var command = new UploadAnimalPhotoCommand(
+                id,
+                stream,
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                description
+            );
+
+            var result = await mediator.Send(command);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
+    }
+
+    [HttpPut("{id}/photos/{photoId}/profile")]
+    public async Task<ActionResult> SetProfilePhoto(int id, int photoId)
+    {
+        try
+        {
+            await mediator.Send(new SetAnimalProfilePhotoCommand(id, photoId));
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return HandleServiceException(ex);
+        }
+    }
+
+    [HttpDelete("{id}/photos/{photoId}")]
+    public async Task<ActionResult> DeletePhoto(int id, int photoId)
+    {
+        try
+        {
+            await mediator.Send(new DeleteAnimalPhotoCommand(id, photoId));
+            return NoContent();
         }
         catch (Exception ex)
         {

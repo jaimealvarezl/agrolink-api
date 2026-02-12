@@ -43,7 +43,10 @@ public class GetAnimalDetailQueryHandlerTests
                     SharePercent = 100,
                 },
             },
-            Photos = new List<Photo> { new() { UriRemote = "http://example.com/photo.jpg" } },
+            Photos = new List<AnimalPhoto>
+            {
+                new() { UriRemote = "http://example.com/photo.jpg", ContentType = "image/jpeg" },
+            },
         };
 
         _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(1)).ReturnsAsync(animal);

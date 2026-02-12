@@ -1,5 +1,4 @@
 using AgroLink.Application.Features.Animals.DTOs;
-using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -13,7 +12,7 @@ public class GetAnimalByIdQueryHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    IPhotoRepository photoRepository
+    IAnimalPhotoRepository animalPhotoRepository
 ) : IRequestHandler<GetAnimalByIdQuery, AnimalDto?>
 {
     public async Task<AnimalDto?> Handle(
@@ -54,17 +53,18 @@ public class GetAnimalByIdQueryHandler(
             }
         }
 
-        var photos = await photoRepository.GetPhotosByEntityAsync("ANIMAL", animal.Id);
+        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id);
         var photoDtos = photos
-            .Select(p => new PhotoDto
+            .Select(p => new AnimalPhotoDto
             {
                 Id = p.Id,
-                EntityType = p.EntityType,
-                EntityId = p.EntityId,
-                UriLocal = p.UriLocal,
+                AnimalId = p.AnimalId,
                 UriRemote = p.UriRemote,
-                Uploaded = p.Uploaded,
+                IsProfile = p.IsProfile,
+                ContentType = p.ContentType,
+                Size = p.Size,
                 Description = p.Description,
+                UploadedAt = p.UploadedAt,
                 CreatedAt = p.CreatedAt,
             })
             .ToList();

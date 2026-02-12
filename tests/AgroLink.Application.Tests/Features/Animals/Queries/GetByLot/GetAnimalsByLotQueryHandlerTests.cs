@@ -18,13 +18,13 @@ public class GetAnimalsByLotQueryHandlerTests
         _lotRepositoryMock = new Mock<ILotRepository>();
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
-        _photoRepositoryMock = new Mock<IPhotoRepository>();
+        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
         _handler = new GetAnimalsByLotQueryHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
-            _photoRepositoryMock.Object
+            _animalPhotoRepositoryMock.Object
         );
     }
 
@@ -32,7 +32,7 @@ public class GetAnimalsByLotQueryHandlerTests
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
+    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
     private GetAnimalsByLotQueryHandler _handler = null!;
 
     [Test]
@@ -71,9 +71,9 @@ public class GetAnimalsByLotQueryHandlerTests
         _animalOwnerRepositoryMock
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
-        _photoRepositoryMock
-            .Setup(r => r.GetPhotosByEntityAsync(It.IsAny<string>(), It.IsAny<int>()))
-            .ReturnsAsync(new List<Photo>());
+        _animalPhotoRepositoryMock
+            .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<AnimalPhoto>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

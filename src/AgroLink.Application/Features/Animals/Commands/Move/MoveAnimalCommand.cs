@@ -1,5 +1,4 @@
 using AgroLink.Application.Features.Animals.DTOs;
-using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -18,7 +17,7 @@ public class MoveAnimalCommandHandler(
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IMovementRepository movementRepository, // Assuming movement repository is needed for moving animals
-    IPhotoRepository photoRepository,
+    IAnimalPhotoRepository animalPhotoRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService
 ) : IRequestHandler<MoveAnimalCommand, AnimalDto>
@@ -85,17 +84,18 @@ public class MoveAnimalCommandHandler(
             }
         }
 
-        var photos = await photoRepository.GetPhotosByEntityAsync("ANIMAL", animal.Id); // Corrected method name
+        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id);
         var photoDtos = photos
-            .Select(p => new PhotoDto
+            .Select(p => new AnimalPhotoDto
             {
                 Id = p.Id,
-                EntityType = p.EntityType,
-                EntityId = p.EntityId,
-                UriLocal = p.UriLocal,
+                AnimalId = p.AnimalId,
                 UriRemote = p.UriRemote,
-                Uploaded = p.Uploaded,
+                IsProfile = p.IsProfile,
+                ContentType = p.ContentType,
+                Size = p.Size,
                 Description = p.Description,
+                UploadedAt = p.UploadedAt,
                 CreatedAt = p.CreatedAt,
             })
             .ToList();

@@ -1,6 +1,4 @@
 using AgroLink.Application.Features.Checklists.DTOs;
-using AgroLink.Application.Features.Photos.DTOs;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -12,7 +10,6 @@ public class UpdateChecklistCommandHandler(
     IRepository<ChecklistItem> checklistItemRepository, // Using generic repository for ChecklistItem
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
-    IPhotoRepository photoRepository,
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
     IUnitOfWork unitOfWork
@@ -65,7 +62,6 @@ public class UpdateChecklistCommandHandler(
     {
         var user = await userRepository.GetByIdAsync(checklist.UserId);
         var items = await checklistItemRepository.FindAsync(ci => ci.ChecklistId == checklist.Id);
-        var photos = await photoRepository.GetPhotosByEntityAsync("CHECKLIST", checklist.Id);
 
         var itemDtos = new List<ChecklistItemDto>();
         foreach (var item in items)
@@ -84,20 +80,6 @@ public class UpdateChecklistCommandHandler(
                 }
             );
         }
-
-        var photoDtos = photos
-            .Select(p => new PhotoDto
-            {
-                Id = p.Id,
-                EntityType = p.EntityType,
-                EntityId = p.EntityId,
-                UriLocal = p.UriLocal,
-                UriRemote = p.UriRemote,
-                Uploaded = p.Uploaded,
-                Description = p.Description,
-                CreatedAt = p.CreatedAt,
-            })
-            .ToList();
 
         string? scopeName = null;
         if (checklist.ScopeType == "LOT")
@@ -122,7 +104,6 @@ public class UpdateChecklistCommandHandler(
             UserName = user?.Name ?? "",
             Notes = checklist.Notes,
             Items = itemDtos,
-            Photos = photoDtos,
             CreatedAt = checklist.CreatedAt,
         };
     }

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using AgroLink.Application.Features.Photos.DTOs;
 
 namespace AgroLink.Application.Features.Checklists.DTOs;
 
@@ -28,9 +27,6 @@ public class ChecklistDto
 
     [Required]
     public required List<ChecklistItemDto> Items { get; set; }
-
-    [Required]
-    public required List<PhotoDto> Photos { get; set; }
 
     [Required]
     public required DateTime CreatedAt { get; set; }

@@ -36,7 +36,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         var response = new
         {
             statusCode = context.Response.StatusCode,
-            message = message,
+            message,
             detail = statusCode == HttpStatusCode.InternalServerError
                 ? "Internal Server Error"
                 : null,

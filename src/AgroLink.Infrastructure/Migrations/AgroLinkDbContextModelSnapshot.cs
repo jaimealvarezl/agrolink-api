@@ -17,7 +17,7 @@ namespace AgroLink.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -127,6 +127,57 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("AnimalOwners");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.AnimalPhoto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AnimalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsProfile")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UriRemote")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalId")
+                        .IsUnique()
+                        .HasFilter("\"IsProfile\" = true");
+
+                    b.ToTable("AnimalPhotos");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Checklist", b =>
@@ -445,56 +496,6 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("Paddocks");
                 });
 
-            modelBuilder.Entity("AgroLink.Domain.Entities.Photo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AnimalId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("EntityId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("Uploaded")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("UriLocal")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("UriRemote")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AnimalId");
-
-                    b.HasIndex("EntityType", "EntityId");
-
-                    b.ToTable("Photos");
-                });
-
             modelBuilder.Entity("AgroLink.Domain.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -585,6 +586,17 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Animal");
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.AnimalPhoto", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.Animal", "Animal")
+                        .WithMany("Photos")
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Checklist", b =>
@@ -695,13 +707,6 @@ namespace AgroLink.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Farm");
-                });
-
-            modelBuilder.Entity("AgroLink.Domain.Entities.Photo", b =>
-                {
-                    b.HasOne("AgroLink.Domain.Entities.Animal", null)
-                        .WithMany("Photos")
-                        .HasForeignKey("AnimalId");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Animal", b =>

@@ -1,7 +1,6 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
-using AgroLink.Application.Features.Photos.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -145,7 +144,7 @@ public class CreateAnimalCommandHandler(
             }
         }
 
-        var photoDtos = new List<PhotoDto>();
+        var photoDtos = new List<AnimalPhotoDto>();
 
         return new AnimalDto
         {

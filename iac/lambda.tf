@@ -21,6 +21,7 @@ resource "aws_lambda_function" "agro_link" {
       # Secret ARNs - read from Secrets Manager at runtime
       AgroLink__DbSecretArn  = aws_secretsmanager_secret.agro_link_db_connection.arn
       AgroLink__JwtSecretArn = aws_secretsmanager_secret.jwt_secret_key.arn
+      AWS__S3BucketName      = aws_s3_bucket.file_storage.bucket
     }
   }
 

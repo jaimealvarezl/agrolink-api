@@ -319,11 +319,11 @@ public class AnimalRepositoryTests : TestBase
         child.AnimalOwners.Add(new AnimalOwner { OwnerId = owner.Id, SharePercent = 50 });
 
         child.Photos.Add(
-            new Photo
+            new AnimalPhoto
             {
                 UriRemote = "http://photo.com",
-                EntityType = "ANIMAL",
-                UriLocal = "local",
+                ContentType = "image/jpeg",
+                Size = 1024,
             }
         );
 

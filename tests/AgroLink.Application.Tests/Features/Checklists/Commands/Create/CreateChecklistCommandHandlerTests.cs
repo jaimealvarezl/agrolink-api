@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Create;
 using AgroLink.Application.Features.Checklists.DTOs;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -19,7 +18,6 @@ public class CreateChecklistCommandHandlerTests
         _checklistItemRepositoryMock = new Mock<IRepository<ChecklistItem>>();
         _userRepositoryMock = new Mock<IUserRepository>();
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _photoRepositoryMock = new Mock<IPhotoRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
@@ -28,7 +26,6 @@ public class CreateChecklistCommandHandlerTests
             _checklistItemRepositoryMock.Object,
             _userRepositoryMock.Object,
             _animalRepositoryMock.Object,
-            _photoRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _paddockRepositoryMock.Object,
             _unitOfWorkMock.Object
@@ -39,7 +36,6 @@ public class CreateChecklistCommandHandlerTests
     private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
     private Mock<IUserRepository> _userRepositoryMock = null!;
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
@@ -103,9 +99,6 @@ public class CreateChecklistCommandHandlerTests
                 }
             );
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animal.Id)).ReturnsAsync(animal);
-        _photoRepositoryMock
-            .Setup(r => r.GetPhotosByEntityAsync(It.IsAny<string>(), It.IsAny<int>()))
-            .ReturnsAsync(new List<Photo>());
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
 
         // Act

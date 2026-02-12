@@ -49,5 +49,5 @@ public class Animal
     public virtual ICollection<ChecklistItem> ChecklistItems { get; set; } =
         new List<ChecklistItem>();
 
-    public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
+    public virtual ICollection<AnimalPhoto> Photos { get; set; } = new List<AnimalPhoto>();
 }
