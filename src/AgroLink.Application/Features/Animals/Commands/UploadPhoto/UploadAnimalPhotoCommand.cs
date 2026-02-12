@@ -36,8 +36,13 @@ public class UploadAnimalPhotoCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        logger.LogInformation("Starting photo upload for animal {AnimalId}. File: {FileName}, ContentType: {ContentType}, Size: {Size}", 
-            request.AnimalId, request.FileName, request.ContentType, request.Size);
+        logger.LogInformation(
+            "Starting photo upload for animal {AnimalId}. File: {FileName}, ContentType: {ContentType}, Size: {Size}",
+            request.AnimalId,
+            request.FileName,
+            request.ContentType,
+            request.Size
+        );
 
         // 1. Validate File Extension and Content Type
         var extension = Path.GetExtension(request.FileName).ToLowerInvariant();
@@ -66,22 +71,33 @@ public class UploadAnimalPhotoCommandHandler(
 
         if (animal.Lot?.Paddock == null)
         {
-            logger.LogError("Animal {AnimalId} is not correctly assigned to a lot/paddock. Lot: {LotId}", 
-                request.AnimalId, animal.LotId);
+            logger.LogError(
+                "Animal {AnimalId} is not correctly assigned to a lot/paddock. Lot: {LotId}",
+                request.AnimalId,
+                animal.LotId
+            );
             throw new InvalidOperationException("Animal is not assigned to a valid paddock/farm.");
         }
 
         var farmId = animal.Lot.Paddock.FarmId;
         var userId = currentUserService.GetRequiredUserId();
 
-        logger.LogInformation("Checking permissions for user {UserId} on farm {FarmId}", userId, farmId);
+        logger.LogInformation(
+            "Checking permissions for user {UserId} on farm {FarmId}",
+            userId,
+            farmId
+        );
         var isMember = await farmMemberRepository.ExistsAsync(fm =>
             fm.FarmId == farmId && fm.UserId == userId
         );
 
         if (!isMember)
         {
-            logger.LogWarning("User {UserId} does not have permission for farm {FarmId}", userId, farmId);
+            logger.LogWarning(
+                "User {UserId} does not have permission for farm {FarmId}",
+                userId,
+                farmId
+            );
             throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
@@ -103,7 +119,10 @@ public class UploadAnimalPhotoCommandHandler(
 
         await animalPhotoRepository.AddAsync(animalPhoto);
         await unitOfWork.SaveChangesAsync();
-        logger.LogInformation("Database record created with temporary state. PhotoId: {PhotoId}", animalPhoto.Id);
+        logger.LogInformation(
+            "Database record created with temporary state. PhotoId: {PhotoId}",
+            animalPhoto.Id
+        );
 
         // Generate S3 Key
         var key = pathProvider.GetAnimalPhotoPath(
@@ -118,12 +137,15 @@ public class UploadAnimalPhotoCommandHandler(
         {
             logger.LogInformation("Uploading file to storage...");
             await storageService.UploadFileAsync(key, request.FileStream, request.ContentType);
-            
+
             animalPhoto.UriRemote = storageService.GetFileUrl(key);
             animalPhoto.StorageKey = key;
             await unitOfWork.SaveChangesAsync();
-            
-            logger.LogInformation("Photo upload and database update completed successfully. URL: {Url}", animalPhoto.UriRemote);
+
+            logger.LogInformation(
+                "Photo upload and database update completed successfully. URL: {Url}",
+                animalPhoto.UriRemote
+            );
         }
         catch (Exception ex)
         {
@@ -135,7 +157,10 @@ public class UploadAnimalPhotoCommandHandler(
             );
 
             // Cleanup DB record if upload failure to maintain consistency
-            logger.LogInformation("Cleaning up database record {PhotoId} due to upload failure", animalPhoto.Id);
+            logger.LogInformation(
+                "Cleaning up database record {PhotoId} due to upload failure",
+                animalPhoto.Id
+            );
             animalPhotoRepository.Remove(animalPhoto);
             await unitOfWork.SaveChangesAsync();
 

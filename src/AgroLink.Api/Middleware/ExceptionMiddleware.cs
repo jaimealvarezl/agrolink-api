@@ -38,7 +38,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
             statusCode = context.Response.StatusCode,
             message,
             detail = exception.Message,
-            stackTrace = exception.StackTrace
+            stackTrace = exception.StackTrace,
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response));

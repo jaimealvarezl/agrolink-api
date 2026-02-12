@@ -16,6 +16,17 @@ public static class SecretsManagerHelper
             return;
         }
 
+        // Create a temporary logger factory to use during startup
+        // This is "proper" in the sense that it uses the ILogger abstraction
+        // and can be configured to use the same output as the main application.
+        using var loggerFactory = LoggerFactory.Create(loggingBuilder =>
+        {
+            loggingBuilder.AddConfiguration(builder.Configuration.GetSection("Logging"));
+            loggingBuilder.AddConsole();
+            // We could also add Lambda logging here if we detect the environment
+        });
+        var logger = loggerFactory.CreateLogger("SecretsManagerHelper");
+
         try
         {
             var secretsClient = new AmazonSecretsManagerClient();
@@ -60,21 +71,15 @@ public static class SecretsManagerHelper
                     }
                 );
 
-                Console.WriteLine(
+                logger.LogInformation(
                     "Successfully loaded database connection string from Secrets Manager."
                 );
             }
         }
         catch (Exception ex)
         {
-            // Note: We keep Console.WriteLine here because this runs during startup
-            // before the logging system is fully initialized.
-            Console.WriteLine($"Error loading secrets: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
-            }
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            logger.LogError(ex, "Error loading secrets from {SecretArn}", secretArn);
+            // Don't crash here, let the app fail later if connection is missing
         }
     }
 }
