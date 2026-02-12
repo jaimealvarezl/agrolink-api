@@ -62,7 +62,6 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Checklist>, Repository<Checklist>>();
         services.AddScoped<IRepository<ChecklistItem>, Repository<ChecklistItem>>();
         services.AddScoped<IRepository<Movement>, Repository<Movement>>();
-        services.AddScoped<IRepository<Photo>, Repository<Photo>>();
         services.AddScoped<IRepository<User>, Repository<User>>();
 
         // Specific Repositories
@@ -76,7 +75,6 @@ public static class DependencyInjection
         services.AddScoped<IMovementRepository, MovementRepository>();
         services.AddScoped<IChecklistRepository, ChecklistRepository>();
         services.AddScoped<IFarmMemberRepository, FarmMemberRepository>();
-        services.AddScoped<IPhotoRepository, PhotoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

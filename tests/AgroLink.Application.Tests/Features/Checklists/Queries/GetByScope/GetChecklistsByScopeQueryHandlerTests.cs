@@ -18,7 +18,6 @@ public class GetChecklistsByScopeQueryHandlerTests
         _checklistItemRepositoryMock = new Mock<IRepository<ChecklistItem>>();
         _userRepositoryMock = new Mock<IUserRepository>();
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _photoRepositoryMock = new Mock<IPhotoRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _handler = new GetChecklistsByScopeQueryHandler(
@@ -26,7 +25,6 @@ public class GetChecklistsByScopeQueryHandlerTests
             _checklistItemRepositoryMock.Object,
             _userRepositoryMock.Object,
             _animalRepositoryMock.Object,
-            _photoRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _paddockRepositoryMock.Object
         );
@@ -36,7 +34,6 @@ public class GetChecklistsByScopeQueryHandlerTests
     private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
     private Mock<IUserRepository> _userRepositoryMock = null!;
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IPhotoRepository> _photoRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private GetChecklistsByScopeQueryHandler _handler = null!;
@@ -77,9 +74,6 @@ public class GetChecklistsByScopeQueryHandlerTests
         _checklistItemRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem>());
-        _photoRepositoryMock
-            .Setup(r => r.GetPhotosByEntityAsync(It.IsAny<string>(), It.IsAny<int>()))
-            .ReturnsAsync(new List<Photo>());
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
 
         // Act

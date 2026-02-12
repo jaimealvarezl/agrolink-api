@@ -42,7 +42,6 @@ public abstract class TestBase
         services.AddScoped<IUserRepository, UserRepository>();
 
         // Add new CQRS-related repositories and services
-        services.AddScoped<IPhotoRepository, PhotoRepository>(); // Explicitly use Application interface
         services.AddScoped<IMovementRepository, MovementRepository>(); // Explicitly use Application interface
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
