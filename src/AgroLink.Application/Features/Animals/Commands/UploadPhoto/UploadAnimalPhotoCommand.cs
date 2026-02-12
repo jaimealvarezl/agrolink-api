@@ -36,10 +36,14 @@ public class UploadAnimalPhotoCommandHandler(
         CancellationToken cancellationToken
     )
     {
+        logger.LogInformation("Starting photo upload for animal {AnimalId}. File: {FileName}, ContentType: {ContentType}, Size: {Size}", 
+            request.AnimalId, request.FileName, request.ContentType, request.Size);
+
         // 1. Validate File Extension and Content Type
         var extension = Path.GetExtension(request.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(extension))
         {
+            logger.LogWarning("Invalid file extension: {Extension}", extension);
             throw new ArgumentException(
                 $"File extension {extension} is not allowed. Allowed: {string.Join(", ", AllowedExtensions)}"
             );
@@ -47,6 +51,7 @@ public class UploadAnimalPhotoCommandHandler(
 
         if (!AllowedMimeTypes.Contains(request.ContentType.ToLowerInvariant()))
         {
+            logger.LogWarning("Invalid content type: {ContentType}", request.ContentType);
             throw new ArgumentException(
                 $"Content type {request.ContentType} is not allowed. Allowed: {string.Join(", ", AllowedMimeTypes)}"
             );
@@ -55,23 +60,34 @@ public class UploadAnimalPhotoCommandHandler(
         var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId);
         if (animal == null)
         {
+            logger.LogWarning("Animal {AnimalId} not found", request.AnimalId);
             throw new ArgumentException($"Animal with ID {request.AnimalId} not found.");
+        }
+
+        if (animal.Lot?.Paddock == null)
+        {
+            logger.LogError("Animal {AnimalId} is not correctly assigned to a lot/paddock. Lot: {LotId}", 
+                request.AnimalId, animal.LotId);
+            throw new InvalidOperationException("Animal is not assigned to a valid paddock/farm.");
         }
 
         var farmId = animal.Lot.Paddock.FarmId;
         var userId = currentUserService.GetRequiredUserId();
 
+        logger.LogInformation("Checking permissions for user {UserId} on farm {FarmId}", userId, farmId);
         var isMember = await farmMemberRepository.ExistsAsync(fm =>
             fm.FarmId == farmId && fm.UserId == userId
         );
 
         if (!isMember)
         {
+            logger.LogWarning("User {UserId} does not have permission for farm {FarmId}", userId, farmId);
             throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
         // Check if it's the first photo
         var isFirstPhoto = !await animalPhotoRepository.HasPhotosAsync(request.AnimalId);
+        logger.LogInformation("Is first photo: {IsFirstPhoto}", isFirstPhoto);
 
         var animalPhoto = new AnimalPhoto
         {
@@ -87,6 +103,7 @@ public class UploadAnimalPhotoCommandHandler(
 
         await animalPhotoRepository.AddAsync(animalPhoto);
         await unitOfWork.SaveChangesAsync();
+        logger.LogInformation("Database record created with temporary state. PhotoId: {PhotoId}", animalPhoto.Id);
 
         // Generate S3 Key
         var key = pathProvider.GetAnimalPhotoPath(
@@ -95,23 +112,30 @@ public class UploadAnimalPhotoCommandHandler(
             animalPhoto.Id,
             request.FileName
         );
+        logger.LogInformation("Generated storage key: {Key}", key);
 
         try
         {
+            logger.LogInformation("Uploading file to storage...");
             await storageService.UploadFileAsync(key, request.FileStream, request.ContentType);
+            
             animalPhoto.UriRemote = storageService.GetFileUrl(key);
             animalPhoto.StorageKey = key;
             await unitOfWork.SaveChangesAsync();
+            
+            logger.LogInformation("Photo upload and database update completed successfully. URL: {Url}", animalPhoto.UriRemote);
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex,
-                "Failed to upload photo for animal {AnimalId} to storage",
-                request.AnimalId
+                "Failed to upload photo for animal {AnimalId} to storage. Key: {Key}",
+                request.AnimalId,
+                key
             );
 
-            // Cleanup DB record if upload fails to maintain consistency
+            // Cleanup DB record if upload failure to maintain consistency
+            logger.LogInformation("Cleaning up database record {PhotoId} due to upload failure", animalPhoto.Id);
             animalPhotoRepository.Remove(animalPhoto);
             await unitOfWork.SaveChangesAsync();
 
