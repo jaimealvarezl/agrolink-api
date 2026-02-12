@@ -142,6 +142,7 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPost("{id}/photos")]
+    [Consumes("multipart/form-data")]
     public async Task<ActionResult<AnimalPhotoDto>> UploadPhoto(
         int id,
         IFormFile file,
@@ -150,7 +151,7 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         try
         {
-            using var stream = file.OpenReadStream();
+            await using var stream = file.OpenReadStream();
             var command = new UploadAnimalPhotoCommand(
                 id,
                 stream,

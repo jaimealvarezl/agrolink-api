@@ -26,7 +26,7 @@ public class S3StorageService(
     )
     {
         logger.LogInformation(
-            "Uploading file to bucket {BucketName} with key {Key}, content type {ContentType} and size {Size}",
+            "Uploading file to bucket {BucketName} with key {Key}, content type {ContentType} and expected size {Size}",
             _bucketName,
             key,
             contentType,
@@ -35,33 +35,46 @@ public class S3StorageService(
 
         try
         {
-            // Ensure stream is at the beginning if possible
-            if (fileStream.CanSeek && fileStream.Position != 0)
+            using var ms = new MemoryStream();
+            await fileStream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            logger.LogInformation("Actual bytes read from stream: {ActualSize}", ms.Length);
+
+            if (ms.Length == 0)
             {
-                fileStream.Position = 0;
+                throw new InvalidOperationException("Source stream is empty.");
             }
+
+            // Diagnostic: Log the first 32 bytes to check for Base64 or corruption
+            var diagBuffer = new byte[32];
+            var read = await ms.ReadAsync(diagBuffer, 0, 32);
+            ms.Position = 0;
+            logger.LogInformation("First 32 bytes (Hex): {Hex}", BitConverter.ToString(diagBuffer, 0, read));
+            logger.LogInformation("First 32 bytes (ASCII): {Text}", System.Text.Encoding.ASCII.GetString(diagBuffer, 0, read));
 
             var request = new PutObjectRequest
             {
                 BucketName = _bucketName,
                 Key = key,
-                InputStream = fileStream,
+                InputStream = ms,
                 ContentType = contentType,
             };
 
-            // It's highly recommended to set ContentLength when using InputStream
-            request.Headers.ContentLength = contentLength;
+            // Set ContentLength property instead of header
+            request.Headers.ContentLength = ms.Length;
 
             var response = await s3Client.PutObjectAsync(request);
             logger.LogInformation(
-                "S3 upload successful. Key: {Key}. HTTP Status: {Status}",
+                "S3 upload successful. Key: {Key}. HTTP Status: {Status}. ETag: {ETag}",
                 key,
-                response.HttpStatusCode
+                response.HttpStatusCode,
+                response.ETag
             );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to upload file to S3 with key {Key}", key);
+            logger.LogError(ex, "Failed to upload file to S3 with key {Key} to bucket {Bucket}", key, _bucketName);
             throw;
         }
     }
