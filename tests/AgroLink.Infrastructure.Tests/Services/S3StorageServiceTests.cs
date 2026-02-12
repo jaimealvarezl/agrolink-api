@@ -3,7 +3,6 @@ using Amazon.S3;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Shouldly;
-using NUnit.Framework;
 
 namespace AgroLink.Infrastructure.Tests.Services;
 
@@ -25,7 +24,7 @@ public class S3StorageServiceTests
         var configurationMock = new Mock<IConfiguration>();
         configurationMock.Setup(c => c["AWS:S3BucketName"]).Returns("my-bucket");
         configurationMock.Setup(c => c["AWS:ServiceUrl"]).Returns("https://s3.amazonaws.com");
-        
+
         var service = new S3StorageService(_s3ClientMock.Object, configurationMock.Object);
         var url = "https://my-bucket.s3.amazonaws.com/f/1/a/1/photo.png";
 

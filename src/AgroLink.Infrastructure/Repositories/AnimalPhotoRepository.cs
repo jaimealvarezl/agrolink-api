@@ -16,7 +16,6 @@ public class AnimalPhotoRepository(AgroLinkDbContext context)
 
     public async Task SetProfilePhotoAsync(int animalId, int photoId)
     {
-
         var currentProfiles = await _dbSet
             .Where(p => p.AnimalId == animalId && p.IsProfile)
             .ToListAsync();
@@ -25,7 +24,6 @@ public class AnimalPhotoRepository(AgroLinkDbContext context)
         {
             photo.IsProfile = false;
         }
-
 
         var newProfile = await _dbSet.FindAsync(photoId);
         newProfile?.IsProfile = true;
