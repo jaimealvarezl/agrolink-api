@@ -60,6 +60,19 @@ resource "aws_api_gateway_deployment" "api_gateway_deployment" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.agro_link_api.id
+
+  # Force redeployment when the API configuration changes
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_rest_api.agro_link_api.binary_media_types,
+      aws_api_gateway_integration.proxy_integration.uri,
+      aws_api_gateway_integration.root_integration.uri,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_api_gateway_stage" "prod" {
