@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using AgroLink.Infrastructure.Services;
 using Amazon.S3;
@@ -121,6 +122,50 @@ public class S3StorageServiceTests
                         && r.InputStream == stream
                         && r.ContentType == contentType
                         && r.AutoCloseStream == false
+                        && r.Headers.ContentLength == length
+                        && r.MD5Digest != null // Verify MD5 is set
+                    ),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Test]
+    public async Task UploadFileAsync_StreamWithNonZeroPosition_ResetsPosition()
+    {
+        // Arrange
+        var configurationMock = new Mock<IConfiguration>();
+        configurationMock.Setup(c => c["AgroLink:S3BucketName"]).Returns("my-bucket");
+        configurationMock.Setup(c => c["AWS:ServiceUrl"]).Returns("https://s3.amazonaws.com");
+
+        var service = new S3StorageService(
+            _s3ClientMock.Object,
+            configurationMock.Object,
+            _loggerMock.Object
+        );
+
+        var key = "test/key.png";
+        var content = "test content";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+        var contentType = "image/png";
+        var length = stream.Length;
+
+        // Simulate stream being read
+        stream.Position = length;
+
+        // Act
+        await service.UploadFileAsync(key, stream, contentType, length);
+
+        // Assert
+        stream.Position.ShouldBe(0);
+        _s3ClientMock.Verify(
+            s =>
+                s.PutObjectAsync(
+                    It.Is<PutObjectRequest>(r =>
+                        r.InputStream == stream
+                        && r.Headers.ContentLength == length
+                        && r.MD5Digest != null
                     ),
                     It.IsAny<CancellationToken>()
                 ),

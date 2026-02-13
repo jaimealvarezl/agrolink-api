@@ -36,6 +36,10 @@ public class UploadAnimalPhotoCommandHandler(
         CancellationToken cancellationToken
     )
     {
+        using var scope = logger.BeginScope(
+            new Dictionary<string, object> { ["AnimalId"] = request.AnimalId }
+        );
+
         logger.LogInformation(
             "Starting photo upload for animal {AnimalId}. File: {FileName}, ContentType: {ContentType}, Size: {Size}",
             request.AnimalId,
@@ -62,6 +66,60 @@ public class UploadAnimalPhotoCommandHandler(
             );
         }
 
+        // 2. Validate File Signature (Magic Numbers)
+        if (request.FileStream.CanSeek)
+        {
+            if (request.Size < 12)
+            {
+                logger.LogWarning("File too small: {Size} bytes", request.Size);
+                throw new ArgumentException("File is too small to be a valid image.");
+            }
+
+            var buffer = new byte[12];
+            var initialPos = request.FileStream.Position;
+            if (initialPos != 0)
+                request.FileStream.Position = 0;
+
+            await request.FileStream.ReadExactlyAsync(buffer, 0, 12, cancellationToken);
+            request.FileStream.Position = 0; // Reset for subsequent operations
+
+            // JPEG: FF D8 FF
+            var isJpeg = buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF;
+            // PNG: 89 50 4E 47 0D 0A 1A 0A
+            var isPng =
+                buffer[0] == 0x89
+                && buffer[1] == 0x50
+                && buffer[2] == 0x4E
+                && buffer[3] == 0x47
+                && buffer[4] == 0x0D
+                && buffer[5] == 0x0A
+                && buffer[6] == 0x1A
+                && buffer[7] == 0x0A;
+            // WebP: RIFF ... WEBP
+            var isWebp =
+                buffer[0] == 0x52
+                && buffer[1] == 0x49
+                && buffer[2] == 0x46
+                && buffer[3] == 0x46
+                && buffer[8] == 0x57
+                && buffer[9] == 0x45
+                && buffer[10] == 0x42
+                && buffer[11] == 0x50;
+
+            if (!isJpeg && !isPng && !isWebp)
+            {
+                logger.LogWarning(
+                    "File signature mismatch. Filename: {FileName}, ContentType: {ContentType}, Header: {Header}",
+                    request.FileName,
+                    request.ContentType,
+                    BitConverter.ToString(buffer)
+                );
+                throw new ArgumentException(
+                    "File content does not match the expected image format (JPEG, PNG, WebP). The file may be corrupted."
+                );
+            }
+        }
+
         var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId);
         if (animal == null)
         {
@@ -81,6 +139,10 @@ public class UploadAnimalPhotoCommandHandler(
 
         var farmId = animal.Lot.Paddock.FarmId;
         var userId = currentUserService.GetRequiredUserId();
+
+        using var farmScope = logger.BeginScope(
+            new Dictionary<string, object> { ["FarmId"] = farmId, ["UserId"] = userId }
+        );
 
         logger.LogInformation(
             "Checking permissions for user {UserId} on farm {FarmId}",

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Security.Cryptography;
 using AgroLink.Application.Interfaces;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -27,8 +29,9 @@ public class S3StorageService(
         long contentLength
     )
     {
+        var stopwatch = Stopwatch.StartNew();
         logger.LogInformation(
-            "Uploading file to bucket {BucketName} with key {Key}, content type {ContentType} and size {Size}",
+            "Starting upload to S3. Bucket: {BucketName}, Key: {Key}, ContentType: {ContentType}, Size: {Size}",
             _bucketName,
             key,
             contentType,
@@ -37,6 +40,23 @@ public class S3StorageService(
 
         try
         {
+            if (fileStream.CanSeek && fileStream.Position != 0)
+            {
+                fileStream.Position = 0;
+            }
+
+            string? md5Digest = null;
+            if (fileStream.CanSeek)
+            {
+                using var md5 = MD5.Create();
+                // ComputeHash reads the stream to the end
+                var hashBytes = await md5.ComputeHashAsync(fileStream);
+                md5Digest = Convert.ToBase64String(hashBytes);
+
+                // Reset position for the actual upload
+                fileStream.Position = 0;
+            }
+
             var putRequest = new PutObjectRequest
             {
                 BucketName = _bucketName,
@@ -44,22 +64,47 @@ public class S3StorageService(
                 InputStream = fileStream,
                 ContentType = contentType,
                 AutoCloseStream = false, // Let the caller manage the stream lifecycle
+                MD5Digest = md5Digest, // S3 will verify this hash matches the uploaded content
             };
+
+            putRequest.Headers.ContentLength = contentLength;
 
             // Add metadata if useful
             putRequest.Metadata.Add("x-amz-meta-original-size", contentLength.ToString());
 
             await s3Client.PutObjectAsync(putRequest);
 
-            logger.LogInformation("S3 upload successful via PutObjectAsync. Key: {Key}", key);
+            stopwatch.Stop();
+            logger.LogInformation(
+                "S3 upload successful. Key: {Key}, DurationMs: {DurationMs}, Size: {Size}",
+                key,
+                stopwatch.ElapsedMilliseconds,
+                contentLength
+            );
+        }
+        catch (AmazonS3Exception ex)
+        {
+            stopwatch.Stop();
+            logger.LogError(
+                ex,
+                "AWS S3 Error during upload. Key: {Key}, Bucket: {Bucket}, ErrorCode: {ErrorCode}, RequestId: {RequestId}, DurationMs: {DurationMs}",
+                key,
+                _bucketName,
+                ex.ErrorCode,
+                ex.RequestId,
+                stopwatch.ElapsedMilliseconds
+            );
+            throw;
         }
         catch (Exception ex)
         {
+            stopwatch.Stop();
             logger.LogError(
                 ex,
-                "Failed to upload file to S3 with key {Key} to bucket {Bucket}",
+                "Unexpected error during S3 upload. Key: {Key}, Bucket: {Bucket}, DurationMs: {DurationMs}",
                 key,
-                _bucketName
+                _bucketName,
+                stopwatch.ElapsedMilliseconds
             );
             throw;
         }

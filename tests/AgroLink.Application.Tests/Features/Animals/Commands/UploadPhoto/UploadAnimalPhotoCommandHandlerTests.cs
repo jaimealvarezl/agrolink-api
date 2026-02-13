@@ -54,12 +54,33 @@ public class UploadAnimalPhotoCommandHandlerTests
         var animalId = 1;
         var farmId = 10;
         var userId = 5;
+
+        // Create a stream with valid JPEG header
+        var jpegHeader = new byte[]
+        {
+            0xFF,
+            0xD8,
+            0xFF,
+            0xE0,
+            0x00,
+            0x10,
+            0x4A,
+            0x46,
+            0x49,
+            0x46,
+            0x00,
+            0x01,
+        };
+        var stream = new MemoryStream();
+        stream.Write(jpegHeader, 0, jpegHeader.Length);
+        stream.Position = 0;
+
         var command = new UploadAnimalPhotoCommand(
             animalId,
-            new MemoryStream(),
+            stream,
             "photo.jpg",
             "image/jpeg",
-            1024,
+            stream.Length,
             "Test Photo"
         );
 
@@ -113,12 +134,33 @@ public class UploadAnimalPhotoCommandHandlerTests
     {
         // Arrange
         var animalId = 1;
+
+        // Create a stream with valid JPEG header
+        var jpegHeader = new byte[]
+        {
+            0xFF,
+            0xD8,
+            0xFF,
+            0xE0,
+            0x00,
+            0x10,
+            0x4A,
+            0x46,
+            0x49,
+            0x46,
+            0x00,
+            0x01,
+        };
+        var stream = new MemoryStream();
+        stream.Write(jpegHeader, 0, jpegHeader.Length);
+        stream.Position = 0;
+
         var command = new UploadAnimalPhotoCommand(
             animalId,
-            new MemoryStream(),
+            stream,
             "p.jpg",
             "image/jpeg",
-            100
+            stream.Length
         );
         var animal = new Animal
         {
@@ -167,6 +209,19 @@ public class UploadAnimalPhotoCommandHandlerTests
             "text/html",
             100
         );
+
+        // Act & Assert
+        await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task Handle_InvalidSignature_ThrowsArgumentException()
+    {
+        // Arrange
+        var stream = new MemoryStream(new byte[12]); // All zeros
+        var command = new UploadAnimalPhotoCommand(1, stream, "p.jpg", "image/jpeg", stream.Length);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(() =>
