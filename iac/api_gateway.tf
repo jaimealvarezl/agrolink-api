@@ -1,7 +1,7 @@
 resource "aws_api_gateway_rest_api" "agro_link_api" {
   name = "AgroLinkAPI"
 
-  binary_media_types = ["multipart/form-data", "image/jpeg", "image/png", "image/webp"]
+  binary_media_types = ["*/*"]
 
   tags = {
     Service = "AgroLink"
