@@ -38,6 +38,23 @@ public class GetAnimalDetailQueryHandler(
                 ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
                 : null;
 
+        var photoDtos = animal
+            .Photos.OrderByDescending(p => p.IsProfile)
+            .ThenByDescending(p => p.UploadedAt)
+            .Select(p => new AnimalPhotoDto
+            {
+                Id = p.Id,
+                AnimalId = p.AnimalId,
+                UriRemote = storageService.GetPresignedUrl(p.StorageKey, TimeSpan.FromHours(1)),
+                IsProfile = p.IsProfile,
+                ContentType = p.ContentType,
+                Size = p.Size,
+                Description = p.Description,
+                UploadedAt = p.UploadedAt,
+                CreatedAt = p.CreatedAt,
+            })
+            .ToList();
+
         return new AnimalDetailDto
         {
             Id = animal.Id,
@@ -66,6 +83,7 @@ public class GetAnimalDetailQueryHandler(
                 })
                 .ToList(),
             PrimaryPhotoUrl = primaryPhotoUrl,
+            Photos = photoDtos,
         };
     }
 }

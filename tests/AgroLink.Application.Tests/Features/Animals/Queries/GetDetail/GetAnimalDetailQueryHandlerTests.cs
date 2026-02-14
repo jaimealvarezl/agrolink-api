@@ -77,6 +77,9 @@ public class GetAnimalDetailQueryHandlerTests
         result.Owners[0].OwnerName.ShouldBe("John Doe");
         result.AgeInMonths.ShouldBe(24);
         result.PrimaryPhotoUrl.ShouldBe("http://signed-url.com/photo.jpg");
+        result.Photos.ShouldNotBeNull();
+        result.Photos.Count.ShouldBe(1);
+        result.Photos[0].UriRemote.ShouldBe("http://signed-url.com/photo.jpg");
     }
 
     [Test]
