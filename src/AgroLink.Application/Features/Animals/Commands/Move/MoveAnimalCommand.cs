@@ -18,6 +18,7 @@ public class MoveAnimalCommandHandler(
     IAnimalOwnerRepository animalOwnerRepository,
     IMovementRepository movementRepository, // Assuming movement repository is needed for moving animals
     IAnimalPhotoRepository animalPhotoRepository,
+    IStorageService storageService,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService
 ) : IRequestHandler<MoveAnimalCommand, AnimalDto>
@@ -90,7 +91,7 @@ public class MoveAnimalCommandHandler(
             {
                 Id = p.Id,
                 AnimalId = p.AnimalId,
-                UriRemote = p.UriRemote,
+                UriRemote = storageService.GetPresignedUrl(p.StorageKey, TimeSpan.FromHours(1)),
                 IsProfile = p.IsProfile,
                 ContentType = p.ContentType,
                 Size = p.Size,

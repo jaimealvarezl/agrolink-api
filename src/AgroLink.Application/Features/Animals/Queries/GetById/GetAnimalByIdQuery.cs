@@ -12,7 +12,8 @@ public class GetAnimalByIdQueryHandler(
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    IAnimalPhotoRepository animalPhotoRepository
+    IAnimalPhotoRepository animalPhotoRepository,
+    IStorageService storageService
 ) : IRequestHandler<GetAnimalByIdQuery, AnimalDto?>
 {
     public async Task<AnimalDto?> Handle(
@@ -59,7 +60,7 @@ public class GetAnimalByIdQueryHandler(
             {
                 Id = p.Id,
                 AnimalId = p.AnimalId,
-                UriRemote = p.UriRemote,
+                UriRemote = storageService.GetPresignedUrl(p.StorageKey, TimeSpan.FromHours(1)),
                 IsProfile = p.IsProfile,
                 ContentType = p.ContentType,
                 Size = p.Size,

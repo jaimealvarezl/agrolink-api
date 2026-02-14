@@ -22,6 +22,7 @@ public class MoveAnimalCommandHandlerTests
         _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _storageServiceMock = new Mock<IStorageService>();
 
         _handler = new MoveAnimalCommandHandler(
             _animalRepositoryMock.Object,
@@ -30,6 +31,7 @@ public class MoveAnimalCommandHandlerTests
             _animalOwnerRepositoryMock.Object,
             _movementRepositoryMock.Object,
             _animalPhotoRepositoryMock.Object,
+            _storageServiceMock.Object,
             _unitOfWorkMock.Object,
             _currentUserServiceMock.Object
         );
@@ -43,6 +45,7 @@ public class MoveAnimalCommandHandlerTests
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private MoveAnimalCommandHandler _handler = null!;
 
     [Test]

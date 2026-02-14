@@ -241,7 +241,10 @@ public class UploadAnimalPhotoCommandHandler(
         {
             Id = animalPhoto.Id,
             AnimalId = animalPhoto.AnimalId,
-            UriRemote = animalPhoto.UriRemote,
+            UriRemote = storageService.GetPresignedUrl(
+                animalPhoto.StorageKey,
+                TimeSpan.FromHours(1)
+            ),
             IsProfile = animalPhoto.IsProfile,
             ContentType = animalPhoto.ContentType,
             Size = animalPhoto.Size,

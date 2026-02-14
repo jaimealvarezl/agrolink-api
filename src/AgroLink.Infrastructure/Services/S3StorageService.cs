@@ -138,6 +138,26 @@ public class S3StorageService(
         return $"https://{_bucketName}.s3.amazonaws.com/{key}";
     }
 
+    public string GetPresignedUrl(string key, TimeSpan expiration)
+    {
+        try
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = _bucketName,
+                Key = key,
+                Expires = DateTime.UtcNow.Add(expiration),
+            };
+
+            return s3Client.GetPreSignedURL(request);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to generate pre-signed URL for key {Key}", key);
+            return GetFileUrl(key); // Fallback to direct URL if signing fails
+        }
+    }
+
     public string GetKeyFromUrl(string url)
     {
         if (string.IsNullOrEmpty(url))

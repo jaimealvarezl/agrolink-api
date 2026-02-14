@@ -18,6 +18,7 @@ public class UpdateAnimalCommandHandler(
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
     IFarmMemberRepository farmMemberRepository,
+    IStorageService storageService,
     ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
@@ -205,7 +206,7 @@ public class UpdateAnimalCommandHandler(
             {
                 Id = p.Id,
                 AnimalId = p.AnimalId,
-                UriRemote = p.UriRemote,
+                UriRemote = storageService.GetPresignedUrl(p.StorageKey, TimeSpan.FromHours(1)),
                 IsProfile = p.IsProfile,
                 ContentType = p.ContentType,
                 Size = p.Size,

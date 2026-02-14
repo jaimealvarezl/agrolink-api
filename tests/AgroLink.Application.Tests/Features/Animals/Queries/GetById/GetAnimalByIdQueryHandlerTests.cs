@@ -19,12 +19,14 @@ public class GetAnimalByIdQueryHandlerTests
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
         _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
+        _storageServiceMock = new Mock<IStorageService>();
         _handler = new GetAnimalByIdQueryHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object
+            _animalPhotoRepositoryMock.Object,
+            _storageServiceMock.Object
         );
     }
 
@@ -33,6 +35,7 @@ public class GetAnimalByIdQueryHandlerTests
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private GetAnimalByIdQueryHandler _handler = null!;
 
     [Test]

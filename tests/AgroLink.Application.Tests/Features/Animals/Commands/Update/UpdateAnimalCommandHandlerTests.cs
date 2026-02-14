@@ -25,6 +25,7 @@ public class UpdateAnimalCommandHandlerTests
         _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _storageServiceMock = new Mock<IStorageService>();
         _handler = new UpdateAnimalCommandHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
@@ -32,6 +33,7 @@ public class UpdateAnimalCommandHandlerTests
             _animalOwnerRepositoryMock.Object,
             _animalPhotoRepositoryMock.Object,
             _farmMemberRepositoryMock.Object,
+            _storageServiceMock.Object,
             _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
         );
@@ -45,6 +47,7 @@ public class UpdateAnimalCommandHandlerTests
     private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private UpdateAnimalCommandHandler _handler = null!;
 
     [Test]
