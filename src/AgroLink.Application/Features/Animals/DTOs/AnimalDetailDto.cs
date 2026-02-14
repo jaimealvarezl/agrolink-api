@@ -52,5 +52,7 @@ public class AnimalDetailDto
 
     // Photos
     public string? PrimaryPhotoUrl { get; set; }
-    public List<AnimalPhotoDto> Photos { get; set; } = new();
+
+    [Required]
+    public required List<AnimalPhotoDto> Photos { get; set; } = new();
 }
