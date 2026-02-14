@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -14,10 +15,15 @@ public class GetAnimalsPagedListQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalsPagedListQueryHandler(_animalRepositoryMock.Object);
+        _storageServiceMock = new Mock<IStorageService>();
+        _handler = new GetAnimalsPagedListQueryHandler(
+            _animalRepositoryMock.Object,
+            _storageServiceMock.Object
+        );
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private GetAnimalsPagedListQueryHandler _handler = null!;
 
     [Test]
@@ -47,6 +53,10 @@ public class GetAnimalsPagedListQueryHandlerTests
                 HealthStatus = HealthStatus.Sick,
                 ReproductiveStatus = ReproductiveStatus.Pregnant,
                 Sex = Sex.Female,
+                Photos = new List<AnimalPhoto>
+                {
+                    new() { StorageKey = "p1", UriRemote = "old" },
+                },
             },
         };
 
@@ -66,6 +76,10 @@ public class GetAnimalsPagedListQueryHandlerTests
             )
             .ReturnsAsync((animals, 1));
 
+        _storageServiceMock
+            .Setup(s => s.GetPresignedUrl("p1", It.IsAny<TimeSpan>()))
+            .Returns("http://signed.com/p1");
+
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
@@ -75,6 +89,7 @@ public class GetAnimalsPagedListQueryHandlerTests
         result.TotalCount.ShouldBe(1);
         var dto = result.Items.First();
         dto.TagVisual.ShouldBe("Tag1");
+        dto.PhotoUrl.ShouldBe("http://signed.com/p1");
         dto.IsSick.ShouldBeTrue();
         dto.IsPregnant.ShouldBeTrue();
         dto.IsMissing.ShouldBeFalse();

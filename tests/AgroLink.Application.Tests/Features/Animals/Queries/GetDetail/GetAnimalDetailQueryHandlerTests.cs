@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -14,10 +15,15 @@ public class GetAnimalDetailQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalDetailQueryHandler(_animalRepositoryMock.Object);
+        _storageServiceMock = new Mock<IStorageService>();
+        _handler = new GetAnimalDetailQueryHandler(
+            _animalRepositoryMock.Object,
+            _storageServiceMock.Object
+        );
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private GetAnimalDetailQueryHandler _handler = null!;
 
     [Test]
@@ -45,11 +51,19 @@ public class GetAnimalDetailQueryHandlerTests
             },
             Photos = new List<AnimalPhoto>
             {
-                new() { UriRemote = "http://example.com/photo.jpg", ContentType = "image/jpeg" },
+                new()
+                {
+                    StorageKey = "photo-key",
+                    UriRemote = "http://example.com/photo.jpg",
+                    ContentType = "image/jpeg",
+                },
             },
         };
 
         _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(1)).ReturnsAsync(animal);
+        _storageServiceMock
+            .Setup(s => s.GetPresignedUrl("photo-key", It.IsAny<TimeSpan>()))
+            .Returns("http://signed-url.com/photo.jpg");
 
         // Act
         var result = await _handler.Handle(new GetAnimalDetailQuery(1), CancellationToken.None);
@@ -62,7 +76,7 @@ public class GetAnimalDetailQueryHandlerTests
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerName.ShouldBe("John Doe");
         result.AgeInMonths.ShouldBe(24);
-        result.PrimaryPhotoUrl.ShouldBe("http://example.com/photo.jpg");
+        result.PrimaryPhotoUrl.ShouldBe("http://signed-url.com/photo.jpg");
     }
 
     [Test]

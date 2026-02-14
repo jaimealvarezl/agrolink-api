@@ -1,11 +1,14 @@
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetDetail;
 
-public class GetAnimalDetailQueryHandler(IAnimalRepository animalRepository)
-    : IRequestHandler<GetAnimalDetailQuery, AnimalDetailDto?>
+public class GetAnimalDetailQueryHandler(
+    IAnimalRepository animalRepository,
+    IStorageService storageService
+) : IRequestHandler<GetAnimalDetailQuery, AnimalDetailDto?>
 {
     public async Task<AnimalDetailDto?> Handle(
         GetAnimalDetailQuery request,
@@ -27,6 +30,13 @@ public class GetAnimalDetailQueryHandler(IAnimalRepository animalRepository)
         {
             ageInMonths--;
         }
+
+        var primaryPhoto =
+            animal.Photos.FirstOrDefault(p => p.IsProfile) ?? animal.Photos.FirstOrDefault();
+        var primaryPhotoUrl =
+            primaryPhoto != null
+                ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
+                : null;
 
         return new AnimalDetailDto
         {
@@ -55,9 +65,7 @@ public class GetAnimalDetailQueryHandler(IAnimalRepository animalRepository)
                     SharePercent = ao.SharePercent,
                 })
                 .ToList(),
-            PrimaryPhotoUrl =
-                animal.Photos.FirstOrDefault(p => p.IsProfile)?.UriRemote
-                ?? animal.Photos.FirstOrDefault()?.UriRemote,
+            PrimaryPhotoUrl = primaryPhotoUrl,
         };
     }
 }

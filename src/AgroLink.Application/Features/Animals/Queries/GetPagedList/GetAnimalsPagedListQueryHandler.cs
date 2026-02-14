@@ -1,13 +1,16 @@
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetPagedList;
 
-public class GetAnimalsPagedListQueryHandler(IAnimalRepository animalRepository)
-    : IRequestHandler<GetAnimalsPagedListQuery, PagedResult<AnimalListDto>>
+public class GetAnimalsPagedListQueryHandler(
+    IAnimalRepository animalRepository,
+    IStorageService storageService
+) : IRequestHandler<GetAnimalsPagedListQuery, PagedResult<AnimalListDto>>
 {
     public async Task<PagedResult<AnimalListDto>> Handle(
         GetAnimalsPagedListQuery request,
@@ -26,18 +29,26 @@ public class GetAnimalsPagedListQueryHandler(IAnimalRepository animalRepository)
             request.Sex
         );
 
-        var dtos = items.Select(a => new AnimalListDto
+        var dtos = items.Select(a =>
         {
-            Id = a.Id,
-            TagVisual = a.TagVisual,
-            Name = a.Name,
-            PhotoUrl =
-                a.Photos.FirstOrDefault(p => p.IsProfile)?.UriRemote
-                ?? a.Photos.FirstOrDefault()?.UriRemote,
-            LotName = a.Lot.Name,
-            IsSick = a.HealthStatus == HealthStatus.Sick,
-            IsPregnant = a.ReproductiveStatus == ReproductiveStatus.Pregnant,
-            IsMissing = a.LifeStatus == LifeStatus.Missing,
+            var primaryPhoto =
+                a.Photos.FirstOrDefault(p => p.IsProfile) ?? a.Photos.FirstOrDefault();
+            var photoUrl =
+                primaryPhoto != null
+                    ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
+                    : null;
+
+            return new AnimalListDto
+            {
+                Id = a.Id,
+                TagVisual = a.TagVisual,
+                Name = a.Name,
+                PhotoUrl = photoUrl,
+                LotName = a.Lot.Name,
+                IsSick = a.HealthStatus == HealthStatus.Sick,
+                IsPregnant = a.ReproductiveStatus == ReproductiveStatus.Pregnant,
+                IsMissing = a.LifeStatus == LifeStatus.Missing,
+            };
         });
 
         return new PagedResult<AnimalListDto>(dtos, totalCount, request.Page, request.PageSize);
