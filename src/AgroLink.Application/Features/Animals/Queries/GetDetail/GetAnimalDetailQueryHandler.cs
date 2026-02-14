@@ -31,28 +31,32 @@ public class GetAnimalDetailQueryHandler(
             ageInMonths--;
         }
 
-        var primaryPhoto =
-            animal.Photos.OrderByDescending(p => p.IsProfile).ThenByDescending(p => p.UploadedAt).FirstOrDefault();
+        var primaryPhoto = animal
+            .Photos.OrderByDescending(p => p.IsProfile)
+            .ThenByDescending(p => p.UploadedAt)
+            .FirstOrDefault();
         var primaryPhotoUrl =
             primaryPhoto != null
                 ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
                 : null;
 
-        var motherPhoto = animal.Mother?.Photos?
-            .OrderByDescending(p => p.IsProfile)
+        var motherPhoto = animal
+            .Mother?.Photos?.OrderByDescending(p => p.IsProfile)
             .ThenByDescending(p => p.UploadedAt)
             .FirstOrDefault();
-        var motherPhotoUrl = motherPhoto != null
-            ? storageService.GetPresignedUrl(motherPhoto.StorageKey, TimeSpan.FromHours(1))
-            : null;
+        var motherPhotoUrl =
+            motherPhoto != null
+                ? storageService.GetPresignedUrl(motherPhoto.StorageKey, TimeSpan.FromHours(1))
+                : null;
 
-        var fatherPhoto = animal.Father?.Photos?
-            .OrderByDescending(p => p.IsProfile)
+        var fatherPhoto = animal
+            .Father?.Photos?.OrderByDescending(p => p.IsProfile)
             .ThenByDescending(p => p.UploadedAt)
             .FirstOrDefault();
-        var fatherPhotoUrl = fatherPhoto != null
-            ? storageService.GetPresignedUrl(fatherPhoto.StorageKey, TimeSpan.FromHours(1))
-            : null;
+        var fatherPhotoUrl =
+            fatherPhoto != null
+                ? storageService.GetPresignedUrl(fatherPhoto.StorageKey, TimeSpan.FromHours(1))
+                : null;
 
         var photoDtos = animal
             .Photos.OrderByDescending(p => p.IsProfile)

@@ -39,17 +39,23 @@ public class GetAnimalDetailQueryHandlerTests
             BirthDate = birthDate,
             LotId = 10,
             Lot = new Lot { Name = "Pasture 1" },
-            Mother = new Animal 
-            { 
-                TagVisual = "M1", 
+            Mother = new Animal
+            {
+                TagVisual = "M1",
                 Name = "Mom",
-                Photos = new List<AnimalPhoto> { new() { StorageKey = "mom-key", IsProfile = true } }
+                Photos = new List<AnimalPhoto>
+                {
+                    new() { StorageKey = "mom-key", IsProfile = true },
+                },
             },
-            Father = new Animal 
-            { 
-                TagVisual = "F1", 
+            Father = new Animal
+            {
+                TagVisual = "F1",
                 Name = "Dad",
-                Photos = new List<AnimalPhoto> { new() { StorageKey = "dad-key", IsProfile = true } }
+                Photos = new List<AnimalPhoto>
+                {
+                    new() { StorageKey = "dad-key", IsProfile = true },
+                },
             },
             AnimalOwners = new List<AnimalOwner>
             {

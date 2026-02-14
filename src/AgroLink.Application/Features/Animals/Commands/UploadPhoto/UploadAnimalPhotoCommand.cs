@@ -78,7 +78,9 @@ public class UploadAnimalPhotoCommandHandler(
             var buffer = new byte[12];
             var initialPos = request.FileStream.Position;
             if (initialPos != 0)
+            {
                 request.FileStream.Position = 0;
+            }
 
             await request.FileStream.ReadExactlyAsync(buffer, 0, 12, cancellationToken);
             request.FileStream.Position = 0; // Reset for subsequent operations
