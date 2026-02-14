@@ -38,6 +38,18 @@ public class GetAnimalDetailQueryHandler(
                 ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
                 : null;
 
+        var motherPhoto = animal.Mother?.Photos?.FirstOrDefault(p => p.IsProfile) 
+                         ?? animal.Mother?.Photos?.FirstOrDefault();
+        var motherPhotoUrl = motherPhoto != null
+            ? storageService.GetPresignedUrl(motherPhoto.StorageKey, TimeSpan.FromHours(1))
+            : null;
+
+        var fatherPhoto = animal.Father?.Photos?.FirstOrDefault(p => p.IsProfile) 
+                         ?? animal.Father?.Photos?.FirstOrDefault();
+        var fatherPhotoUrl = fatherPhoto != null
+            ? storageService.GetPresignedUrl(fatherPhoto.StorageKey, TimeSpan.FromHours(1))
+            : null;
+
         var photoDtos = animal
             .Photos.OrderByDescending(p => p.IsProfile)
             .ThenByDescending(p => p.UploadedAt)
@@ -73,7 +85,9 @@ public class GetAnimalDetailQueryHandler(
             HealthStatus = animal.HealthStatus,
             ReproductiveStatus = animal.ReproductiveStatus,
             MotherName = animal.Mother is { } mother ? mother.Name ?? mother.TagVisual : null,
+            MotherPhotoUrl = motherPhotoUrl,
             FatherName = animal.Father is { } father ? father.Name ?? father.TagVisual : null,
+            FatherPhotoUrl = fatherPhotoUrl,
             Owners = animal
                 .AnimalOwners.Select(ao => new AnimalOwnerDto
                 {

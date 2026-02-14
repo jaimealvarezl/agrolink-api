@@ -39,8 +39,18 @@ public class GetAnimalDetailQueryHandlerTests
             BirthDate = birthDate,
             LotId = 10,
             Lot = new Lot { Name = "Pasture 1" },
-            Mother = new Animal { TagVisual = "M1", Name = "Mom" },
-            Father = new Animal { TagVisual = "F1", Name = "Dad" },
+            Mother = new Animal 
+            { 
+                TagVisual = "M1", 
+                Name = "Mom",
+                Photos = new List<AnimalPhoto> { new() { StorageKey = "mom-key", IsProfile = true } }
+            },
+            Father = new Animal 
+            { 
+                TagVisual = "F1", 
+                Name = "Dad",
+                Photos = new List<AnimalPhoto> { new() { StorageKey = "dad-key", IsProfile = true } }
+            },
             AnimalOwners = new List<AnimalOwner>
             {
                 new()
@@ -64,6 +74,12 @@ public class GetAnimalDetailQueryHandlerTests
         _storageServiceMock
             .Setup(s => s.GetPresignedUrl("photo-key", It.IsAny<TimeSpan>()))
             .Returns("http://signed-url.com/photo.jpg");
+        _storageServiceMock
+            .Setup(s => s.GetPresignedUrl("mom-key", It.IsAny<TimeSpan>()))
+            .Returns("http://signed-url.com/mom.jpg");
+        _storageServiceMock
+            .Setup(s => s.GetPresignedUrl("dad-key", It.IsAny<TimeSpan>()))
+            .Returns("http://signed-url.com/dad.jpg");
 
         // Act
         var result = await _handler.Handle(new GetAnimalDetailQuery(1), CancellationToken.None);
@@ -72,7 +88,9 @@ public class GetAnimalDetailQueryHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(1);
         result.MotherName.ShouldBe("Mom");
+        result.MotherPhotoUrl.ShouldBe("http://signed-url.com/mom.jpg");
         result.FatherName.ShouldBe("Dad");
+        result.FatherPhotoUrl.ShouldBe("http://signed-url.com/dad.jpg");
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerName.ShouldBe("John Doe");
         result.AgeInMonths.ShouldBe(24);
