@@ -32,20 +32,24 @@ public class GetAnimalDetailQueryHandler(
         }
 
         var primaryPhoto =
-            animal.Photos.FirstOrDefault(p => p.IsProfile) ?? animal.Photos.FirstOrDefault();
+            animal.Photos.OrderByDescending(p => p.IsProfile).ThenByDescending(p => p.UploadedAt).FirstOrDefault();
         var primaryPhotoUrl =
             primaryPhoto != null
                 ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
                 : null;
 
-        var motherPhoto = animal.Mother?.Photos?.FirstOrDefault(p => p.IsProfile) 
-                         ?? animal.Mother?.Photos?.FirstOrDefault();
+        var motherPhoto = animal.Mother?.Photos?
+            .OrderByDescending(p => p.IsProfile)
+            .ThenByDescending(p => p.UploadedAt)
+            .FirstOrDefault();
         var motherPhotoUrl = motherPhoto != null
             ? storageService.GetPresignedUrl(motherPhoto.StorageKey, TimeSpan.FromHours(1))
             : null;
 
-        var fatherPhoto = animal.Father?.Photos?.FirstOrDefault(p => p.IsProfile) 
-                         ?? animal.Father?.Photos?.FirstOrDefault();
+        var fatherPhoto = animal.Father?.Photos?
+            .OrderByDescending(p => p.IsProfile)
+            .ThenByDescending(p => p.UploadedAt)
+            .FirstOrDefault();
         var fatherPhotoUrl = fatherPhoto != null
             ? storageService.GetPresignedUrl(fatherPhoto.StorageKey, TimeSpan.FromHours(1))
             : null;
