@@ -106,7 +106,7 @@ public class UploadAnimalPhotoCommandHandlerTests
             )
             .Returns("path/to/photo.jpg");
         _storageServiceMock
-            .Setup(s => s.GetFileUrl(It.IsAny<string>()))
+            .Setup(s => s.GetPresignedUrl(It.IsAny<string>(), It.IsAny<TimeSpan>()))
             .Returns("http://storage.com/photo.jpg");
 
         // Act
