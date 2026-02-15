@@ -10,12 +10,15 @@ public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(contex
 {
     public async Task<IEnumerable<Farm>> GetFarmsWithPaddocksAsync()
     {
-        return await _dbSet.Include(f => f.Paddocks).ToListAsync();
+        return await _dbSet.AsNoTracking().Include(f => f.Paddocks).ToListAsync();
     }
 
     public async Task<Farm?> GetFarmWithPaddocksAsync(int id)
     {
-        return await _dbSet.Include(f => f.Paddocks).FirstOrDefaultAsync(f => f.Id == id);
+        return await _dbSet
+            .AsNoTracking()
+            .Include(f => f.Paddocks)
+            .FirstOrDefaultAsync(f => f.Id == id);
     }
 
     public async Task<FarmHierarchy?> GetFarmHierarchyAsync(int id)

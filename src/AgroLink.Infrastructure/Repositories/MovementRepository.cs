@@ -13,7 +13,8 @@ public class MovementRepository(AgroLinkDbContext context) : IMovementRepository
     )
     {
         return await context
-            .Movements.Where(m => m.EntityType == entityType && m.EntityId == entityId)
+            .Movements.AsNoTracking()
+            .Where(m => m.EntityType == entityType && m.EntityId == entityId)
             .ToListAsync();
     }
 

@@ -9,12 +9,16 @@ public class UserRepository(AgroLinkDbContext context) : Repository<User>(contex
 {
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+        return await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task<IEnumerable<User>> GetActiveUsersAsync()
     {
-        return await _dbSet.Where(u => u.IsActive).OrderBy(u => u.Name).ToListAsync();
+        return await _dbSet
+            .AsNoTracking()
+            .Where(u => u.IsActive)
+            .OrderBy(u => u.Name)
+            .ToListAsync();
     }
 
     public async Task<bool> EmailExistsAsync(string email)
