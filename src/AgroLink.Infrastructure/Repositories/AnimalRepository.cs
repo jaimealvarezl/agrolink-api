@@ -198,15 +198,14 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
-            .Join(_context.Lots, a => a.LotId, l => l.Id, (a, l) => new { a, l })
-            .Join(_context.Paddocks, x => x.l.PaddockId, p => p.Id, (x, p) => new { x.a, p })
-            .Where(x =>
-                _context.FarmMembers.Any(m => m.UserId == userId && m.FarmId == x.p.FarmId)
+            .Where(a =>
+                _context.FarmMembers.Any(m =>
+                    m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                )
                 || _context.Farms.Any(f =>
-                    f.Id == x.p.FarmId && f.Owner != null && f.Owner.UserId == userId
+                    f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
                 )
             )
-            .Select(x => x.a)
             .ToListAsync(cancellationToken);
     }
 
@@ -238,24 +237,22 @@ public class AnimalRepository(AgroLinkDbContext context)
         CancellationToken cancellationToken = default
     )
     {
-        var colors = await _context
-            .Animals.Join(_context.Lots, a => a.LotId, l => l.Id, (a, l) => new { a, l })
-            .Join(_context.Paddocks, x => x.l.PaddockId, p => p.Id, (x, p) => new { x.a, p })
-            .Where(x =>
-                _context.FarmMembers.Any(m => m.UserId == userId && m.FarmId == x.p.FarmId)
-                || _context.Farms.Any(f =>
-                    f.Id == x.p.FarmId && f.Owner != null && f.Owner.UserId == userId
+        return await _dbSet
+            .Where(a =>
+                !string.IsNullOrEmpty(a.Color)
+                && (
+                    _context.FarmMembers.Any(m =>
+                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                    )
+                    || _context.Farms.Any(f =>
+                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                    )
                 )
             )
-            .Where(x => !string.IsNullOrEmpty(x.a.Color))
-            .Select(x => x.a.Color!)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        return colors
+            .Select(a => a.Color!)
             .GroupBy(c => c.ToLower())
             .Select(g => g.OrderBy(c => c).First())
             .OrderBy(c => c)
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 }
