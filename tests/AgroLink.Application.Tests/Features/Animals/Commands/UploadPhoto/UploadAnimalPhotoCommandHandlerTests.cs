@@ -16,7 +16,6 @@ public class UploadAnimalPhotoCommandHandlerTests
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _storageServiceMock = new Mock<IStorageService>();
         _pathProviderMock = new Mock<IStoragePathProvider>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
@@ -25,7 +24,6 @@ public class UploadAnimalPhotoCommandHandlerTests
         _handler = new UploadAnimalPhotoCommandHandler(
             _animalRepositoryMock.Object,
             _animalPhotoRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
             _storageServiceMock.Object,
             _pathProviderMock.Object,
             _unitOfWorkMock.Object,
@@ -35,7 +33,6 @@ public class UploadAnimalPhotoCommandHandlerTests
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private Mock<IStoragePathProvider> _pathProviderMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;

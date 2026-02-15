@@ -245,9 +245,10 @@ public class AnimalRepository(AgroLinkDbContext context)
         }
 
         return await _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
             .Where(a =>
-                !string.IsNullOrEmpty(a.Color)
-                && userFarmIds.Contains(a.Lot.Paddock.FarmId)
+                !string.IsNullOrEmpty(a.Color) && userFarmIds.Contains(a.Lot.Paddock.FarmId)
             )
             .Select(a => a.Color!)
             .GroupBy(c => c.ToLower())
@@ -269,9 +270,10 @@ public class AnimalRepository(AgroLinkDbContext context)
         }
 
         return await _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
             .Where(a =>
-                !string.IsNullOrEmpty(a.Breed)
-                && userFarmIds.Contains(a.Lot.Paddock.FarmId)
+                !string.IsNullOrEmpty(a.Breed) && userFarmIds.Contains(a.Lot.Paddock.FarmId)
             )
             .Select(a => a.Breed!)
             .GroupBy(b => b.ToLower())
@@ -285,12 +287,28 @@ public class AnimalRepository(AgroLinkDbContext context)
         CancellationToken cancellationToken
     )
     {
-        return await _context
-            .Farms.Where(f =>
-                (f.Owner != null && f.Owner.UserId == userId)
-                || f.Members.Any(m => m.UserId == userId)
-            )
-            .Select(f => f.Id)
+        // Get farms where user is a member
+        var memberFarmIds = await _context
+            .FarmMembers.Where(m => m.UserId == userId)
+            .Select(m => m.FarmId)
             .ToListAsync(cancellationToken);
+
+        // Get farms where user is the owner (via Owner entity)
+        // Find Owner entity for this user
+        var ownerIds = await _context
+            .Owners.Where(o => o.UserId == userId)
+            .Select(o => o.Id)
+            .ToListAsync(cancellationToken);
+
+        var ownedFarmIds = new List<int>();
+        if (ownerIds.Any())
+        {
+            ownedFarmIds = await _context
+                .Farms.Where(f => ownerIds.Contains(f.OwnerId))
+                .Select(f => f.Id)
+                .ToListAsync(cancellationToken);
+        }
+
+        return memberFarmIds.Concat(ownedFarmIds).Distinct().ToList();
     }
 }
