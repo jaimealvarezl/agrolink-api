@@ -153,6 +153,30 @@ public class AnimalRepository(AgroLinkDbContext context)
         return (items, totalCount);
     }
 
+    public async Task<IEnumerable<Animal>> GetAllByUserAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await _dbSet
+            .Include(a => a.Lot)
+            .Include(a => a.Mother)
+            .Include(a => a.Father)
+            .Include(a => a.AnimalOwners)
+                .ThenInclude(ao => ao.Owner)
+            .Include(a => a.Photos)
+            .Join(_context.Lots, a => a.LotId, l => l.Id, (a, l) => new { a, l })
+            .Join(_context.Paddocks, x => x.l.PaddockId, p => p.Id, (x, p) => new { x.a, p })
+            .Where(x =>
+                _context.FarmMembers.Any(m => m.UserId == userId && m.FarmId == x.p.FarmId)
+                || _context.Farms.Any(f =>
+                    f.Id == x.p.FarmId && f.Owner != null && f.Owner.UserId == userId
+                )
+            )
+            .Select(x => x.a)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Animal?> GetAnimalDetailsAsync(int id)
     {
         return await _dbSet

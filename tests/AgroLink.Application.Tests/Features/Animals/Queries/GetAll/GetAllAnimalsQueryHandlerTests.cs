@@ -42,7 +42,10 @@ public class GetAllAnimalsQueryHandlerTests
     public async Task Handle_ReturnsAllAnimals()
     {
         // Arrange
-        var query = new GetAllAnimalsQuery();
+        var userId = 1;
+        var query = new GetAllAnimalsQuery(userId);
+        var lot1 = new Lot { Id = 1, Name = "Lot 1" };
+        var lot2 = new Lot { Id = 2, Name = "Lot 2" };
         var animals = new List<Animal>
         {
             new()
@@ -52,8 +55,11 @@ public class GetAllAnimalsQueryHandlerTests
                 Cuia = "CUIA-A001",
                 Name = "Animal 1",
                 LotId = 1,
+                Lot = lot1,
                 CreatedAt = DateTime.UtcNow,
                 LifeStatus = LifeStatus.Active,
+                AnimalOwners = [],
+                Photos = [],
             },
             new()
             {
@@ -62,14 +68,17 @@ public class GetAllAnimalsQueryHandlerTests
                 Cuia = "CUIA-A002",
                 Name = "Animal 2",
                 LotId = 2,
+                Lot = lot2,
                 CreatedAt = DateTime.UtcNow,
                 LifeStatus = LifeStatus.Active,
+                AnimalOwners = [],
+                Photos = [],
             },
         };
-        var lot1 = new Lot { Id = 1, Name = "Lot 1" };
-        var lot2 = new Lot { Id = 2, Name = "Lot 2" };
 
-        _animalRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(animals);
+        _animalRepositoryMock
+            .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animals);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(lot1);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(lot2);
         _animalOwnerRepositoryMock
@@ -93,8 +102,11 @@ public class GetAllAnimalsQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        var query = new GetAllAnimalsQuery();
-        _animalRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Animal>());
+        var userId = 1;
+        var query = new GetAllAnimalsQuery(userId);
+        _animalRepositoryMock
+            .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Animal>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
