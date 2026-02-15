@@ -1,4 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -7,18 +9,31 @@ namespace AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 
 public record GetAnimalGenealogyQuery(int Id) : IRequest<AnimalGenealogyDto?>;
 
-public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
-    : IRequestHandler<GetAnimalGenealogyQuery, AnimalGenealogyDto?>
+public class GetAnimalGenealogyQueryHandler(
+    IAnimalRepository animalRepository,
+    IFarmMemberRepository farmMemberRepository,
+    ICurrentUserService currentUserService
+) : IRequestHandler<GetAnimalGenealogyQuery, AnimalGenealogyDto?>
 {
     public async Task<AnimalGenealogyDto?> Handle(
         GetAnimalGenealogyQuery request,
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalWithGenealogyAsync(request.Id);
+        var animal = await animalRepository.GetAnimalDetailsAsync(request.Id);
         if (animal == null)
         {
             return null;
+        }
+
+        var userId = currentUserService.GetRequiredUserId();
+        var isMember = await farmMemberRepository.ExistsAsync(fm =>
+            fm.UserId == userId && fm.FarmId == animal.Lot.Paddock.FarmId
+        );
+
+        if (!isMember)
+        {
+            throw new ForbiddenAccessException("You do not have access to this animal.");
         }
 
         return await BuildGenealogyAsync(animal);

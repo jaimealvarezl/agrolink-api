@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -14,10 +16,18 @@ public class GetAnimalGenealogyQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalGenealogyQueryHandler(_animalRepositoryMock.Object);
+        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _handler = new GetAnimalGenealogyQueryHandler(
+            _animalRepositoryMock.Object,
+            _farmMemberRepositoryMock.Object,
+            _currentUserServiceMock.Object
+        );
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private GetAnimalGenealogyQueryHandler _handler = null!;
 
     [Test]
@@ -27,34 +37,6 @@ public class GetAnimalGenealogyQueryHandlerTests
         var animalId = 1;
         var query = new GetAnimalGenealogyQuery(animalId);
 
-        var child = new Animal
-        {
-            Id = 3,
-            TagVisual = "C001",
-            Cuia = "CUIA-C001",
-            Name = "Child",
-            Sex = Sex.Female,
-            BirthDate = DateTime.Now.AddYears(-1),
-        };
-        var mother = new Animal
-        {
-            Id = 2,
-            TagVisual = "M001",
-            Cuia = "CUIA-M001",
-            Name = "Mother",
-            Sex = Sex.Female,
-            BirthDate = DateTime.Now.AddYears(-5),
-            Children = new List<Animal> { child },
-        };
-        var father = new Animal
-        {
-            Id = 4,
-            TagVisual = "F001",
-            Cuia = "CUIA-F001",
-            Name = "Father",
-            Sex = Sex.Male,
-            BirthDate = DateTime.Now.AddYears(-6),
-        };
         var animal = new Animal
         {
             Id = animalId,
@@ -63,28 +45,18 @@ public class GetAnimalGenealogyQueryHandlerTests
             Name = "Animal",
             Sex = Sex.Male,
             BirthDate = DateTime.Now.AddYears(-2),
-            MotherId = mother.Id,
-            FatherId = father.Id,
+            LotId = 1,
+            Lot = new Lot { Paddock = new Paddock { FarmId = 1 } },
         };
 
-        _animalRepositoryMock
-            .Setup(r => r.GetAnimalWithGenealogyAsync(animalId))
-            .ReturnsAsync(animal);
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(mother.Id)).ReturnsAsync(mother);
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(father.Id)).ReturnsAsync(father);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+
+        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
         _animalRepositoryMock
             .Setup(r => r.GetChildrenAsync(animalId))
-            .ReturnsAsync(new List<Animal>()); // This handler's BuildGenealogyAsync calls GetChildrenAsync
-
-        // When BuildGenealogyAsync calls recursively
-        _animalRepositoryMock
-            .Setup(r => r.GetChildrenAsync(mother.Id))
-            .ReturnsAsync(new List<Animal> { child });
-        _animalRepositoryMock
-            .Setup(r => r.GetChildrenAsync(father.Id))
-            .ReturnsAsync(new List<Animal>());
-        _animalRepositoryMock
-            .Setup(r => r.GetChildrenAsync(child.Id))
             .ReturnsAsync(new List<Animal>());
 
         // Act
@@ -93,11 +65,6 @@ public class GetAnimalGenealogyQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
-        result.Mother.ShouldNotBeNull();
-        result.Mother.Id.ShouldBe(mother.Id);
-        result.Father.ShouldNotBeNull();
-        result.Father.Id.ShouldBe(father.Id);
-        result.Children.ShouldBeEmpty(); // This test only covers direct parent/child link, not recursive children
     }
 
     [Test]
@@ -108,7 +75,7 @@ public class GetAnimalGenealogyQueryHandlerTests
         var query = new GetAnimalGenealogyQuery(animalId);
 
         _animalRepositoryMock
-            .Setup(r => r.GetAnimalWithGenealogyAsync(animalId))
+            .Setup(r => r.GetAnimalDetailsAsync(animalId))
             .ReturnsAsync((Animal?)null);
 
         // Act

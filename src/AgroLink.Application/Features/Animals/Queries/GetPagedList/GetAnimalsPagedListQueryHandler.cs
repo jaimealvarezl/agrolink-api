@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
@@ -9,6 +10,8 @@ namespace AgroLink.Application.Features.Animals.Queries.GetPagedList;
 
 public class GetAnimalsPagedListQueryHandler(
     IAnimalRepository animalRepository,
+    IFarmMemberRepository farmMemberRepository,
+    ICurrentUserService currentUserService,
     IStorageService storageService
 ) : IRequestHandler<GetAnimalsPagedListQuery, PagedResult<AnimalListDto>>
 {
@@ -17,6 +20,16 @@ public class GetAnimalsPagedListQueryHandler(
         CancellationToken cancellationToken
     )
     {
+        var userId = currentUserService.GetRequiredUserId();
+        var isMember = await farmMemberRepository.ExistsAsync(fm =>
+            fm.UserId == userId && fm.FarmId == request.FarmId
+        );
+
+        if (!isMember)
+        {
+            throw new ForbiddenAccessException("You do not have access to this farm's animals.");
+        }
+
         var (items, totalCount) = await animalRepository.GetPagedListAsync(
             request.FarmId,
             request.Page,

@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
@@ -10,6 +11,8 @@ public record GetAnimalByIdQuery(int Id) : IRequest<AnimalDto?>;
 public class GetAnimalByIdQueryHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
+    IFarmMemberRepository farmMemberRepository,
+    ICurrentUserService currentUserService,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
@@ -27,7 +30,22 @@ public class GetAnimalByIdQueryHandler(
             return null;
         }
 
-        var lot = await lotRepository.GetByIdAsync(animal.LotId);
+        var lot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
+        if (lot == null)
+        {
+            return null;
+        }
+
+        var userId = currentUserService.GetRequiredUserId();
+        var isMember = await farmMemberRepository.ExistsAsync(fm =>
+            fm.UserId == userId && fm.FarmId == lot.Paddock.FarmId
+        );
+
+        if (!isMember)
+        {
+            throw new ForbiddenAccessException("You do not have access to this animal.");
+        }
+
         var mother = animal.MotherId.HasValue
             ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
             : null;

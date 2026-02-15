@@ -1,5 +1,4 @@
 using AgroLink.Application.Features.Animals.Queries.GetAll;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -12,15 +11,15 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetAll;
 [TestFixture]
 public class GetAllAnimalsQueryHandlerTests
 {
-    private AutoMocker _mocker = null!;
-    private GetAllAnimalsQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<GetAllAnimalsQueryHandler>();
     }
+
+    private AutoMocker _mocker = null!;
+    private GetAllAnimalsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ReturnsAllAnimals()
@@ -60,7 +59,8 @@ public class GetAllAnimalsQueryHandlerTests
             },
         };
 
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
 
@@ -80,7 +80,8 @@ public class GetAllAnimalsQueryHandlerTests
         // Arrange
         var userId = 1;
         var query = new GetAllAnimalsQuery(userId);
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Animal>());
 

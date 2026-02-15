@@ -14,6 +14,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Api.Tests.Controllers;
@@ -24,8 +25,8 @@ public class AnimalsControllerTests
     [SetUp]
     public void Setup()
     {
-        _mediatorMock = new Mock<IMediator>();
-        _controller = new AnimalsController(_mediatorMock.Object);
+        _mocker = new AutoMocker();
+        _controller = _mocker.CreateInstance<AnimalsController>();
 
         // Setup HTTP context with user claims for tests that need it
         var claims = new List<Claim> { new("userid", "1"), new(ClaimTypes.Name, "testuser") };
@@ -38,7 +39,7 @@ public class AnimalsControllerTests
         };
     }
 
-    private Mock<IMediator> _mediatorMock = null!;
+    private AutoMocker _mocker = null!;
     private AnimalsController _controller = null!;
 
     [Test]
@@ -89,7 +90,8 @@ public class AnimalsControllerTests
             },
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x => x.Send(It.IsAny<GetAllAnimalsQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
 
@@ -129,7 +131,8 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<GetAnimalByIdQuery>(q => q.Id == animalId),
@@ -155,7 +158,8 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<GetAnimalByIdQuery>(q => q.Id == animalId),
@@ -201,7 +205,8 @@ public class AnimalsControllerTests
             },
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<GetAnimalsByLotQuery>(q => q.LotId == lotId),
@@ -266,7 +271,8 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<CreateAnimalCommand>(c => c.Dto == createDto),
@@ -325,7 +331,8 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<UpdateAnimalCommand>(c => c.Id == animalId && c.Dto == updateDto),
@@ -359,7 +366,8 @@ public class AnimalsControllerTests
             },
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<UpdateAnimalCommand>(c => c.Id == animalId),
@@ -382,7 +390,8 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 1;
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<DeleteAnimalCommand>(c => c.Id == animalId),
@@ -405,7 +414,8 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<DeleteAnimalCommand>(c => c.Id == animalId),
@@ -438,7 +448,8 @@ public class AnimalsControllerTests
             Children = [],
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<GetAnimalGenealogyQuery>(q => q.Id == animalId),
@@ -464,7 +475,8 @@ public class AnimalsControllerTests
         // Arrange
         var animalId = 999;
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<GetAnimalGenealogyQuery>(q => q.Id == animalId),
@@ -514,7 +526,8 @@ public class AnimalsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _mediatorMock
+        _mocker
+            .GetMock<IMediator>()
             .Setup(x =>
                 x.Send(
                     It.Is<MoveAnimalCommand>(c =>

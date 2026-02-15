@@ -9,15 +9,15 @@ namespace AgroLink.Application.Tests.Features.Animals.Queries.GetColors;
 [TestFixture]
 public class GetAnimalColorsQueryHandlerTests
 {
-    private AutoMocker _mocker = null!;
-    private GetAnimalColorsQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<GetAnimalColorsQueryHandler>();
     }
+
+    private AutoMocker _mocker = null!;
+    private GetAnimalColorsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ReturnsDistinctColors()
@@ -27,7 +27,8 @@ public class GetAnimalColorsQueryHandlerTests
         var query = new GetAnimalColorsQuery(userId);
         var expectedColors = new List<string> { "Blanco", "Negro", "Pinto Negro" };
 
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetDistinctColorsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedColors);
 
@@ -47,7 +48,8 @@ public class GetAnimalColorsQueryHandlerTests
         // Arrange
         var userId = 1;
         var query = new GetAnimalColorsQuery(userId);
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetDistinctColorsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 

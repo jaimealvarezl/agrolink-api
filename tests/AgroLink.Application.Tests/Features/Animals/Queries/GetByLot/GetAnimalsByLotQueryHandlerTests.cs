@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -16,6 +17,8 @@ public class GetAnimalsByLotQueryHandlerTests
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
+        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
         _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
@@ -23,6 +26,8 @@ public class GetAnimalsByLotQueryHandlerTests
         _handler = new GetAnimalsByLotQueryHandler(
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
+            _farmMemberRepositoryMock.Object,
+            _currentUserServiceMock.Object,
             _ownerRepositoryMock.Object,
             _animalOwnerRepositoryMock.Object,
             _animalPhotoRepositoryMock.Object,
@@ -32,6 +37,8 @@ public class GetAnimalsByLotQueryHandlerTests
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
@@ -67,10 +74,20 @@ public class GetAnimalsByLotQueryHandlerTests
                 LifeStatus = LifeStatus.Active,
             },
         };
-        var lot = new Lot { Id = lotId, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = lotId,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = 1 },
+        };
+
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
 
         _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId)).ReturnsAsync(animals);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(lotId)).ReturnsAsync(lot);
         _animalOwnerRepositoryMock
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
@@ -94,10 +111,20 @@ public class GetAnimalsByLotQueryHandlerTests
         // Arrange
         var lotId = 1;
         var query = new GetAnimalsByLotQuery(lotId);
-        var lot = new Lot { Id = lotId, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = lotId,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = 1 },
+        };
+
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
 
         _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId)).ReturnsAsync(new List<Animal>());
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(lotId)).ReturnsAsync(lot);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
