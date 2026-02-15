@@ -168,7 +168,10 @@ public class AnimalRepository(AgroLinkDbContext context)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<List<string>> GetDistinctColorsAsync(int userId)
+    public async Task<List<string>> GetDistinctColorsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    )
     {
         var colors = await _context
             .Animals.Join(_context.Lots, a => a.LotId, l => l.Id, (a, l) => new { a, l })
@@ -182,7 +185,7 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Where(x => x.a.Color != null && x.a.Color != "")
             .Select(x => x.a.Color!)
             .Distinct()
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return colors
             .GroupBy(c => c.ToLower())

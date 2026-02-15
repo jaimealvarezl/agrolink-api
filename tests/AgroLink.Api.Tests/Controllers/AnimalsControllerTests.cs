@@ -94,7 +94,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(animals);
 
         // Act
-        var result = await _controller.GetAll();
+        var result = await _controller.GetAll(CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -139,7 +139,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(animal);
 
         // Act
-        var result = await _controller.GetById(animalId);
+        var result = await _controller.GetById(animalId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -165,7 +165,7 @@ public class AnimalsControllerTests
             .ReturnsAsync((AnimalDto?)null);
 
         // Act
-        var result = await _controller.GetById(animalId);
+        var result = await _controller.GetById(animalId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -211,7 +211,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(animals);
 
         // Act
-        var result = await _controller.GetByLot(lotId);
+        var result = await _controller.GetByLot(lotId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -276,7 +276,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(createdAnimal);
 
         // Act
-        var result = await _controller.Create(createDto);
+        var result = await _controller.Create(createDto, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -335,7 +335,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(updatedAnimal);
 
         // Act
-        var result = await _controller.Update(animalId, updateDto);
+        var result = await _controller.Update(animalId, updateDto, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -369,7 +369,7 @@ public class AnimalsControllerTests
             .ThrowsAsync(new ArgumentException("Animal not found"));
 
         // Act
-        var result = await _controller.Update(animalId, updateDto);
+        var result = await _controller.Update(animalId, updateDto, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -392,7 +392,7 @@ public class AnimalsControllerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _controller.Delete(animalId);
+        var result = await _controller.Delete(animalId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -415,7 +415,7 @@ public class AnimalsControllerTests
             .ThrowsAsync(new ArgumentException("Animal not found"));
 
         // Act
-        var result = await _controller.Delete(animalId);
+        var result = await _controller.Delete(animalId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -448,7 +448,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(genealogy);
 
         // Act
-        var result = await _controller.GetGenealogy(animalId);
+        var result = await _controller.GetGenealogy(animalId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -474,7 +474,7 @@ public class AnimalsControllerTests
             .ReturnsAsync((AnimalGenealogyDto?)null);
 
         // Act
-        var result = await _controller.GetGenealogy(animalId);
+        var result = await _controller.GetGenealogy(animalId, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();
@@ -528,7 +528,7 @@ public class AnimalsControllerTests
             .ReturnsAsync(movedAnimal);
 
         // Act
-        var result = await _controller.MoveAnimal(animalId, moveRequest);
+        var result = await _controller.MoveAnimal(animalId, moveRequest, CancellationToken.None);
 
         // Assert
         result.ShouldNotBeNull();

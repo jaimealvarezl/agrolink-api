@@ -410,4 +410,28 @@ public class AnimalRepositoryTests : TestBase
         result.ShouldContain("Negro");
         result.ShouldNotContain("Blanco");
     }
+
+    [Test]
+    public async Task GetDistinctColorsAsync_ShouldReturnColors_WhenUserIsFarmOwnerViaOwnerEntity()
+    {
+        // Arrange
+        var user = await CreateTestUserAsync(_context);
+        var owner = await CreateTestOwnerAsync(_context, "Owner", user.Id);
+        var farm = await CreateTestFarmAsync(_context, "Owned Farm");
+        farm.OwnerId = owner.Id;
+        await _context.SaveChangesAsync();
+
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id);
+        var lot = await CreateTestLotAsync(_context, paddock.Id);
+        var animal = await CreateTestAnimalAsync(_context, lot.Id);
+        animal.Color = "Rojo";
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetDistinctColorsAsync(user.Id);
+
+        // Assert
+        result.Count.ShouldBe(1);
+        result.ShouldContain("Rojo");
+    }
 }

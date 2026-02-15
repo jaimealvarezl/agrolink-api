@@ -138,13 +138,15 @@ public abstract class TestBase
 
     protected async Task<Owner> CreateTestOwnerAsync(
         AgroLinkDbContext context,
-        string name = "Test Owner"
+        string name = "Test Owner",
+        int? userId = null
     )
     {
         var owner = new Owner
         {
             Name = name,
             Phone = "123-456-7890",
+            UserId = userId,
             CreatedAt = DateTime.UtcNow,
         };
 
