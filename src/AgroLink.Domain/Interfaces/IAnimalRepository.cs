@@ -26,4 +26,5 @@ public interface IAnimalRepository : IRepository<Animal>
     );
 
     Task<Animal?> GetAnimalDetailsAsync(int id);
+    Task<List<string>> GetDistinctColorsAsync(string query, int limit = 10);
 }

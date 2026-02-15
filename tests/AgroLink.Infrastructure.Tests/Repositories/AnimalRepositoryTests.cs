@@ -342,4 +342,35 @@ public class AnimalRepositoryTests : TestBase
         result.Photos.Count.ShouldBe(1);
         result.Lot.ShouldNotBeNull();
     }
+
+    [Test]
+    public async Task GetDistinctColorsAsync_ShouldReturnDistinctFilteredColors()
+    {
+        // Arrange
+        var farm = await CreateTestFarmAsync(_context);
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id);
+        var lot = await CreateTestLotAsync(_context, paddock.Id);
+
+        var a1 = await CreateTestAnimalAsync(_context, lot.Id, "A1");
+        a1.Color = "Negro";
+        var a2 = await CreateTestAnimalAsync(_context, lot.Id, "A2");
+        a2.Color = "negro"; // Same color, different casing
+        var a3 = await CreateTestAnimalAsync(_context, lot.Id, "A3");
+        a3.Color = "Blanco";
+        var a4 = await CreateTestAnimalAsync(_context, lot.Id, "A4");
+        a4.Color = "Pinto Negro";
+        var a5 = await CreateTestAnimalAsync(_context, lot.Id, "A5");
+        a5.Color = null;
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetDistinctColorsAsync("ne");
+
+        // Assert
+        result.Count.ShouldBe(3);
+        result.ShouldContain("Negro");
+        result.ShouldContain("negro");
+        result.ShouldContain("Pinto Negro");
+    }
 }

@@ -10,6 +10,7 @@ using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
+using AgroLink.Application.Features.Animals.Queries.GetColors;
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
@@ -26,6 +27,16 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         var animals = await mediator.Send(new GetAllAnimalsQuery());
         return Ok(animals);
+    }
+
+    [HttpGet("colors")]
+    public async Task<ActionResult<IEnumerable<string>>> GetColors(
+        [FromQuery] string query,
+        [FromQuery] int limit = 10
+    )
+    {
+        var colors = await mediator.Send(new GetAnimalColorsQuery(query, limit));
+        return Ok(colors);
     }
 
     [HttpGet("search")]

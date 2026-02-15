@@ -167,4 +167,17 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.Photos)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
+
+    public async Task<List<string>> GetDistinctColorsAsync(string query, int limit = 10)
+    {
+        return await _dbSet
+            .Where(a =>
+                !string.IsNullOrEmpty(a.Color) && a.Color.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+            )
+            .Select(a => a.Color!)
+            .Distinct()
+            .OrderBy(c => c)
+            .Take(limit)
+            .ToListAsync();
+    }
 }
