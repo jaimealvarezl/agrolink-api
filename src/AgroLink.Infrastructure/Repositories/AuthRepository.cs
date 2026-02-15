@@ -9,7 +9,7 @@ public class AuthRepository(AgroLinkDbContext context) : IAuthRepository
 {
     public async Task<User?> GetUserByEmailAsync(string email)
     {
-        return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task UpdateUserAsync(User user)
@@ -26,6 +26,6 @@ public class AuthRepository(AgroLinkDbContext context) : IAuthRepository
 
     public async Task<User?> GetUserByIdAsync(int userId)
     {
-        return await context.Users.FindAsync(userId);
+        return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
     }
 }

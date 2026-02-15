@@ -12,11 +12,14 @@ public class PaddockRepository : Repository<Paddock>, IPaddockRepository
 
     public async Task<IEnumerable<Paddock>> GetByFarmIdAsync(int farmId)
     {
-        return await _dbSet.Where(p => p.FarmId == farmId).ToListAsync();
+        return await _dbSet.AsNoTracking().Where(p => p.FarmId == farmId).ToListAsync();
     }
 
     public async Task<Paddock?> GetPaddockWithLotsAsync(int id)
     {
-        return await _dbSet.Include(p => p.Lots).FirstOrDefaultAsync(p => p.Id == id);
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Lots)
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 }
