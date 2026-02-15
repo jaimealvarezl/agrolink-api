@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -21,7 +19,6 @@ public class UploadAnimalPhotoCommandHandlerTests
         _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _storageServiceMock = new Mock<IStorageService>();
         _pathProviderMock = new Mock<IStoragePathProvider>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _loggerMock = new Mock<ILogger<UploadAnimalPhotoCommandHandler>>();
 
@@ -31,7 +28,6 @@ public class UploadAnimalPhotoCommandHandlerTests
             _farmMemberRepositoryMock.Object,
             _storageServiceMock.Object,
             _pathProviderMock.Object,
-            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object,
             _loggerMock.Object
         );
@@ -42,7 +38,6 @@ public class UploadAnimalPhotoCommandHandlerTests
     private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private Mock<IStoragePathProvider> _pathProviderMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private Mock<ILogger<UploadAnimalPhotoCommandHandler>> _loggerMock = null!;
     private UploadAnimalPhotoCommandHandler _handler = null!;
@@ -81,6 +76,7 @@ public class UploadAnimalPhotoCommandHandlerTests
             "photo.jpg",
             "image/jpeg",
             stream.Length,
+            userId,
             "Test Photo"
         );
 
@@ -89,11 +85,9 @@ public class UploadAnimalPhotoCommandHandlerTests
             Id = animalId,
             Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
         _animalPhotoRepositoryMock.Setup(r => r.HasPhotosAsync(animalId)).ReturnsAsync(false);
         _pathProviderMock
             .Setup(p =>
@@ -130,7 +124,7 @@ public class UploadAnimalPhotoCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_NoPermissions_ThrowsForbiddenAccessException()
+    public async Task Handle_NoPermissions_ThrowsArgumentException()
     {
         // Arrange
         var animalId = 1;
@@ -160,22 +154,16 @@ public class UploadAnimalPhotoCommandHandlerTests
             stream,
             "p.jpg",
             "image/jpeg",
-            stream.Length
+            stream.Length,
+            5
         );
-        var animal = new Animal
-        {
-            Id = animalId,
-            Lot = new Lot { Paddock = new Paddock { FarmId = 10 } },
-        };
 
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(false);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, 5))
+            .ReturnsAsync((Animal?)null);
 
         // Act & Assert
-        await Should.ThrowAsync<ForbiddenAccessException>(() =>
+        await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
     }
@@ -189,7 +177,8 @@ public class UploadAnimalPhotoCommandHandlerTests
             new MemoryStream(),
             "file.exe",
             "image/jpeg",
-            100
+            100,
+            1
         );
 
         // Act & Assert
@@ -207,7 +196,8 @@ public class UploadAnimalPhotoCommandHandlerTests
             new MemoryStream(),
             "file.jpg",
             "text/html",
-            100
+            100,
+            1
         );
 
         // Act & Assert
@@ -221,7 +211,14 @@ public class UploadAnimalPhotoCommandHandlerTests
     {
         // Arrange
         var stream = new MemoryStream(new byte[12]); // All zeros
-        var command = new UploadAnimalPhotoCommand(1, stream, "p.jpg", "image/jpeg", stream.Length);
+        var command = new UploadAnimalPhotoCommand(
+            1,
+            stream,
+            "p.jpg",
+            "image/jpeg",
+            stream.Length,
+            1
+        );
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(() =>

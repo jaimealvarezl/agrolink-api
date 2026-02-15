@@ -8,8 +8,6 @@ namespace AgroLink.Application.Features.Animals.Queries.GetDetail;
 
 public class GetAnimalDetailQueryHandler(
     IAnimalRepository animalRepository,
-    IFarmMemberRepository farmMemberRepository,
-    ICurrentUserService currentUserService,
     IStorageService storageService
 ) : IRequestHandler<GetAnimalDetailQuery, AnimalDetailDto?>
 {
@@ -18,23 +16,11 @@ public class GetAnimalDetailQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.Id);
+        var animal = await animalRepository.GetAnimalDetailsAsync(request.Id, request.UserId);
 
         if (animal == null)
         {
             return null;
-        }
-
-        // IDOR check: Verify that the current user is a member of the farm that owns the animal
-        var userId = currentUserService.GetRequiredUserId();
-        var farmId = animal.Lot.Paddock.FarmId;
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.UserId == userId && fm.FarmId == farmId
-        );
-
-        if (!isMember)
-        {
-            throw new UnauthorizedAccessException("You do not have access to this animal.");
         }
 
         var now = DateTime.UtcNow;

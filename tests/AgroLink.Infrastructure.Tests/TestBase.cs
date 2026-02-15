@@ -138,13 +138,15 @@ public abstract class TestBase
 
     protected async Task<Owner> CreateTestOwnerAsync(
         AgroLinkDbContext context,
-        string name = "Test Owner"
+        string name = "Test Owner",
+        int? userId = null
     )
     {
         var owner = new Owner
         {
             Name = name,
             Phone = "123-456-7890",
+            UserId = userId,
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -171,5 +173,17 @@ public abstract class TestBase
         context.Users.Add(user);
         await context.SaveChangesAsync();
         return user;
+    }
+
+    protected async Task AddUserToFarmAsync(AgroLinkDbContext context, int userId, int farmId)
+    {
+        var member = new FarmMember
+        {
+            UserId = userId,
+            FarmId = farmId,
+            Role = "Owner",
+        };
+        context.FarmMembers.Add(member);
+        await context.SaveChangesAsync();
     }
 }

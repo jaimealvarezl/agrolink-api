@@ -1,26 +1,30 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
-// Assuming this is needed
-
 namespace AgroLink.Application.Features.Animals.Commands.Move;
 
-public record MoveAnimalCommand(int AnimalId, int FromLotId, int ToLotId, string? Reason)
-    : IRequest<AnimalDto>;
+public record MoveAnimalCommand(
+    int AnimalId,
+    int FromLotId,
+    int ToLotId,
+    int UserId,
+    string? Reason
+) : IRequest<AnimalDto>;
 
 public class MoveAnimalCommandHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
-    IMovementRepository movementRepository, // Assuming movement repository is needed for moving animals
+    IMovementRepository movementRepository,
     IAnimalPhotoRepository animalPhotoRepository,
+    IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
-    IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<MoveAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(
@@ -28,16 +32,30 @@ public class MoveAnimalCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var userId = currentUserService.GetRequiredUserId();
-
-        var animal = await animalRepository.GetByIdAsync(request.AnimalId); // Changed from request.Id
+        var animal = await animalRepository.GetByIdAsync(request.AnimalId, request.UserId);
         if (animal == null)
         {
-            throw new ArgumentException("Animal not found");
+            throw new ArgumentException("Animal not found or access denied.");
+        }
+
+        // Verify target lot and permissions
+        var targetLot = await lotRepository.GetLotWithPaddockAsync(request.ToLotId);
+        if (targetLot == null)
+        {
+            throw new ArgumentException("Target lot not found.");
+        }
+
+        var isMemberOfTargetFarm = await farmMemberRepository.ExistsAsync(fm =>
+            fm.FarmId == targetLot.Paddock.FarmId && fm.UserId == request.UserId
+        );
+
+        if (!isMemberOfTargetFarm)
+        {
+            throw new ForbiddenAccessException("You do not have access to the target farm.");
         }
 
         var oldLotId = animal.LotId;
-        animal.LotId = request.ToLotId; // Changed from request.NewLotId
+        animal.LotId = request.ToLotId;
         animal.UpdatedAt = DateTime.UtcNow;
 
         animalRepository.Update(animal);
@@ -51,13 +69,13 @@ public class MoveAnimalCommandHandler(
             ToId = request.ToLotId,
             At = DateTime.UtcNow,
             Reason = request.Reason,
-            UserId = userId,
+            UserId = request.UserId,
         };
         await movementRepository.AddMovementAsync(movement);
 
         await unitOfWork.SaveChangesAsync();
 
-        // Re-fetch related data for DTO (similar to GetAllAnimalsQueryHandler)
+        // Refresh data for response
         var lot = await lotRepository.GetByIdAsync(animal.LotId);
         var mother = animal.MotherId.HasValue
             ? await animalRepository.GetByIdAsync(animal.MotherId.Value)

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -15,14 +16,20 @@ public class GetAnimalsPagedListQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
+        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _storageServiceMock = new Mock<IStorageService>();
         _handler = new GetAnimalsPagedListQueryHandler(
             _animalRepositoryMock.Object,
+            _farmMemberRepositoryMock.Object,
+            _currentUserServiceMock.Object,
             _storageServiceMock.Object
         );
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private GetAnimalsPagedListQueryHandler _handler = null!;
 
@@ -41,6 +48,11 @@ public class GetAnimalsPagedListQueryHandlerTests
             false,
             Sex.Female
         );
+
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
 
         var animals = new List<Animal>
         {

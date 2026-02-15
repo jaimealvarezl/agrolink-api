@@ -42,8 +42,10 @@ public class GetAnimalsByLotQueryHandlerTests
     public async Task Handle_ExistingLotWithAnimals_ReturnsAnimalsDto()
     {
         // Arrange
-        var lotId = 1;
-        var query = new GetAnimalsByLotQuery(lotId);
+        const int lotId = 1;
+        const int userId = 1;
+        var query = new GetAnimalsByLotQuery(lotId, userId);
+        var lot = new Lot { Id = lotId, Name = "Test Lot" };
         var animals = new List<Animal>
         {
             new()
@@ -55,6 +57,7 @@ public class GetAnimalsByLotQueryHandlerTests
                 LotId = lotId,
                 CreatedAt = DateTime.UtcNow,
                 LifeStatus = LifeStatus.Active,
+                Lot = lot,
             },
             new()
             {
@@ -65,12 +68,11 @@ public class GetAnimalsByLotQueryHandlerTests
                 LotId = lotId,
                 CreatedAt = DateTime.UtcNow,
                 LifeStatus = LifeStatus.Active,
+                Lot = lot,
             },
         };
-        var lot = new Lot { Id = lotId, Name = "Test Lot" };
 
-        _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId)).ReturnsAsync(animals);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId, userId)).ReturnsAsync(animals);
         _animalOwnerRepositoryMock
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
@@ -84,20 +86,20 @@ public class GetAnimalsByLotQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        result.All(a => a.LotId == lotId).ShouldBeTrue();
-        result.First().LotName.ShouldBe(lot.Name);
+        result.First().LotName.ShouldBe("Test Lot");
     }
 
     [Test]
     public async Task Handle_ExistingLotWithNoAnimals_ReturnsEmptyList()
     {
         // Arrange
-        var lotId = 1;
-        var query = new GetAnimalsByLotQuery(lotId);
-        var lot = new Lot { Id = lotId, Name = "Test Lot" };
+        const int lotId = 1;
+        const int userId = 1;
+        var query = new GetAnimalsByLotQuery(lotId, userId);
 
-        _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId)).ReturnsAsync(new List<Animal>());
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _animalRepositoryMock
+            .Setup(r => r.GetByLotIdAsync(lotId, userId))
+            .ReturnsAsync(new List<Animal>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

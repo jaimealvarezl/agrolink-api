@@ -5,7 +5,8 @@ namespace AgroLink.Domain.Interfaces;
 
 public interface IAnimalRepository : IRepository<Animal>
 {
-    Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId);
+    Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId, int userId);
+    Task<Animal?> GetByIdAsync(int id, int userId);
     Task<Animal?> GetAnimalWithOwnersAsync(int id);
     Task<Animal?> GetAnimalWithGenealogyAsync(int id);
     Task<IEnumerable<Animal>> GetChildrenAsync(int parentId);
@@ -25,5 +26,15 @@ public interface IAnimalRepository : IRepository<Animal>
         Sex? sex = null
     );
 
-    Task<Animal?> GetAnimalDetailsAsync(int id);
+    Task<IEnumerable<Animal>> GetAllByUserAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<Animal?> GetAnimalDetailsAsync(int id, int userId);
+
+    Task<List<string>> GetDistinctColorsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    );
 }

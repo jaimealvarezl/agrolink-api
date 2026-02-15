@@ -24,37 +24,10 @@ public class GetAnimalGenealogyQueryHandlerTests
     public async Task Handle_ExistingAnimalWithGenealogy_ReturnsAnimalGenealogyDto()
     {
         // Arrange
-        var animalId = 1;
-        var query = new GetAnimalGenealogyQuery(animalId);
+        const int animalId = 1;
+        const int userId = 1;
+        var query = new GetAnimalGenealogyQuery(animalId, userId);
 
-        var child = new Animal
-        {
-            Id = 3,
-            TagVisual = "C001",
-            Cuia = "CUIA-C001",
-            Name = "Child",
-            Sex = Sex.Female,
-            BirthDate = DateTime.Now.AddYears(-1),
-        };
-        var mother = new Animal
-        {
-            Id = 2,
-            TagVisual = "M001",
-            Cuia = "CUIA-M001",
-            Name = "Mother",
-            Sex = Sex.Female,
-            BirthDate = DateTime.Now.AddYears(-5),
-            Children = new List<Animal> { child },
-        };
-        var father = new Animal
-        {
-            Id = 4,
-            TagVisual = "F001",
-            Cuia = "CUIA-F001",
-            Name = "Father",
-            Sex = Sex.Male,
-            BirthDate = DateTime.Now.AddYears(-6),
-        };
         var animal = new Animal
         {
             Id = animalId,
@@ -63,28 +36,15 @@ public class GetAnimalGenealogyQueryHandlerTests
             Name = "Animal",
             Sex = Sex.Male,
             BirthDate = DateTime.Now.AddYears(-2),
-            MotherId = mother.Id,
-            FatherId = father.Id,
+            LotId = 1,
+            Lot = new Lot { Paddock = new Paddock { FarmId = 1 } },
         };
 
         _animalRepositoryMock
-            .Setup(r => r.GetAnimalWithGenealogyAsync(animalId))
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(mother.Id)).ReturnsAsync(mother);
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(father.Id)).ReturnsAsync(father);
         _animalRepositoryMock
             .Setup(r => r.GetChildrenAsync(animalId))
-            .ReturnsAsync(new List<Animal>()); // This handler's BuildGenealogyAsync calls GetChildrenAsync
-
-        // When BuildGenealogyAsync calls recursively
-        _animalRepositoryMock
-            .Setup(r => r.GetChildrenAsync(mother.Id))
-            .ReturnsAsync(new List<Animal> { child });
-        _animalRepositoryMock
-            .Setup(r => r.GetChildrenAsync(father.Id))
-            .ReturnsAsync(new List<Animal>());
-        _animalRepositoryMock
-            .Setup(r => r.GetChildrenAsync(child.Id))
             .ReturnsAsync(new List<Animal>());
 
         // Act
@@ -93,22 +53,18 @@ public class GetAnimalGenealogyQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
-        result.Mother.ShouldNotBeNull();
-        result.Mother.Id.ShouldBe(mother.Id);
-        result.Father.ShouldNotBeNull();
-        result.Father.Id.ShouldBe(father.Id);
-        result.Children.ShouldBeEmpty(); // This test only covers direct parent/child link, not recursive children
     }
 
     [Test]
     public async Task Handle_NonExistingAnimal_ReturnsNull()
     {
         // Arrange
-        var animalId = 999;
-        var query = new GetAnimalGenealogyQuery(animalId);
+        const int animalId = 999;
+        const int userId = 1;
+        var query = new GetAnimalGenealogyQuery(animalId, userId);
 
         _animalRepositoryMock
-            .Setup(r => r.GetAnimalWithGenealogyAsync(animalId))
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
         // Act

@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -16,18 +15,14 @@ public class DeleteAnimalPhotoCommandHandlerTests
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _storageServiceMock = new Mock<IStorageService>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _loggerMock = new Mock<ILogger<DeleteAnimalPhotoCommandHandler>>();
 
         _handler = new DeleteAnimalPhotoCommandHandler(
             _animalRepositoryMock.Object,
             _animalPhotoRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
             _storageServiceMock.Object,
-            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object,
             _loggerMock.Object
         );
@@ -35,9 +30,7 @@ public class DeleteAnimalPhotoCommandHandlerTests
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private Mock<ILogger<DeleteAnimalPhotoCommandHandler>> _loggerMock = null!;
     private DeleteAnimalPhotoCommandHandler _handler = null!;
@@ -46,9 +39,10 @@ public class DeleteAnimalPhotoCommandHandlerTests
     public async Task Handle_ValidRequest_DeletesFromStorageAndDb()
     {
         // Arrange
-        var animalId = 1;
-        var photoId = 100;
-        var command = new DeleteAnimalPhotoCommand(animalId, photoId);
+        const int animalId = 1;
+        const int photoId = 100;
+        const int userId = 5;
+        var command = new DeleteAnimalPhotoCommand(animalId, photoId, userId);
 
         var animal = new Animal
         {
@@ -63,11 +57,9 @@ public class DeleteAnimalPhotoCommandHandlerTests
             StorageKey = "bucket/file.jpg",
         };
 
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
         _animalPhotoRepositoryMock.Setup(r => r.GetByIdAsync(photoId)).ReturnsAsync(photo);
 
         // Act
@@ -83,10 +75,11 @@ public class DeleteAnimalPhotoCommandHandlerTests
     public async Task Handle_PhotoIsProfile_SetsAnotherAsProfile()
     {
         // Arrange
-        var animalId = 1;
-        var photoId = 100;
-        var otherPhotoId = 101;
-        var command = new DeleteAnimalPhotoCommand(animalId, photoId);
+        const int animalId = 1;
+        const int photoId = 100;
+        const int otherPhotoId = 101;
+        const int userId = 5;
+        var command = new DeleteAnimalPhotoCommand(animalId, photoId, userId);
 
         var animal = new Animal
         {
@@ -106,11 +99,9 @@ public class DeleteAnimalPhotoCommandHandlerTests
             IsProfile = false,
         };
 
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
         _animalPhotoRepositoryMock.Setup(r => r.GetByIdAsync(photoId)).ReturnsAsync(photo);
         _animalPhotoRepositoryMock
             .Setup(r => r.GetByAnimalIdAsync(animalId))

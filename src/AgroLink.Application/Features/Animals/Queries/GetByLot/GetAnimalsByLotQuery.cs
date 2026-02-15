@@ -5,7 +5,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetByLot;
 
-public record GetAnimalsByLotQuery(int LotId) : IRequest<IEnumerable<AnimalDto>>;
+public record GetAnimalsByLotQuery(int LotId, int UserId) : IRequest<IEnumerable<AnimalDto>>;
 
 public class GetAnimalsByLotQueryHandler(
     IAnimalRepository animalRepository,
@@ -21,12 +21,11 @@ public class GetAnimalsByLotQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animals = await animalRepository.GetByLotIdAsync(request.LotId);
+        var animals = await animalRepository.GetByLotIdAsync(request.LotId, request.UserId);
         var result = new List<AnimalDto>();
 
         foreach (var animal in animals)
         {
-            var lot = await lotRepository.GetByIdAsync(animal.LotId);
             var mother = animal.MotherId.HasValue
                 ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
                 : null;
@@ -85,7 +84,7 @@ public class GetAnimalsByLotQueryHandler(
                     ReproductiveStatus = animal.ReproductiveStatus,
                     BirthDate = animal.BirthDate,
                     LotId = animal.LotId,
-                    LotName = lot?.Name,
+                    LotName = animal.Lot?.Name,
                     MotherId = animal.MotherId,
                     MotherCuia = mother?.Cuia,
                     FatherId = animal.FatherId,

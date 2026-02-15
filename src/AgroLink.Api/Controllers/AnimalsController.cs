@@ -10,6 +10,7 @@ using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
+using AgroLink.Application.Features.Animals.Queries.GetColors;
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
@@ -22,25 +23,46 @@ namespace AgroLink.Api.Controllers;
 public class AnimalsController(IMediator mediator) : BaseController
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll(
+        CancellationToken cancellationToken
+    )
     {
-        var animals = await mediator.Send(new GetAllAnimalsQuery());
+        var animals = await mediator.Send(
+            new GetAllAnimalsQuery(GetCurrentUserId()),
+            cancellationToken
+        );
         return Ok(animals);
+    }
+
+    [HttpGet("colors")]
+    public async Task<ActionResult<IEnumerable<string>>> GetColors(
+        CancellationToken cancellationToken
+    )
+    {
+        var colors = await mediator.Send(
+            new GetAnimalColorsQuery(GetCurrentUserId()),
+            cancellationToken
+        );
+        return Ok(colors);
     }
 
     [HttpGet("search")]
     public async Task<ActionResult<PagedResult<AnimalListDto>>> GetPagedList(
-        [FromQuery] GetAnimalsPagedListQuery query
+        [FromQuery] GetAnimalsPagedListQuery query,
+        CancellationToken cancellationToken
     )
     {
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AnimalDto>> GetById(int id)
+    public async Task<ActionResult<AnimalDto>> GetById(int id, CancellationToken cancellationToken)
     {
-        var animal = await mediator.Send(new GetAnimalByIdQuery(id));
+        var animal = await mediator.Send(
+            new GetAnimalByIdQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
         if (animal == null)
         {
             return NotFound();
@@ -50,9 +72,15 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpGet("{id}/details")]
-    public async Task<ActionResult<AnimalDetailDto>> GetDetail(int id)
+    public async Task<ActionResult<AnimalDetailDto>> GetDetail(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
-        var animal = await mediator.Send(new GetAnimalDetailQuery(id));
+        var animal = await mediator.Send(
+            new GetAnimalDetailQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
         if (animal == null)
         {
             return NotFound();
@@ -62,16 +90,28 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpGet("lot/{lotId}")]
-    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(int lotId)
+    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(
+        int lotId,
+        CancellationToken cancellationToken
+    )
     {
-        var animals = await mediator.Send(new GetAnimalsByLotQuery(lotId));
+        var animals = await mediator.Send(
+            new GetAnimalsByLotQuery(lotId, GetCurrentUserId()),
+            cancellationToken
+        );
         return Ok(animals);
     }
 
     [HttpGet("{id}/genealogy")]
-    public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(int id)
+    public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
-        var genealogy = await mediator.Send(new GetAnimalGenealogyQuery(id));
+        var genealogy = await mediator.Send(
+            new GetAnimalGenealogyQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
         if (genealogy == null)
         {
             return NotFound();
@@ -81,11 +121,14 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<AnimalDto>> Create(CreateAnimalDto dto)
+    public async Task<ActionResult<AnimalDto>> Create(
+        CreateAnimalDto dto,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            var animal = await mediator.Send(new CreateAnimalCommand(dto));
+            var animal = await mediator.Send(new CreateAnimalCommand(dto), cancellationToken);
             return CreatedAtAction(nameof(GetById), new { id = animal.Id }, animal);
         }
         catch (Exception ex)
@@ -95,11 +138,18 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<AnimalDto>> Update(int id, UpdateAnimalDto dto)
+    public async Task<ActionResult<AnimalDto>> Update(
+        int id,
+        UpdateAnimalDto dto,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            var animal = await mediator.Send(new UpdateAnimalCommand(id, dto));
+            var animal = await mediator.Send(
+                new UpdateAnimalCommand(id, dto, GetCurrentUserId()),
+                cancellationToken
+            );
             return Ok(animal);
         }
         catch (Exception ex)
@@ -109,11 +159,11 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         try
         {
-            await mediator.Send(new DeleteAnimalCommand(id));
+            await mediator.Send(new DeleteAnimalCommand(id, GetCurrentUserId()), cancellationToken);
             return NoContent();
         }
         catch (Exception ex)
@@ -125,13 +175,21 @@ public class AnimalsController(IMediator mediator) : BaseController
     [HttpPost("{id}/move")]
     public async Task<ActionResult<AnimalDto>> MoveAnimal(
         int id,
-        [FromBody] MoveAnimalRequest request
+        [FromBody] MoveAnimalRequest request,
+        CancellationToken cancellationToken
     )
     {
         try
         {
             var animal = await mediator.Send(
-                new MoveAnimalCommand(id, request.FromLotId, request.ToLotId, request.Reason)
+                new MoveAnimalCommand(
+                    id,
+                    request.FromLotId,
+                    request.ToLotId,
+                    GetCurrentUserId(),
+                    request.Reason
+                ),
+                cancellationToken
             );
             return Ok(animal);
         }
@@ -146,7 +204,8 @@ public class AnimalsController(IMediator mediator) : BaseController
     public async Task<ActionResult<AnimalPhotoDto>> UploadPhoto(
         int id,
         IFormFile file,
-        [FromForm] string? description
+        [FromForm] string? description,
+        CancellationToken cancellationToken
     )
     {
         try
@@ -158,10 +217,11 @@ public class AnimalsController(IMediator mediator) : BaseController
                 file.FileName,
                 file.ContentType,
                 file.Length,
+                GetCurrentUserId(),
                 description
             );
 
-            var result = await mediator.Send(command);
+            var result = await mediator.Send(command, cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -171,11 +231,18 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}/photos/{photoId}/profile")]
-    public async Task<ActionResult> SetProfilePhoto(int id, int photoId)
+    public async Task<ActionResult> SetProfilePhoto(
+        int id,
+        int photoId,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            await mediator.Send(new SetAnimalProfilePhotoCommand(id, photoId));
+            await mediator.Send(
+                new SetAnimalProfilePhotoCommand(id, photoId, GetCurrentUserId()),
+                cancellationToken
+            );
             return NoContent();
         }
         catch (Exception ex)
@@ -185,11 +252,18 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}/photos/{photoId}")]
-    public async Task<ActionResult> DeletePhoto(int id, int photoId)
+    public async Task<ActionResult> DeletePhoto(
+        int id,
+        int photoId,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            await mediator.Send(new DeleteAnimalPhotoCommand(id, photoId));
+            await mediator.Send(
+                new DeleteAnimalPhotoCommand(id, photoId, GetCurrentUserId()),
+                cancellationToken
+            );
             return NoContent();
         }
         catch (Exception ex)

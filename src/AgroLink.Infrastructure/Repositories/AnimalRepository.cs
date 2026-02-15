@@ -10,9 +10,42 @@ public class AnimalRepository(AgroLinkDbContext context)
     : Repository<Animal>(context),
         IAnimalRepository
 {
-    public async Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId)
+    public async Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId, int userId)
     {
-        return await _dbSet.Where(a => a.LotId == lotId).ToListAsync();
+        return await _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
+            .Where(a =>
+                a.LotId == lotId
+                && (
+                    _context.FarmMembers.Any(m =>
+                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                    )
+                    || _context.Farms.Any(f =>
+                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                    )
+                )
+            )
+            .ToListAsync();
+    }
+
+    public async Task<Animal?> GetByIdAsync(int id, int userId)
+    {
+        return await _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
+            .Where(a =>
+                a.Id == id
+                && (
+                    _context.FarmMembers.Any(m =>
+                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                    )
+                    || _context.Farms.Any(f =>
+                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                    )
+                )
+            )
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Animal?> GetAnimalWithOwnersAsync(int id)
@@ -153,7 +186,30 @@ public class AnimalRepository(AgroLinkDbContext context)
         return (items, totalCount);
     }
 
-    public async Task<Animal?> GetAnimalDetailsAsync(int id)
+    public async Task<IEnumerable<Animal>> GetAllByUserAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await _dbSet
+            .Include(a => a.Lot)
+            .Include(a => a.Mother)
+            .Include(a => a.Father)
+            .Include(a => a.AnimalOwners)
+                .ThenInclude(ao => ao.Owner)
+            .Include(a => a.Photos)
+            .Where(a =>
+                _context.FarmMembers.Any(m =>
+                    m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                )
+                || _context.Farms.Any(f =>
+                    f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                )
+            )
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Animal?> GetAnimalDetailsAsync(int id, int userId)
     {
         return await _dbSet
             .Include(a => a.Lot)
@@ -165,6 +221,38 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
+            .Where(a =>
+                _context.FarmMembers.Any(m =>
+                    m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                )
+                || _context.Farms.Any(f =>
+                    f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                )
+            )
             .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task<List<string>> GetDistinctColorsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await _dbSet
+            .Where(a =>
+                !string.IsNullOrEmpty(a.Color)
+                && (
+                    _context.FarmMembers.Any(m =>
+                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                    )
+                    || _context.Farms.Any(f =>
+                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                    )
+                )
+            )
+            .Select(a => a.Color!)
+            .GroupBy(c => c.ToLower())
+            .Select(g => g.OrderBy(c => c).First())
+            .OrderBy(c => c)
+            .ToListAsync(cancellationToken);
     }
 }

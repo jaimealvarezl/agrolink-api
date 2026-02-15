@@ -43,7 +43,8 @@ public class GetAnimalByIdQueryHandlerTests
     {
         // Arrange
         const int animalId = 1;
-        var query = new GetAnimalByIdQuery(animalId);
+        const int userId = 1;
+        var query = new GetAnimalByIdQuery(animalId, userId);
         var animal = new Animal
         {
             Id = animalId,
@@ -54,11 +55,10 @@ public class GetAnimalByIdQueryHandlerTests
             LotId = 1,
             CreatedAt = DateTime.UtcNow,
             LifeStatus = LifeStatus.Active,
+            Lot = new Lot { Name = "Test Lot" },
         };
-        var lot = new Lot { Id = 1, Name = "Test Lot" };
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(animal.LotId)).ReturnsAsync(lot);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
         _animalOwnerRepositoryMock
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
@@ -73,7 +73,7 @@ public class GetAnimalByIdQueryHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
         result.TagVisual.ShouldBe(animal.TagVisual);
-        result.LotName.ShouldBe(lot.Name);
+        result.LotName.ShouldBe("Test Lot");
     }
 
     [Test]
@@ -81,9 +81,12 @@ public class GetAnimalByIdQueryHandlerTests
     {
         // Arrange
         const int animalId = 999;
-        var query = new GetAnimalByIdQuery(animalId);
+        const int userId = 1;
+        var query = new GetAnimalByIdQuery(animalId, userId);
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync((Animal?)null);
+        _animalRepositoryMock
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync((Animal?)null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -6,14 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 
-public record DeleteAnimalPhotoCommand(int AnimalId, int PhotoId) : IRequest<Unit>;
+public record DeleteAnimalPhotoCommand(int AnimalId, int PhotoId, int UserId) : IRequest<Unit>;
 
 public class DeleteAnimalPhotoCommandHandler(
     IAnimalRepository animalRepository,
     IAnimalPhotoRepository animalPhotoRepository,
-    IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
-    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork,
     ILogger<DeleteAnimalPhotoCommandHandler> logger
 ) : IRequestHandler<DeleteAnimalPhotoCommand, Unit>
@@ -23,22 +20,12 @@ public class DeleteAnimalPhotoCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId, request.UserId);
         if (animal == null)
         {
-            throw new ArgumentException($"Animal with ID {request.AnimalId} not found.");
-        }
-
-        var farmId = animal.Lot.Paddock.FarmId;
-        var userId = currentUserService.GetRequiredUserId();
-
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.FarmId == farmId && fm.UserId == userId
-        );
-
-        if (!isMember)
-        {
-            throw new ForbiddenAccessException("User does not have permission for this Farm.");
+            throw new ArgumentException(
+                $"Animal with ID {request.AnimalId} not found or access denied."
+            );
         }
 
         var photo = await animalPhotoRepository.GetByIdAsync(request.PhotoId);

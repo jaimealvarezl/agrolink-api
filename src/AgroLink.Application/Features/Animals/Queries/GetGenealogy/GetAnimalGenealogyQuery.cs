@@ -5,7 +5,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 
-public record GetAnimalGenealogyQuery(int Id) : IRequest<AnimalGenealogyDto?>;
+public record GetAnimalGenealogyQuery(int Id, int UserId) : IRequest<AnimalGenealogyDto?>;
 
 public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
     : IRequestHandler<GetAnimalGenealogyQuery, AnimalGenealogyDto?>
@@ -15,7 +15,7 @@ public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalWithGenealogyAsync(request.Id);
+        var animal = await animalRepository.GetAnimalDetailsAsync(request.Id, request.UserId);
         if (animal == null)
         {
             return null;
