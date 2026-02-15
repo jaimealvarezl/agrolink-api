@@ -23,16 +23,23 @@ namespace AgroLink.Api.Controllers;
 public class AnimalsController(IMediator mediator) : BaseController
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll(
+        CancellationToken cancellationToken
+    )
     {
         var animals = await mediator.Send(new GetAllAnimalsQuery(), cancellationToken);
         return Ok(animals);
     }
 
     [HttpGet("colors")]
-    public async Task<ActionResult<IEnumerable<string>>> GetColors(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<string>>> GetColors(
+        CancellationToken cancellationToken
+    )
     {
-        var colors = await mediator.Send(new GetAnimalColorsQuery(GetCurrentUserId()), cancellationToken);
+        var colors = await mediator.Send(
+            new GetAnimalColorsQuery(GetCurrentUserId()),
+            cancellationToken
+        );
         return Ok(colors);
     }
 
@@ -59,7 +66,10 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpGet("{id}/details")]
-    public async Task<ActionResult<AnimalDetailDto>> GetDetail(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnimalDetailDto>> GetDetail(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         var animal = await mediator.Send(new GetAnimalDetailQuery(id), cancellationToken);
         if (animal == null)
@@ -71,14 +81,20 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpGet("lot/{lotId}")]
-    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(int lotId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(
+        int lotId,
+        CancellationToken cancellationToken
+    )
     {
         var animals = await mediator.Send(new GetAnimalsByLotQuery(lotId), cancellationToken);
         return Ok(animals);
     }
 
     [HttpGet("{id}/genealogy")]
-    public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         var genealogy = await mediator.Send(new GetAnimalGenealogyQuery(id), cancellationToken);
         if (genealogy == null)
@@ -90,7 +106,10 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<AnimalDto>> Create(CreateAnimalDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnimalDto>> Create(
+        CreateAnimalDto dto,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -104,7 +123,11 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<AnimalDto>> Update(int id, UpdateAnimalDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnimalDto>> Update(
+        int id,
+        UpdateAnimalDto dto,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -183,7 +206,11 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}/photos/{photoId}/profile")]
-    public async Task<ActionResult> SetProfilePhoto(int id, int photoId, CancellationToken cancellationToken)
+    public async Task<ActionResult> SetProfilePhoto(
+        int id,
+        int photoId,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -197,7 +224,11 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}/photos/{photoId}")]
-    public async Task<ActionResult> DeletePhoto(int id, int photoId, CancellationToken cancellationToken)
+    public async Task<ActionResult> DeletePhoto(
+        int id,
+        int photoId,
+        CancellationToken cancellationToken
+    )
     {
         try
         {

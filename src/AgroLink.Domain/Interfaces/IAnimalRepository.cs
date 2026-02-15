@@ -26,5 +26,8 @@ public interface IAnimalRepository : IRepository<Animal>
     );
 
     Task<Animal?> GetAnimalDetailsAsync(int id);
-    Task<List<string>> GetDistinctColorsAsync(int userId, CancellationToken cancellationToken = default);
+    Task<List<string>> GetDistinctColorsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    );
 }
