@@ -172,4 +172,16 @@ public abstract class TestBase
         await context.SaveChangesAsync();
         return user;
     }
+
+    protected async Task AddUserToFarmAsync(AgroLinkDbContext context, int userId, int farmId)
+    {
+        var member = new FarmMember
+        {
+            UserId = userId,
+            FarmId = farmId,
+            Role = "Owner",
+        };
+        context.FarmMembers.Add(member);
+        await context.SaveChangesAsync();
+    }
 }

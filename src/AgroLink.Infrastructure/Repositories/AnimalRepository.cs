@@ -168,16 +168,29 @@ public class AnimalRepository(AgroLinkDbContext context)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<List<string>> GetDistinctColorsAsync(string query, int limit = 10)
+    public async Task<List<string>> GetDistinctColorsAsync(int userId)
     {
-        return await _dbSet
-            .Where(a =>
-                !string.IsNullOrEmpty(a.Color) && a.Color.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-            )
-            .Select(a => a.Color!)
-            .Distinct()
-            .OrderBy(c => c)
-            .Take(limit)
+        var farmIds = await _context
+            .FarmMembers.Where(m => m.UserId == userId)
+            .Select(m => m.FarmId)
             .ToListAsync();
+
+        var ownedFarmIds = await _context
+            .Farms.Where(f => f.Owner != null && f.Owner.UserId == userId)
+            .Select(f => f.Id)
+            .ToListAsync();
+
+        var allFarmIds = farmIds.Concat(ownedFarmIds).Distinct().ToList();
+
+        var colors = await _context
+            .Animals.Join(_context.Lots, a => a.LotId, l => l.Id, (a, l) => new { a, l })
+            .Join(_context.Paddocks, x => x.l.PaddockId, p => p.Id, (x, p) => new { x.a, p })
+            .Where(x => allFarmIds.Contains(x.p.FarmId))
+            .Where(x => x.a.Color != null && x.a.Color != "")
+            .Select(x => x.a.Color!)
+            .Distinct()
+            .ToListAsync();
+
+        return colors.GroupBy(c => c.ToLower()).Select(g => g.First()).OrderBy(c => c).ToList();
     }
 }

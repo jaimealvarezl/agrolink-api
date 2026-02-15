@@ -22,11 +22,12 @@ public class GetAnimalColorsQueryHandlerTests
     public async Task Handle_ReturnsDistinctColors()
     {
         // Arrange
-        var query = new GetAnimalColorsQuery("ne", 10);
-        var expectedColors = new List<string> { "Negro", "Pinto Negro" };
+        var userId = 1;
+        var query = new GetAnimalColorsQuery(userId);
+        var expectedColors = new List<string> { "Blanco", "Negro", "Pinto Negro" };
 
         _animalRepositoryMock
-            .Setup(r => r.GetDistinctColorsAsync("ne", 10))
+            .Setup(r => r.GetDistinctColorsAsync(userId))
             .ReturnsAsync(expectedColors);
 
         // Act
@@ -34,18 +35,19 @@ public class GetAnimalColorsQueryHandlerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.Count.ShouldBe(2);
+        result.Count.ShouldBe(3);
         result.ShouldContain("Negro");
-        result.ShouldContain("Pinto Negro");
+        result.ShouldContain("Blanco");
     }
 
     [Test]
-    public async Task Handle_ReturnsEmptyList_WhenNoMatch()
+    public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        var query = new GetAnimalColorsQuery("xyz", 10);
+        var userId = 1;
+        var query = new GetAnimalColorsQuery(userId);
         _animalRepositoryMock
-            .Setup(r => r.GetDistinctColorsAsync("xyz", 10))
+            .Setup(r => r.GetDistinctColorsAsync(userId))
             .ReturnsAsync(new List<string>());
 
         // Act

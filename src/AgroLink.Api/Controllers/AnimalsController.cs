@@ -30,12 +30,9 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpGet("colors")]
-    public async Task<ActionResult<IEnumerable<string>>> GetColors(
-        [FromQuery] string query,
-        [FromQuery] int limit = 10
-    )
+    public async Task<ActionResult<IEnumerable<string>>> GetColors()
     {
-        var colors = await mediator.Send(new GetAnimalColorsQuery(query, limit));
+        var colors = await mediator.Send(new GetAnimalColorsQuery(GetCurrentUserId()));
         return Ok(colors);
     }
 

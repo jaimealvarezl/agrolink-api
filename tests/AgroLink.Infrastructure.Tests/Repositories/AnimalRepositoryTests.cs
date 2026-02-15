@@ -347,7 +347,10 @@ public class AnimalRepositoryTests : TestBase
     public async Task GetDistinctColorsAsync_ShouldReturnDistinctFilteredColors()
     {
         // Arrange
+        var user = await CreateTestUserAsync(_context);
         var farm = await CreateTestFarmAsync(_context);
+        await AddUserToFarmAsync(_context, user.Id, farm.Id);
+
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
 
@@ -365,12 +368,46 @@ public class AnimalRepositoryTests : TestBase
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _repository.GetDistinctColorsAsync("ne");
+        var result = await _repository.GetDistinctColorsAsync(user.Id);
 
         // Assert
-        result.Count.ShouldBe(3);
-        result.ShouldContain("Negro");
-        result.ShouldContain("negro");
+        result.Count.ShouldBe(3); // Case-insensitive distinct: "Negro", "Blanco", "Pinto Negro"
+        result.Any(c => c.ToLower() == "negro").ShouldBeTrue();
+        result.ShouldContain("Blanco");
         result.ShouldContain("Pinto Negro");
+    }
+
+    [Test]
+    public async Task GetDistinctColorsAsync_ShouldOnlyReturnColorsFromAccessibleFarms()
+    {
+        // Arrange
+        var user = await CreateTestUserAsync(_context, "user1@test.com");
+        var otherUser = await CreateTestUserAsync(_context, "user2@test.com");
+
+        var farm1 = await CreateTestFarmAsync(_context, "Farm 1");
+        await AddUserToFarmAsync(_context, user.Id, farm1.Id);
+
+        var farm2 = await CreateTestFarmAsync(_context, "Farm 2");
+        await AddUserToFarmAsync(_context, otherUser.Id, farm2.Id);
+
+        var p1 = await CreateTestPaddockAsync(_context, farm1.Id);
+        var l1 = await CreateTestLotAsync(_context, p1.Id);
+        var a1 = await CreateTestAnimalAsync(_context, l1.Id, "A1");
+        a1.Color = "Negro";
+
+        var p2 = await CreateTestPaddockAsync(_context, farm2.Id);
+        var l2 = await CreateTestLotAsync(_context, p2.Id);
+        var a2 = await CreateTestAnimalAsync(_context, l2.Id, "A2");
+        a2.Color = "Blanco";
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetDistinctColorsAsync(user.Id);
+
+        // Assert
+        result.Count.ShouldBe(1);
+        result.ShouldContain("Negro");
+        result.ShouldNotContain("Blanco");
     }
 }
