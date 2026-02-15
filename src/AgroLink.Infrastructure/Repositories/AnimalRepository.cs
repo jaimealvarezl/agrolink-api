@@ -237,17 +237,17 @@ public class AnimalRepository(AgroLinkDbContext context)
         CancellationToken cancellationToken = default
     )
     {
+        var userFarmIds = await GetUserFarmIdsAsync(userId, cancellationToken);
+
+        if (userFarmIds.Count == 0)
+        {
+            return [];
+        }
+
         return await _dbSet
             .Where(a =>
                 !string.IsNullOrEmpty(a.Color)
-                && (
-                    _context.FarmMembers.Any(m =>
-                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
-                    )
-                    || _context.Farms.Any(f =>
-                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
-                    )
-                )
+                && userFarmIds.Contains(a.Lot.Paddock.FarmId)
             )
             .Select(a => a.Color!)
             .GroupBy(c => c.ToLower())
@@ -261,22 +261,36 @@ public class AnimalRepository(AgroLinkDbContext context)
         CancellationToken cancellationToken = default
     )
     {
+        var userFarmIds = await GetUserFarmIdsAsync(userId, cancellationToken);
+
+        if (userFarmIds.Count == 0)
+        {
+            return [];
+        }
+
         return await _dbSet
             .Where(a =>
                 !string.IsNullOrEmpty(a.Breed)
-                && (
-                    _context.FarmMembers.Any(m =>
-                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
-                    )
-                    || _context.Farms.Any(f =>
-                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
-                    )
-                )
+                && userFarmIds.Contains(a.Lot.Paddock.FarmId)
             )
             .Select(a => a.Breed!)
             .GroupBy(b => b.ToLower())
             .Select(g => g.OrderBy(b => b).First())
             .OrderBy(b => b)
+            .ToListAsync(cancellationToken);
+    }
+
+    private async Task<List<int>> GetUserFarmIdsAsync(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        return await _context
+            .Farms.Where(f =>
+                (f.Owner != null && f.Owner.UserId == userId)
+                || f.Members.Any(m => m.UserId == userId)
+            )
+            .Select(f => f.Id)
             .ToListAsync(cancellationToken);
     }
 }
