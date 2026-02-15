@@ -60,6 +60,7 @@ public class UpdateAnimalCommandHandlerTests
         var updateAnimalDto = new UpdateAnimalDto
         {
             Name = "Updated Name",
+            Color = "Black",
             LifeStatus = LifeStatus.Sold,
             Owners = new List<AnimalOwnerCreateDto>
             {
@@ -134,6 +135,7 @@ public class UpdateAnimalCommandHandlerTests
         result.ShouldNotBeNull();
         result.Id.ShouldBe(animalId);
         result.Name.ShouldBe(updateAnimalDto.Name);
+        result.Color.ShouldBe(updateAnimalDto.Color);
         result.LifeStatus.ShouldBe(updateAnimalDto.LifeStatus!.Value);
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerId.ShouldBe(1);

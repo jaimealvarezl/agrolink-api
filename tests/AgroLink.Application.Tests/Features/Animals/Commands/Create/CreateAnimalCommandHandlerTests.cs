@@ -58,6 +58,7 @@ public class CreateAnimalCommandHandlerTests
             Cuia = "A001",
             TagVisual = "V001",
             Name = "Test Animal",
+            Color = "Brown",
             LotId = 1,
             Sex = Sex.Female,
             BirthDate = DateTime.UtcNow.AddYears(-2),
@@ -119,6 +120,7 @@ public class CreateAnimalCommandHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Cuia.ShouldBe(createAnimalDto.Cuia);
+        result.Color.ShouldBe(createAnimalDto.Color);
         result.LotName.ShouldBe(lot.Name);
         result.Owners.Count.ShouldBe(1);
         result.Owners[0].OwnerId.ShouldBe(1);
