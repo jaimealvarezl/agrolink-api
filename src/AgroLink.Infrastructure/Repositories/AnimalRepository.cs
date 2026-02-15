@@ -287,28 +287,20 @@ public class AnimalRepository(AgroLinkDbContext context)
         CancellationToken cancellationToken
     )
     {
-        // Get farms where user is a member
-        var memberFarmIds = await _context
+        // 1. Get IDs of farms owned by the user
+        // Using explicit join to be safe regardless of navigation property state
+        var ownedFarmIds =
+            from farm in _context.Farms
+            join owner in _context.Owners on farm.OwnerId equals owner.Id
+            where owner.UserId == userId
+            select farm.Id;
+
+        // 2. Get IDs of farms where user is a member
+        var memberFarmIds = _context
             .FarmMembers.Where(m => m.UserId == userId)
-            .Select(m => m.FarmId)
-            .ToListAsync(cancellationToken);
+            .Select(m => m.FarmId);
 
-        // Get farms where user is the owner (via Owner entity)
-        // Find Owner entity for this user
-        var ownerIds = await _context
-            .Owners.Where(o => o.UserId == userId)
-            .Select(o => o.Id)
-            .ToListAsync(cancellationToken);
-
-        var ownedFarmIds = new List<int>();
-        if (ownerIds.Any())
-        {
-            ownedFarmIds = await _context
-                .Farms.Where(f => ownerIds.Contains(f.OwnerId))
-                .Select(f => f.Id)
-                .ToListAsync(cancellationToken);
-        }
-
-        return memberFarmIds.Concat(ownedFarmIds).Distinct().ToList();
+        // 3. Combine into single distinct query
+        return await ownedFarmIds.Union(memberFarmIds).ToListAsync(cancellationToken);
     }
 }
