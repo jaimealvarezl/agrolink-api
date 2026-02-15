@@ -170,27 +170,24 @@ public class AnimalRepository(AgroLinkDbContext context)
 
     public async Task<List<string>> GetDistinctColorsAsync(int userId)
     {
-        var farmIds = await _context
-            .FarmMembers.Where(m => m.UserId == userId)
-            .Select(m => m.FarmId)
-            .ToListAsync();
-
-        var ownedFarmIds = await _context
-            .Farms.Where(f => f.Owner != null && f.Owner.UserId == userId)
-            .Select(f => f.Id)
-            .ToListAsync();
-
-        var allFarmIds = farmIds.Concat(ownedFarmIds).Distinct().ToList();
-
         var colors = await _context
             .Animals.Join(_context.Lots, a => a.LotId, l => l.Id, (a, l) => new { a, l })
             .Join(_context.Paddocks, x => x.l.PaddockId, p => p.Id, (x, p) => new { x.a, p })
-            .Where(x => allFarmIds.Contains(x.p.FarmId))
+            .Where(x =>
+                _context.FarmMembers.Any(m => m.UserId == userId && m.FarmId == x.p.FarmId)
+                || _context.Farms.Any(f =>
+                    f.Id == x.p.FarmId && f.Owner != null && f.Owner.UserId == userId
+                )
+            )
             .Where(x => x.a.Color != null && x.a.Color != "")
             .Select(x => x.a.Color!)
             .Distinct()
             .ToListAsync();
 
-        return colors.GroupBy(c => c.ToLower()).Select(g => g.First()).OrderBy(c => c).ToList();
+        return colors
+            .GroupBy(c => c.ToLower())
+            .Select(g => g.First())
+            .OrderBy(c => c)
+            .ToList();
     }
 }
