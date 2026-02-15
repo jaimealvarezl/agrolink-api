@@ -8,6 +8,7 @@ using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
+using AgroLink.Application.Features.Animals.Queries.GetBreeds;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
 using AgroLink.Application.Features.Animals.Queries.GetColors;
@@ -44,6 +45,18 @@ public class AnimalsController(IMediator mediator) : BaseController
             cancellationToken
         );
         return Ok(colors);
+    }
+
+    [HttpGet("breeds")]
+    public async Task<ActionResult<IEnumerable<string>>> GetBreeds(
+        CancellationToken cancellationToken
+    )
+    {
+        var breeds = await mediator.Send(
+            new GetAnimalBreedsQuery(GetCurrentUserId()),
+            cancellationToken
+        );
+        return Ok(breeds);
     }
 
     [HttpGet("search")]

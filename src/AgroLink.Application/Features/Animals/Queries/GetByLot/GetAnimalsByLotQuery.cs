@@ -9,7 +9,6 @@ public record GetAnimalsByLotQuery(int LotId, int UserId) : IRequest<IEnumerable
 
 public class GetAnimalsByLotQueryHandler(
     IAnimalRepository animalRepository,
-    ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,

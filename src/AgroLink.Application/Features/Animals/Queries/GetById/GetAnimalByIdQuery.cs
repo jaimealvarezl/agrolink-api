@@ -9,7 +9,6 @@ public record GetAnimalByIdQuery(int Id, int UserId) : IRequest<AnimalDto?>;
 
 public class GetAnimalByIdQueryHandler(
     IAnimalRepository animalRepository,
-    ILotRepository lotRepository,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,

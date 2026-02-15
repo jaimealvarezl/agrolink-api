@@ -43,6 +43,8 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => e.Name);
+        builder.HasIndex(e => e.Breed);
+        builder.HasIndex(e => e.Color);
 
         builder.HasQueryFilter(e => e.LifeStatus != LifeStatus.Deleted);
     }

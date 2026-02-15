@@ -20,7 +20,6 @@ public record UploadAnimalPhotoCommand(
 public class UploadAnimalPhotoCommandHandler(
     IAnimalRepository animalRepository,
     IAnimalPhotoRepository animalPhotoRepository,
-    IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
     IStoragePathProvider pathProvider,
     IUnitOfWork unitOfWork,

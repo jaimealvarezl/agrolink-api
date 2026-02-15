@@ -237,22 +237,70 @@ public class AnimalRepository(AgroLinkDbContext context)
         CancellationToken cancellationToken = default
     )
     {
+        var userFarmIds = await GetUserFarmIdsAsync(userId, cancellationToken);
+
+        if (userFarmIds.Count == 0)
+        {
+            return [];
+        }
+
         return await _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
             .Where(a =>
-                !string.IsNullOrEmpty(a.Color)
-                && (
-                    _context.FarmMembers.Any(m =>
-                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
-                    )
-                    || _context.Farms.Any(f =>
-                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
-                    )
-                )
+                !string.IsNullOrEmpty(a.Color) && userFarmIds.Contains(a.Lot.Paddock.FarmId)
             )
             .Select(a => a.Color!)
             .GroupBy(c => c.ToLower())
             .Select(g => g.OrderBy(c => c).First())
             .OrderBy(c => c)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<string>> GetDistinctBreedsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var userFarmIds = await GetUserFarmIdsAsync(userId, cancellationToken);
+
+        if (userFarmIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await _dbSet
+            .Include(a => a.Lot)
+                .ThenInclude(l => l.Paddock)
+            .Where(a =>
+                !string.IsNullOrEmpty(a.Breed) && userFarmIds.Contains(a.Lot.Paddock.FarmId)
+            )
+            .Select(a => a.Breed!)
+            .GroupBy(b => b.ToLower())
+            .Select(g => g.OrderBy(b => b).First())
+            .OrderBy(b => b)
+            .ToListAsync(cancellationToken);
+    }
+
+    private async Task<List<int>> GetUserFarmIdsAsync(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 1. Get IDs of farms owned by the user
+        // Using explicit join to be safe regardless of navigation property state
+        var ownedFarmIds =
+            from farm in _context.Farms
+            join owner in _context.Owners on farm.OwnerId equals owner.Id
+            where owner.UserId == userId
+            select farm.Id;
+
+        // 2. Get IDs of farms where user is a member
+        var memberFarmIds = _context
+            .FarmMembers.Where(m => m.UserId == userId)
+            .Select(m => m.FarmId);
+
+        // 3. Combine into single distinct query
+        return await ownedFarmIds.Union(memberFarmIds).ToListAsync(cancellationToken);
     }
 }

@@ -37,4 +37,9 @@ public interface IAnimalRepository : IRepository<Animal>
         int userId,
         CancellationToken cancellationToken = default
     );
+
+    Task<List<string>> GetDistinctBreedsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    );
 }
