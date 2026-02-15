@@ -1,6 +1,4 @@
-using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -16,26 +14,19 @@ public class GetAnimalGenealogyQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _handler = new GetAnimalGenealogyQueryHandler(
-            _animalRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _currentUserServiceMock.Object
-        );
+        _handler = new GetAnimalGenealogyQueryHandler(_animalRepositoryMock.Object);
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private GetAnimalGenealogyQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingAnimalWithGenealogy_ReturnsAnimalGenealogyDto()
     {
         // Arrange
-        var animalId = 1;
-        var query = new GetAnimalGenealogyQuery(animalId);
+        const int animalId = 1;
+        const int userId = 1;
+        var query = new GetAnimalGenealogyQuery(animalId, userId);
 
         var animal = new Animal
         {
@@ -49,12 +40,9 @@ public class GetAnimalGenealogyQueryHandlerTests
             Lot = new Lot { Paddock = new Paddock { FarmId = 1 } },
         };
 
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
-
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(animalId)).ReturnsAsync(animal);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
         _animalRepositoryMock
             .Setup(r => r.GetChildrenAsync(animalId))
             .ReturnsAsync(new List<Animal>());
@@ -71,11 +59,12 @@ public class GetAnimalGenealogyQueryHandlerTests
     public async Task Handle_NonExistingAnimal_ReturnsNull()
     {
         // Arrange
-        var animalId = 999;
-        var query = new GetAnimalGenealogyQuery(animalId);
+        const int animalId = 999;
+        const int userId = 1;
+        var query = new GetAnimalGenealogyQuery(animalId, userId);
 
         _animalRepositoryMock
-            .Setup(r => r.GetAnimalDetailsAsync(animalId))
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
         // Act

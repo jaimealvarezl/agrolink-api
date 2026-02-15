@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
@@ -6,13 +5,11 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetById;
 
-public record GetAnimalByIdQuery(int Id) : IRequest<AnimalDto?>;
+public record GetAnimalByIdQuery(int Id, int UserId) : IRequest<AnimalDto?>;
 
 public class GetAnimalByIdQueryHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
-    IFarmMemberRepository farmMemberRepository,
-    ICurrentUserService currentUserService,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
@@ -24,26 +21,10 @@ public class GetAnimalByIdQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdAsync(request.Id);
+        var animal = await animalRepository.GetByIdAsync(request.Id, request.UserId);
         if (animal == null)
         {
             return null;
-        }
-
-        var lot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
-        if (lot == null)
-        {
-            return null;
-        }
-
-        var userId = currentUserService.GetRequiredUserId();
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.UserId == userId && fm.FarmId == lot.Paddock.FarmId
-        );
-
-        if (!isMember)
-        {
-            throw new ForbiddenAccessException("You do not have access to this animal.");
         }
 
         var mother = animal.MotherId.HasValue
@@ -103,7 +84,7 @@ public class GetAnimalByIdQueryHandler(
             ReproductiveStatus = animal.ReproductiveStatus,
             BirthDate = animal.BirthDate,
             LotId = animal.LotId,
-            LotName = lot?.Name,
+            LotName = animal.Lot?.Name,
             MotherId = animal.MotherId,
             MotherCuia = mother?.Cuia,
             FatherId = animal.FatherId,

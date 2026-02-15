@@ -30,13 +30,15 @@ public class AnimalRepositoryTests : TestBase
     public async Task GetByIdAsync_WhenAnimalExists_ShouldReturnAnimal()
     {
         // Arrange
+        var user = await CreateTestUserAsync(_context);
         var farm = await CreateTestFarmAsync(_context);
+        await AddUserToFarmAsync(_context, user.Id, farm.Id);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
         var animal = await CreateTestAnimalAsync(_context, lot.Id);
 
         // Act
-        var result = await _repository.GetByIdAsync(animal.Id);
+        var result = await _repository.GetByIdAsync(animal.Id, user.Id);
 
         // Assert
         result.ShouldNotBeNull();
@@ -49,7 +51,7 @@ public class AnimalRepositoryTests : TestBase
     public async Task GetByIdAsync_WhenAnimalDoesNotExist_ShouldReturnNull()
     {
         // Act
-        var result = await _repository.GetByIdAsync(999);
+        var result = await _repository.GetByIdAsync(999, 1);
 
         // Assert
         result.ShouldBeNull();
@@ -77,7 +79,9 @@ public class AnimalRepositoryTests : TestBase
     public async Task GetByLotIdAsync_ShouldReturnAnimalsInLot()
     {
         // Arrange
+        var user = await CreateTestUserAsync(_context);
         var farm = await CreateTestFarmAsync(_context);
+        await AddUserToFarmAsync(_context, user.Id, farm.Id);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot1 = await CreateTestLotAsync(_context, paddock.Id, "Lot 1");
         var lot2 = await CreateTestLotAsync(_context, paddock.Id, "Lot 2");
@@ -87,7 +91,7 @@ public class AnimalRepositoryTests : TestBase
         await CreateTestAnimalAsync(_context, lot2.Id, "A003");
 
         // Act
-        var result = await _repository.GetByLotIdAsync(lot1.Id);
+        var result = await _repository.GetByLotIdAsync(lot1.Id, user.Id);
 
         // Assert
         result.ShouldNotBeNull();
@@ -304,7 +308,9 @@ public class AnimalRepositoryTests : TestBase
     public async Task GetAnimalDetailsAsync_ShouldReturnDetailsWithIncludes()
     {
         // Arrange
+        var user = await CreateTestUserAsync(_context);
         var farm = await CreateTestFarmAsync(_context);
+        await AddUserToFarmAsync(_context, user.Id, farm.Id);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
 
@@ -330,7 +336,7 @@ public class AnimalRepositoryTests : TestBase
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _repository.GetAnimalDetailsAsync(child.Id);
+        var result = await _repository.GetAnimalDetailsAsync(child.Id, user.Id);
 
         // Assert
         result.ShouldNotBeNull();

@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -14,6 +13,7 @@ public record UploadAnimalPhotoCommand(
     string FileName,
     string ContentType,
     long Size,
+    int UserId,
     string? Description = null
 ) : IRequest<AnimalPhotoDto>;
 
@@ -23,7 +23,6 @@ public class UploadAnimalPhotoCommandHandler(
     IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
     IStoragePathProvider pathProvider,
-    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork,
     ILogger<UploadAnimalPhotoCommandHandler> logger
 ) : IRequestHandler<UploadAnimalPhotoCommand, AnimalPhotoDto>
@@ -122,11 +121,13 @@ public class UploadAnimalPhotoCommandHandler(
             }
         }
 
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId, request.UserId);
         if (animal == null)
         {
-            logger.LogWarning("Animal {AnimalId} not found", request.AnimalId);
-            throw new ArgumentException($"Animal with ID {request.AnimalId} not found.");
+            logger.LogWarning("Animal {AnimalId} not found or access denied", request.AnimalId);
+            throw new ArgumentException(
+                $"Animal with ID {request.AnimalId} not found or access denied."
+            );
         }
 
         if (animal.Lot?.Paddock == null)
@@ -140,30 +141,6 @@ public class UploadAnimalPhotoCommandHandler(
         }
 
         var farmId = animal.Lot.Paddock.FarmId;
-        var userId = currentUserService.GetRequiredUserId();
-
-        using var farmScope = logger.BeginScope(
-            new Dictionary<string, object> { ["FarmId"] = farmId, ["UserId"] = userId }
-        );
-
-        logger.LogInformation(
-            "Checking permissions for user {UserId} on farm {FarmId}",
-            userId,
-            farmId
-        );
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.FarmId == farmId && fm.UserId == userId
-        );
-
-        if (!isMember)
-        {
-            logger.LogWarning(
-                "User {UserId} does not have permission for farm {FarmId}",
-                userId,
-                farmId
-            );
-            throw new ForbiddenAccessException("User does not have permission for this Farm.");
-        }
 
         // Check if it's the first photo
         var isFirstPhoto = !await animalPhotoRepository.HasPhotosAsync(request.AnimalId);

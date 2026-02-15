@@ -1,9 +1,9 @@
 using AgroLink.Application.Features.Animals.Queries.GetAll;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
-using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetAll;
@@ -14,18 +14,23 @@ public class GetAllAnimalsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _mocker = new AutoMocker();
-        _handler = _mocker.CreateInstance<GetAllAnimalsQueryHandler>();
+        _animalRepositoryMock = new Mock<IAnimalRepository>();
+        _storageServiceMock = new Mock<IStorageService>();
+        _handler = new GetAllAnimalsQueryHandler(
+            _animalRepositoryMock.Object,
+            _storageServiceMock.Object
+        );
     }
 
-    private AutoMocker _mocker = null!;
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IStorageService> _storageServiceMock = null!;
     private GetAllAnimalsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ReturnsAllAnimals()
     {
         // Arrange
-        var userId = 1;
+        const int userId = 1;
         var query = new GetAllAnimalsQuery(userId);
         var lot1 = new Lot { Id = 1, Name = "Lot 1" };
         var lot2 = new Lot { Id = 2, Name = "Lot 2" };
@@ -59,8 +64,7 @@ public class GetAllAnimalsQueryHandlerTests
             },
         };
 
-        _mocker
-            .GetMock<IAnimalRepository>()
+        _animalRepositoryMock
             .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
 
@@ -78,10 +82,9 @@ public class GetAllAnimalsQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        var userId = 1;
+        const int userId = 1;
         var query = new GetAllAnimalsQuery(userId);
-        _mocker
-            .GetMock<IAnimalRepository>()
+        _animalRepositoryMock
             .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Animal>());
 

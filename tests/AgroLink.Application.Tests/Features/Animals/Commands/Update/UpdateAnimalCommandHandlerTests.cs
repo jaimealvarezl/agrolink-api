@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
@@ -23,7 +21,6 @@ public class UpdateAnimalCommandHandlerTests
         _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
         _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
         _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _storageServiceMock = new Mock<IStorageService>();
         _handler = new UpdateAnimalCommandHandler(
@@ -34,7 +31,6 @@ public class UpdateAnimalCommandHandlerTests
             _animalPhotoRepositoryMock.Object,
             _farmMemberRepositoryMock.Object,
             _storageServiceMock.Object,
-            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
         );
     }
@@ -45,7 +41,6 @@ public class UpdateAnimalCommandHandlerTests
     private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
     private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private UpdateAnimalCommandHandler _handler = null!;
@@ -66,7 +61,7 @@ public class UpdateAnimalCommandHandlerTests
                 new() { OwnerId = 1, SharePercent = 100 },
             },
         };
-        var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
         var animal = new Animal
         {
             Id = animalId,
@@ -80,6 +75,7 @@ public class UpdateAnimalCommandHandlerTests
             ProductionStatus = ProductionStatus.Milking,
             ReproductiveStatus = ReproductiveStatus.Open,
             CreatedAt = DateTime.UtcNow,
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
         var lot = new Lot
         {
@@ -89,12 +85,7 @@ public class UpdateAnimalCommandHandlerTests
         };
         var owner = new Owner { Id = 1, Name = "Test Owner" };
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
         _animalRepositoryMock
             .Setup(r =>
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
@@ -151,27 +142,19 @@ public class UpdateAnimalCommandHandlerTests
         // Arrange
         const int animalId = 1;
         const int farmId = 10;
+        const int userId = 5;
         var updateAnimalDto = new UpdateAnimalDto { Name = "Existing Name" };
-        var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
         var animal = new Animal
         {
             Id = animalId,
             LotId = 1,
             Name = "Old Name",
             BirthDate = DateTime.UtcNow.AddYears(-2),
-        };
-        var lot = new Lot
-        {
-            Id = 1,
-            Paddock = new Paddock { FarmId = farmId },
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
 
         _animalRepositoryMock
             .Setup(r => r.IsNameUniqueInFarmAsync("Existing Name", farmId, animalId))
@@ -189,47 +172,19 @@ public class UpdateAnimalCommandHandlerTests
     {
         // Arrange
         const int animalId = 999;
+        const int userId = 5;
         var updateAnimalDto = new UpdateAnimalDto { Name = "Updated Name" };
-        var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync((Animal?)null);
+        _animalRepositoryMock
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync((Animal?)null);
 
         // Act & Assert
         var exception = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        exception.Message.ShouldBe("Animal not found");
-    }
-
-    [Test]
-    public async Task Handle_NoPermission_ThrowsForbiddenAccessException()
-    {
-        // Arrange
-        const int animalId = 1;
-        var command = new UpdateAnimalCommand(animalId, new UpdateAnimalDto());
-        var animal = new Animal
-        {
-            Id = animalId,
-            LotId = 1,
-            BirthDate = DateTime.UtcNow.AddYears(-2),
-        };
-        var lot = new Lot
-        {
-            Id = 1,
-            Paddock = new Paddock { FarmId = 10 },
-        };
-
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(false);
-
-        // Act & Assert
-        await Should.ThrowAsync<ForbiddenAccessException>(() =>
-            _handler.Handle(command, CancellationToken.None)
-        );
+        exception.Message.ShouldBe("Animal not found or access denied.");
     }
 
     [Test]
@@ -237,26 +192,19 @@ public class UpdateAnimalCommandHandlerTests
     {
         // Arrange
         const int animalId = 1;
+        const int userId = 5;
+        const int farmId = 10;
         var updateAnimalDto = new UpdateAnimalDto { Owners = new List<AnimalOwnerCreateDto>() };
-        var command = new UpdateAnimalCommand(animalId, updateAnimalDto);
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
         var animal = new Animal
         {
             Id = animalId,
             LotId = 1,
             BirthDate = DateTime.UtcNow.AddYears(-2),
-        };
-        var lot = new Lot
-        {
-            Id = 1,
-            Paddock = new Paddock { FarmId = 10 },
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
         _animalRepositoryMock
             .Setup(r =>
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())

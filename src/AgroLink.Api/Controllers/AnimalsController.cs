@@ -59,7 +59,10 @@ public class AnimalsController(IMediator mediator) : BaseController
     [HttpGet("{id}")]
     public async Task<ActionResult<AnimalDto>> GetById(int id, CancellationToken cancellationToken)
     {
-        var animal = await mediator.Send(new GetAnimalByIdQuery(id), cancellationToken);
+        var animal = await mediator.Send(
+            new GetAnimalByIdQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
         if (animal == null)
         {
             return NotFound();
@@ -74,7 +77,10 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var animal = await mediator.Send(new GetAnimalDetailQuery(id), cancellationToken);
+        var animal = await mediator.Send(
+            new GetAnimalDetailQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
         if (animal == null)
         {
             return NotFound();
@@ -89,7 +95,10 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var animals = await mediator.Send(new GetAnimalsByLotQuery(lotId), cancellationToken);
+        var animals = await mediator.Send(
+            new GetAnimalsByLotQuery(lotId, GetCurrentUserId()),
+            cancellationToken
+        );
         return Ok(animals);
     }
 
@@ -99,7 +108,10 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var genealogy = await mediator.Send(new GetAnimalGenealogyQuery(id), cancellationToken);
+        var genealogy = await mediator.Send(
+            new GetAnimalGenealogyQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
         if (genealogy == null)
         {
             return NotFound();
@@ -134,7 +146,10 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         try
         {
-            var animal = await mediator.Send(new UpdateAnimalCommand(id, dto), cancellationToken);
+            var animal = await mediator.Send(
+                new UpdateAnimalCommand(id, dto, GetCurrentUserId()),
+                cancellationToken
+            );
             return Ok(animal);
         }
         catch (Exception ex)
@@ -148,7 +163,7 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         try
         {
-            await mediator.Send(new DeleteAnimalCommand(id), cancellationToken);
+            await mediator.Send(new DeleteAnimalCommand(id, GetCurrentUserId()), cancellationToken);
             return NoContent();
         }
         catch (Exception ex)
@@ -167,7 +182,13 @@ public class AnimalsController(IMediator mediator) : BaseController
         try
         {
             var animal = await mediator.Send(
-                new MoveAnimalCommand(id, request.FromLotId, request.ToLotId, request.Reason),
+                new MoveAnimalCommand(
+                    id,
+                    request.FromLotId,
+                    request.ToLotId,
+                    GetCurrentUserId(),
+                    request.Reason
+                ),
                 cancellationToken
             );
             return Ok(animal);
@@ -196,6 +217,7 @@ public class AnimalsController(IMediator mediator) : BaseController
                 file.FileName,
                 file.ContentType,
                 file.Length,
+                GetCurrentUserId(),
                 description
             );
 
@@ -217,7 +239,10 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         try
         {
-            await mediator.Send(new SetAnimalProfilePhotoCommand(id, photoId), cancellationToken);
+            await mediator.Send(
+                new SetAnimalProfilePhotoCommand(id, photoId, GetCurrentUserId()),
+                cancellationToken
+            );
             return NoContent();
         }
         catch (Exception ex)
@@ -235,7 +260,10 @@ public class AnimalsController(IMediator mediator) : BaseController
     {
         try
         {
-            await mediator.Send(new DeleteAnimalPhotoCommand(id, photoId), cancellationToken);
+            await mediator.Send(
+                new DeleteAnimalPhotoCommand(id, photoId, GetCurrentUserId()),
+                cancellationToken
+            );
             return NoContent();
         }
         catch (Exception ex)

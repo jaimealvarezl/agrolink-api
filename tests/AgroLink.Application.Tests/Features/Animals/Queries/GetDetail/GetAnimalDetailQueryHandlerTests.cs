@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -16,26 +15,14 @@ public class GetAnimalDetailQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _storageServiceMock = new Mock<IStorageService>();
         _handler = new GetAnimalDetailQueryHandler(
             _animalRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _currentUserServiceMock.Object,
             _storageServiceMock.Object
         );
-
-        // Default setup for successful authorization
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(true);
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private GetAnimalDetailQueryHandler _handler = null!;
 
@@ -43,10 +30,12 @@ public class GetAnimalDetailQueryHandlerTests
     public async Task Handle_ExistingAnimal_ReturnsDetailDto()
     {
         // Arrange
+        const int animalId = 1;
+        const int userId = 1;
         var birthDate = DateTime.UtcNow.AddYears(-2);
         var animal = new Animal
         {
-            Id = 1,
+            Id = animalId,
             TagVisual = "A1",
             Name = "Betsy",
             BirthDate = birthDate,
@@ -93,7 +82,9 @@ public class GetAnimalDetailQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(1)).ReturnsAsync(animal);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
         _storageServiceMock
             .Setup(s => s.GetPresignedUrl("photo-key", It.IsAny<TimeSpan>()))
             .Returns("http://signed-url.com/photo.jpg");
@@ -105,11 +96,14 @@ public class GetAnimalDetailQueryHandlerTests
             .Returns("http://signed-url.com/dad.jpg");
 
         // Act
-        var result = await _handler.Handle(new GetAnimalDetailQuery(1), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
+        );
 
         // Assert
         result.ShouldNotBeNull();
-        result.Id.ShouldBe(1);
+        result.Id.ShouldBe(animalId);
         result.MotherName.ShouldBe("Mom");
         result.MotherPhotoUrl.ShouldBe("http://signed-url.com/mom.jpg");
         result.FatherName.ShouldBe("Dad");
@@ -124,31 +118,38 @@ public class GetAnimalDetailQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_UnauthorizedUser_ThrowsUnauthorizedAccessException()
+    public async Task Handle_UnauthorizedUser_ReturnsNull()
     {
         // Arrange
-        var animal = new Animal
-        {
-            Id = 1,
-            Lot = new Lot { Paddock = new Paddock { FarmId = 100 } },
-        };
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(1)).ReturnsAsync(animal);
-        _farmMemberRepositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(false);
+        const int animalId = 1;
+        const int userId = 1;
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync((Animal?)null);
 
-        // Act & Assert
-        await Should.ThrowAsync<UnauthorizedAccessException>(async () =>
-            await _handler.Handle(new GetAnimalDetailQuery(1), CancellationToken.None)
+        // Act
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
         );
+
+        // Assert
+        result.ShouldBeNull();
     }
 
     [Test]
     public async Task Handle_NonExistingAnimal_ReturnsNull()
     {
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(99)).ReturnsAsync((Animal?)null);
+        const int animalId = 99;
+        const int userId = 1;
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync((Animal?)null);
 
-        var result = await _handler.Handle(new GetAnimalDetailQuery(99), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
+        );
 
         result.ShouldBeNull();
     }
@@ -157,11 +158,12 @@ public class GetAnimalDetailQueryHandlerTests
     public async Task Handle_AnimalBornAlmostAMonthAgo_ReturnsZeroMonths()
     {
         // Arrange
-        // Born 20 days ago (should be 0 months old)
+        const int animalId = 2;
+        const int userId = 1;
         var birthDate = DateTime.UtcNow.AddDays(-20);
         var animal = new Animal
         {
-            Id = 2,
+            Id = animalId,
             TagVisual = "Calf",
             BirthDate = birthDate,
             Sex = Sex.Female,
@@ -172,10 +174,15 @@ public class GetAnimalDetailQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(2)).ReturnsAsync(animal);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
 
         // Act
-        var result = await _handler.Handle(new GetAnimalDetailQuery(2), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
+        );
 
         // Assert
         result.ShouldNotBeNull();
@@ -186,11 +193,12 @@ public class GetAnimalDetailQueryHandlerTests
     public async Task Handle_AnimalBornOneMonthAndOneDayAgo_ReturnsOneMonth()
     {
         // Arrange
-        // Born 1 month and 1 day ago
+        const int animalId = 3;
+        const int userId = 1;
         var birthDate = DateTime.UtcNow.AddMonths(-1).AddDays(-1);
         var animal = new Animal
         {
-            Id = 3,
+            Id = animalId,
             TagVisual = "Calf2",
             BirthDate = birthDate,
             Sex = Sex.Male,
@@ -201,10 +209,15 @@ public class GetAnimalDetailQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(3)).ReturnsAsync(animal);
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
 
         // Act
-        var result = await _handler.Handle(new GetAnimalDetailQuery(3), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
+        );
 
         // Assert
         result.ShouldNotBeNull();

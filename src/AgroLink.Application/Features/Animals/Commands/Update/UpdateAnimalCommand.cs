@@ -9,7 +9,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Commands.Update;
 
-public record UpdateAnimalCommand(int Id, UpdateAnimalDto Dto) : IRequest<AnimalDto>;
+public record UpdateAnimalCommand(int Id, UpdateAnimalDto Dto, int UserId) : IRequest<AnimalDto>;
 
 public class UpdateAnimalCommandHandler(
     IAnimalRepository animalRepository,
@@ -19,7 +19,6 @@ public class UpdateAnimalCommandHandler(
     IAnimalPhotoRepository animalPhotoRepository,
     IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
-    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
 {
@@ -28,31 +27,13 @@ public class UpdateAnimalCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdAsync(request.Id);
+        var animal = await animalRepository.GetByIdAsync(request.Id, request.UserId);
         if (animal == null)
         {
-            throw new ArgumentException("Animal not found");
+            throw new ArgumentException("Animal not found or access denied.");
         }
 
-        // Get current farm context for validation
-        var currentLot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
-        if (currentLot == null)
-        {
-            throw new InvalidOperationException("Current lot not found.");
-        }
-
-        var farmId = currentLot.Paddock.FarmId;
-
-        // Ensure user has permissions
-        var userId = currentUserService.GetRequiredUserId();
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.FarmId == farmId && fm.UserId == userId
-        );
-        if (!isMember)
-        {
-            throw new ForbiddenAccessException("User does not have permission for this Farm.");
-        }
-
+        var farmId = animal.Lot.Paddock.FarmId;
         var dto = request.Dto;
 
         // If lot is changing, validate the new lot belongs to the same farm or user has access to it
@@ -68,7 +49,7 @@ public class UpdateAnimalCommandHandler(
             {
                 // Verify access to the new farm if it's different
                 var isMemberNewFarm = await farmMemberRepository.ExistsAsync(fm =>
-                    fm.FarmId == newLot.Paddock.FarmId && fm.UserId == userId
+                    fm.FarmId == newLot.Paddock.FarmId && fm.UserId == request.UserId
                 );
                 if (!isMemberNewFarm)
                 {

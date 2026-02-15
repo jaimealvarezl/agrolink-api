@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
@@ -6,13 +5,11 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetByLot;
 
-public record GetAnimalsByLotQuery(int LotId) : IRequest<IEnumerable<AnimalDto>>;
+public record GetAnimalsByLotQuery(int LotId, int UserId) : IRequest<IEnumerable<AnimalDto>>;
 
 public class GetAnimalsByLotQueryHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
-    IFarmMemberRepository farmMemberRepository,
-    ICurrentUserService currentUserService,
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
@@ -24,23 +21,7 @@ public class GetAnimalsByLotQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId);
-        if (lot == null)
-        {
-            return [];
-        }
-
-        var userId = currentUserService.GetRequiredUserId();
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.UserId == userId && fm.FarmId == lot.Paddock.FarmId
-        );
-
-        if (!isMember)
-        {
-            throw new ForbiddenAccessException("You do not have access to this lot's animals.");
-        }
-
-        var animals = await animalRepository.GetByLotIdAsync(request.LotId);
+        var animals = await animalRepository.GetByLotIdAsync(request.LotId, request.UserId);
         var result = new List<AnimalDto>();
 
         foreach (var animal in animals)
@@ -103,7 +84,7 @@ public class GetAnimalsByLotQueryHandler(
                     ReproductiveStatus = animal.ReproductiveStatus,
                     BirthDate = animal.BirthDate,
                     LotId = animal.LotId,
-                    LotName = lot?.Name,
+                    LotName = animal.Lot?.Name,
                     MotherId = animal.MotherId,
                     MotherCuia = mother?.Cuia,
                     FatherId = animal.FatherId,
