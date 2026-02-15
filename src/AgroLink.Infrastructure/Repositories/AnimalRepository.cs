@@ -182,14 +182,14 @@ public class AnimalRepository(AgroLinkDbContext context)
                     f.Id == x.p.FarmId && f.Owner != null && f.Owner.UserId == userId
                 )
             )
-            .Where(x => x.a.Color != null && x.a.Color != "")
+            .Where(x => !string.IsNullOrEmpty(x.a.Color))
             .Select(x => x.a.Color!)
             .Distinct()
             .ToListAsync(cancellationToken);
 
         return colors
             .GroupBy(c => c.ToLower())
-            .Select(g => g.First())
+            .Select(g => g.OrderBy(c => c).First())
             .OrderBy(c => c)
             .ToList();
     }
