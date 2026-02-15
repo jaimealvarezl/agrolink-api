@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -7,6 +8,8 @@ namespace AgroLink.Application.Features.Animals.Queries.GetDetail;
 
 public class GetAnimalDetailQueryHandler(
     IAnimalRepository animalRepository,
+    IFarmMemberRepository farmMemberRepository,
+    ICurrentUserService currentUserService,
     IStorageService storageService
 ) : IRequestHandler<GetAnimalDetailQuery, AnimalDetailDto?>
 {
@@ -22,6 +25,18 @@ public class GetAnimalDetailQueryHandler(
             return null;
         }
 
+        // IDOR check: Verify that the current user is a member of the farm that owns the animal
+        var userId = currentUserService.GetRequiredUserId();
+        var farmId = animal.Lot.Paddock.FarmId;
+        var isMember = await farmMemberRepository.ExistsAsync(fm =>
+            fm.UserId == userId && fm.FarmId == farmId
+        );
+
+        if (!isMember)
+        {
+            throw new UnauthorizedAccessException("You do not have access to this animal.");
+        }
+
         var now = DateTime.UtcNow;
         var ageInMonths =
             (now.Year - animal.BirthDate.Year) * 12 + now.Month - animal.BirthDate.Month;
@@ -31,28 +46,9 @@ public class GetAnimalDetailQueryHandler(
             ageInMonths--;
         }
 
-        var primaryPhoto =
-            animal.Photos.OrderByDescending(p => p.IsProfile).ThenByDescending(p => p.UploadedAt).FirstOrDefault();
-        var primaryPhotoUrl =
-            primaryPhoto != null
-                ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
-                : null;
-
-        var motherPhoto = animal.Mother?.Photos?
-            .OrderByDescending(p => p.IsProfile)
-            .ThenByDescending(p => p.UploadedAt)
-            .FirstOrDefault();
-        var motherPhotoUrl = motherPhoto != null
-            ? storageService.GetPresignedUrl(motherPhoto.StorageKey, TimeSpan.FromHours(1))
-            : null;
-
-        var fatherPhoto = animal.Father?.Photos?
-            .OrderByDescending(p => p.IsProfile)
-            .ThenByDescending(p => p.UploadedAt)
-            .FirstOrDefault();
-        var fatherPhotoUrl = fatherPhoto != null
-            ? storageService.GetPresignedUrl(fatherPhoto.StorageKey, TimeSpan.FromHours(1))
-            : null;
+        var primaryPhotoUrl = GetPrimaryPhotoUrl(animal.Photos);
+        var motherPhotoUrl = GetPrimaryPhotoUrl(animal.Mother?.Photos);
+        var fatherPhotoUrl = GetPrimaryPhotoUrl(animal.Father?.Photos);
 
         var photoDtos = animal
             .Photos.OrderByDescending(p => p.IsProfile)
@@ -103,5 +99,22 @@ public class GetAnimalDetailQueryHandler(
             PrimaryPhotoUrl = primaryPhotoUrl,
             Photos = photoDtos,
         };
+    }
+
+    private string? GetPrimaryPhotoUrl(IEnumerable<AnimalPhoto>? photos)
+    {
+        if (photos == null || !photos.Any())
+        {
+            return null;
+        }
+
+        var primaryPhoto = photos
+            .OrderByDescending(p => p.IsProfile)
+            .ThenByDescending(p => p.UploadedAt)
+            .FirstOrDefault();
+
+        return primaryPhoto != null
+            ? storageService.GetPresignedUrl(primaryPhoto.StorageKey, TimeSpan.FromHours(1))
+            : null;
     }
 }

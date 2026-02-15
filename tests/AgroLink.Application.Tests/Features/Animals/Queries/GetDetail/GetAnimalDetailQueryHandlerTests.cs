@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -15,14 +16,26 @@ public class GetAnimalDetailQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
+        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _storageServiceMock = new Mock<IStorageService>();
         _handler = new GetAnimalDetailQueryHandler(
             _animalRepositoryMock.Object,
+            _farmMemberRepositoryMock.Object,
+            _currentUserServiceMock.Object,
             _storageServiceMock.Object
         );
+
+        // Default setup for successful authorization
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private GetAnimalDetailQueryHandler _handler = null!;
 
@@ -38,18 +51,28 @@ public class GetAnimalDetailQueryHandlerTests
             Name = "Betsy",
             BirthDate = birthDate,
             LotId = 10,
-            Lot = new Lot { Name = "Pasture 1" },
-            Mother = new Animal 
-            { 
-                TagVisual = "M1", 
-                Name = "Mom",
-                Photos = new List<AnimalPhoto> { new() { StorageKey = "mom-key", IsProfile = true } }
+            Lot = new Lot
+            {
+                Name = "Pasture 1",
+                Paddock = new Paddock { FarmId = 100 },
             },
-            Father = new Animal 
-            { 
-                TagVisual = "F1", 
+            Mother = new Animal
+            {
+                TagVisual = "M1",
+                Name = "Mom",
+                Photos = new List<AnimalPhoto>
+                {
+                    new() { StorageKey = "mom-key", IsProfile = true },
+                },
+            },
+            Father = new Animal
+            {
+                TagVisual = "F1",
                 Name = "Dad",
-                Photos = new List<AnimalPhoto> { new() { StorageKey = "dad-key", IsProfile = true } }
+                Photos = new List<AnimalPhoto>
+                {
+                    new() { StorageKey = "dad-key", IsProfile = true },
+                },
             },
             AnimalOwners = new List<AnimalOwner>
             {
@@ -101,6 +124,26 @@ public class GetAnimalDetailQueryHandlerTests
     }
 
     [Test]
+    public async Task Handle_UnauthorizedUser_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange
+        var animal = new Animal
+        {
+            Id = 1,
+            Lot = new Lot { Paddock = new Paddock { FarmId = 100 } },
+        };
+        _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(1)).ReturnsAsync(animal);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(false);
+
+        // Act & Assert
+        await Should.ThrowAsync<UnauthorizedAccessException>(async () =>
+            await _handler.Handle(new GetAnimalDetailQuery(1), CancellationToken.None)
+        );
+    }
+
+    [Test]
     public async Task Handle_NonExistingAnimal_ReturnsNull()
     {
         _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(99)).ReturnsAsync((Animal?)null);
@@ -122,7 +165,11 @@ public class GetAnimalDetailQueryHandlerTests
             TagVisual = "Calf",
             BirthDate = birthDate,
             Sex = Sex.Female,
-            Lot = new Lot { Name = "Nursery" },
+            Lot = new Lot
+            {
+                Name = "Nursery",
+                Paddock = new Paddock { FarmId = 100 },
+            },
         };
 
         _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(2)).ReturnsAsync(animal);
@@ -147,7 +194,11 @@ public class GetAnimalDetailQueryHandlerTests
             TagVisual = "Calf2",
             BirthDate = birthDate,
             Sex = Sex.Male,
-            Lot = new Lot { Name = "Nursery" },
+            Lot = new Lot
+            {
+                Name = "Nursery",
+                Paddock = new Paddock { FarmId = 100 },
+            },
         };
 
         _animalRepositoryMock.Setup(r => r.GetAnimalDetailsAsync(3)).ReturnsAsync(animal);
