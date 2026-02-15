@@ -9,10 +9,6 @@ public record GetAllAnimalsQuery(int UserId) : IRequest<IEnumerable<AnimalDto>>;
 
 public class GetAllAnimalsQueryHandler(
     IAnimalRepository animalRepository,
-    ILotRepository lotRepository,
-    IOwnerRepository ownerRepository,
-    IAnimalOwnerRepository animalOwnerRepository,
-    IAnimalPhotoRepository animalPhotoRepository,
     IStorageService storageService
 ) : IRequestHandler<GetAllAnimalsQuery, IEnumerable<AnimalDto>>
 {

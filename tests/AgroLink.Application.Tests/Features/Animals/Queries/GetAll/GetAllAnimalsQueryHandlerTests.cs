@@ -15,26 +15,14 @@ public class GetAllAnimalsQueryHandlerTests
     public void Setup()
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
-        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
         _storageServiceMock = new Mock<IStorageService>();
         _handler = new GetAllAnimalsQueryHandler(
             _animalRepositoryMock.Object,
-            _lotRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
-            _animalOwnerRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object,
             _storageServiceMock.Object
         );
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
     private GetAllAnimalsQueryHandler _handler = null!;
 
@@ -79,14 +67,6 @@ public class GetAllAnimalsQueryHandlerTests
         _animalRepositoryMock
             .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(lot1);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(lot2);
-        _animalOwnerRepositoryMock
-            .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
-            .ReturnsAsync(new List<AnimalOwner>());
-        _animalPhotoRepositoryMock
-            .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
-            .ReturnsAsync(new List<AnimalPhoto>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
