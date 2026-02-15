@@ -255,4 +255,28 @@ public class AnimalRepository(AgroLinkDbContext context)
             .OrderBy(c => c)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<List<string>> GetDistinctBreedsAsync(
+        int userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await _dbSet
+            .Where(a =>
+                !string.IsNullOrEmpty(a.Breed)
+                && (
+                    _context.FarmMembers.Any(m =>
+                        m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
+                    )
+                    || _context.Farms.Any(f =>
+                        f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
+                    )
+                )
+            )
+            .Select(a => a.Breed!)
+            .GroupBy(b => b.ToLower())
+            .Select(g => g.OrderBy(b => b).First())
+            .OrderBy(b => b)
+            .ToListAsync(cancellationToken);
+    }
 }
