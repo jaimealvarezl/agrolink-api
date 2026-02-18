@@ -3,6 +3,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.Delete;
@@ -10,23 +11,18 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Delete;
 [TestFixture]
 public class DeleteAnimalCommandHandlerTests
 {
+    private AutoMocker _mocker = null!;
+    private DeleteAnimalCommandHandler _handler = null!;
+
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new DeleteAnimalCommandHandler(
-            _animalRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<DeleteAnimalCommandHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private DeleteAnimalCommandHandler _handler = null!;
-
     [Test]
-    public async Task Handle_ExistingAnimalWithPermission_SoftDeletesAnimal()
+    public async Task Handle_ValidDeleteAnimalCommand_PerformsSoftDelete()
     {
         // Arrange
         const int animalId = 1;
@@ -35,21 +31,20 @@ public class DeleteAnimalCommandHandlerTests
         var animal = new Animal
         {
             Id = animalId,
-            LotId = 1,
-            BirthDate = DateTime.UtcNow.AddYears(-2),
             LifeStatus = LifeStatus.Active,
+            Lot = new Lot { Paddock = new Paddock { FarmId = 10 } }
         };
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         animal.LifeStatus.ShouldBe(LifeStatus.Deleted);
-        _animalRepositoryMock.Verify(r => r.Update(animal), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IAnimalRepository>().Verify(r => r.Update(animal), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -60,14 +55,14 @@ public class DeleteAnimalCommandHandlerTests
         const int userId = 5;
         var command = new DeleteAnimalCommand(animalId, userId);
 
-        _animalRepositoryMock
+        _mocker.GetMock<IAnimalRepository>()
             .Setup(r => r.GetByIdAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<ArgumentException>(() =>
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        exception.Message.ShouldBe("Animal not found or access denied.");
+        ex.Message.ShouldBe("Animal not found or access denied.");
     }
 }
