@@ -7,6 +7,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.Create;
@@ -14,28 +15,86 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Create;
 [TestFixture]
 public class CreateAnimalCommandHandlerTests
 {
+    private AutoMocker _mocker = null!;
+    private CreateAnimalCommandHandler _handler = null!;
+
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new CreateAnimalCommandHandler(
-            _animalRepositoryMock.Object,
-            _lotRepositoryMock.Object,
-            _farmRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
-            _animalOwnerRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _currentUserServiceMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<CreateAnimalCommandHandler>();
     }
+
+    [Test]
+    public async Task Handle_ValidCreateAnimalCommand_ReturnsAnimalDto()
+    {
+        // Arrange
+        var farmId = 10;
+        var userId = 5;
+        var createAnimalDto = new CreateAnimalDto
+        {
+            Cuia = "A001",
+            TagVisual = "V001",
+            Name = "Test Animal",
+            Color = "Brown",
+            LotId = 1,
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Heifer,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.Open,
+            Owners = new List<AnimalOwnerCreateDto>
+            {
+                new() { OwnerId = 1, SharePercent = 100 },
+            },
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = farmId },
+        };
+        var owner = new Owner { Id = 1, Name = "Test Owner" };
+
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetLotWithPaddockAsync(lot.Id)).ReturnsAsync(lot);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _mocker.GetMock<IFarmMemberRepository>()
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+        _mocker.GetMock<IAnimalRepository>()
+            .Setup(r => r.IsCuiaUniqueInFarmAsync(createAnimalDto.Cuia, farmId, null))
+            .ReturnsAsync(true);
+        _mocker.GetMock<IAnimalRepository>()
+            .Setup(r => r.IsNameUniqueInFarmAsync(createAnimalDto.Name, farmId, null))
+            .ReturnsAsync(true);
+
+        _mocker.GetMock<IAnimalRepository>()
+            .Setup(r => r.AddAsync(It.IsAny<Animal>()))
+            .Callback<Animal>(a => a.Id = 1);
+        _mocker.GetMock<IOwnerRepository>().Setup(r => r.GetByIdAsync(owner.Id)).ReturnsAsync(owner);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Cuia.ShouldBe(createAnimalDto.Cuia);
+        result.Color.ShouldBe(createAnimalDto.Color);
+        result.LotName.ShouldBe(lot.Name);
+        result.Owners.Count.ShouldBe(1);
+        result.Owners[0].OwnerId.ShouldBe(1);
+        result.Owners[0].OwnerName.ShouldBe(owner.Name);
+
+        _mocker.GetMock<IAnimalRepository>().Verify(
+            r => r.AddAsync(It.Is<Animal>(a => a.AnimalOwners.Count == 1)),
+            Times.Once
+        );
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
@@ -126,9 +185,11 @@ public class CreateAnimalCommandHandlerTests
         result.Owners[0].OwnerId.ShouldBe(1);
         result.Owners[0].OwnerName.ShouldBe(owner.Name);
 
-        _animalRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Animal>()), Times.Once);
-        _animalOwnerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<AnimalOwner>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
+        _animalRepositoryMock.Verify(
+            r => r.AddAsync(It.Is<Animal>(a => a.AnimalOwners.Count == 1)),
+            Times.Once
+        );
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -424,10 +485,14 @@ public class CreateAnimalCommandHandlerTests
 
         // Assert
         result.ShouldNotBeNull();
-        _animalOwnerRepositoryMock.Verify(
+        _animalRepositoryMock.Verify(
             r =>
                 r.AddAsync(
-                    It.Is<AnimalOwner>(ao => ao.OwnerId == farmOwnerId && ao.SharePercent == 100)
+                    It.Is<Animal>(a =>
+                        a.AnimalOwners.Any(ao =>
+                            ao.OwnerId == farmOwnerId && ao.SharePercent == 100
+                        )
+                    )
                 ),
             Times.Once
         );
@@ -476,5 +541,177 @@ public class CreateAnimalCommandHandlerTests
             _handler.Handle(command, CancellationToken.None)
         );
         ex.Message.ShouldContain($"Farm with ID {farmId} not found");
+    }
+
+    [Test]
+    public async Task Handle_FutureBirthDate_ThrowsArgumentException()
+    {
+        // Arrange
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            Name = "Future Animal",
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddDays(1),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+            Owners = [],
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = 10 },
+        };
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("Birth date cannot be in the future");
+    }
+
+    [Test]
+    public async Task Handle_InconsistentOwnersPercentage_ThrowsArgumentException()
+    {
+        // Arrange
+        var farmId = 10;
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            Name = "Test Animal",
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 50 }], // Sum is 50
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(5);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r => r.IsNameUniqueInFarmAsync(It.IsAny<string>(), farmId, null))
+            .ReturnsAsync(true);
+        _animalRepositoryMock
+            .Setup(r => r.IsCuiaUniqueInFarmAsync(It.IsAny<string>(), farmId, null))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("Total ownership percentage must be 100%");
+    }
+
+    [Test]
+    public async Task Handle_MotherIsMale_ThrowsArgumentException()
+    {
+        // Arrange
+        var farmId = 10;
+        var userId = 5;
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            Name = "Test Animal",
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+            MotherId = 2,
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 }],
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
+        var mother = new Animal
+        {
+            Id = 2,
+            Sex = Sex.Male, // Wrong sex
+            Lot = lot,
+        };
+
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(2, userId)).ReturnsAsync(mother);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("Mother must be Female");
+    }
+
+    [Test]
+    public async Task Handle_ParentFromDifferentFarm_ThrowsArgumentException()
+    {
+        // Arrange
+        var farmId = 10;
+        var userId = 5;
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            Name = "Test Animal",
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+            FatherId = 3,
+            Owners = [new AnimalOwnerCreateDto { OwnerId = 1, SharePercent = 100 }],
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
+        var father = new Animal
+        {
+            Id = 3,
+            Sex = Sex.Male,
+            Lot = new Lot
+            {
+                Paddock = new Paddock { FarmId = 20 }, // Different farm
+            },
+        };
+
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _farmMemberRepositoryMock
+            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(true);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(3, userId)).ReturnsAsync(father);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("belongs to a different farm");
     }
 }

@@ -122,9 +122,39 @@ public class UpdateAnimalCommandHandler(
             animal.ReproductiveStatus
         );
 
+        if (dto.BirthDate.HasValue && dto.BirthDate.Value > DateTime.UtcNow)
+        {
+            throw new ArgumentException("Birth date cannot be in the future.");
+        }
+
         animal.BirthDate = dto.BirthDate ?? animal.BirthDate;
-        animal.MotherId = dto.MotherId ?? animal.MotherId;
-        animal.FatherId = dto.FatherId ?? animal.FatherId;
+
+        if (dto.MotherId.HasValue && dto.MotherId.Value != animal.MotherId)
+        {
+            var motherEntity = await animalRepository.GetByIdAsync(dto.MotherId.Value, request.UserId);
+            if (motherEntity == null)
+            {
+                throw new ArgumentException(
+                    $"Mother with ID {dto.MotherId.Value} not found or access denied."
+                );
+            }
+            AnimalValidator.ValidateParentage(motherEntity, null, farmId);
+            animal.MotherId = dto.MotherId.Value;
+        }
+
+        if (dto.FatherId.HasValue && dto.FatherId.Value != animal.FatherId)
+        {
+            var fatherEntity = await animalRepository.GetByIdAsync(dto.FatherId.Value, request.UserId);
+            if (fatherEntity == null)
+            {
+                throw new ArgumentException(
+                    $"Father with ID {dto.FatherId.Value} not found or access denied."
+                );
+            }
+            AnimalValidator.ValidateParentage(null, fatherEntity, farmId);
+            animal.FatherId = dto.FatherId.Value;
+        }
+
         animal.UpdatedAt = DateTime.UtcNow;
 
         animalRepository.Update(animal);
@@ -136,6 +166,8 @@ public class UpdateAnimalCommandHandler(
             {
                 throw new ArgumentException("At least one owner is required for an animal.");
             }
+
+            AnimalValidator.ValidateOwners(dto.Owners.Select(o => o.SharePercent));
 
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id);
 

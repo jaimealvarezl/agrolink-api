@@ -219,4 +219,79 @@ public class UpdateAnimalCommandHandlerTests
         );
         ex.Message.ShouldContain("At least one owner is required");
     }
+
+    [Test]
+    public async Task Handle_InconsistentOwnersSum_ThrowsArgumentException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 5;
+        const int farmId = 10;
+        var updateAnimalDto = new UpdateAnimalDto
+        {
+            Owners = new List<AnimalOwnerCreateDto>
+            {
+                new() { OwnerId = 1, SharePercent = 40 },
+            },
+        };
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
+        };
+
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
+        _animalRepositoryMock
+            .Setup(r =>
+                r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("Total ownership percentage must be 100%");
+    }
+
+    [Test]
+    public async Task Handle_UpdateMotherToMale_ThrowsArgumentException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 5;
+        const int farmId = 10;
+        var updateAnimalDto = new UpdateAnimalDto { MotherId = 2 };
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
+        };
+        var mother = new Animal
+        {
+            Id = 2,
+            Sex = Sex.Male, // Wrong sex
+            Lot = animal.Lot,
+        };
+
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
+        _animalRepositoryMock
+            .Setup(r =>
+                r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
+            )
+            .ReturnsAsync(true);
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(2, userId)).ReturnsAsync(mother);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("Mother must be Female");
+    }
 }

@@ -15,7 +15,6 @@ public class CreateAnimalCommandHandler(
     ILotRepository lotRepository,
     IFarmRepository farmRepository,
     IOwnerRepository ownerRepository,
-    IAnimalOwnerRepository animalOwnerRepository,
     IFarmMemberRepository farmMemberRepository,
     ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
@@ -47,14 +46,46 @@ public class CreateAnimalCommandHandler(
             throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
-        // 3. Validate Status Consistency
+        // 3. Validate Basic Rules
+        if (dto.BirthDate > DateTime.UtcNow)
+        {
+            throw new ArgumentException("Birth date cannot be in the future.");
+        }
+
         AnimalValidator.ValidateStatusConsistency(
             dto.Sex,
             dto.ProductionStatus,
             dto.ReproductiveStatus
         );
 
-        // 4. Ensure CUIA (if provided) is unique within the Farm
+        // 4. Validate Parentage
+        Animal? mother = null;
+        if (dto.MotherId.HasValue)
+        {
+            mother = await animalRepository.GetByIdAsync(dto.MotherId.Value, userId);
+            if (mother == null)
+            {
+                throw new ArgumentException(
+                    $"Mother with ID {dto.MotherId.Value} not found or access denied."
+                );
+            }
+        }
+
+        Animal? father = null;
+        if (dto.FatherId.HasValue)
+        {
+            father = await animalRepository.GetByIdAsync(dto.FatherId.Value, userId);
+            if (father == null)
+            {
+                throw new ArgumentException(
+                    $"Father with ID {dto.FatherId.Value} not found or access denied."
+                );
+            }
+        }
+
+        AnimalValidator.ValidateParentage(mother, father, farmId);
+
+        // 5. Ensure CUIA (if provided) is unique within the Farm
         if (!string.IsNullOrEmpty(dto.Cuia))
         {
             var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(dto.Cuia, farmId);
@@ -64,7 +95,7 @@ public class CreateAnimalCommandHandler(
             }
         }
 
-        // 5. Ensure Name is unique within the Farm
+        // 6. Ensure Name is unique within the Farm
         var isNameUnique = await animalRepository.IsNameUniqueInFarmAsync(dto.Name, farmId);
         if (!isNameUnique)
         {
@@ -73,13 +104,17 @@ public class CreateAnimalCommandHandler(
             );
         }
 
-        // 6. Ensure at least one owner is provided. If not, auto-assign Farm Owner.
+        // 7. Validate Owners
         if (dto.Owners.Count == 0)
         {
             var farm =
                 await farmRepository.GetByIdAsync(farmId)
                 ?? throw new ArgumentException($"Farm with ID {farmId} not found.");
             dto.Owners.Add(new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 });
+        }
+        else
+        {
+            AnimalValidator.ValidateOwners(dto.Owners.Select(o => o.SharePercent));
         }
 
         var animal = new Animal
@@ -100,35 +135,21 @@ public class CreateAnimalCommandHandler(
             FatherId = dto.FatherId,
         };
 
-        await animalRepository.AddAsync(animal);
-        await unitOfWork.SaveChangesAsync();
-
         // Add owners
         foreach (var ownerDto in dto.Owners)
         {
-            var animalOwner = new AnimalOwner
-            {
-                AnimalId = animal.Id,
-                OwnerId = ownerDto.OwnerId,
-                SharePercent = ownerDto.SharePercent,
-            };
-            await animalOwnerRepository.AddAsync(animalOwner);
+            animal.AnimalOwners.Add(
+                new AnimalOwner { OwnerId = ownerDto.OwnerId, SharePercent = ownerDto.SharePercent }
+            );
         }
 
+        await animalRepository.AddAsync(animal);
         await unitOfWork.SaveChangesAsync();
 
         // Map to DTO
-        var mother = animal.MotherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
-            : null;
-        var father = animal.FatherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.FatherId.Value)
-            : null;
-
-        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
         var ownerDtos = new List<AnimalOwnerDto>();
 
-        foreach (var owner in owners)
+        foreach (var owner in animal.AnimalOwners)
         {
             var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
             if (ownerEntity != null)
