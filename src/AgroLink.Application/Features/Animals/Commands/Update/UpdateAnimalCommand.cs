@@ -131,26 +131,34 @@ public class UpdateAnimalCommandHandler(
 
         if (dto.MotherId.HasValue && dto.MotherId.Value != animal.MotherId)
         {
-            var motherEntity = await animalRepository.GetByIdAsync(dto.MotherId.Value, request.UserId);
+            var motherEntity = await animalRepository.GetByIdAsync(
+                dto.MotherId.Value,
+                request.UserId
+            );
             if (motherEntity == null)
             {
                 throw new ArgumentException(
                     $"Mother with ID {dto.MotherId.Value} not found or access denied."
                 );
             }
+
             AnimalValidator.ValidateParentage(motherEntity, null, farmId);
             animal.MotherId = dto.MotherId.Value;
         }
 
         if (dto.FatherId.HasValue && dto.FatherId.Value != animal.FatherId)
         {
-            var fatherEntity = await animalRepository.GetByIdAsync(dto.FatherId.Value, request.UserId);
+            var fatherEntity = await animalRepository.GetByIdAsync(
+                dto.FatherId.Value,
+                request.UserId
+            );
             if (fatherEntity == null)
             {
                 throw new ArgumentException(
                     $"Father with ID {dto.FatherId.Value} not found or access denied."
                 );
             }
+
             AnimalValidator.ValidateParentage(null, fatherEntity, farmId);
             animal.FatherId = dto.FatherId.Value;
         }

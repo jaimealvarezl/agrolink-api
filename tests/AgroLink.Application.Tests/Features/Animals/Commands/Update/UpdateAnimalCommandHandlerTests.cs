@@ -13,15 +13,15 @@ namespace AgroLink.Application.Tests.Features.Animals.Commands.Update;
 [TestFixture]
 public class UpdateAnimalCommandHandlerTests
 {
-    private AutoMocker _mocker = null!;
-    private UpdateAnimalCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<UpdateAnimalCommandHandler>();
     }
+
+    private AutoMocker _mocker = null!;
+    private UpdateAnimalCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidUpdateAnimalCommand_ReturnsAnimalDto()
@@ -64,23 +64,33 @@ public class UpdateAnimalCommandHandlerTests
         };
         var owner = new Owner { Id = 1, Name = "Test Owner" };
 
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r =>
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
             )
             .ReturnsAsync(true);
         _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
-        _mocker.GetMock<IOwnerRepository>().Setup(r => r.GetByIdAsync(owner.Id)).ReturnsAsync(owner);
+        _mocker
+            .GetMock<IOwnerRepository>()
+            .Setup(r => r.GetByIdAsync(owner.Id))
+            .ReturnsAsync(owner);
 
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _mocker.GetMock<IAnimalOwnerRepository>()
+        _mocker
+            .GetMock<IAnimalOwnerRepository>()
             .Setup(r => r.RemoveByAnimalIdAsync(animalId))
             .Returns(Task.CompletedTask);
-        _mocker.GetMock<IAnimalOwnerRepository>()
+        _mocker
+            .GetMock<IAnimalOwnerRepository>()
             .Setup(r => r.AddAsync(It.IsAny<AnimalOwner>()))
             .Returns(Task.CompletedTask);
-        _mocker.GetMock<IAnimalOwnerRepository>()
+        _mocker
+            .GetMock<IAnimalOwnerRepository>()
             .Setup(r => r.GetByAnimalIdAsync(animalId))
             .ReturnsAsync(
                 new List<AnimalOwner>
@@ -93,7 +103,8 @@ public class UpdateAnimalCommandHandlerTests
                     },
                 }
             );
-        _mocker.GetMock<IAnimalPhotoRepository>()
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
             .Setup(r => r.GetByAnimalIdAsync(animalId))
             .ReturnsAsync(new List<AnimalPhoto>());
 
@@ -112,7 +123,9 @@ public class UpdateAnimalCommandHandlerTests
 
         _mocker.GetMock<IAnimalRepository>().Verify(r => r.Update(animal), Times.Once);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
-        _mocker.GetMock<IAnimalOwnerRepository>().Verify(r => r.RemoveByAnimalIdAsync(animalId), Times.Once);
+        _mocker
+            .GetMock<IAnimalOwnerRepository>()
+            .Verify(r => r.RemoveByAnimalIdAsync(animalId), Times.Once);
     }
 
     [Test]
@@ -133,9 +146,13 @@ public class UpdateAnimalCommandHandlerTests
             Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
 
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
 
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.IsNameUniqueInFarmAsync("Existing Name", farmId, animalId))
             .ReturnsAsync(false);
 
@@ -155,7 +172,8 @@ public class UpdateAnimalCommandHandlerTests
         var updateAnimalDto = new UpdateAnimalDto { Name = "Updated Name" };
         var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
 
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetByIdAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
@@ -183,8 +201,12 @@ public class UpdateAnimalCommandHandlerTests
             Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
 
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r =>
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
             )
@@ -220,8 +242,12 @@ public class UpdateAnimalCommandHandlerTests
             Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
 
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r =>
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
             )
@@ -257,13 +283,20 @@ public class UpdateAnimalCommandHandlerTests
             Lot = animal.Lot,
         };
 
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
-        _mocker.GetMock<IAnimalRepository>()
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r =>
                 r.IsNameUniqueInFarmAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>())
             )
             .ReturnsAsync(true);
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(2, userId)).ReturnsAsync(mother);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(2, userId))
+            .ReturnsAsync(mother);
 
         // Act & Assert
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
