@@ -304,4 +304,73 @@ public class UpdateAnimalCommandHandlerTests
         );
         ex.Message.ShouldContain("Mother must be Female");
     }
+
+    [Test]
+    public async Task Handle_EmptyNameProvided_ThrowsArgumentException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 5;
+        var updateAnimalDto = new UpdateAnimalDto { Name = "   " };
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            Name = "Old Name",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            Lot = new Lot { Paddock = new Paddock { FarmId = 10 } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("Animal name cannot be empty");
+    }
+
+    [Test]
+    public async Task Handle_KeepSameName_DoesNotRevalidateUniqueness()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 5;
+        const int farmId = 10;
+        var updateAnimalDto = new UpdateAnimalDto { Name = "Same Name" };
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            Name = "Same Name",
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Verify(
+                r =>
+                    r.IsNameUniqueInFarmAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<int>(),
+                        It.IsAny<int?>()
+                    ),
+                Times.Never
+            );
+    }
 }

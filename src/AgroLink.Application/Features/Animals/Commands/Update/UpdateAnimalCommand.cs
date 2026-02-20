@@ -83,7 +83,15 @@ public class UpdateAnimalCommandHandler(
         var oldStatus = animal.LifeStatus;
         var oldName = animal.Name;
 
-        animal.Name = dto.Name ?? animal.Name;
+        if (dto.Name != null)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name))
+            {
+                throw new ArgumentException("Animal name cannot be empty.");
+            }
+            animal.Name = dto.Name;
+        }
+
         animal.TagVisual = dto.TagVisual ?? animal.TagVisual;
         animal.Color = dto.Color ?? animal.Color;
         animal.Breed = dto.Breed ?? animal.Breed;
