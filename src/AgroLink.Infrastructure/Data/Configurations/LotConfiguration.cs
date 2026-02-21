@@ -17,5 +17,6 @@ public class LotConfiguration : IEntityTypeConfiguration<Lot>
             .HasForeignKey(e => e.PaddockId)
             .OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(e => e.Name);
+        builder.HasQueryFilter(e => e.Paddock.Farm.IsActive);
     }
 }

@@ -105,7 +105,8 @@ public class FarmsController(IMediator mediator) : BaseController
     {
         try
         {
-            await mediator.Send(new DeleteFarmCommand(id));
+            var userId = GetCurrentUserId();
+            await mediator.Send(new DeleteFarmCommand(id, userId));
             return NoContent();
         }
         catch (Exception ex)

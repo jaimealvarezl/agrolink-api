@@ -18,5 +18,6 @@ public class PaddockConfiguration : IEntityTypeConfiguration<Paddock>
             .HasForeignKey(e => e.FarmId)
             .OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(e => e.Name);
+        builder.HasQueryFilter(e => e.Farm.IsActive);
     }
 }

@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Farms.Commands.Delete;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -13,50 +15,115 @@ public class DeleteFarmCommandHandlerTests
     public void Setup()
     {
         _farmRepositoryMock = new Mock<IFarmRepository>();
+        _ownerRepositoryMock = new Mock<IOwnerRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new DeleteFarmCommandHandler(_farmRepositoryMock.Object, _unitOfWorkMock.Object);
+        _handler = new DeleteFarmCommandHandler(
+            _farmRepositoryMock.Object,
+            _ownerRepositoryMock.Object,
+            _unitOfWorkMock.Object
+        );
     }
 
     private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private DeleteFarmCommandHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ExistingFarm_DeletesFarm()
+    public async Task Handle_ExistingFarmByOwner_SoftDeletesFarm()
     {
         // Arrange
         var farmId = 1;
-        var command = new DeleteFarmCommand(farmId);
-        var farm = new Farm { Id = farmId };
+        var userId = 10;
+        var ownerId = 20;
+        var command = new DeleteFarmCommand(farmId, userId);
+        var owner = new Owner { Id = ownerId, UserId = userId };
+        var farm = new Farm
+        {
+            Id = farmId,
+            IsActive = true,
+            OwnerId = ownerId,
+        };
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmRepositoryMock.Setup(r => r.Remove(farm));
+        _ownerRepositoryMock
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .ReturnsAsync(owner);
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _farmRepositoryMock.Verify(r => r.GetByIdAsync(farmId), Times.Once);
-        _farmRepositoryMock.Verify(r => r.Remove(farm), Times.Once);
+        farm.IsActive.ShouldBeFalse();
+        farm.DeletedAt.ShouldNotBeNull();
+        _farmRepositoryMock.Verify(r => r.Update(farm), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
-    public async Task Handle_NonExistingFarm_ThrowsArgumentException()
+    public async Task Handle_NotOwner_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        var farmId = 1;
+        var userId = 10;
+        var otherOwnerId = 30;
+        var command = new DeleteFarmCommand(farmId, userId);
+        var owner = new Owner { Id = 20, UserId = userId };
+        var farm = new Farm
+        {
+            Id = farmId,
+            IsActive = true,
+            OwnerId = otherOwnerId,
+        };
+
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _ownerRepositoryMock
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .ReturnsAsync(owner);
+
+        // Act & Assert
+        await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_NonExistingFarm_ReturnsSuccessfullyForIdempotency()
     {
         // Arrange
         var farmId = 999;
-        var command = new DeleteFarmCommand(farmId);
+        var userId = 10;
+        var command = new DeleteFarmCommand(farmId, userId);
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync((Farm?)null);
 
-        // Act & Assert
-        var exception = await Should.ThrowAsync<ArgumentException>(() =>
-            _handler.Handle(command, CancellationToken.None)
-        );
-        exception.Message.ShouldBe("Farm not found");
-        _farmRepositoryMock.Verify(r => r.Remove(It.IsAny<Farm>()), Times.Never);
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_AlreadyDeletedFarm_ReturnsSuccessfullyForIdempotency()
+    {
+        // Arrange
+        var farmId = 1;
+        var userId = 10;
+        var command = new DeleteFarmCommand(farmId, userId);
+        var farm = new Farm { Id = farmId, IsActive = false };
+
+        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }
