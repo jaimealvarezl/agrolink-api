@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Farms.DTOs;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
@@ -37,9 +36,7 @@ public class UpdateFarmCommandHandler(
             )
         )
         {
-            throw new ForbiddenAccessException(
-                "Only owners or admins can update the farm details."
-            );
+            throw new ArgumentException("Farm not found");
         }
 
         farm.Name = request.Name;

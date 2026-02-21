@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -28,7 +27,8 @@ public class DeleteFarmCommandHandler(
 
         if (membership == null || membership.Role != FarmMemberRoles.Owner)
         {
-            throw new ForbiddenAccessException("Only the owner can delete the farm.");
+            // Mimic behavior of non-existent farm to prevent information leakage
+            return;
         }
 
         farm.IsActive = false;

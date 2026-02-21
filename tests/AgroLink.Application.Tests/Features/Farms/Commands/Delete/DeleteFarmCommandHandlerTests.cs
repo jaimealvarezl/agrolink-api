@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Farms.Commands.Delete;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
@@ -62,7 +61,7 @@ public class DeleteFarmCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_NotOwner_ThrowsForbiddenAccessException()
+    public async Task Handle_NotOwner_ReturnsSuccessfullyToPreventInformationLeakage()
     {
         // Arrange
         var farmId = 1;
@@ -81,10 +80,10 @@ public class DeleteFarmCommandHandlerTests
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
 
-        // Act & Assert
-        await Should.ThrowAsync<ForbiddenAccessException>(() =>
-            _handler.Handle(command, CancellationToken.None)
-        );
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
         _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }

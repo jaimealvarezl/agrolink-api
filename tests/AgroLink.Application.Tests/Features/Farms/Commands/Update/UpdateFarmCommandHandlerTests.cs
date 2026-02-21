@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Farms.Commands.Update;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
@@ -106,7 +105,7 @@ public class UpdateFarmCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_ForbiddenRole_ThrowsForbiddenAccessException()
+    public async Task Handle_ForbiddenRole_ThrowsArgumentException()
     {
         // Arrange
         var farmId = 1;
@@ -127,13 +126,13 @@ public class UpdateFarmCommandHandlerTests
             .ReturnsAsync(membership);
 
         // Act & Assert
-        await Should.ThrowAsync<ForbiddenAccessException>(async () =>
+        await Should.ThrowAsync<ArgumentException>(async () =>
             await _handler.Handle(command, CancellationToken.None)
         );
     }
 
     [Test]
-    public async Task Handle_NotMember_ThrowsForbiddenAccessException()
+    public async Task Handle_NotMember_ThrowsArgumentException()
     {
         // Arrange
         var farmId = 1;
@@ -148,7 +147,7 @@ public class UpdateFarmCommandHandlerTests
             .ReturnsAsync((FarmMember?)null);
 
         // Act & Assert
-        await Should.ThrowAsync<ForbiddenAccessException>(async () =>
+        await Should.ThrowAsync<ArgumentException>(async () =>
             await _handler.Handle(command, CancellationToken.None)
         );
     }
