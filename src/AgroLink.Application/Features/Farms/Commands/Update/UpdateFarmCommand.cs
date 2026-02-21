@@ -6,7 +6,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Update;
 
-public record UpdateFarmCommand(int Id, string? Name, string? Location, string? CUE)
+public record UpdateFarmCommand(int Id, string Name, string? Location, string? CUE)
     : IRequest<FarmDto>;
 
 public class UpdateFarmCommandHandler(
@@ -42,26 +42,7 @@ public class UpdateFarmCommandHandler(
             throw new ForbiddenAccessException("Only the owner can update the farm details.");
         }
 
-        // 3. Validation logic
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            throw new ArgumentException("Name is required.");
-        }
-
-        if (request.Name.Length > 100)
-        {
-            throw new ArgumentException("Name cannot exceed 100 characters.");
-        }
-
-        if (!string.IsNullOrEmpty(request.CUE))
-        {
-            if (!request.CUE.All(char.IsLetterOrDigit))
-            {
-                throw new ArgumentException("CUE must be alphanumeric.");
-            }
-        }
-
-        // 4. Update fields
+        // 3. Update fields (Format validation handled by API layer/Annotations)
         farm.Name = request.Name;
         farm.Location = request.Location;
         farm.CUE = request.CUE;
