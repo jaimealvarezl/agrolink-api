@@ -44,8 +44,17 @@ public class UpdateFarmCommandHandler(
 
         // 3. Update fields (Format validation handled by API layer/Annotations)
         farm.Name = request.Name;
-        farm.Location = request.Location;
-        farm.CUE = request.CUE;
+
+        if (request.Location != null)
+        {
+            farm.Location = request.Location;
+        }
+
+        if (request.CUE != null)
+        {
+            farm.CUE = request.CUE;
+        }
+
         farm.UpdatedAt = DateTime.UtcNow;
 
         farmRepository.Update(farm);
