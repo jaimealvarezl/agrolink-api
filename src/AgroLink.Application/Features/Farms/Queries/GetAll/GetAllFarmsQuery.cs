@@ -4,26 +4,36 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Queries.GetAll;
 
-public record GetAllFarmsQuery : IRequest<IEnumerable<FarmDto>>;
+public record GetAllFarmsQuery(int UserId) : IRequest<IEnumerable<FarmDto>>;
 
-public class GetAllFarmsQueryHandler(IFarmRepository farmRepository)
-    : IRequestHandler<GetAllFarmsQuery, IEnumerable<FarmDto>>
+public class GetAllFarmsQueryHandler(
+    IFarmRepository farmRepository,
+    IFarmMemberRepository farmMemberRepository
+) : IRequestHandler<GetAllFarmsQuery, IEnumerable<FarmDto>>
 {
     public async Task<IEnumerable<FarmDto>> Handle(
         GetAllFarmsQuery request,
         CancellationToken cancellationToken
     )
     {
-        var farms = await farmRepository.GetAllAsync();
-        return farms.Select(f => new FarmDto
+        var memberships = await farmMemberRepository.FindAsync(m => m.UserId == request.UserId);
+        var farmIds = memberships.Select(m => m.FarmId).ToList();
+
+        var farms = await farmRepository.FindAsync(f => farmIds.Contains(f.Id));
+
+        return farms.Select(f =>
         {
-            Id = f.Id,
-            Name = f.Name,
-            Location = f.Location,
-            CUE = f.CUE,
-            OwnerId = f.OwnerId,
-            Role = string.Empty,
-            CreatedAt = f.CreatedAt,
+            var role = memberships.FirstOrDefault(m => m.FarmId == f.Id)?.Role ?? string.Empty;
+            return new FarmDto
+            {
+                Id = f.Id,
+                Name = f.Name,
+                Location = f.Location,
+                CUE = f.CUE,
+                OwnerId = f.OwnerId,
+                Role = role,
+                CreatedAt = f.CreatedAt,
+            };
         });
     }
 }
