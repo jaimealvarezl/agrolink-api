@@ -46,7 +46,6 @@ public class UploadAnimalPhotoCommandHandler(
             request.Size
         );
 
-        // 1. Validate File Extension and Content Type
         var extension = Path.GetExtension(request.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(extension))
         {
@@ -64,7 +63,6 @@ public class UploadAnimalPhotoCommandHandler(
             );
         }
 
-        // 2. Validate File Signature (Magic Numbers)
         if (request.FileStream.CanSeek)
         {
             if (request.Size < 12)
@@ -81,11 +79,9 @@ public class UploadAnimalPhotoCommandHandler(
             }
 
             await request.FileStream.ReadExactlyAsync(buffer, 0, 12, cancellationToken);
-            request.FileStream.Position = 0; // Reset for subsequent operations
+            request.FileStream.Position = 0;
 
-            // JPEG: FF D8 FF
             var isJpeg = buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF;
-            // PNG: 89 50 4E 47 0D 0A 1A 0A
             var isPng =
                 buffer[0] == 0x89
                 && buffer[1] == 0x50
@@ -95,7 +91,6 @@ public class UploadAnimalPhotoCommandHandler(
                 && buffer[5] == 0x0A
                 && buffer[6] == 0x1A
                 && buffer[7] == 0x0A;
-            // WebP: RIFF ... WEBP
             var isWebp =
                 buffer[0] == 0x52
                 && buffer[1] == 0x49

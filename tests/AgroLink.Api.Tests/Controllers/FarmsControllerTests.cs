@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using AgroLink.Api.Controllers;
 using AgroLink.Api.DTOs.Farms;
@@ -125,7 +126,10 @@ public class FarmsControllerTests
         };
 
         // Mock Controller Context with User Claims
-        var claims = new List<Claim> { new("userid", userId.ToString()) };
+        var claims = new List<Claim>
+        {
+            new("userid", userId.ToString(CultureInfo.InvariantCulture)),
+        };
         var identity = new ClaimsIdentity(claims, "TestAuthType");
         var claimsPrincipal = new ClaimsPrincipal(identity);
         _controller.ControllerContext = new ControllerContext
@@ -179,6 +183,20 @@ public class FarmsControllerTests
     public async Task Delete_ShouldReturnNoContent()
     {
         // Arrange
+        var userId = 1;
+
+        // Mock Controller Context with User Claims
+        var claims = new List<Claim>
+        {
+            new("userid", userId.ToString(CultureInfo.InvariantCulture)),
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal },
+        };
+
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<DeleteFarmCommand>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

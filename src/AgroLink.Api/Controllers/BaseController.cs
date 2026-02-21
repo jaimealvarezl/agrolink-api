@@ -1,6 +1,8 @@
 using AgroLink.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace AgroLink.Api.Controllers;
 
@@ -32,8 +34,8 @@ public abstract class BaseController : ControllerBase
 
     private ActionResult HandleUnexpectedException(Exception ex)
     {
-        var logger = HttpContext.RequestServices.GetRequiredService<ILogger<BaseController>>();
-        logger.LogError(
+        var logger = HttpContext?.RequestServices?.GetService<ILogger<BaseController>>();
+        logger?.LogError(
             ex,
             "An unexpected error occurred in {Controller}: {Message}",
             GetType().Name,
