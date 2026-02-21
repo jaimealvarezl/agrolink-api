@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Claims;
 using AgroLink.Api.Controllers;
 using AgroLink.Api.DTOs.Farms;
@@ -25,6 +24,15 @@ public class FarmsControllerTests
     {
         _mediatorMock = new Mock<IMediator>();
         _controller = new FarmsController(_mediatorMock.Object);
+
+        // Mock Controller Context with User Claims by default
+        var claims = new List<Claim> { new("userid", "1") };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal },
+        };
     }
 
     private Mock<IMediator> _mediatorMock = null!;
@@ -125,18 +133,6 @@ public class FarmsControllerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        // Mock Controller Context with User Claims
-        var claims = new List<Claim>
-        {
-            new("userid", userId.ToString(CultureInfo.InvariantCulture)),
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal },
-        };
-
         _mediatorMock
             .Setup(x =>
                 x.Send(
@@ -183,20 +179,6 @@ public class FarmsControllerTests
     public async Task Delete_ShouldReturnNoContent()
     {
         // Arrange
-        var userId = 1;
-
-        // Mock Controller Context with User Claims
-        var claims = new List<Claim>
-        {
-            new("userid", userId.ToString(CultureInfo.InvariantCulture)),
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal },
-        };
-
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<DeleteFarmCommand>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

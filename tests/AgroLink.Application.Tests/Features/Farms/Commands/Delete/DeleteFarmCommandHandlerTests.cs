@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Farms.Commands.Delete;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -15,17 +16,17 @@ public class DeleteFarmCommandHandlerTests
     public void Setup()
     {
         _farmRepositoryMock = new Mock<IFarmRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
+        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new DeleteFarmCommandHandler(
             _farmRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
+            _farmMemberRepositoryMock.Object,
             _unitOfWorkMock.Object
         );
     }
 
     private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private DeleteFarmCommandHandler _handler = null!;
 
@@ -35,20 +36,19 @@ public class DeleteFarmCommandHandlerTests
         // Arrange
         var farmId = 1;
         var userId = 10;
-        var ownerId = 20;
         var command = new DeleteFarmCommand(farmId, userId);
-        var owner = new Owner { Id = ownerId, UserId = userId };
-        var farm = new Farm
+        var farm = new Farm { Id = farmId, IsActive = true };
+        var membership = new FarmMember
         {
-            Id = farmId,
-            IsActive = true,
-            OwnerId = ownerId,
+            FarmId = farmId,
+            UserId = userId,
+            Role = FarmMemberRoles.Owner,
         };
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _ownerRepositoryMock
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
-            .ReturnsAsync(owner);
+        _farmMemberRepositoryMock
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(membership);
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
@@ -67,20 +67,19 @@ public class DeleteFarmCommandHandlerTests
         // Arrange
         var farmId = 1;
         var userId = 10;
-        var otherOwnerId = 30;
         var command = new DeleteFarmCommand(farmId, userId);
-        var owner = new Owner { Id = 20, UserId = userId };
-        var farm = new Farm
+        var farm = new Farm { Id = farmId, IsActive = true };
+        var membership = new FarmMember
         {
-            Id = farmId,
-            IsActive = true,
-            OwnerId = otherOwnerId,
+            FarmId = farmId,
+            UserId = userId,
+            Role = FarmMemberRoles.Admin,
         };
 
         _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _ownerRepositoryMock
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
-            .ReturnsAsync(owner);
+        _farmMemberRepositoryMock
+            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
+            .ReturnsAsync(membership);
 
         // Act & Assert
         await Should.ThrowAsync<ForbiddenAccessException>(() =>
