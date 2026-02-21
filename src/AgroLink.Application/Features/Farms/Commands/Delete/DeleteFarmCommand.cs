@@ -1,22 +1,37 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Delete;
 
-public record DeleteFarmCommand(int Id) : IRequest;
+public record DeleteFarmCommand(int Id, int UserId) : IRequest;
 
-public class DeleteFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
-    : IRequestHandler<DeleteFarmCommand>
+public class DeleteFarmCommandHandler(
+    IFarmRepository farmRepository,
+    IOwnerRepository ownerRepository,
+    IUnitOfWork unitOfWork
+) : IRequestHandler<DeleteFarmCommand>
 {
     public async Task Handle(DeleteFarmCommand request, CancellationToken cancellationToken)
     {
         var farm = await farmRepository.GetByIdAsync(request.Id);
-        if (farm == null)
+        if (farm is not { IsActive: true })
         {
-            throw new ArgumentException("Farm not found");
+            // Idempotency: If already deleted or not found, return success.
+            return;
         }
 
-        farmRepository.Remove(farm);
+        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == request.UserId);
+        if (owner == null || farm.OwnerId != owner.Id)
+        {
+            throw new ForbiddenAccessException("Only the owner can delete the farm.");
+        }
+
+        farm.IsActive = false;
+        farm.DeletedAt = DateTime.UtcNow;
+        farm.UpdatedAt = DateTime.UtcNow;
+
+        farmRepository.Update(farm);
         await unitOfWork.SaveChangesAsync();
     }
 }

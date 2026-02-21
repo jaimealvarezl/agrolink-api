@@ -36,7 +36,6 @@ public class UpdateAnimalCommandHandler(
         var farmId = animal.Lot.Paddock.FarmId;
         var dto = request.Dto;
 
-        // If lot is changing, validate the new lot belongs to the same farm or user has access to it
         if (dto.LotId.HasValue && dto.LotId.Value != animal.LotId)
         {
             var newLot = await lotRepository.GetLotWithPaddockAsync(dto.LotId.Value);
@@ -47,7 +46,6 @@ public class UpdateAnimalCommandHandler(
 
             if (newLot.Paddock.FarmId != farmId)
             {
-                // Verify access to the new farm if it's different
                 var isMemberNewFarm = await farmMemberRepository.ExistsAsync(fm =>
                     fm.FarmId == newLot.Paddock.FarmId && fm.UserId == request.UserId
                 );
@@ -58,13 +56,12 @@ public class UpdateAnimalCommandHandler(
                     );
                 }
 
-                farmId = newLot.Paddock.FarmId; // Update farmId context for subsequent validations
+                farmId = newLot.Paddock.FarmId;
             }
 
             animal.LotId = dto.LotId.Value;
         }
 
-        // Validate CUIA uniqueness if changing
         if (!string.IsNullOrEmpty(dto.Cuia) && dto.Cuia != animal.Cuia)
         {
             var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(
@@ -103,7 +100,6 @@ public class UpdateAnimalCommandHandler(
         animal.HealthStatus = dto.HealthStatus ?? animal.HealthStatus;
         animal.ReproductiveStatus = dto.ReproductiveStatus ?? animal.ReproductiveStatus;
 
-        // Validate Name uniqueness if name changed OR if animal became active/missing
         var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
         var nameChanged = dto.Name != null && dto.Name != oldName;
         var becameActive =
@@ -124,7 +120,6 @@ public class UpdateAnimalCommandHandler(
             }
         }
 
-        // Validate consistency of the final state
         AnimalValidator.ValidateStatusConsistency(
             animal.Sex,
             animal.ProductionStatus,
@@ -176,7 +171,6 @@ public class UpdateAnimalCommandHandler(
 
         animalRepository.Update(animal);
 
-        // Update owners if provided
         if (dto.Owners != null)
         {
             if (dto.Owners.Count == 0)
@@ -202,7 +196,6 @@ public class UpdateAnimalCommandHandler(
 
         await unitOfWork.SaveChangesAsync();
 
-        // Refresh data for the response
         var lot = await lotRepository.GetByIdAsync(animal.LotId);
         var mother = animal.MotherId.HasValue
             ? await animalRepository.GetByIdAsync(animal.MotherId.Value)

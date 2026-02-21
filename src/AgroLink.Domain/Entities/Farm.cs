@@ -21,6 +21,8 @@ public class Farm
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public virtual ICollection<Paddock> Paddocks { get; set; } = new List<Paddock>();

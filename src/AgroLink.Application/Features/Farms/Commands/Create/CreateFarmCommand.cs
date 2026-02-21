@@ -24,14 +24,12 @@ public class CreateFarmCommandHandler(
     {
         var userId = request.UserId;
 
-        // 1. Get User details
         var user = await userRepository.GetByIdAsync(userId);
         if (user == null)
         {
             throw new UnauthorizedAccessException($"User with ID {userId} from token not found.");
         }
 
-        // 2. Find or Create Owner record (Legal Entity)
         var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
 
         if (owner == null)
@@ -45,7 +43,6 @@ public class CreateFarmCommandHandler(
             await ownerRepository.AddAsync(owner);
         }
 
-        // 3. Create Farm
         var farm = new Farm
         {
             Name = request.Name,
@@ -56,7 +53,6 @@ public class CreateFarmCommandHandler(
 
         await farmRepository.AddAsync(farm);
 
-        // 4. Create FarmMember
         var member = new FarmMember
         {
             Farm = farm,

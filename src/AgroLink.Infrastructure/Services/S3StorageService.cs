@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.Cryptography;
 using AgroLink.Application.Interfaces;
 using Amazon.S3;
@@ -70,7 +71,10 @@ public class S3StorageService(
             putRequest.Headers.ContentLength = contentLength;
 
             // Add metadata if useful
-            putRequest.Metadata.Add("x-amz-meta-original-size", contentLength.ToString());
+            putRequest.Metadata.Add(
+                "x-amz-meta-original-size",
+                contentLength.ToString(CultureInfo.InvariantCulture)
+            );
 
             await s3Client.PutObjectAsync(putRequest);
 

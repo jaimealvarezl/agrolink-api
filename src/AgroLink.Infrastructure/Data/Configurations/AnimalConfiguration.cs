@@ -46,6 +46,8 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
         builder.HasIndex(e => e.Breed);
         builder.HasIndex(e => e.Color);
 
-        builder.HasQueryFilter(e => e.LifeStatus != LifeStatus.Deleted);
+        builder.HasQueryFilter(e =>
+            e.LifeStatus != LifeStatus.Deleted && e.Lot.Paddock.Farm.IsActive
+        );
     }
 }

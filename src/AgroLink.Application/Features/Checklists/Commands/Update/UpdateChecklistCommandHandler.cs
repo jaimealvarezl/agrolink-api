@@ -7,7 +7,7 @@ namespace AgroLink.Application.Features.Checklists.Commands.Update;
 
 public class UpdateChecklistCommandHandler(
     IChecklistRepository checklistRepository,
-    IRepository<ChecklistItem> checklistItemRepository, // Using generic repository for ChecklistItem
+    IRepository<ChecklistItem> checklistItemRepository,
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
@@ -35,7 +35,6 @@ public class UpdateChecklistCommandHandler(
 
         checklistRepository.Update(checklist);
 
-        // Update checklist items: remove existing, add new
         var existingItems = await checklistItemRepository.FindAsync(ci =>
             ci.ChecklistId == request.Id
         );
@@ -54,7 +53,7 @@ public class UpdateChecklistCommandHandler(
             await checklistItemRepository.AddAsync(item);
         }
 
-        await unitOfWork.SaveChangesAsync(); // Save all changes
+        await unitOfWork.SaveChangesAsync();
         return await MapToDtoAsync(checklist);
     }
 

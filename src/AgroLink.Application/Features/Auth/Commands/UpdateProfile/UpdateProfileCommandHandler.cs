@@ -25,12 +25,10 @@ public class UpdateProfileCommandHandler(
             throw new UnauthorizedAccessException($"User with ID {userId} not found.");
         }
 
-        // 1. Update User Name
         user.Name = request.Request.Name;
         user.UpdatedAt = DateTime.UtcNow;
         userRepository.Update(user);
 
-        // 2. Sync with Owner record (if exists)
         var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
         if (owner != null)
         {
