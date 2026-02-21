@@ -1,4 +1,4 @@
-using AgroLink.Application.Common.Exceptions;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -8,7 +8,7 @@ public record DeleteFarmCommand(int Id, int UserId) : IRequest;
 
 public class DeleteFarmCommandHandler(
     IFarmRepository farmRepository,
-    IOwnerRepository ownerRepository,
+    IFarmMemberRepository farmMemberRepository,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<DeleteFarmCommand>
 {
@@ -21,10 +21,14 @@ public class DeleteFarmCommandHandler(
             return;
         }
 
-        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == request.UserId);
-        if (owner == null || farm.OwnerId != owner.Id)
+        var membership = await farmMemberRepository.FirstOrDefaultAsync(m =>
+            m.FarmId == request.Id && m.UserId == request.UserId
+        );
+
+        if (membership == null || membership.Role != FarmMemberRoles.Owner)
         {
-            throw new ForbiddenAccessException("Only the owner can delete the farm.");
+            // Mimic behavior of non-existent farm to prevent information leakage
+            return;
         }
 
         farm.IsActive = false;

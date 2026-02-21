@@ -19,7 +19,8 @@ public class FarmsController(IMediator mediator) : BaseController
     {
         try
         {
-            var farms = await mediator.Send(new GetAllFarmsQuery());
+            var userId = GetCurrentUserId();
+            var farms = await mediator.Send(new GetAllFarmsQuery(userId));
             return Ok(farms);
         }
         catch (Exception ex)
@@ -33,7 +34,8 @@ public class FarmsController(IMediator mediator) : BaseController
     {
         try
         {
-            var farm = await mediator.Send(new GetFarmByIdQuery(id));
+            var userId = GetCurrentUserId();
+            var farm = await mediator.Send(new GetFarmByIdQuery(id, userId));
             if (farm == null)
             {
                 return NotFound();
@@ -89,8 +91,9 @@ public class FarmsController(IMediator mediator) : BaseController
     {
         try
         {
+            var userId = GetCurrentUserId();
             var farm = await mediator.Send(
-                new UpdateFarmCommand(id, request.Name, request.Location, request.CUE)
+                new UpdateFarmCommand(id, request.Name, request.Location, request.CUE, userId)
             );
             return Ok(farm);
         }

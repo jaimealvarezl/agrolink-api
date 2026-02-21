@@ -1,18 +1,16 @@
-using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Farms.DTOs;
-using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Commands.Update;
 
-public record UpdateFarmCommand(int Id, string Name, string? Location, string? CUE)
+public record UpdateFarmCommand(int Id, string Name, string? Location, string? CUE, int UserId)
     : IRequest<FarmDto>;
 
 public class UpdateFarmCommandHandler(
     IFarmRepository farmRepository,
-    IOwnerRepository ownerRepository,
-    ICurrentUserService currentUserService,
+    IFarmMemberRepository farmMemberRepository,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateFarmCommand, FarmDto>
 {
@@ -21,23 +19,24 @@ public class UpdateFarmCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var userId = currentUserService.GetRequiredUserId();
-        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
-
-        if (owner == null)
-        {
-            throw new ForbiddenAccessException("User is not registered as an Owner.");
-        }
-
         var farm = await farmRepository.GetByIdAsync(request.Id);
         if (farm == null)
         {
             throw new ArgumentException("Farm not found");
         }
 
-        if (farm.OwnerId != owner.Id)
+        var membership = await farmMemberRepository.FirstOrDefaultAsync(m =>
+            m.FarmId == request.Id && m.UserId == request.UserId
+        );
+
+        if (
+            membership == null
+            || (
+                membership.Role != FarmMemberRoles.Owner && membership.Role != FarmMemberRoles.Admin
+            )
+        )
         {
-            throw new ForbiddenAccessException("Only the owner can update the farm details.");
+            throw new ArgumentException("Farm not found");
         }
 
         farm.Name = request.Name;
@@ -64,7 +63,7 @@ public class UpdateFarmCommandHandler(
             Location = farm.Location,
             CUE = farm.CUE,
             OwnerId = farm.OwnerId,
-            Role = "Owner",
+            Role = membership.Role,
             CreatedAt = farm.CreatedAt,
         };
     }

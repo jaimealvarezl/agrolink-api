@@ -4,10 +4,12 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Farms.Queries.GetById;
 
-public record GetFarmByIdQuery(int Id) : IRequest<FarmDto?>;
+public record GetFarmByIdQuery(int Id, int UserId) : IRequest<FarmDto?>;
 
-public class GetFarmByIdQueryHandler(IFarmRepository farmRepository)
-    : IRequestHandler<GetFarmByIdQuery, FarmDto?>
+public class GetFarmByIdQueryHandler(
+    IFarmRepository farmRepository,
+    IFarmMemberRepository farmMemberRepository
+) : IRequestHandler<GetFarmByIdQuery, FarmDto?>
 {
     public async Task<FarmDto?> Handle(
         GetFarmByIdQuery request,
@@ -20,6 +22,15 @@ public class GetFarmByIdQueryHandler(IFarmRepository farmRepository)
             return null;
         }
 
+        var membership = await farmMemberRepository.FirstOrDefaultAsync(m =>
+            m.FarmId == request.Id && m.UserId == request.UserId
+        );
+
+        if (membership == null)
+        {
+            return null;
+        }
+
         return new FarmDto
         {
             Id = farm.Id,
@@ -27,7 +38,7 @@ public class GetFarmByIdQueryHandler(IFarmRepository farmRepository)
             Location = farm.Location,
             CUE = farm.CUE,
             OwnerId = farm.OwnerId,
-            Role = string.Empty,
+            Role = membership.Role,
             CreatedAt = farm.CreatedAt,
         };
     }
