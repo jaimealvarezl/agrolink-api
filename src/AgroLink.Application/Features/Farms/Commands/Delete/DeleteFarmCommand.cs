@@ -1,5 +1,4 @@
 using AgroLink.Application.Common.Exceptions;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
