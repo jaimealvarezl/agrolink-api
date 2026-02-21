@@ -14,7 +14,6 @@ public class DeleteFarmCommandHandler(
 {
     public async Task Handle(DeleteFarmCommand request, CancellationToken cancellationToken)
     {
-        // 1. Get Farm
         var farm = await farmRepository.GetByIdAsync(request.Id);
         if (farm is not { IsActive: true })
         {
@@ -22,14 +21,12 @@ public class DeleteFarmCommandHandler(
             return;
         }
 
-        // 2. Verify Ownership
         var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == request.UserId);
         if (owner == null || farm.OwnerId != owner.Id)
         {
             throw new ForbiddenAccessException("Only the owner can delete the farm.");
         }
 
-        // 3. Soft Delete
         farm.IsActive = false;
         farm.DeletedAt = DateTime.UtcNow;
         farm.UpdatedAt = DateTime.UtcNow;

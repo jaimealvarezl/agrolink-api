@@ -21,7 +21,6 @@ public class UpdateFarmCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        // 1. Get Current User and Owner record
         var userId = currentUserService.GetRequiredUserId();
         var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
 
@@ -30,7 +29,6 @@ public class UpdateFarmCommandHandler(
             throw new ForbiddenAccessException("User is not registered as an Owner.");
         }
 
-        // 2. Get Farm and verify ownership
         var farm = await farmRepository.GetByIdAsync(request.Id);
         if (farm == null)
         {
@@ -42,7 +40,6 @@ public class UpdateFarmCommandHandler(
             throw new ForbiddenAccessException("Only the owner can update the farm details.");
         }
 
-        // 3. Update fields (Format validation handled by API layer/Annotations)
         farm.Name = request.Name;
 
         if (request.Location != null)
