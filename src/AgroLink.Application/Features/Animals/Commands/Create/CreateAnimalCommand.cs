@@ -27,7 +27,6 @@ public class CreateAnimalCommandHandler(
     {
         var dto = request.Dto;
 
-        // 1. Ensure Lot exists and get FarmId
         var lot = await lotRepository.GetLotWithPaddockAsync(dto.LotId);
         if (lot == null)
         {
@@ -36,7 +35,6 @@ public class CreateAnimalCommandHandler(
 
         var farmId = lot.Paddock.FarmId;
 
-        // 2. Ensure user has permissions on the Farm
         var userId = currentUserService.GetRequiredUserId();
         var isMember = await farmMemberRepository.ExistsAsync(fm =>
             fm.FarmId == farmId && fm.UserId == userId
@@ -46,7 +44,6 @@ public class CreateAnimalCommandHandler(
             throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
 
-        // 3. Validate Basic Rules
         if (dto.BirthDate > DateTime.UtcNow)
         {
             throw new ArgumentException("Birth date cannot be in the future.");
@@ -58,7 +55,6 @@ public class CreateAnimalCommandHandler(
             dto.ReproductiveStatus
         );
 
-        // 4. Validate Parentage
         Animal? mother = null;
         if (dto.MotherId.HasValue)
         {
@@ -85,7 +81,6 @@ public class CreateAnimalCommandHandler(
 
         AnimalValidator.ValidateParentage(mother, father, farmId);
 
-        // 5. Ensure CUIA (if provided) is unique within the Farm
         if (!string.IsNullOrEmpty(dto.Cuia))
         {
             var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(dto.Cuia, farmId);
@@ -95,7 +90,6 @@ public class CreateAnimalCommandHandler(
             }
         }
 
-        // 6. Ensure Name is unique within the Farm
         var isNameUnique = await animalRepository.IsNameUniqueInFarmAsync(dto.Name, farmId);
         if (!isNameUnique)
         {
@@ -104,7 +98,6 @@ public class CreateAnimalCommandHandler(
             );
         }
 
-        // 7. Validate Owners
         if (dto.Owners.Count == 0)
         {
             var farm =
@@ -135,7 +128,6 @@ public class CreateAnimalCommandHandler(
             FatherId = dto.FatherId,
         };
 
-        // Add owners
         foreach (var ownerDto in dto.Owners)
         {
             animal.AnimalOwners.Add(
@@ -146,7 +138,6 @@ public class CreateAnimalCommandHandler(
         await animalRepository.AddAsync(animal);
         await unitOfWork.SaveChangesAsync();
 
-        // Map to DTO
         var ownerDtos = new List<AnimalOwnerDto>();
 
         foreach (var owner in animal.AnimalOwners)
