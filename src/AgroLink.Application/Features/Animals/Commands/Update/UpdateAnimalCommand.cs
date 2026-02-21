@@ -89,6 +89,7 @@ public class UpdateAnimalCommandHandler(
             {
                 throw new ArgumentException("Animal name cannot be empty.");
             }
+
             animal.Name = dto.Name;
         }
 
