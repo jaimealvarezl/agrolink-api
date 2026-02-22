@@ -8,7 +8,8 @@ public record GetFarmHierarchyQuery(int Id, int UserId) : IRequest<FarmHierarchy
 
 public class GetFarmHierarchyQueryHandler(
     IFarmRepository farmRepository,
-    IFarmMemberRepository farmMemberRepository
+    IFarmMemberRepository farmMemberRepository,
+    IOwnerRepository ownerRepository
 ) : IRequestHandler<GetFarmHierarchyQuery, FarmHierarchyDto?>
 {
     public async Task<FarmHierarchyDto?> Handle(
@@ -16,11 +17,23 @@ public class GetFarmHierarchyQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
+        var hasAccess = await farmMemberRepository.ExistsAsync(fm =>
             fm.FarmId == request.Id && fm.UserId == request.UserId
         );
 
-        if (!isMember)
+        if (!hasAccess)
+        {
+            // Fallback check: is user the owner of this farm?
+            var farmRecord = await farmRepository.GetByIdAsync(request.Id);
+            if (farmRecord != null)
+            {
+                hasAccess = await ownerRepository.ExistsAsync(o =>
+                    o.Id == farmRecord.OwnerId && o.UserId == request.UserId
+                );
+            }
+        }
+
+        if (!hasAccess)
         {
             return null;
         }
