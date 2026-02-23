@@ -2,11 +2,14 @@ using System.Text;
 using System.Text.Json.Serialization;
 using AgroLink.Api;
 using AgroLink.Api.Middleware;
+using AgroLink.Api.Security;
 using AgroLink.Api.Services;
 using AgroLink.Application;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +37,10 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Caching & Security
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IAuthorizationHandler, FarmRoleHandler>();
+
 // JWT Authentication
 var jwtKey =
     builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
@@ -56,7 +63,29 @@ builder
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Hierarchical Policies
+    options.AddPolicy(
+        "FarmOwnerOnly",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Owner))
+    );
+
+    options.AddPolicy(
+        "FarmAdminAccess",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Admin))
+    );
+
+    options.AddPolicy(
+        "FarmEditorAccess",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Editor))
+    );
+
+    options.AddPolicy(
+        "FarmViewerAccess",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Viewer))
+    );
+});
 
 // CORS
 builder.Services.AddCors(options =>

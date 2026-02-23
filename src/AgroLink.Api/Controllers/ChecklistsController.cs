@@ -2,26 +2,22 @@ using AgroLink.Application.Features.Checklists.Commands.Create;
 using AgroLink.Application.Features.Checklists.Commands.Delete;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
-using AgroLink.Application.Features.Checklists.Queries.GetAll;
 using AgroLink.Application.Features.Checklists.Queries.GetById;
 using AgroLink.Application.Features.Checklists.Queries.GetByScope;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/farms/{farmId}/checklists")]
+[Authorize(Policy = "FarmViewerAccess")]
 public class ChecklistsController(IMediator mediator) : BaseController
 {
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetAll()
-    {
-        var checklists = await mediator.Send(new GetAllChecklistsQuery());
-        return Ok(checklists);
-    }
+    // Removed generic GetAll as it's not useful in farm context without filtering
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ChecklistDto>> GetById(int id)
+    public async Task<ActionResult<ChecklistDto>> GetById(int farmId, int id)
     {
         var checklist = await mediator.Send(new GetChecklistByIdQuery(id));
         if (checklist == null)
@@ -34,6 +30,7 @@ public class ChecklistsController(IMediator mediator) : BaseController
 
     [HttpGet("scope/{scopeType}/{scopeId}")]
     public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetByScope(
+        int farmId,
         string scopeType,
         int scopeId
     )
@@ -43,13 +40,21 @@ public class ChecklistsController(IMediator mediator) : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<ChecklistDto>> Create(CreateChecklistDto dto)
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<ChecklistDto>> Create(
+        int farmId,
+        [FromBody] CreateChecklistDto dto
+    )
     {
         try
         {
             var userId = GetCurrentUserId();
             var checklist = await mediator.Send(new CreateChecklistCommand(dto, userId));
-            return CreatedAtAction(nameof(GetById), new { id = checklist.Id }, checklist);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { farmId, id = checklist.Id },
+                checklist
+            );
         }
         catch (ArgumentException ex)
         {
@@ -58,7 +63,12 @@ public class ChecklistsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ChecklistDto>> Update(int id, CreateChecklistDto dto)
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<ChecklistDto>> Update(
+        int farmId,
+        int id,
+        [FromBody] CreateChecklistDto dto
+    )
     {
         try
         {
@@ -72,7 +82,8 @@ public class ChecklistsController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult> Delete(int farmId, int id)
     {
         try
         {

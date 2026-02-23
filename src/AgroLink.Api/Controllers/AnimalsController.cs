@@ -16,15 +16,18 @@ using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/farms/{farmId}/animals")]
+[Authorize(Policy = "FarmViewerAccess")]
 public class AnimalsController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AnimalDto>>> GetAll(
+        int farmId,
         CancellationToken cancellationToken
     )
     {
@@ -37,6 +40,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("colors")]
     public async Task<ActionResult<IEnumerable<string>>> GetColors(
+        int farmId,
         CancellationToken cancellationToken
     )
     {
@@ -49,6 +53,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("breeds")]
     public async Task<ActionResult<IEnumerable<string>>> GetBreeds(
+        int farmId,
         CancellationToken cancellationToken
     )
     {
@@ -61,6 +66,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("search")]
     public async Task<ActionResult<PagedResult<AnimalListDto>>> GetPagedList(
+        int farmId,
         [FromQuery] GetAnimalsPagedListQuery query,
         CancellationToken cancellationToken
     )
@@ -70,7 +76,11 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AnimalDto>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnimalDto>> GetById(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         var animal = await mediator.Send(
             new GetAnimalByIdQuery(id, GetCurrentUserId()),
@@ -86,6 +96,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("{id}/details")]
     public async Task<ActionResult<AnimalDetailDto>> GetDetail(
+        int farmId,
         int id,
         CancellationToken cancellationToken
     )
@@ -104,6 +115,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("lot/{lotId}")]
     public async Task<ActionResult<IEnumerable<AnimalDto>>> GetByLot(
+        int farmId,
         int lotId,
         CancellationToken cancellationToken
     )
@@ -117,6 +129,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpGet("{id}/genealogy")]
     public async Task<ActionResult<AnimalGenealogyDto>> GetGenealogy(
+        int farmId,
         int id,
         CancellationToken cancellationToken
     )
@@ -134,7 +147,9 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPost]
+    [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult<AnimalDto>> Create(
+        int farmId,
         CreateAnimalDto dto,
         CancellationToken cancellationToken
     )
@@ -142,7 +157,7 @@ public class AnimalsController(IMediator mediator) : BaseController
         try
         {
             var animal = await mediator.Send(new CreateAnimalCommand(dto), cancellationToken);
-            return CreatedAtAction(nameof(GetById), new { id = animal.Id }, animal);
+            return CreatedAtAction(nameof(GetById), new { farmId, id = animal.Id }, animal);
         }
         catch (Exception ex)
         {
@@ -151,7 +166,9 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult<AnimalDto>> Update(
+        int farmId,
         int id,
         UpdateAnimalDto dto,
         CancellationToken cancellationToken
@@ -172,7 +189,12 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult> Delete(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -186,7 +208,9 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPost("{id}/move")]
+    [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult<AnimalDto>> MoveAnimal(
+        int farmId,
         int id,
         [FromBody] MoveAnimalRequest request,
         CancellationToken cancellationToken
@@ -214,7 +238,9 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpPost("{id}/photos")]
     [Consumes("multipart/form-data")]
+    [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult<AnimalPhotoDto>> UploadPhoto(
+        int farmId,
         int id,
         IFormFile file,
         [FromForm] string? description,
@@ -244,7 +270,9 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}/photos/{photoId}/profile")]
+    [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult> SetProfilePhoto(
+        int farmId,
         int id,
         int photoId,
         CancellationToken cancellationToken
@@ -265,7 +293,9 @@ public class AnimalsController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}/photos/{photoId}")]
+    [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult> DeletePhoto(
+        int farmId,
         int id,
         int photoId,
         CancellationToken cancellationToken

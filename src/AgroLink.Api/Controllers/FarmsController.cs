@@ -7,6 +7,7 @@ using AgroLink.Application.Features.Farms.Queries.GetAll;
 using AgroLink.Application.Features.Farms.Queries.GetById;
 using AgroLink.Application.Features.Farms.Queries.GetFarmHierarchy;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
@@ -29,13 +30,14 @@ public class FarmsController(IMediator mediator) : BaseController
         }
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<FarmDto>> GetById(int id)
+    [HttpGet("{farmId}")]
+    [Authorize(Policy = "FarmViewerAccess")]
+    public async Task<ActionResult<FarmDto>> GetById(int farmId)
     {
         try
         {
             var userId = GetCurrentUserId();
-            var farm = await mediator.Send(new GetFarmByIdQuery(id, userId));
+            var farm = await mediator.Send(new GetFarmByIdQuery(farmId, userId));
             if (farm == null)
             {
                 return NotFound();
@@ -49,13 +51,14 @@ public class FarmsController(IMediator mediator) : BaseController
         }
     }
 
-    [HttpGet("{id}/hierarchy")]
-    public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int id)
+    [HttpGet("{farmId}/hierarchy")]
+    [Authorize(Policy = "FarmViewerAccess")]
+    public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int farmId)
     {
         try
         {
             var userId = GetCurrentUserId();
-            var farm = await mediator.Send(new GetFarmHierarchyQuery(id, userId));
+            var farm = await mediator.Send(new GetFarmHierarchyQuery(farmId, userId));
             if (farm == null)
             {
                 return NotFound();
@@ -78,7 +81,7 @@ public class FarmsController(IMediator mediator) : BaseController
             var farm = await mediator.Send(
                 new CreateFarmCommand(request.Name, request.Location, request.CUE, userId)
             );
-            return CreatedAtAction(nameof(GetById), new { id = farm.Id }, farm);
+            return CreatedAtAction(nameof(GetById), new { farmId = farm.Id }, farm);
         }
         catch (Exception ex)
         {
@@ -86,14 +89,15 @@ public class FarmsController(IMediator mediator) : BaseController
         }
     }
 
-    [HttpPut("{id}")]
-    public async Task<ActionResult<FarmDto>> Update(int id, UpdateFarmRequest request)
+    [HttpPut("{farmId}")]
+    [Authorize(Policy = "FarmOwnerOnly")]
+    public async Task<ActionResult<FarmDto>> Update(int farmId, UpdateFarmRequest request)
     {
         try
         {
             var userId = GetCurrentUserId();
             var farm = await mediator.Send(
-                new UpdateFarmCommand(id, request.Name, request.Location, request.CUE, userId)
+                new UpdateFarmCommand(farmId, request.Name, request.Location, request.CUE, userId)
             );
             return Ok(farm);
         }
@@ -103,13 +107,14 @@ public class FarmsController(IMediator mediator) : BaseController
         }
     }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
+    [HttpDelete("{farmId}")]
+    [Authorize(Policy = "FarmOwnerOnly")]
+    public async Task<ActionResult> Delete(int farmId)
     {
         try
         {
             var userId = GetCurrentUserId();
-            await mediator.Send(new DeleteFarmCommand(id, userId));
+            await mediator.Send(new DeleteFarmCommand(farmId, userId));
             return NoContent();
         }
         catch (Exception ex)
