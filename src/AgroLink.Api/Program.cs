@@ -15,7 +15,10 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 // Load configuration from Secrets Manager if available
-await SecretsManagerHelper.LoadSecretsAsync(builder);
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    await SecretsManagerHelper.LoadSecretsAsync(builder);
+}
 
 // Add services to the container.
 builder
@@ -54,7 +57,7 @@ builder
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = true,
             ValidIssuer = jwtIssuer,
             ValidateAudience = true,
@@ -117,3 +120,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
