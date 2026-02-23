@@ -190,11 +190,7 @@ public class AnimalsController(IMediator mediator) : BaseController
 
     [HttpDelete("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
-    public async Task<ActionResult> Delete(
-        int farmId,
-        int id,
-        CancellationToken cancellationToken
-    )
+    public async Task<ActionResult> Delete(int farmId, int id, CancellationToken cancellationToken)
     {
         try
         {

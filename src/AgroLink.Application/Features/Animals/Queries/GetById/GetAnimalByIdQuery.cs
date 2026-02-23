@@ -28,8 +28,10 @@ public class GetAnimalByIdQueryHandler(
         }
 
         // Validate Farm Context
-        if (currentUserService.CurrentFarmId.HasValue &&
-            animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value)
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value
+        )
         {
             return null; // Or throw ForbiddenAccessException
         }

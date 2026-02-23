@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgroLink.Api.Controllers;
@@ -15,31 +14,44 @@ public class LotsIntegrationTests : IntegrationTestBase
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
     };
 
     [Test]
     public async Task Create_AsAdmin_ShouldReturnCreated()
     {
         // Arrange
-        var user = new User { Name = "Admin", Email = "admin@lot.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Admin",
+            Email = "admin@lot.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
-        
+
         var owner = new Owner { Name = "Owner", Phone = "123" };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
         var farm = new Farm { Name = "Test Farm", OwnerId = owner.Id };
         DbContext.Farms.Add(farm);
-        
+
         var paddock = new Paddock { Name = "P1", FarmId = 0 }; // Will set after farm save
-        
+
         // Relational save
         farm.Paddocks.Add(paddock);
         DbContext.Farms.Add(farm);
         await DbContext.SaveChangesAsync();
 
-        DbContext.FarmMembers.Add(new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Admin });
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Admin,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
@@ -48,7 +60,7 @@ public class LotsIntegrationTests : IntegrationTestBase
         {
             Name = "Lot 1",
             PaddockId = paddock.Id,
-            Status = "ACTIVE"
+            Status = "ACTIVE",
         };
 
         // Act
@@ -65,9 +77,15 @@ public class LotsIntegrationTests : IntegrationTestBase
     public async Task GetByPaddock_ShouldReturnLots()
     {
         // Arrange
-        var user = new User { Name = "Viewer", Email = "viewer@lot.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Viewer",
+            Email = "viewer@lot.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
-        
+
         var owner = new Owner { Name = "Owner", Phone = "123" };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
@@ -78,10 +96,27 @@ public class LotsIntegrationTests : IntegrationTestBase
         DbContext.Farms.Add(farm);
         await DbContext.SaveChangesAsync();
 
-        DbContext.FarmMembers.Add(new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Viewer });
-        
-        var lot1 = new Lot { Name = "L1", PaddockId = paddock.Id, Status = "Active" };
-        var lot2 = new Lot { Name = "L2", PaddockId = paddock.Id, Status = "Active" };
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Viewer,
+            }
+        );
+
+        var lot1 = new Lot
+        {
+            Name = "L1",
+            PaddockId = paddock.Id,
+            Status = "Active",
+        };
+        var lot2 = new Lot
+        {
+            Name = "L2",
+            PaddockId = paddock.Id,
+            Status = "Active",
+        };
         DbContext.Lots.AddRange(lot1, lot2);
         await DbContext.SaveChangesAsync();
 

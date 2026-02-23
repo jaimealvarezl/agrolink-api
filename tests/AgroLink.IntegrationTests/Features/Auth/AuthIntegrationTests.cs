@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using AgroLink.Application.Features.Auth.DTOs;
 using Shouldly;
 
@@ -16,7 +15,7 @@ public class AuthIntegrationTests : IntegrationTestBase
             Name = "New User",
             Email = "newuser@example.com",
             Password = "SecurePassword123",
-            Role = "USER"
+            Role = "USER",
         };
 
         // Act
@@ -39,14 +38,14 @@ public class AuthIntegrationTests : IntegrationTestBase
             Name = "Login User",
             Email = "login@example.com",
             Password = "SecurePassword123",
-            Role = "USER"
+            Role = "USER",
         };
         await Client.PostAsJsonAsync("/api/Auth/register", registerRequest);
 
         var loginDto = new LoginDto
         {
             Email = registerRequest.Email,
-            Password = registerRequest.Password
+            Password = registerRequest.Password,
         };
 
         // Act
@@ -67,12 +66,17 @@ public class AuthIntegrationTests : IntegrationTestBase
         {
             Name = "Profile User",
             Email = "profile@example.com",
-            Password = "SecurePassword123"
+            Password = "SecurePassword123",
         };
         var regResponse = await Client.PostAsJsonAsync("/api/Auth/register", registerRequest);
         var authData = await regResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
-        
-        Authenticate(authData!.User.Id, authData.User.Email, authData.User.Role, authData.User.Name);
+
+        Authenticate(
+            authData!.User.Id,
+            authData.User.Email,
+            authData.User.Role,
+            authData.User.Name
+        );
 
         // Act
         var response = await Client.GetAsync("/api/Auth/profile");

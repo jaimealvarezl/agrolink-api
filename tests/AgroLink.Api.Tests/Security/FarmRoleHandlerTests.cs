@@ -5,12 +5,10 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Moq;
-using NUnit.Framework;
 using Shouldly;
 
 namespace AgroLink.Api.Tests.Security;
@@ -18,15 +16,6 @@ namespace AgroLink.Api.Tests.Security;
 [TestFixture]
 public class FarmRoleHandlerTests
 {
-    private Mock<IMemoryCache> _cacheMock = null!;
-    private Mock<IServiceProvider> _serviceProviderMock = null!;
-    private Mock<IServiceScopeFactory> _scopeFactoryMock = null!;
-    private Mock<IServiceScope> _scopeMock = null!;
-    private Mock<IHttpContextAccessor> _httpContextAccessorMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepoMock = null!;
-    private Mock<ICacheEntry> _cacheEntryMock = null!;
-    private FarmRoleHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -57,6 +46,15 @@ public class FarmRoleHandlerTests
             _httpContextAccessorMock.Object
         );
     }
+
+    private Mock<IMemoryCache> _cacheMock = null!;
+    private Mock<IServiceProvider> _serviceProviderMock = null!;
+    private Mock<IServiceScopeFactory> _scopeFactoryMock = null!;
+    private Mock<IServiceScope> _scopeMock = null!;
+    private Mock<IHttpContextAccessor> _httpContextAccessorMock = null!;
+    private Mock<IFarmMemberRepository> _farmMemberRepoMock = null!;
+    private Mock<ICacheEntry> _cacheEntryMock = null!;
+    private FarmRoleHandler _handler = null!;
 
     [Test]
     public async Task HandleAsync_WhenUserHasRequiredRole_ShouldSucceed()
@@ -127,7 +125,7 @@ public class FarmRoleHandlerTests
         var farmId = 55;
         var requirement = new FarmRoleRequirement(FarmMemberRoles.Viewer);
 
-        SetupHttpContext(userId, farmId, source: "route");
+        SetupHttpContext(userId, farmId);
         SetupRepo(userId, farmId, FarmMemberRoles.Viewer);
 
         var context = new AuthorizationHandlerContext([requirement], SetupUser(userId), null);
@@ -148,7 +146,7 @@ public class FarmRoleHandlerTests
         var farmId = 77;
         var requirement = new FarmRoleRequirement(FarmMemberRoles.Viewer);
 
-        SetupHttpContext(userId, farmId, source: "header");
+        SetupHttpContext(userId, farmId, "header");
         SetupRepo(userId, farmId, FarmMemberRoles.Viewer);
 
         var context = new AuthorizationHandlerContext([requirement], SetupUser(userId), null);
@@ -192,12 +190,17 @@ public class FarmRoleHandlerTests
     private void SetupRepo(int userId, int farmId, string role)
     {
         object? cacheValue = null;
-        _cacheMock
-            .Setup(x => x.TryGetValue(It.IsAny<object>(), out cacheValue))
-            .Returns(false);
+        _cacheMock.Setup(x => x.TryGetValue(It.IsAny<object>(), out cacheValue)).Returns(false);
 
         _farmMemberRepoMock
             .Setup(x => x.GetByFarmAndUserAsync(farmId, userId))
-            .ReturnsAsync(new FarmMember { Role = role, UserId = userId, FarmId = farmId });
+            .ReturnsAsync(
+                new FarmMember
+                {
+                    Role = role,
+                    UserId = userId,
+                    FarmId = farmId,
+                }
+            );
     }
 }

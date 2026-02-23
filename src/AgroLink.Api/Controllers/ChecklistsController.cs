@@ -50,11 +50,7 @@ public class ChecklistsController(IMediator mediator) : BaseController
         {
             var userId = GetCurrentUserId();
             var checklist = await mediator.Send(new CreateChecklistCommand(dto, userId));
-            return CreatedAtAction(
-                nameof(GetById),
-                new { farmId, id = checklist.Id },
-                checklist
-            );
+            return CreatedAtAction(nameof(GetById), new { farmId, id = checklist.Id }, checklist);
         }
         catch (ArgumentException ex)
         {

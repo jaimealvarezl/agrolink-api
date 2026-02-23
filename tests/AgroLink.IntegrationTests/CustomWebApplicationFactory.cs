@@ -1,15 +1,12 @@
 using AgroLink.Infrastructure.Data;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
 
 namespace AgroLink.IntegrationTests;
 
-public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
+public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram>
+    where TProgram : class
 {
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
@@ -18,30 +15,41 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         .WithPassword("postgres")
         .Build();
 
-    public string GetConnectionString() => _dbContainer.GetConnectionString();
+    public string GetConnectionString()
+    {
+        return _dbContainer.GetConnectionString();
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Force Testing environment
         builder.UseEnvironment("Testing");
 
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+        builder.ConfigureAppConfiguration(
+            (context, config) =>
             {
-                { "Jwt:Key", "your-super-secret-key-that-is-at-least-32-characters-long" },
-                { "Jwt:Issuer", "AgroLink" },
-                { "Jwt:Audience", "AgroLink" },
-                { "ConnectionStrings:DefaultConnection", _dbContainer.GetConnectionString() },
-                { "AWS:Region", "us-east-1" } // Prevent AWS SDK errors if any
-            });
-        });
+                config.AddInMemoryCollection(
+                    new Dictionary<string, string?>
+                    {
+                        { "Jwt:Key", "your-super-secret-key-that-is-at-least-32-characters-long" },
+                        { "Jwt:Issuer", "AgroLink" },
+                        { "Jwt:Audience", "AgroLink" },
+                        {
+                            "ConnectionStrings:DefaultConnection",
+                            _dbContainer.GetConnectionString()
+                        },
+                        { "AWS:Region", "us-east-1" }, // Prevent AWS SDK errors if any
+                    }
+                );
+            }
+        );
 
         builder.ConfigureServices(services =>
         {
             // Remove existing DbContext registration
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AgroLinkDbContext>));
+            var descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<AgroLinkDbContext>)
+            );
 
             if (descriptor != null)
             {
@@ -62,7 +70,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
             {
                 var scopedServices = scope.ServiceProvider;
                 var db = scopedServices.GetRequiredService<AgroLinkDbContext>();
-                
+
                 // Ensure the database is created and migrations applied
                 db.Database.Migrate();
             }

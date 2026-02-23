@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgroLink.Application.Features.Animals.DTOs;
@@ -15,7 +14,7 @@ public class AnimalsIntegrationTests : IntegrationTestBase
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
     };
 
     [Test]
@@ -27,19 +26,19 @@ public class AnimalsIntegrationTests : IntegrationTestBase
             Name = "Test User",
             Email = "test@example.com",
             PasswordHash = "hash",
-            Role = "USER"
+            Role = "USER",
         };
         DbContext.Users.Add(user);
-        
+
         var owner = new Owner { Name = "Main Owner", Phone = "123" };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
-        var farm = new Farm 
-        { 
-            Name = "Test Farm", 
+        var farm = new Farm
+        {
+            Name = "Test Farm",
             Location = "Location",
-            OwnerId = owner.Id
+            OwnerId = owner.Id,
         };
         DbContext.Farms.Add(farm);
         await DbContext.SaveChangesAsync();
@@ -48,7 +47,7 @@ public class AnimalsIntegrationTests : IntegrationTestBase
         {
             FarmId = farm.Id,
             UserId = user.Id,
-            Role = FarmMemberRoles.Viewer
+            Role = FarmMemberRoles.Viewer,
         };
         DbContext.FarmMembers.Add(member);
         await DbContext.SaveChangesAsync();
@@ -68,16 +67,27 @@ public class AnimalsIntegrationTests : IntegrationTestBase
     public async Task GetById_WhenAnimalExists_ShouldReturnOk()
     {
         // Arrange
-        var user = new User { Name = "Viewer", Email = "viewer@ani.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Viewer",
+            Email = "viewer@ani.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
-        
+
         var owner = new Owner { Name = "Owner", Phone = "123" };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
         var farm = new Farm { Name = "Farm", OwnerId = owner.Id };
         var paddock = new Paddock { Name = "P1", FarmId = 0 };
-        var lot = new Lot { Name = "L1", PaddockId = 0, Status = "Active" };
+        var lot = new Lot
+        {
+            Name = "L1",
+            PaddockId = 0,
+            Status = "Active",
+        };
         paddock.Lots.Add(lot);
         farm.Paddocks.Add(paddock);
         DbContext.Farms.Add(farm);
@@ -92,11 +102,18 @@ public class AnimalsIntegrationTests : IntegrationTestBase
             LifeStatus = LifeStatus.Active,
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
-            ReproductiveStatus = ReproductiveStatus.NotApplicable
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
         };
         DbContext.Animals.Add(animal);
-        
-        DbContext.FarmMembers.Add(new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Viewer });
+
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Viewer,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
@@ -121,19 +138,19 @@ public class AnimalsIntegrationTests : IntegrationTestBase
             Name = "Editor User",
             Email = "editor@example.com",
             PasswordHash = "hash",
-            Role = "USER"
+            Role = "USER",
         };
         DbContext.Users.Add(user);
-        
+
         var owner = new Owner { Name = "Owner 3", Phone = "789" };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
-        var farm = new Farm 
-        { 
-            Name = "Work Farm", 
+        var farm = new Farm
+        {
+            Name = "Work Farm",
             Location = "Here",
-            OwnerId = owner.Id
+            OwnerId = owner.Id,
         };
         DbContext.Farms.Add(farm);
         await DbContext.SaveChangesAsync();
@@ -142,15 +159,20 @@ public class AnimalsIntegrationTests : IntegrationTestBase
         {
             FarmId = farm.Id,
             UserId = user.Id,
-            Role = FarmMemberRoles.Editor
+            Role = FarmMemberRoles.Editor,
         };
         DbContext.FarmMembers.Add(member);
-        
+
         var paddock = new Paddock { Name = "P1", FarmId = farm.Id };
         DbContext.Paddocks.Add(paddock);
         await DbContext.SaveChangesAsync();
-        
-        var lot = new Lot { Name = "L1", PaddockId = paddock.Id, Status = "Active" };
+
+        var lot = new Lot
+        {
+            Name = "L1",
+            PaddockId = paddock.Id,
+            Status = "Active",
+        };
         DbContext.Lots.Add(lot);
         await DbContext.SaveChangesAsync();
 
@@ -166,7 +188,7 @@ public class AnimalsIntegrationTests : IntegrationTestBase
             ProductionStatus = ProductionStatus.Calf,
             HealthStatus = HealthStatus.Healthy,
             ReproductiveStatus = ReproductiveStatus.NotApplicable,
-            Owners = new List<AnimalOwnerCreateDto>()
+            Owners = new List<AnimalOwnerCreateDto>(),
         };
 
         // Act

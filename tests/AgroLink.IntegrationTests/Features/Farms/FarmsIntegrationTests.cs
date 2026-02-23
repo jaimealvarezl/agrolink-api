@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgroLink.Api.DTOs.Farms;
@@ -15,14 +14,20 @@ public class FarmsIntegrationTests : IntegrationTestBase
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
     };
 
     [Test]
     public async Task Create_WithValidData_ShouldReturnCreated()
     {
         // Arrange
-        var user = new User { Name = "Owner", Email = "owner@farm.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Owner",
+            Email = "owner@farm.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
 
@@ -32,7 +37,7 @@ public class FarmsIntegrationTests : IntegrationTestBase
         {
             Name = "Integration Farm",
             Location = "Test Location",
-            CUE = "123456"
+            CUE = "123456",
         };
 
         // Act
@@ -43,7 +48,7 @@ public class FarmsIntegrationTests : IntegrationTestBase
         var created = await response.Content.ReadFromJsonAsync<FarmDto>(JsonOptions);
         created.ShouldNotBeNull();
         created.Name.ShouldBe(request.Name);
-        
+
         // Verify in DB
         var dbFarm = await DbContext.Farms.FindAsync(created.Id);
         dbFarm.ShouldNotBeNull();
@@ -54,7 +59,13 @@ public class FarmsIntegrationTests : IntegrationTestBase
     public async Task GetAll_ShouldReturnUserFarms()
     {
         // Arrange
-        var user = new User { Name = "Farm User", Email = "user@farm.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Farm User",
+            Email = "user@farm.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
 
@@ -68,7 +79,14 @@ public class FarmsIntegrationTests : IntegrationTestBase
         await DbContext.SaveChangesAsync();
 
         // Add user as member to farm1 only
-        DbContext.FarmMembers.Add(new FarmMember { FarmId = farm1.Id, UserId = user.Id, Role = FarmMemberRoles.Owner });
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm1.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Owner,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);

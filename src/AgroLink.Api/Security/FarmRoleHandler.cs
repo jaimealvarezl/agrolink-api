@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -28,7 +26,9 @@ public class FarmRoleHandler(
     {
         var httpContext = httpContextAccessor.HttpContext;
         if (httpContext == null)
+        {
             return;
+        }
 
         // 1. Get User ID
         var userIdClaim = context.User.FindFirst("userid");
@@ -43,17 +43,23 @@ public class FarmRoleHandler(
         if (httpContext.Request.RouteValues.TryGetValue("farmId", out var routeFarmId))
         {
             if (int.TryParse(routeFarmId?.ToString(), out var parsedId))
+            {
                 farmId = parsedId;
+            }
         }
         else if (httpContext.Request.Query.TryGetValue("farmId", out var queryFarmId))
         {
             if (int.TryParse(queryFarmId.ToString(), out var parsedId))
+            {
                 farmId = parsedId;
+            }
         }
         else if (httpContext.Request.Headers.TryGetValue("x-farm-id", out var headerFarmId))
         {
             if (int.TryParse(headerFarmId.ToString(), out var parsedId))
+            {
                 farmId = parsedId;
+            }
         }
 
         if (!farmId.HasValue)

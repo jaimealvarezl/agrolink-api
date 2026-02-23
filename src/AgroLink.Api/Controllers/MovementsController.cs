@@ -35,7 +35,10 @@ public class MovementsController(IMediator mediator) : BaseController
 
     [HttpPost]
     [Authorize(Policy = "FarmEditorAccess")]
-    public async Task<ActionResult<MovementDto>> Create(int farmId, [FromBody] CreateMovementDto dto)
+    public async Task<ActionResult<MovementDto>> Create(
+        int farmId,
+        [FromBody] CreateMovementDto dto
+    )
     {
         try
         {

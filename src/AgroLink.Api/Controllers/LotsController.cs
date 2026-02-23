@@ -37,10 +37,10 @@ public class LotsController(IMediator mediator) : BaseController
         }
         // Implicitly, if I can see the lot, I verify if it belongs to this farm
         // Ideally we check: if (lot.Paddock.FarmId != farmId) return NotFound();
-        // But LotDto might not have Paddock.FarmId populated deep enough. 
-        // We rely on the initial FarmRoleHandler check for access to the URL farm, 
+        // But LotDto might not have Paddock.FarmId populated deep enough.
+        // We rely on the initial FarmRoleHandler check for access to the URL farm,
         // but this specific resource check is pending strictly for "Cross-Farm" data leak prevention on read.
-        
+
         return Ok(lot);
     }
 
@@ -68,7 +68,11 @@ public class LotsController(IMediator mediator) : BaseController
 
     [HttpPut("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
-    public async Task<ActionResult<LotDto>> Update(int farmId, int id, [FromBody] UpdateLotRequest request)
+    public async Task<ActionResult<LotDto>> Update(
+        int farmId,
+        int id,
+        [FromBody] UpdateLotRequest request
+    )
     {
         try
         {
@@ -104,7 +108,11 @@ public class LotsController(IMediator mediator) : BaseController
 
     [HttpPost("{id}/move")]
     [Authorize(Policy = "FarmEditorAccess")] // Moving cattle is operation -> Editor
-    public async Task<ActionResult<LotDto>> MoveLot(int farmId, int id, [FromBody] MoveLotRequest request)
+    public async Task<ActionResult<LotDto>> MoveLot(
+        int farmId,
+        int id,
+        [FromBody] MoveLotRequest request
+    )
     {
         try
         {

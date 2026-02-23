@@ -3,7 +3,6 @@ using AgroLink.Application.Features.Paddocks.Commands.Create;
 using AgroLink.Application.Features.Paddocks.Commands.Delete;
 using AgroLink.Application.Features.Paddocks.Commands.Update;
 using AgroLink.Application.Features.Paddocks.DTOs;
-using AgroLink.Application.Features.Paddocks.Queries.GetAll;
 using AgroLink.Application.Features.Paddocks.Queries.GetByFarm;
 using AgroLink.Application.Features.Paddocks.Queries.GetById;
 using MediatR;
@@ -32,7 +31,7 @@ public class PaddocksController(IMediator mediator) : BaseController
         {
             return NotFound();
         }
-        
+
         // Safety check: ensure paddock belongs to farm
         if (paddock.FarmId != farmId)
         {
@@ -44,7 +43,10 @@ public class PaddocksController(IMediator mediator) : BaseController
 
     [HttpPost]
     [Authorize(Policy = "FarmAdminAccess")]
-    public async Task<ActionResult<PaddockDto>> Create(int farmId, [FromBody] CreatePaddockRequest request)
+    public async Task<ActionResult<PaddockDto>> Create(
+        int farmId,
+        [FromBody] CreatePaddockRequest request
+    )
     {
         try
         {
@@ -70,7 +72,11 @@ public class PaddocksController(IMediator mediator) : BaseController
 
     [HttpPut("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
-    public async Task<ActionResult<PaddockDto>> Update(int farmId, int id, [FromBody] UpdatePaddockRequest request)
+    public async Task<ActionResult<PaddockDto>> Update(
+        int farmId,
+        int id,
+        [FromBody] UpdatePaddockRequest request
+    )
     {
         try
         {

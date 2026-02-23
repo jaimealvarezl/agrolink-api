@@ -1,36 +1,22 @@
 using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Infrastructure.Data;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using Respawn;
-using Respawn.Graph;
 using Npgsql;
+using Respawn;
 
 namespace AgroLink.IntegrationTests;
 
 [TestFixture]
 public abstract class IntegrationTestBase
 {
-    protected CustomWebApplicationFactory<Program> Factory = null!;
-    protected HttpClient Client = null!;
-    protected IServiceScope Scope = null!;
-    protected AgroLinkDbContext DbContext = null!;
-    private Respawner _respawner = null!;
-    private string _connectionString = null!;
-
     [OneTimeSetUp]
     public async Task GlobalSetup()
     {
         Factory = new CustomWebApplicationFactory<Program>();
         await Factory.InitializeAsync();
         _connectionString = Factory.GetConnectionString();
-        
+
         // Trigger host build and migrations by accessing Services
         using (var scope = Factory.Services.CreateScope())
         {
@@ -41,11 +27,14 @@ public abstract class IntegrationTestBase
         // Initialize Respawner
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
-        _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
-        {
-            DbAdapter = DbAdapter.Postgres,
-            SchemasToInclude = new[] { "public" }
-        });
+        _respawner = await Respawner.CreateAsync(
+            connection,
+            new RespawnerOptions
+            {
+                DbAdapter = DbAdapter.Postgres,
+                SchemasToInclude = new[] { "public" },
+            }
+        );
     }
 
     [SetUp]
@@ -54,16 +43,9 @@ public abstract class IntegrationTestBase
         Client = Factory.CreateClient();
         Scope = Factory.Services.CreateScope();
         DbContext = Scope.ServiceProvider.GetRequiredService<AgroLinkDbContext>();
-        
+
         // Reset database state before each test
         await ResetDatabaseAsync();
-    }
-
-    private async Task ResetDatabaseAsync()
-    {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-        await _respawner.ResetAsync(connection);
     }
 
     [TearDown]
@@ -80,6 +62,20 @@ public abstract class IntegrationTestBase
         await Factory.DisposeAsync();
     }
 
+    protected CustomWebApplicationFactory<Program> Factory = null!;
+    protected HttpClient Client = null!;
+    protected IServiceScope Scope = null!;
+    protected AgroLinkDbContext DbContext = null!;
+    private Respawner _respawner = null!;
+    private string _connectionString = null!;
+
+    private async Task ResetDatabaseAsync()
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await _respawner.ResetAsync(connection);
+    }
+
     protected void Authenticate(User user)
     {
         var jwtService = Scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
@@ -94,7 +90,7 @@ public abstract class IntegrationTestBase
             Id = userId,
             Email = email,
             Role = role,
-            Name = name
+            Name = name,
         };
         Authenticate(user);
     }
