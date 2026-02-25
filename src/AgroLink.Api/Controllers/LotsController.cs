@@ -60,9 +60,9 @@ public class LotsController(IMediator mediator) : BaseController
             var lot = await mediator.Send(new CreateLotCommand(dto));
             return CreatedAtAction(nameof(GetById), new { farmId, id = lot.Id }, lot);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -85,9 +85,9 @@ public class LotsController(IMediator mediator) : BaseController
             var lot = await mediator.Send(new UpdateLotCommand(id, dto));
             return Ok(lot);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -100,9 +100,9 @@ public class LotsController(IMediator mediator) : BaseController
             await mediator.Send(new DeleteLotCommand(id));
             return NoContent();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -122,9 +122,9 @@ public class LotsController(IMediator mediator) : BaseController
             );
             return Ok(lot);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 }
