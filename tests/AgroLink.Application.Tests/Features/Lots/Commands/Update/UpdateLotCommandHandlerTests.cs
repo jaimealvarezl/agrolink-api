@@ -1,5 +1,7 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Lots.Commands.Update;
 using AgroLink.Application.Features.Lots.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -16,23 +18,27 @@ public class UpdateLotCommandHandlerTests
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _handler = new UpdateLotCommandHandler(
             _lotRepositoryMock.Object,
             _paddockRepositoryMock.Object,
-            _unitOfWorkMock.Object
+            _unitOfWorkMock.Object,
+            _currentUserServiceMock.Object
         );
     }
 
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private UpdateLotCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidUpdateLotCommand_ReturnsLotDto()
     {
         // Arrange
-        var lotId = 1;
+        const int lotId = 1;
+        const int farmId = 10;
         var updateLotDto = new UpdateLotDto
         {
             Name = "Updated Lot Name",
@@ -48,12 +54,20 @@ public class UpdateLotCommandHandlerTests
             Status = "ACTIVE",
             CreatedAt = DateTime.UtcNow,
         };
-        var newPaddock = new Paddock { Id = 2, Name = "New Paddock" };
+        var oldPaddock = new Paddock { Id = 1, FarmId = farmId };
+        var newPaddock = new Paddock
+        {
+            Id = 2,
+            Name = "New Paddock",
+            FarmId = farmId,
+        };
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _lotRepositoryMock.Setup(r => r.Update(lot));
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(oldPaddock);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(newPaddock.Id)).ReturnsAsync(newPaddock);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -70,10 +84,32 @@ public class UpdateLotCommandHandlerTests
     }
 
     [Test]
+    public async Task Handle_LotFromAnotherFarm_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        const int lotId = 1;
+        const int currentFarmId = 10;
+        const int lotFarmId = 20;
+        var updateLotDto = new UpdateLotDto { Name = "Updated Name" };
+        var command = new UpdateLotCommand(lotId, updateLotDto);
+        var lot = new Lot { Id = lotId, PaddockId = 1 };
+        var paddock = new Paddock { Id = 1, FarmId = lotFarmId };
+
+        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(paddock);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act & Assert
+        await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public async Task Handle_NonExistingLot_ThrowsArgumentException()
     {
         // Arrange
-        var lotId = 999;
+        const int lotId = 999;
         var updateLotDto = new UpdateLotDto { Name = "Updated Name" };
         var command = new UpdateLotCommand(lotId, updateLotDto);
 

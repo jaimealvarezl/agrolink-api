@@ -1,4 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Lots.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -9,7 +11,8 @@ public record UpdateLotCommand(int Id, UpdateLotDto Dto) : IRequest<LotDto>;
 public class UpdateLotCommandHandler(
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<UpdateLotCommand, LotDto>
 {
     public async Task<LotDto> Handle(UpdateLotCommand request, CancellationToken cancellationToken)
@@ -18,6 +21,19 @@ public class UpdateLotCommandHandler(
         if (lot == null)
         {
             throw new ArgumentException("Lot not found");
+        }
+
+        // Security check: ensure lot belongs to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            var paddockContext = await paddockRepository.GetByIdAsync(lot.PaddockId);
+            if (
+                paddockContext != null
+                && paddockContext.FarmId != currentUserService.CurrentFarmId.Value
+            )
+            {
+                throw new ForbiddenAccessException("You do not have access to this lot");
+            }
         }
 
         var dto = request.Dto;

@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Lots.Queries.GetById;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -14,21 +15,25 @@ public class GetLotByIdQueryHandlerTests
     {
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _handler = new GetLotByIdQueryHandler(
             _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
+            _paddockRepositoryMock.Object,
+            _currentUserServiceMock.Object
         );
     }
 
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private GetLotByIdQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingLot_ReturnsLotDto()
     {
         // Arrange
-        var lotId = 1;
+        const int lotId = 1;
+        const int farmId = 10;
         var query = new GetLotByIdQuery(lotId);
         var lot = new Lot
         {
@@ -38,10 +43,16 @@ public class GetLotByIdQueryHandlerTests
             Status = "ACTIVE",
             CreatedAt = DateTime.UtcNow,
         };
-        var paddock = new Paddock { Id = 1, Name = "Test Paddock" };
+        var paddock = new Paddock
+        {
+            Id = 1,
+            Name = "Test Paddock",
+            FarmId = farmId,
+        };
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(lot.PaddockId)).ReturnsAsync(paddock);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -54,10 +65,44 @@ public class GetLotByIdQueryHandlerTests
     }
 
     [Test]
+    public async Task Handle_LotFromAnotherFarm_ReturnsNull()
+    {
+        // Arrange
+        const int lotId = 1;
+        const int currentFarmId = 10;
+        const int lotFarmId = 20;
+        var query = new GetLotByIdQuery(lotId);
+        var lot = new Lot
+        {
+            Id = lotId,
+            Name = "Test Lot",
+            PaddockId = 1,
+            Status = "ACTIVE",
+            CreatedAt = DateTime.UtcNow,
+        };
+        var paddock = new Paddock
+        {
+            Id = 1,
+            Name = "Test Paddock",
+            FarmId = lotFarmId,
+        };
+
+        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(lot.PaddockId)).ReturnsAsync(paddock);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
     public async Task Handle_NonExistingLot_ReturnsNull()
     {
         // Arrange
-        var lotId = 999;
+        const int lotId = 999;
         var query = new GetLotByIdQuery(lotId);
 
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync((Lot?)null);

@@ -16,14 +16,17 @@ public class GetAnimalDetailQueryHandlerTests
     {
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _storageServiceMock = new Mock<IStorageService>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _handler = new GetAnimalDetailQueryHandler(
             _animalRepositoryMock.Object,
-            _storageServiceMock.Object
+            _storageServiceMock.Object,
+            _currentUserServiceMock.Object
         );
     }
 
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private GetAnimalDetailQueryHandler _handler = null!;
 
     [Test]
@@ -32,6 +35,7 @@ public class GetAnimalDetailQueryHandlerTests
         // Arrange
         const int animalId = 1;
         const int userId = 1;
+        const int farmId = 100;
         var birthDate = DateTime.UtcNow.AddYears(-2);
         var animal = new Animal
         {
@@ -43,7 +47,7 @@ public class GetAnimalDetailQueryHandlerTests
             Lot = new Lot
             {
                 Name = "Pasture 1",
-                Paddock = new Paddock { FarmId = 100 },
+                Paddock = new Paddock { FarmId = farmId },
             },
             Mother = new Animal
             {
@@ -85,6 +89,7 @@ public class GetAnimalDetailQueryHandlerTests
         _animalRepositoryMock
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
         _storageServiceMock
             .Setup(s => s.GetPresignedUrl("photo-key", It.IsAny<TimeSpan>()))
             .Returns("http://signed-url.com/photo.jpg");
@@ -115,6 +120,35 @@ public class GetAnimalDetailQueryHandlerTests
         result.Photos.ShouldNotBeNull();
         result.Photos.Count.ShouldBe(1);
         result.Photos[0].UriRemote.ShouldBe("http://signed-url.com/photo.jpg");
+    }
+
+    [Test]
+    public async Task Handle_AnimalFromAnotherFarm_ReturnsNull()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 1;
+        const int currentFarmId = 100;
+        const int animalFarmId = 200;
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = animalFarmId } },
+        };
+
+        _animalRepositoryMock
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
+        );
+
+        // Assert
+        result.ShouldBeNull();
     }
 
     [Test]
@@ -160,6 +194,7 @@ public class GetAnimalDetailQueryHandlerTests
         // Arrange
         const int animalId = 2;
         const int userId = 1;
+        const int farmId = 100;
         var birthDate = DateTime.UtcNow.AddDays(-20);
         var animal = new Animal
         {
@@ -170,13 +205,14 @@ public class GetAnimalDetailQueryHandlerTests
             Lot = new Lot
             {
                 Name = "Nursery",
-                Paddock = new Paddock { FarmId = 100 },
+                Paddock = new Paddock { FarmId = farmId },
             },
         };
 
         _animalRepositoryMock
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(
@@ -195,6 +231,7 @@ public class GetAnimalDetailQueryHandlerTests
         // Arrange
         const int animalId = 3;
         const int userId = 1;
+        const int farmId = 100;
         var birthDate = DateTime.UtcNow.AddMonths(-1).AddDays(-1);
         var animal = new Animal
         {
@@ -205,13 +242,14 @@ public class GetAnimalDetailQueryHandlerTests
             Lot = new Lot
             {
                 Name = "Nursery",
-                Paddock = new Paddock { FarmId = 100 },
+                Paddock = new Paddock { FarmId = farmId },
             },
         };
 
         _animalRepositoryMock
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(
