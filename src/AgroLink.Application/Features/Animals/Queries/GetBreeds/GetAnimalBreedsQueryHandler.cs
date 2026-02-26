@@ -11,6 +11,6 @@ public class GetAnimalBreedsQueryHandler(IAnimalRepository animalRepository)
         CancellationToken cancellationToken
     )
     {
-        return await animalRepository.GetDistinctBreedsAsync(request.UserId, cancellationToken);
+        return await animalRepository.GetDistinctBreedsAsync(request.FarmId, cancellationToken);
     }
 }

@@ -30,8 +30,8 @@ public class GetAllAnimalsQueryHandlerTests
     public async Task Handle_ReturnsAllAnimals()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAllAnimalsQuery(userId);
+        const int farmId = 1;
+        var query = new GetAllAnimalsQuery(farmId);
         var lot1 = new Lot { Id = 1, Name = "Lot 1" };
         var lot2 = new Lot { Id = 2, Name = "Lot 2" };
         var animals = new List<Animal>
@@ -65,7 +65,7 @@ public class GetAllAnimalsQueryHandlerTests
         };
 
         _animalRepositoryMock
-            .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetAllByFarmAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
 
         // Act
@@ -82,10 +82,10 @@ public class GetAllAnimalsQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAllAnimalsQuery(userId);
+        const int farmId = 1;
+        var query = new GetAllAnimalsQuery(farmId);
         _animalRepositoryMock
-            .Setup(r => r.GetAllByUserAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetAllByFarmAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Animal>());
 
         // Act

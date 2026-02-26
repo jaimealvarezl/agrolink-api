@@ -22,12 +22,12 @@ public class GetAnimalBreedsQueryHandlerTests
     public async Task Handle_ReturnsDistinctBreeds()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAnimalBreedsQuery(userId);
+        const int farmId = 1;
+        var query = new GetAnimalBreedsQuery(farmId);
         var expectedBreeds = new List<string> { "Angus", "Hereford", "Brahman" };
 
         _animalRepositoryMock
-            .Setup(r => r.GetDistinctBreedsAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetDistinctBreedsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedBreeds);
 
         // Act
@@ -44,10 +44,10 @@ public class GetAnimalBreedsQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAnimalBreedsQuery(userId);
+        const int farmId = 1;
+        var query = new GetAnimalBreedsQuery(farmId);
         _animalRepositoryMock
-            .Setup(r => r.GetDistinctBreedsAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetDistinctBreedsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act

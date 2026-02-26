@@ -11,6 +11,6 @@ public class GetAnimalColorsQueryHandler(IAnimalRepository animalRepository)
         CancellationToken cancellationToken
     )
     {
-        return await animalRepository.GetDistinctColorsAsync(request.UserId, cancellationToken);
+        return await animalRepository.GetDistinctColorsAsync(request.FarmId, cancellationToken);
     }
 }

@@ -31,10 +31,7 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var animals = await mediator.Send(
-            new GetAllAnimalsQuery(GetCurrentUserId()),
-            cancellationToken
-        );
+        var animals = await mediator.Send(new GetAllAnimalsQuery(farmId), cancellationToken);
         return Ok(animals);
     }
 
@@ -44,10 +41,7 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var colors = await mediator.Send(
-            new GetAnimalColorsQuery(GetCurrentUserId()),
-            cancellationToken
-        );
+        var colors = await mediator.Send(new GetAnimalColorsQuery(farmId), cancellationToken);
         return Ok(colors);
     }
 
@@ -57,10 +51,7 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var breeds = await mediator.Send(
-            new GetAnimalBreedsQuery(GetCurrentUserId()),
-            cancellationToken
-        );
+        var breeds = await mediator.Send(new GetAnimalBreedsQuery(farmId), cancellationToken);
         return Ok(breeds);
     }
 

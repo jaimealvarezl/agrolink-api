@@ -138,7 +138,12 @@ public class UpdatePaddockCommandHandlerTests
         var paddockId = 1;
         var farmId = 1;
         var command = new UpdatePaddockCommand(paddockId, null, null, null, "InvalidType");
-        var paddock = new Paddock { Id = paddockId, Name = "Test", FarmId = farmId };
+        var paddock = new Paddock
+        {
+            Id = paddockId,
+            Name = "Test",
+            FarmId = farmId,
+        };
 
         _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
         _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);

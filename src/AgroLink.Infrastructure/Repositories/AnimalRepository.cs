@@ -186,8 +186,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         return (items, totalCount);
     }
 
-    public async Task<IEnumerable<Animal>> GetAllByUserAsync(
-        int userId,
+    public async Task<IEnumerable<Animal>> GetAllByFarmAsync(
+        int farmId,
         CancellationToken cancellationToken = default
     )
     {
@@ -198,14 +198,7 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
-            .Where(a =>
-                _context.FarmMembers.Any(m =>
-                    m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId
-                )
-                || _context.Farms.Any(f =>
-                    f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
-                )
-            )
+            .Where(a => a.Lot.Paddock.FarmId == farmId)
             .ToListAsync(cancellationToken);
     }
 
@@ -233,23 +226,14 @@ public class AnimalRepository(AgroLinkDbContext context)
     }
 
     public async Task<List<string>> GetDistinctColorsAsync(
-        int userId,
+        int farmId,
         CancellationToken cancellationToken = default
     )
     {
-        var userFarmIds = await GetUserFarmIdsAsync(userId, cancellationToken);
-
-        if (userFarmIds.Count == 0)
-        {
-            return [];
-        }
-
         return await _dbSet
             .Include(a => a.Lot)
                 .ThenInclude(l => l.Paddock)
-            .Where(a =>
-                !string.IsNullOrEmpty(a.Color) && userFarmIds.Contains(a.Lot.Paddock.FarmId)
-            )
+            .Where(a => !string.IsNullOrEmpty(a.Color) && a.Lot.Paddock.FarmId == farmId)
             .Select(a => a.Color!)
             .GroupBy(c => c.ToLower())
             .Select(g => g.OrderBy(c => c).First())
@@ -258,23 +242,14 @@ public class AnimalRepository(AgroLinkDbContext context)
     }
 
     public async Task<List<string>> GetDistinctBreedsAsync(
-        int userId,
+        int farmId,
         CancellationToken cancellationToken = default
     )
     {
-        var userFarmIds = await GetUserFarmIdsAsync(userId, cancellationToken);
-
-        if (userFarmIds.Count == 0)
-        {
-            return [];
-        }
-
         return await _dbSet
             .Include(a => a.Lot)
                 .ThenInclude(l => l.Paddock)
-            .Where(a =>
-                !string.IsNullOrEmpty(a.Breed) && userFarmIds.Contains(a.Lot.Paddock.FarmId)
-            )
+            .Where(a => !string.IsNullOrEmpty(a.Breed) && a.Lot.Paddock.FarmId == farmId)
             .Select(a => a.Breed!)
             .GroupBy(b => b.ToLower())
             .Select(g => g.OrderBy(b => b).First())
