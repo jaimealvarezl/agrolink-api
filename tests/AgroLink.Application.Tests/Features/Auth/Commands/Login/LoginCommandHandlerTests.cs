@@ -3,6 +3,7 @@ using AgroLink.Application.Features.Auth.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Auth.Commands.Login;
@@ -13,19 +14,11 @@ public class LoginCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _authRepositoryMock = new Mock<IAuthRepository>();
-        _jwtTokenServiceMock = new Mock<IJwtTokenService>();
-        _passwordHasherMock = new Mock<IPasswordHasher>();
-        _handler = new LoginCommandHandler(
-            _authRepositoryMock.Object,
-            _jwtTokenServiceMock.Object,
-            _passwordHasherMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<LoginCommandHandler>();
     }
 
-    private Mock<IAuthRepository> _authRepositoryMock = null!;
-    private Mock<IJwtTokenService> _jwtTokenServiceMock = null!;
-    private Mock<IPasswordHasher> _passwordHasherMock = null!;
+    private AutoMocker _mocker = null!;
     private LoginCommandHandler _handler = null!;
 
     [Test]
@@ -44,12 +37,22 @@ public class LoginCommandHandlerTests
         };
         var authResponseToken = "some_jwt_token";
 
-        _authRepositoryMock.Setup(r => r.GetUserByEmailAsync(loginDto.Email)).ReturnsAsync(user);
-        _passwordHasherMock
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Setup(r => r.GetUserByEmailAsync(loginDto.Email))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IPasswordHasher>()
             .Setup(h => h.VerifyPassword(loginDto.Password, user.PasswordHash))
             .Returns(true);
-        _jwtTokenServiceMock.Setup(s => s.GenerateToken(user)).Returns(authResponseToken);
-        _authRepositoryMock.Setup(r => r.UpdateUserAsync(user)).Returns(Task.CompletedTask);
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Setup(s => s.GenerateToken(user))
+            .Returns(authResponseToken);
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Setup(r => r.UpdateUserAsync(user))
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -58,10 +61,12 @@ public class LoginCommandHandlerTests
         result.ShouldNotBeNull();
         result.Token.ShouldBe(authResponseToken);
         result.User.Email.ShouldBe(user.Email);
-        _authRepositoryMock.Verify(
-            r => r.UpdateUserAsync(It.Is<User>(u => u.LastLoginAt != default(DateTime))),
-            Times.Once
-        );
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Verify(
+                r => r.UpdateUserAsync(It.Is<User>(u => u.LastLoginAt != default(DateTime))),
+                Times.Once
+            );
     }
 
     [Test]
@@ -71,7 +76,8 @@ public class LoginCommandHandlerTests
         var loginDto = new LoginDto { Email = "nonexistent@example.com", Password = "password123" };
         var command = new LoginCommand(loginDto);
 
-        _authRepositoryMock
+        _mocker
+            .GetMock<IAuthRepository>()
             .Setup(r => r.GetUserByEmailAsync(loginDto.Email))
             .ReturnsAsync((User?)null);
 
@@ -80,12 +86,15 @@ public class LoginCommandHandlerTests
 
         // Assert
         result.ShouldBeNull();
-        _authRepositoryMock.Verify(r => r.UpdateUserAsync(It.IsAny<User>()), Times.Never);
-        _passwordHasherMock.Verify(
-            h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()),
-            Times.Never
-        );
-        _jwtTokenServiceMock.Verify(s => s.GenerateToken(It.IsAny<User>()), Times.Never);
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Verify(r => r.UpdateUserAsync(It.IsAny<User>()), Times.Never);
+        _mocker
+            .GetMock<IPasswordHasher>()
+            .Verify(h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Verify(s => s.GenerateToken(It.IsAny<User>()), Times.Never);
     }
 
     [Test]
@@ -103,19 +112,25 @@ public class LoginCommandHandlerTests
             IsActive = false,
         };
 
-        _authRepositoryMock.Setup(r => r.GetUserByEmailAsync(loginDto.Email)).ReturnsAsync(user);
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Setup(r => r.GetUserByEmailAsync(loginDto.Email))
+            .ReturnsAsync(user);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.ShouldBeNull();
-        _authRepositoryMock.Verify(r => r.UpdateUserAsync(It.IsAny<User>()), Times.Never);
-        _passwordHasherMock.Verify(
-            h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()),
-            Times.Never
-        );
-        _jwtTokenServiceMock.Verify(s => s.GenerateToken(It.IsAny<User>()), Times.Never);
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Verify(r => r.UpdateUserAsync(It.IsAny<User>()), Times.Never);
+        _mocker
+            .GetMock<IPasswordHasher>()
+            .Verify(h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Verify(s => s.GenerateToken(It.IsAny<User>()), Times.Never);
     }
 
     [Test]
@@ -133,8 +148,12 @@ public class LoginCommandHandlerTests
             IsActive = true,
         };
 
-        _authRepositoryMock.Setup(r => r.GetUserByEmailAsync(loginDto.Email)).ReturnsAsync(user);
-        _passwordHasherMock
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Setup(r => r.GetUserByEmailAsync(loginDto.Email))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IPasswordHasher>()
             .Setup(h => h.VerifyPassword(loginDto.Password, user.PasswordHash))
             .Returns(false);
 
@@ -143,7 +162,11 @@ public class LoginCommandHandlerTests
 
         // Assert
         result.ShouldBeNull();
-        _authRepositoryMock.Verify(r => r.UpdateUserAsync(It.IsAny<User>()), Times.Never);
-        _jwtTokenServiceMock.Verify(s => s.GenerateToken(It.IsAny<User>()), Times.Never);
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Verify(r => r.UpdateUserAsync(It.IsAny<User>()), Times.Never);
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Verify(s => s.GenerateToken(It.IsAny<User>()), Times.Never);
     }
 }

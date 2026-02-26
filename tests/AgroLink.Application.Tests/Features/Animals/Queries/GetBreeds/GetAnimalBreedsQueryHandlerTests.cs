@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Queries.GetBreeds;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetBreeds;
@@ -11,11 +12,11 @@ public class GetAnimalBreedsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalBreedsQueryHandler(_animalRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalBreedsQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalBreedsQueryHandler _handler = null!;
 
     [Test]
@@ -26,7 +27,8 @@ public class GetAnimalBreedsQueryHandlerTests
         var query = new GetAnimalBreedsQuery(farmId);
         var expectedBreeds = new List<string> { "Angus", "Hereford", "Brahman" };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetDistinctBreedsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedBreeds);
 
@@ -46,7 +48,8 @@ public class GetAnimalBreedsQueryHandlerTests
         // Arrange
         const int farmId = 1;
         var query = new GetAnimalBreedsQuery(farmId);
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetDistinctBreedsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 

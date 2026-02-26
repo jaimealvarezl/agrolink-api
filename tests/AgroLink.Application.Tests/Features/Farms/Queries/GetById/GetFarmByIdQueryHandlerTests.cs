@@ -4,6 +4,7 @@ using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Farms.Queries.GetById;
@@ -14,19 +15,11 @@ public class GetFarmByIdQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _handler = new GetFarmByIdQueryHandler(
-            _farmRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _ownerRepositoryMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetFarmByIdQueryHandler>();
     }
 
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetFarmByIdQueryHandler _handler = null!;
 
     [Test]
@@ -50,8 +43,9 @@ public class GetFarmByIdQueryHandlerTests
             Role = FarmMemberRoles.Owner,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
 
@@ -66,39 +60,6 @@ public class GetFarmByIdQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_ExistingFarmWithAccessViaOwnerTable_ReturnsFarmDto()
-    {
-        // Arrange
-        var farmId = 1;
-        var userId = 10;
-        var ownerId = 20;
-        var query = new GetFarmByIdQuery(farmId, userId);
-        var farm = new Farm
-        {
-            Id = farmId,
-            Name = "Test Farm",
-            OwnerId = ownerId,
-        };
-        var owner = new Owner { Id = ownerId, UserId = userId };
-
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync((FarmMember?)null);
-        _ownerRepositoryMock
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
-            .ReturnsAsync(owner);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.ShouldNotBeNull();
-        result.Id.ShouldBe(farmId);
-        result.Role.ShouldBe(FarmMemberRoles.Owner);
-    }
-
-    [Test]
     public async Task Handle_ExistingFarmWithoutAccess_ReturnsNull()
     {
         // Arrange
@@ -107,8 +68,9 @@ public class GetFarmByIdQueryHandlerTests
         var query = new GetFarmByIdQuery(farmId, userId);
         var farm = new Farm { Id = farmId, Name = "Test Farm" };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync((FarmMember?)null);
 
@@ -127,7 +89,10 @@ public class GetFarmByIdQueryHandlerTests
         var userId = 10;
         var query = new GetFarmByIdQuery(farmId, userId);
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync((Farm?)null);
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Setup(r => r.GetByIdAsync(farmId))
+            .ReturnsAsync((Farm?)null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

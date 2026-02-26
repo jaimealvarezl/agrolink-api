@@ -3,6 +3,7 @@ using AgroLink.Application.Features.Lots.DTOs;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Lots.Commands.Create;
@@ -13,19 +14,11 @@ public class CreateLotCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new CreateLotCommandHandler(
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<CreateLotCommandHandler>();
     }
 
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private CreateLotCommandHandler _handler = null!;
 
     [Test]
@@ -48,11 +41,15 @@ public class CreateLotCommandHandlerTests
         };
         var paddock = new Paddock { Id = 1, Name = "Test Paddock" };
 
-        _lotRepositoryMock
+        _mocker
+            .GetMock<ILotRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Lot>()))
             .Callback<Lot>(l => l.Id = lot.Id); // Simulate DB ID generation
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddock.Id)).ReturnsAsync(paddock);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddock.Id))
+            .ReturnsAsync(paddock);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -62,8 +59,8 @@ public class CreateLotCommandHandlerTests
         result.Id.ShouldBe(lot.Id);
         result.Name.ShouldBe(lot.Name);
         result.PaddockName.ShouldBe(paddock.Name);
-        _lotRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Lot>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<ILotRepository>().Verify(r => r.AddAsync(It.IsAny<Lot>()), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -78,7 +75,8 @@ public class CreateLotCommandHandlerTests
         };
         var command = new CreateLotCommand(createLotDto);
 
-        _paddockRepositoryMock
+        _mocker
+            .GetMock<IPaddockRepository>()
             .Setup(r => r.GetByIdAsync(createLotDto.PaddockId))
             .ReturnsAsync((Paddock?)null);
 

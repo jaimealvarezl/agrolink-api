@@ -2,8 +2,8 @@ using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
-using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.UploadPhoto;
@@ -14,29 +14,11 @@ public class UploadAnimalPhotoCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _pathProviderMock = new Mock<IStoragePathProvider>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _loggerMock = new Mock<ILogger<UploadAnimalPhotoCommandHandler>>();
-
-        _handler = new UploadAnimalPhotoCommandHandler(
-            _animalRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object,
-            _storageServiceMock.Object,
-            _pathProviderMock.Object,
-            _unitOfWorkMock.Object,
-            _loggerMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<UploadAnimalPhotoCommandHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<IStoragePathProvider> _pathProviderMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private Mock<ILogger<UploadAnimalPhotoCommandHandler>> _loggerMock = null!;
+    private AutoMocker _mocker = null!;
     private UploadAnimalPhotoCommandHandler _handler = null!;
 
     [Test]
@@ -82,11 +64,16 @@ public class UploadAnimalPhotoCommandHandlerTests
             Id = animalId,
             Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _animalPhotoRepositoryMock.Setup(r => r.HasPhotosAsync(animalId)).ReturnsAsync(false);
-        _pathProviderMock
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Setup(r => r.HasPhotosAsync(animalId))
+            .ReturnsAsync(false);
+        _mocker
+            .GetMock<IStoragePathProvider>()
             .Setup(p =>
                 p.GetAnimalPhotoPath(
                     It.IsAny<int>(),
@@ -96,7 +83,8 @@ public class UploadAnimalPhotoCommandHandlerTests
                 )
             )
             .Returns("path/to/photo.jpg");
-        _storageServiceMock
+        _mocker
+            .GetMock<IStorageService>()
             .Setup(s => s.GetPresignedUrl(It.IsAny<string>(), It.IsAny<TimeSpan>()))
             .Returns("http://storage.com/photo.jpg");
 
@@ -107,17 +95,19 @@ public class UploadAnimalPhotoCommandHandlerTests
         result.ShouldNotBeNull();
         result.UriRemote.ShouldBe("http://storage.com/photo.jpg");
         result.IsProfile.ShouldBeTrue(); // First photo
-        _storageServiceMock.Verify(
-            s =>
-                s.UploadFileAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<Stream>(),
-                    It.IsAny<string>(),
-                    It.IsAny<long>()
-                ),
-            Times.Once
-        );
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.AtLeast(2));
+        _mocker
+            .GetMock<IStorageService>()
+            .Verify(
+                s =>
+                    s.UploadFileAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<Stream>(),
+                        It.IsAny<string>(),
+                        It.IsAny<long>()
+                    ),
+                Times.Once
+            );
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.AtLeast(2));
     }
 
     [Test]
@@ -155,7 +145,8 @@ public class UploadAnimalPhotoCommandHandlerTests
             5
         );
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, 5))
             .ReturnsAsync((Animal?)null);
 

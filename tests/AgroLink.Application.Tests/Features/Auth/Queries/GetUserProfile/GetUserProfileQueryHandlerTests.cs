@@ -3,6 +3,7 @@ using AgroLink.Application.Features.Auth.Queries.GetUserProfile;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Auth.Queries.GetUserProfile;
@@ -13,16 +14,11 @@ public class GetUserProfileQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _authRepositoryMock = new Mock<IAuthRepository>();
-        _jwtTokenServiceMock = new Mock<IJwtTokenService>();
-        _handler = new GetUserProfileQueryHandler(
-            _authRepositoryMock.Object,
-            _jwtTokenServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetUserProfileQueryHandler>();
     }
 
-    private Mock<IAuthRepository> _authRepositoryMock = null!;
-    private Mock<IJwtTokenService> _jwtTokenServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetUserProfileQueryHandler _handler = null!;
 
     [Test]
@@ -50,8 +46,12 @@ public class GetUserProfileQueryHandlerTests
             LastLoginAt = DateTime.UtcNow,
         };
 
-        _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns(userDtoFromToken);
-        _authRepositoryMock
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Setup(s => s.GetUserFromToken(token))
+            .Returns(userDtoFromToken);
+        _mocker
+            .GetMock<IAuthRepository>()
             .Setup(r => r.GetUserByIdAsync(userDtoFromToken.Id))
             .ReturnsAsync(userEntity);
 
@@ -71,14 +71,19 @@ public class GetUserProfileQueryHandlerTests
         var token = "invalid_jwt_token";
         var query = new GetUserProfileQuery(token);
 
-        _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns((UserDto?)null);
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Setup(s => s.GetUserFromToken(token))
+            .Returns((UserDto?)null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
         result.ShouldBeNull();
-        _authRepositoryMock.Verify(r => r.GetUserByIdAsync(It.IsAny<int>()), Times.Never);
+        _mocker
+            .GetMock<IAuthRepository>()
+            .Verify(r => r.GetUserByIdAsync(It.IsAny<int>()), Times.Never);
     }
 
     [Test]
@@ -97,8 +102,12 @@ public class GetUserProfileQueryHandlerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns(userDtoFromToken);
-        _authRepositoryMock
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Setup(s => s.GetUserFromToken(token))
+            .Returns(userDtoFromToken);
+        _mocker
+            .GetMock<IAuthRepository>()
             .Setup(r => r.GetUserByIdAsync(userDtoFromToken.Id))
             .ReturnsAsync((User?)null);
 
@@ -126,8 +135,12 @@ public class GetUserProfileQueryHandlerTests
         };
         var inactiveUser = new User { Id = 1, IsActive = false };
 
-        _jwtTokenServiceMock.Setup(s => s.GetUserFromToken(token)).Returns(userDtoFromToken);
-        _authRepositoryMock
+        _mocker
+            .GetMock<IJwtTokenService>()
+            .Setup(s => s.GetUserFromToken(token))
+            .Returns(userDtoFromToken);
+        _mocker
+            .GetMock<IAuthRepository>()
             .Setup(r => r.GetUserByIdAsync(userDtoFromToken.Id))
             .ReturnsAsync(inactiveUser);
 

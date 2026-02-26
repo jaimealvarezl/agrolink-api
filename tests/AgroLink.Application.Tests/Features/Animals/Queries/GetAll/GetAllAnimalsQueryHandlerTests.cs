@@ -1,9 +1,9 @@
 using AgroLink.Application.Features.Animals.Queries.GetAll;
-using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetAll;
@@ -14,16 +14,11 @@ public class GetAllAnimalsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _handler = new GetAllAnimalsQueryHandler(
-            _animalRepositoryMock.Object,
-            _storageServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAllAnimalsQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAllAnimalsQueryHandler _handler = null!;
 
     [Test]
@@ -64,7 +59,8 @@ public class GetAllAnimalsQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAllByFarmAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
 
@@ -84,7 +80,8 @@ public class GetAllAnimalsQueryHandlerTests
         // Arrange
         const int farmId = 1;
         var query = new GetAllAnimalsQuery(farmId);
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAllByFarmAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Animal>());
 

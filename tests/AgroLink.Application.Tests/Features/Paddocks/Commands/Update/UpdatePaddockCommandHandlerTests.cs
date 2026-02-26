@@ -4,6 +4,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Paddocks.Commands.Update;
@@ -14,22 +15,11 @@ public class UpdatePaddockCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new UpdatePaddockCommandHandler(
-            _paddockRepositoryMock.Object,
-            _farmRepositoryMock.Object,
-            _currentUserServiceMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<UpdatePaddockCommandHandler>();
     }
 
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private UpdatePaddockCommandHandler _handler = null!;
 
     [Test]
@@ -51,10 +41,13 @@ public class UpdatePaddockCommandHandlerTests
         };
         var farm = new Farm { Id = farmId, Name = "Test Farm" };
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -66,8 +59,10 @@ public class UpdatePaddockCommandHandlerTests
         result.FarmId.ShouldBe(farmId);
         result.Area.ShouldBe(area);
         result.AreaType.ShouldBe(areaType);
-        _paddockRepositoryMock.Verify(r => r.Update(It.IsAny<Paddock>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Verify(r => r.Update(It.IsAny<Paddock>()), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -85,8 +80,11 @@ public class UpdatePaddockCommandHandlerTests
             FarmId = paddockFarmId,
         };
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
 
         // Act & Assert
         await Should.ThrowAsync<ForbiddenAccessException>(async () =>
@@ -99,7 +97,10 @@ public class UpdatePaddockCommandHandlerTests
     {
         // Arrange
         var command = new UpdatePaddockCommand(999, "Name", 1, null, null);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Paddock?)null);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(999))
+            .ReturnsAsync((Paddock?)null);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(async () =>
@@ -122,8 +123,11 @@ public class UpdatePaddockCommandHandlerTests
             AreaType = null,
         };
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(async () =>
@@ -145,8 +149,11 @@ public class UpdatePaddockCommandHandlerTests
             FarmId = farmId,
         };
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(async () =>

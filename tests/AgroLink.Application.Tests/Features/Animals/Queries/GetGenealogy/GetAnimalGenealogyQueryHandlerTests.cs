@@ -4,6 +4,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetGenealogy;
@@ -14,16 +15,11 @@ public class GetAnimalGenealogyQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _handler = new GetAnimalGenealogyQueryHandler(
-            _animalRepositoryMock.Object,
-            _currentUserServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalGenealogyQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalGenealogyQueryHandler _handler = null!;
 
     [Test]
@@ -47,11 +43,13 @@ public class GetAnimalGenealogyQueryHandlerTests
             Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
-        _animalRepositoryMock
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetChildrenAsync(animalId))
             .ReturnsAsync(new List<Animal>());
 
@@ -79,10 +77,11 @@ public class GetAnimalGenealogyQueryHandlerTests
             Lot = new Lot { Paddock = new Paddock { FarmId = animalFarmId } },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -99,7 +98,8 @@ public class GetAnimalGenealogyQueryHandlerTests
         const int userId = 1;
         var query = new GetAnimalGenealogyQuery(animalId, userId);
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 

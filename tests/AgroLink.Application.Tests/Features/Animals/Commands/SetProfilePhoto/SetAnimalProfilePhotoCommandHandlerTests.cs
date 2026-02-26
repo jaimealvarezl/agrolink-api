@@ -3,6 +3,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.SetProfilePhoto;
@@ -13,20 +14,11 @@ public class SetAnimalProfilePhotoCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-
-        _handler = new SetAnimalProfilePhotoCommandHandler(
-            _animalRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<SetAnimalProfilePhotoCommandHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private SetAnimalProfilePhotoCommandHandler _handler = null!;
 
     [Test]
@@ -45,20 +37,23 @@ public class SetAnimalProfilePhotoCommandHandlerTests
         };
         var photo = new AnimalPhoto { Id = photoId, AnimalId = animalId };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _animalPhotoRepositoryMock.Setup(r => r.GetByIdAsync(photoId)).ReturnsAsync(photo);
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Setup(r => r.GetByIdAsync(photoId))
+            .ReturnsAsync(photo);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _animalPhotoRepositoryMock.Verify(
-            r => r.SetProfilePhotoAsync(animalId, photoId),
-            Times.Once
-        );
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Verify(r => r.SetProfilePhotoAsync(animalId, photoId), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -77,10 +72,14 @@ public class SetAnimalProfilePhotoCommandHandlerTests
         };
         var photo = new AnimalPhoto { Id = photoId, AnimalId = 2 }; // Different animal
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _animalPhotoRepositoryMock.Setup(r => r.GetByIdAsync(photoId)).ReturnsAsync(photo);
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Setup(r => r.GetByIdAsync(photoId))
+            .ReturnsAsync(photo);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(() =>

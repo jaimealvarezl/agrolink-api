@@ -3,6 +3,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Paddocks.Queries.GetById;
@@ -13,19 +14,11 @@ public class GetPaddockByIdQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _handler = new GetPaddockByIdQueryHandler(
-            _paddockRepositoryMock.Object,
-            _farmRepositoryMock.Object,
-            _currentUserServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetPaddockByIdQueryHandler>();
     }
 
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetPaddockByIdQueryHandler _handler = null!;
 
     [Test]
@@ -44,9 +37,12 @@ public class GetPaddockByIdQueryHandlerTests
         };
         var farm = new Farm { Id = farmId, Name = "Test Farm" };
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -74,8 +70,11 @@ public class GetPaddockByIdQueryHandlerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -91,7 +90,10 @@ public class GetPaddockByIdQueryHandlerTests
         const int paddockId = 999;
         var query = new GetPaddockByIdQuery(paddockId);
 
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync((Paddock?)null);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync((Paddock?)null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

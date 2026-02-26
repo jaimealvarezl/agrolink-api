@@ -2,6 +2,7 @@ using AgroLink.Application.Features.Lots.Queries.GetAll;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Lots.Queries.GetAll;
@@ -12,16 +13,11 @@ public class GetAllLotsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _handler = new GetAllLotsQueryHandler(
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAllLotsQueryHandler>();
     }
 
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAllLotsQueryHandler _handler = null!;
 
     [Test]
@@ -50,8 +46,11 @@ public class GetAllLotsQueryHandlerTests
         };
         var paddock = new Paddock { Id = 1, Name = "Test Paddock" };
 
-        _lotRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(lots);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddock.Id)).ReturnsAsync(paddock);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetAllAsync()).ReturnsAsync(lots);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddock.Id))
+            .ReturnsAsync(paddock);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -68,7 +67,7 @@ public class GetAllLotsQueryHandlerTests
     {
         // Arrange
         var query = new GetAllLotsQuery();
-        _lotRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Lot>());
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Lot>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

@@ -4,6 +4,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetByLot;
@@ -14,34 +15,11 @@ public class GetAnimalsByLotQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
-        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _handler = new GetAnimalsByLotQueryHandler(
-            _animalRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
-            _animalOwnerRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object,
-            _storageServiceMock.Object,
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object,
-            _currentUserServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalsByLotQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalsByLotQueryHandler _handler = null!;
 
     [Test]
@@ -85,14 +63,22 @@ public class GetAnimalsByLotQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetByLotIdAsync(lotId, userId)).ReturnsAsync(animals);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(lot.PaddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
-        _animalOwnerRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByLotIdAsync(lotId, userId))
+            .ReturnsAsync(animals);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(lot.PaddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<IAnimalOwnerRepository>()
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
-        _animalPhotoRepositoryMock
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalPhoto>());
 
@@ -122,9 +108,12 @@ public class GetAnimalsByLotQueryHandlerTests
         };
         var paddock = new Paddock { Id = 1, FarmId = lotFarmId };
 
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(lot.PaddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(lot.PaddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -149,12 +138,16 @@ public class GetAnimalsByLotQueryHandlerTests
         };
         var paddock = new Paddock { Id = 1, FarmId = farmId };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetByLotIdAsync(lotId, userId))
             .ReturnsAsync(new List<Animal>());
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(lot.PaddockId)).ReturnsAsync(paddock);
-        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(lot.PaddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

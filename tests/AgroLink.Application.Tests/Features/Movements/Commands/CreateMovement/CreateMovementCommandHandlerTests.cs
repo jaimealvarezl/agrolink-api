@@ -3,6 +3,7 @@ using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Movements.Commands.CreateMovement;
@@ -13,11 +14,11 @@ public class CreateMovementCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _movementRepositoryMock = new Mock<IMovementRepository>();
-        _handler = new CreateMovementCommandHandler(_movementRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<CreateMovementCommandHandler>();
     }
 
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private CreateMovementCommandHandler _handler = null!;
 
     [Test]
@@ -59,13 +60,26 @@ public class CreateMovementCommandHandlerTests
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
 
-        _movementRepositoryMock
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.AddMovementAsync(It.IsAny<Movement>()))
             .Callback<Movement>(m => m.Id = movement.Id); // Simulate DB ID generation
-        _movementRepositoryMock.Setup(r => r.GetUserByIdAsync(userId)).ReturnsAsync(user);
-        _movementRepositoryMock.Setup(r => r.GetAnimalByIdAsync(animal.Id)).ReturnsAsync(animal);
-        _movementRepositoryMock.Setup(r => r.GetLotByIdAsync(lotFrom.Id)).ReturnsAsync(lotFrom);
-        _movementRepositoryMock.Setup(r => r.GetLotByIdAsync(lotTo.Id)).ReturnsAsync(lotTo);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetUserByIdAsync(userId))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetAnimalByIdAsync(animal.Id))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetLotByIdAsync(lotFrom.Id))
+            .ReturnsAsync(lotFrom);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetLotByIdAsync(lotTo.Id))
+            .ReturnsAsync(lotTo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -78,6 +92,8 @@ public class CreateMovementCommandHandlerTests
         result.FromName.ShouldBe(lotFrom.Name);
         result.ToName.ShouldBe(lotTo.Name);
         result.UserName.ShouldBe(user.Name);
-        _movementRepositoryMock.Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Once);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Once);
     }
 }

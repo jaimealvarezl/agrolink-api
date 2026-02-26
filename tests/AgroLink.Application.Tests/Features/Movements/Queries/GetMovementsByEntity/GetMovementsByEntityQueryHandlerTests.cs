@@ -2,6 +2,7 @@ using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Movements.Queries.GetMovementsByEntity;
@@ -12,11 +13,11 @@ public class GetMovementsByEntityQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _movementRepositoryMock = new Mock<IMovementRepository>();
-        _handler = new GetMovementsByEntityQueryHandler(_movementRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetMovementsByEntityQueryHandler>();
     }
 
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetMovementsByEntityQueryHandler _handler = null!;
 
     [Test]
@@ -61,16 +62,28 @@ public class GetMovementsByEntityQueryHandlerTests
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
 
-        _movementRepositoryMock
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.GetMovementsByEntityAsync(entityType, entityId))
             .ReturnsAsync(movements);
-        _movementRepositoryMock.Setup(r => r.GetUserByIdAsync(It.IsAny<int>())).ReturnsAsync(user);
-        _movementRepositoryMock
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetUserByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.GetAnimalByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(animal);
-        _movementRepositoryMock.Setup(r => r.GetLotByIdAsync(10)).ReturnsAsync(lotFrom);
-        _movementRepositoryMock.Setup(r => r.GetLotByIdAsync(20)).ReturnsAsync(lotTo);
-        _movementRepositoryMock
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetLotByIdAsync(10))
+            .ReturnsAsync(lotFrom);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetLotByIdAsync(20))
+            .ReturnsAsync(lotTo);
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.GetLotByIdAsync(30))
             .ReturnsAsync(new Lot { Id = 30, Name = "Lot Final" });
 
@@ -103,7 +116,8 @@ public class GetMovementsByEntityQueryHandlerTests
         var entityId = 1;
         var query = new GetMovementsByEntityQuery(entityType, entityId);
 
-        _movementRepositoryMock
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.GetMovementsByEntityAsync(entityType, entityId))
             .ReturnsAsync(new List<Movement>());
 

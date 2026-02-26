@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Queries.GetColors;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetColors;
@@ -11,11 +12,11 @@ public class GetAnimalColorsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalColorsQueryHandler(_animalRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalColorsQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalColorsQueryHandler _handler = null!;
 
     [Test]
@@ -26,7 +27,8 @@ public class GetAnimalColorsQueryHandlerTests
         var query = new GetAnimalColorsQuery(farmId);
         var expectedColors = new List<string> { "Blanco", "Negro", "Pinto Negro" };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetDistinctColorsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedColors);
 
@@ -46,7 +48,8 @@ public class GetAnimalColorsQueryHandlerTests
         // Arrange
         const int farmId = 1;
         var query = new GetAnimalColorsQuery(farmId);
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetDistinctColorsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
