@@ -29,17 +29,29 @@ public class CreateMovementCommandHandler(
             if (request.MovementDto.EntityType == "ANIMAL")
             {
                 var animal = await animalRepository.GetByIdAsync(request.MovementDto.EntityId);
-                if (animal == null) throw new ArgumentException("Animal not found");
+                if (animal == null)
+                {
+                    throw new ArgumentException("Animal not found");
+                }
+
                 var lot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
                 if (lot == null || lot.Paddock.FarmId != farmId)
+                {
                     throw new ForbiddenAccessException("You do not have access to this animal");
+                }
             }
             else if (request.MovementDto.EntityType == "LOT")
             {
                 var lot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.EntityId);
-                if (lot == null) throw new ArgumentException("Lot not found");
+                if (lot == null)
+                {
+                    throw new ArgumentException("Lot not found");
+                }
+
                 if (lot.Paddock.FarmId != farmId)
+                {
                     throw new ForbiddenAccessException("You do not have access to this lot");
+                }
             }
 
             // Validate FromId
@@ -47,15 +59,27 @@ public class CreateMovementCommandHandler(
             {
                 if (request.MovementDto.EntityType == "ANIMAL")
                 {
-                    var lot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.FromId.Value);
+                    var lot = await lotRepository.GetLotWithPaddockAsync(
+                        request.MovementDto.FromId.Value
+                    );
                     if (lot != null && lot.Paddock.FarmId != farmId)
-                        throw new ForbiddenAccessException("Source lot does not belong to this farm");
+                    {
+                        throw new ForbiddenAccessException(
+                            "Source lot does not belong to this farm"
+                        );
+                    }
                 }
                 else if (request.MovementDto.EntityType == "LOT")
                 {
-                    var paddock = await paddockRepository.GetByIdAsync(request.MovementDto.FromId.Value);
+                    var paddock = await paddockRepository.GetByIdAsync(
+                        request.MovementDto.FromId.Value
+                    );
                     if (paddock != null && paddock.FarmId != farmId)
-                        throw new ForbiddenAccessException("Source paddock does not belong to this farm");
+                    {
+                        throw new ForbiddenAccessException(
+                            "Source paddock does not belong to this farm"
+                        );
+                    }
                 }
             }
 
@@ -64,15 +88,27 @@ public class CreateMovementCommandHandler(
             {
                 if (request.MovementDto.EntityType == "ANIMAL")
                 {
-                    var lot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.ToId.Value);
+                    var lot = await lotRepository.GetLotWithPaddockAsync(
+                        request.MovementDto.ToId.Value
+                    );
                     if (lot != null && lot.Paddock.FarmId != farmId)
-                        throw new ForbiddenAccessException("Target lot does not belong to this farm");
+                    {
+                        throw new ForbiddenAccessException(
+                            "Target lot does not belong to this farm"
+                        );
+                    }
                 }
                 else if (request.MovementDto.EntityType == "LOT")
                 {
-                    var paddock = await paddockRepository.GetByIdAsync(request.MovementDto.ToId.Value);
+                    var paddock = await paddockRepository.GetByIdAsync(
+                        request.MovementDto.ToId.Value
+                    );
                     if (paddock != null && paddock.FarmId != farmId)
-                        throw new ForbiddenAccessException("Target paddock does not belong to this farm");
+                    {
+                        throw new ForbiddenAccessException(
+                            "Target paddock does not belong to this farm"
+                        );
+                    }
                 }
             }
         }

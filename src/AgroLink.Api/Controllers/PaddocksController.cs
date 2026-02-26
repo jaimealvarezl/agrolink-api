@@ -32,12 +32,6 @@ public class PaddocksController(IMediator mediator) : BaseController
             return NotFound();
         }
 
-        // Safety check: ensure paddock belongs to farm
-        if (paddock.FarmId != farmId)
-        {
-            return NotFound();
-        }
-
         return Ok(paddock);
     }
 
