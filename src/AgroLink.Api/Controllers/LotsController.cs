@@ -21,8 +21,6 @@ public class LotsController(IMediator mediator) : BaseController
     [HttpGet("paddock/{paddockId}")]
     public async Task<ActionResult<IEnumerable<LotDto>>> GetByPaddock(int farmId, int paddockId)
     {
-        // TODO: Validate paddockId belongs to farmId (Optimization)
-        // Handler currently checks user access to paddock.
         var lots = await mediator.Send(new GetLotsByPaddockQuery(paddockId));
         return Ok(lots);
     }
@@ -35,11 +33,6 @@ public class LotsController(IMediator mediator) : BaseController
         {
             return NotFound();
         }
-        // Implicitly, if I can see the lot, I verify if it belongs to this farm
-        // Ideally we check: if (lot.Paddock.FarmId != farmId) return NotFound();
-        // But LotDto might not have Paddock.FarmId populated deep enough.
-        // We rely on the initial FarmRoleHandler check for access to the URL farm,
-        // but this specific resource check is pending strictly for "Cross-Farm" data leak prevention on read.
 
         return Ok(lot);
     }

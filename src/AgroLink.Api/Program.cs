@@ -46,7 +46,8 @@ builder.Services.AddSingleton<IAuthorizationHandler, FarmRoleHandler>();
 
 // JWT Authentication
 var jwtKey =
-    builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
+    builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("JWT Key is missing in configuration.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AgroLink";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AgroLink";
 
