@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Create;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -20,6 +21,7 @@ public class CreateChecklistCommandHandlerTests
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new CreateChecklistCommandHandler(
             _checklistRepositoryMock.Object,
@@ -28,6 +30,7 @@ public class CreateChecklistCommandHandlerTests
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _paddockRepositoryMock.Object,
+            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
         );
     }
@@ -38,6 +41,7 @@ public class CreateChecklistCommandHandlerTests
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private CreateChecklistCommandHandler _handler = null!;
 

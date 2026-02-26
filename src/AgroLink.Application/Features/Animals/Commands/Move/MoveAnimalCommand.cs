@@ -24,6 +24,7 @@ public class MoveAnimalCommandHandler(
     IAnimalPhotoRepository animalPhotoRepository,
     IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<MoveAnimalCommand, AnimalDto>
 {
@@ -38,11 +39,31 @@ public class MoveAnimalCommandHandler(
             throw new ArgumentException("Animal not found or access denied.");
         }
 
+        // Security check: ensure animal belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            throw new ForbiddenAccessException("You do not have access to this animal");
+        }
+
         // Verify target lot and permissions
         var targetLot = await lotRepository.GetLotWithPaddockAsync(request.ToLotId);
         if (targetLot == null)
         {
             throw new ArgumentException("Target lot not found.");
+        }
+
+        // Security check: ensure target lot belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && targetLot.Paddock.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            throw new ForbiddenAccessException(
+                "You do not have access to move animals to the target farm context."
+            );
         }
 
         var isMemberOfTargetFarm = await farmMemberRepository.ExistsAsync(fm =>

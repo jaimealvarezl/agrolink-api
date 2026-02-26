@@ -1,4 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.Delete;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -48,6 +50,34 @@ public class DeleteAnimalCommandHandlerTests
         animal.LifeStatus.ShouldBe(LifeStatus.Deleted);
         _mocker.GetMock<IAnimalRepository>().Verify(r => r.Update(animal), Times.Once);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_AnimalFromAnotherFarmContext_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 5;
+        const int currentFarmId = 10;
+        const int animalFarmId = 20;
+        var command = new DeleteAnimalCommand(animalId, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = animalFarmId } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("not have access to this animal");
     }
 
     [Test]

@@ -25,6 +25,7 @@ public class MoveAnimalCommandHandlerTests
         _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
         _storageServiceMock = new Mock<IStorageService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
 
         _handler = new MoveAnimalCommandHandler(
             _animalRepositoryMock.Object,
@@ -35,6 +36,7 @@ public class MoveAnimalCommandHandlerTests
             _animalPhotoRepositoryMock.Object,
             _farmMemberRepositoryMock.Object,
             _storageServiceMock.Object,
+            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
         );
     }
@@ -47,6 +49,7 @@ public class MoveAnimalCommandHandlerTests
     private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
     private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
     private Mock<IStorageService> _storageServiceMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private MoveAnimalCommandHandler _handler = null!;
 
@@ -133,6 +136,62 @@ public class MoveAnimalCommandHandlerTests
             _handler.Handle(command, CancellationToken.None)
         );
         exception.Message.ShouldBe("Animal not found or access denied.");
+    }
+
+    [Test]
+    public async Task Handle_AnimalFromAnotherFarmContext_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 1;
+        const int currentFarmId = 10;
+        const int animalFarmId = 20;
+        var command = new MoveAnimalCommand(animalId, 1, 2, userId, "Test Reason");
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = animalFarmId } },
+        };
+
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("not have access to this animal");
+    }
+
+    [Test]
+    public async Task Handle_TargetLotFromAnotherFarmContext_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 1;
+        const int currentFarmId = 10;
+        const int targetFarmId = 20;
+        var command = new MoveAnimalCommand(animalId, 1, 2, userId, "Test Reason");
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = currentFarmId } },
+        };
+        var lotTo = new Lot
+        {
+            Id = 2,
+            Paddock = new Paddock { FarmId = targetFarmId },
+        };
+
+        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(2)).ReturnsAsync(lotTo);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("not have access to move animals to the target farm context");
     }
 
     [Test]

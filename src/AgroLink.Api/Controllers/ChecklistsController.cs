@@ -52,9 +52,9 @@ public class ChecklistsController(IMediator mediator) : BaseController
             var checklist = await mediator.Send(new CreateChecklistCommand(dto, userId));
             return CreatedAtAction(nameof(GetById), new { farmId, id = checklist.Id }, checklist);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -71,9 +71,9 @@ public class ChecklistsController(IMediator mediator) : BaseController
             var checklist = await mediator.Send(new UpdateChecklistCommand(id, dto));
             return Ok(checklist);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
@@ -86,9 +86,9 @@ public class ChecklistsController(IMediator mediator) : BaseController
             await mediator.Send(new DeleteChecklistCommand(id));
             return NoContent();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 }

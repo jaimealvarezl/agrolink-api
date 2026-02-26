@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -20,6 +21,7 @@ public class UpdateChecklistCommandHandlerTests
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _handler = new UpdateChecklistCommandHandler(
             _checklistRepositoryMock.Object,
@@ -28,6 +30,7 @@ public class UpdateChecklistCommandHandlerTests
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
             _paddockRepositoryMock.Object,
+            _currentUserServiceMock.Object,
             _unitOfWorkMock.Object
         );
     }
@@ -38,6 +41,7 @@ public class UpdateChecklistCommandHandlerTests
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private Mock<IUnitOfWork> _unitOfWorkMock = null!;
     private UpdateChecklistCommandHandler _handler = null!;
 
@@ -46,6 +50,7 @@ public class UpdateChecklistCommandHandlerTests
     {
         // Arrange
         var checklistId = 1;
+        var farmId = 10;
         var updateChecklistDto = new CreateChecklistDto
         {
             ScopeType = "LOT",
@@ -73,7 +78,12 @@ public class UpdateChecklistCommandHandlerTests
             Notes = "Old Notes",
         };
         var user = new User { Id = 1, Name = "Test User" };
-        var lot = new Lot { Id = 1, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = 1,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = farmId },
+        };
         var animal = new Animal
         {
             Id = 1,
@@ -105,6 +115,8 @@ public class UpdateChecklistCommandHandlerTests
         _userRepositoryMock.Setup(r => r.GetByIdAsync(checklist.UserId)).ReturnsAsync(user);
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animal.Id)).ReturnsAsync(animal);
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(lot.Id)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

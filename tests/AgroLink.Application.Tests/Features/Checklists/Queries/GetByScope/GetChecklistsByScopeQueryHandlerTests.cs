@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetByScope;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -19,13 +20,15 @@ public class GetChecklistsByScopeQueryHandlerTests
         _animalRepositoryMock = new Mock<IAnimalRepository>();
         _lotRepositoryMock = new Mock<ILotRepository>();
         _paddockRepositoryMock = new Mock<IPaddockRepository>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _handler = new GetChecklistsByScopeQueryHandler(
             _checklistRepositoryMock.Object,
             _checklistItemRepositoryMock.Object,
             _userRepositoryMock.Object,
             _animalRepositoryMock.Object,
             _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
+            _paddockRepositoryMock.Object,
+            _currentUserServiceMock.Object
         );
     }
 
@@ -35,6 +38,7 @@ public class GetChecklistsByScopeQueryHandlerTests
     private Mock<IAnimalRepository> _animalRepositoryMock = null!;
     private Mock<ILotRepository> _lotRepositoryMock = null!;
     private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
     private GetChecklistsByScopeQueryHandler _handler = null!;
 
     [Test]
@@ -43,6 +47,7 @@ public class GetChecklistsByScopeQueryHandlerTests
         // Arrange
         var scopeType = "LOT";
         var scopeId = 1;
+        var farmId = 10;
         var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
         var checklists = new List<Checklist>
         {
@@ -64,7 +69,12 @@ public class GetChecklistsByScopeQueryHandlerTests
             },
         };
         var user = new User { Id = 1, Name = "Test User" };
-        var lot = new Lot { Id = scopeId, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = scopeId,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = farmId },
+        };
 
         _checklistRepositoryMock
             .Setup(r => r.GetByScopeAsync(scopeType, scopeId))
@@ -74,6 +84,8 @@ public class GetChecklistsByScopeQueryHandlerTests
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem>());
         _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(lot.Id)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -83,6 +95,32 @@ public class GetChecklistsByScopeQueryHandlerTests
         result.Count().ShouldBe(2);
         result.First().ScopeName.ShouldBe(lot.Name);
         result.First().UserName.ShouldBe(user.Name);
+    }
+
+    [Test]
+    public async Task Handle_ScopeFromAnotherFarm_ReturnsEmptyList()
+    {
+        // Arrange
+        var scopeType = "LOT";
+        var scopeId = 1;
+        var currentFarmId = 10;
+        var scopeFarmId = 20;
+        var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
+        var lot = new Lot
+        {
+            Id = scopeId,
+            Paddock = new Paddock { FarmId = scopeFarmId },
+        };
+
+        _lotRepositoryMock.Setup(r => r.GetLotWithPaddockAsync(scopeId)).ReturnsAsync(lot);
+        _currentUserServiceMock.Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.ShouldBeEmpty();
     }
 
     [Test]

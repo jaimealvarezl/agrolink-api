@@ -63,6 +63,7 @@ public class CreateAnimalCommandHandlerTests
             .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
             .ReturnsAsync(lot);
         _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
         _mocker
             .GetMock<IFarmMemberRepository>()
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
@@ -102,6 +103,41 @@ public class CreateAnimalCommandHandlerTests
             .GetMock<IAnimalRepository>()
             .Verify(r => r.AddAsync(It.Is<Animal>(a => a.AnimalOwners.Count == 1)), Times.Once);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_LotFromAnotherFarmContext_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        var currentFarmId = 10;
+        var lotFarmId = 20;
+        var createAnimalDto = new CreateAnimalDto
+        {
+            LotId = 1,
+            Name = "Cross-Farm Animal",
+            Sex = Sex.Female,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+            Owners = [],
+        };
+        var command = new CreateAnimalCommand(createAnimalDto);
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = lotFarmId },
+        };
+
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("not have access to create animals in this farm context");
     }
 
     [Test]
