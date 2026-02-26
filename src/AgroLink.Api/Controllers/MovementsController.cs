@@ -55,9 +55,9 @@ public class MovementsController(IMediator mediator) : BaseController
                 movement
             );
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 }

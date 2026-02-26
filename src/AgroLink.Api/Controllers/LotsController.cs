@@ -43,7 +43,6 @@ public class LotsController(IMediator mediator) : BaseController
     {
         try
         {
-            // We should ensure request.PaddockId belongs to farmId
             var dto = new CreateLotDto
             {
                 Name = request.Name,
