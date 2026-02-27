@@ -41,7 +41,7 @@ public class UpdateMemberRoleCommandHandlerTests
 
         _mocker
             .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.GetByFarmAndUserAsync(farmId, userId))
+            .Setup(r => r.GetByFarmAndUserAsync(farmId, userId, true))
             .ReturnsAsync(member);
 
         // Act
@@ -71,7 +71,7 @@ public class UpdateMemberRoleCommandHandlerTests
 
         _mocker
             .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.GetByFarmAndUserAsync(farmId, userId))
+            .Setup(r => r.GetByFarmAndUserAsync(farmId, userId, true))
             .ReturnsAsync(member);
 
         // Act & Assert
@@ -87,7 +87,7 @@ public class UpdateMemberRoleCommandHandlerTests
         // Arrange
         _mocker
             .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.GetByFarmAndUserAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .Setup(r => r.GetByFarmAndUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()))
             .ReturnsAsync((FarmMember?)null);
 
         // Act & Assert
