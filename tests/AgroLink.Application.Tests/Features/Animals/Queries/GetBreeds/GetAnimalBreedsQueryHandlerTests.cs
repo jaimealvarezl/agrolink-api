@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Queries.GetBreeds;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetBreeds;
@@ -11,23 +12,24 @@ public class GetAnimalBreedsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalBreedsQueryHandler(_animalRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalBreedsQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalBreedsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ReturnsDistinctBreeds()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAnimalBreedsQuery(userId);
+        const int farmId = 1;
+        var query = new GetAnimalBreedsQuery(farmId);
         var expectedBreeds = new List<string> { "Angus", "Hereford", "Brahman" };
 
-        _animalRepositoryMock
-            .Setup(r => r.GetDistinctBreedsAsync(userId, It.IsAny<CancellationToken>()))
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetDistinctBreedsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedBreeds);
 
         // Act
@@ -44,10 +46,11 @@ public class GetAnimalBreedsQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAnimalBreedsQuery(userId);
-        _animalRepositoryMock
-            .Setup(r => r.GetDistinctBreedsAsync(userId, It.IsAny<CancellationToken>()))
+        const int farmId = 1;
+        var query = new GetAnimalBreedsQuery(farmId);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetDistinctBreedsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act

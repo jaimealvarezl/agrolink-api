@@ -12,7 +12,10 @@ public class GetAnimalsByLotQueryHandler(
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
-    IStorageService storageService
+    IStorageService storageService,
+    ILotRepository lotRepository,
+    IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetAnimalsByLotQuery, IEnumerable<AnimalDto>>
 {
     public async Task<IEnumerable<AnimalDto>> Handle(
@@ -20,6 +23,20 @@ public class GetAnimalsByLotQueryHandler(
         CancellationToken cancellationToken
     )
     {
+        // Security check: ensure lot belongs to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            var lot = await lotRepository.GetByIdAsync(request.LotId);
+            if (lot != null)
+            {
+                var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
+                if (paddock != null && paddock.FarmId != currentUserService.CurrentFarmId.Value)
+                {
+                    return Enumerable.Empty<AnimalDto>();
+                }
+            }
+        }
+
         var animals = await animalRepository.GetByLotIdAsync(request.LotId, request.UserId);
         var result = new List<AnimalDto>();
 

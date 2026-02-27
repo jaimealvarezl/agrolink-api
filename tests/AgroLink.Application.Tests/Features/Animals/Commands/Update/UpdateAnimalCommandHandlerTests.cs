@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
@@ -126,6 +127,35 @@ public class UpdateAnimalCommandHandlerTests
         _mocker
             .GetMock<IAnimalOwnerRepository>()
             .Verify(r => r.RemoveByAnimalIdAsync(animalId), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_AnimalFromAnotherFarmContext_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 5;
+        const int currentFarmId = 10;
+        const int animalFarmId = 20;
+        var updateAnimalDto = new UpdateAnimalDto { Name = "Updated Name" };
+        var command = new UpdateAnimalCommand(animalId, updateAnimalDto, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = animalFarmId } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldContain("not have access to this animal");
     }
 
     [Test]

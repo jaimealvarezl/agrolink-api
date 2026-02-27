@@ -3,33 +3,30 @@ using AgroLink.Application.Features.Lots.Commands.Delete;
 using AgroLink.Application.Features.Lots.Commands.Move;
 using AgroLink.Application.Features.Lots.Commands.Update;
 using AgroLink.Application.Features.Lots.DTOs;
-using AgroLink.Application.Features.Lots.Queries.GetAll;
 using AgroLink.Application.Features.Lots.Queries.GetById;
 using AgroLink.Application.Features.Lots.Queries.GetByPaddock;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/farms/{farmId}/lots")]
+[Authorize(Policy = "FarmViewerAccess")]
 public class LotsController(IMediator mediator) : BaseController
 {
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<LotDto>>> GetAll()
-    {
-        var lots = await mediator.Send(new GetAllLotsQuery());
-        return Ok(lots);
-    }
+    // Removing generic GetAll as it's not scoped to Farm efficiently without a new Query.
+    // Ideally we should implement GetLotsByFarmQuery.
 
     [HttpGet("paddock/{paddockId}")]
-    public async Task<ActionResult<IEnumerable<LotDto>>> GetByPaddock(int paddockId)
+    public async Task<ActionResult<IEnumerable<LotDto>>> GetByPaddock(int farmId, int paddockId)
     {
         var lots = await mediator.Send(new GetLotsByPaddockQuery(paddockId));
         return Ok(lots);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<LotDto>> GetById(int id)
+    public async Task<ActionResult<LotDto>> GetById(int farmId, int id)
     {
         var lot = await mediator.Send(new GetLotByIdQuery(id));
         if (lot == null)
@@ -41,7 +38,8 @@ public class LotsController(IMediator mediator) : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<LotDto>> Create(CreateLotRequest request)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult<LotDto>> Create(int farmId, [FromBody] CreateLotRequest request)
     {
         try
         {
@@ -52,16 +50,21 @@ public class LotsController(IMediator mediator) : BaseController
                 Status = request.Status,
             };
             var lot = await mediator.Send(new CreateLotCommand(dto));
-            return CreatedAtAction(nameof(GetById), new { id = lot.Id }, lot);
+            return CreatedAtAction(nameof(GetById), new { farmId, id = lot.Id }, lot);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<LotDto>> Update(int id, UpdateLotRequest request)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult<LotDto>> Update(
+        int farmId,
+        int id,
+        [FromBody] UpdateLotRequest request
+    )
     {
         try
         {
@@ -74,28 +77,34 @@ public class LotsController(IMediator mediator) : BaseController
             var lot = await mediator.Send(new UpdateLotCommand(id, dto));
             return Ok(lot);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult> Delete(int farmId, int id)
     {
         try
         {
             await mediator.Send(new DeleteLotCommand(id));
             return NoContent();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 
     [HttpPost("{id}/move")]
-    public async Task<ActionResult<LotDto>> MoveLot(int id, [FromBody] MoveLotRequest request)
+    [Authorize(Policy = "FarmEditorAccess")] // Moving cattle is operation -> Editor
+    public async Task<ActionResult<LotDto>> MoveLot(
+        int farmId,
+        int id,
+        [FromBody] MoveLotRequest request
+    )
     {
         try
         {
@@ -105,9 +114,9 @@ public class LotsController(IMediator mediator) : BaseController
             );
             return Ok(lot);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return HandleServiceException(ex);
         }
     }
 }

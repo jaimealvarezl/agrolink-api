@@ -2,6 +2,7 @@ using AgroLink.Application.Features.Paddocks.Queries.GetAll;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Paddocks.Queries.GetAll;
@@ -12,16 +13,11 @@ public class GetAllPaddocksQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _handler = new GetAllPaddocksQueryHandler(
-            _paddockRepositoryMock.Object,
-            _farmRepositoryMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAllPaddocksQueryHandler>();
     }
 
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAllPaddocksQueryHandler _handler = null!;
 
     [Test]
@@ -48,8 +44,8 @@ public class GetAllPaddocksQueryHandlerTests
         };
         var farm = new Farm { Id = 1, Name = "Test Farm" };
 
-        _paddockRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(paddocks);
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farm.Id)).ReturnsAsync(farm);
+        _mocker.GetMock<IPaddockRepository>().Setup(r => r.GetAllAsync()).ReturnsAsync(paddocks);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farm.Id)).ReturnsAsync(farm);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -66,7 +62,10 @@ public class GetAllPaddocksQueryHandlerTests
     {
         // Arrange
         var query = new GetAllPaddocksQuery();
-        _paddockRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Paddock>());
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(new List<Paddock>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

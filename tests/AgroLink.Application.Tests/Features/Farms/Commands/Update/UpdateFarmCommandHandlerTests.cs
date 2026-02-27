@@ -4,6 +4,7 @@ using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Farms.Commands.Update;
@@ -14,20 +15,11 @@ public class UpdateFarmCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-
-        _handler = new UpdateFarmCommandHandler(
-            _farmRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<UpdateFarmCommandHandler>();
     }
 
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private UpdateFarmCommandHandler _handler = null!;
 
     [Test]
@@ -54,11 +46,12 @@ public class UpdateFarmCommandHandlerTests
             Role = FarmMemberRoles.Owner,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -71,8 +64,8 @@ public class UpdateFarmCommandHandlerTests
         result.CUE.ShouldBe(cue);
         result.Role.ShouldBe(FarmMemberRoles.Owner);
 
-        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -91,8 +84,9 @@ public class UpdateFarmCommandHandlerTests
             Role = FarmMemberRoles.Admin,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
 
@@ -120,8 +114,9 @@ public class UpdateFarmCommandHandlerTests
             Role = FarmMemberRoles.Viewer,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
 
@@ -141,8 +136,9 @@ public class UpdateFarmCommandHandlerTests
 
         var farm = new Farm { Id = farmId, Name = "Old Name" };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync((FarmMember?)null);
 
@@ -158,7 +154,10 @@ public class UpdateFarmCommandHandlerTests
         // Arrange
         var command = new UpdateFarmCommand(999, "Name", null, null, 10);
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Farm?)null);
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Setup(r => r.GetByIdAsync(999))
+            .ReturnsAsync((Farm?)null);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(async () =>

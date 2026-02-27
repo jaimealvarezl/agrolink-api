@@ -1,4 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -12,6 +14,7 @@ public class CreateChecklistCommandHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateChecklistCommand, ChecklistDto>
 {
@@ -21,6 +24,30 @@ public class CreateChecklistCommandHandler(
     )
     {
         var dto = request.Dto;
+
+        // Security check: ensure target scope belongs to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            int? scopeFarmId = null;
+            if (dto.ScopeType == "LOT")
+            {
+                var lot = await lotRepository.GetLotWithPaddockAsync(dto.ScopeId);
+                scopeFarmId = lot?.Paddock?.FarmId;
+            }
+            else if (dto.ScopeType == "PADDOCK")
+            {
+                var paddock = await paddockRepository.GetByIdAsync(dto.ScopeId);
+                scopeFarmId = paddock?.FarmId;
+            }
+
+            if (scopeFarmId != null && scopeFarmId != currentUserService.CurrentFarmId.Value)
+            {
+                throw new ForbiddenAccessException(
+                    "You do not have access to create checklists in this farm context."
+                );
+            }
+        }
+
         var checklist = new Checklist
         {
             ScopeType = dto.ScopeType,

@@ -5,6 +5,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetPagedList;
@@ -15,22 +16,11 @@ public class GetAnimalsPagedListQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _handler = new GetAnimalsPagedListQueryHandler(
-            _animalRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _currentUserServiceMock.Object,
-            _storageServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalsPagedListQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalsPagedListQueryHandler _handler = null!;
 
     [Test]
@@ -49,8 +39,9 @@ public class GetAnimalsPagedListQueryHandlerTests
             Sex.Female
         );
 
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(1);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(1);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(true);
 
@@ -72,7 +63,8 @@ public class GetAnimalsPagedListQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r =>
                 r.GetPagedListAsync(
                     query.FarmId,
@@ -88,7 +80,8 @@ public class GetAnimalsPagedListQueryHandlerTests
             )
             .ReturnsAsync((animals, 1));
 
-        _storageServiceMock
+        _mocker
+            .GetMock<IStorageService>()
             .Setup(s => s.GetPresignedUrl("p1", It.IsAny<TimeSpan>()))
             .Returns("http://signed.com/p1");
 
@@ -107,20 +100,22 @@ public class GetAnimalsPagedListQueryHandlerTests
         dto.IsMissing.ShouldBeFalse();
         dto.LotName.ShouldBe("Lot A");
 
-        _animalRepositoryMock.Verify(
-            r =>
-                r.GetPagedListAsync(
-                    query.FarmId,
-                    query.Page,
-                    query.PageSize,
-                    query.LotId,
-                    query.SearchTerm,
-                    query.IsSick,
-                    query.IsPregnant,
-                    query.IsMissing,
-                    query.Sex
-                ),
-            Times.Once
-        );
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Verify(
+                r =>
+                    r.GetPagedListAsync(
+                        query.FarmId,
+                        query.Page,
+                        query.PageSize,
+                        query.LotId,
+                        query.SearchTerm,
+                        query.IsSick,
+                        query.IsPregnant,
+                        query.IsMissing,
+                        query.Sex
+                    ),
+                Times.Once
+            );
     }
 }

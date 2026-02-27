@@ -4,6 +4,7 @@ using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Farms.Commands.Delete;
@@ -14,19 +15,11 @@ public class DeleteFarmCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new DeleteFarmCommandHandler(
-            _farmRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<DeleteFarmCommandHandler>();
     }
 
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private DeleteFarmCommandHandler _handler = null!;
 
     [Test]
@@ -44,11 +37,12 @@ public class DeleteFarmCommandHandlerTests
             Role = FarmMemberRoles.Owner,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
@@ -56,8 +50,8 @@ public class DeleteFarmCommandHandlerTests
         // Assert
         farm.IsActive.ShouldBeFalse();
         farm.DeletedAt.ShouldNotBeNull();
-        _farmRepositoryMock.Verify(r => r.Update(farm), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(farm), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -75,8 +69,9 @@ public class DeleteFarmCommandHandlerTests
             Role = FarmMemberRoles.Admin,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(membership);
 
@@ -84,8 +79,8 @@ public class DeleteFarmCommandHandlerTests
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+        _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 
     [Test]
@@ -96,14 +91,17 @@ public class DeleteFarmCommandHandlerTests
         var userId = 10;
         var command = new DeleteFarmCommand(farmId, userId);
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync((Farm?)null);
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Setup(r => r.GetByIdAsync(farmId))
+            .ReturnsAsync((Farm?)null);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+        _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 
     [Test]
@@ -115,13 +113,13 @@ public class DeleteFarmCommandHandlerTests
         var command = new DeleteFarmCommand(farmId, userId);
         var farm = new Farm { Id = farmId, IsActive = false };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _farmRepositoryMock.Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+        _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

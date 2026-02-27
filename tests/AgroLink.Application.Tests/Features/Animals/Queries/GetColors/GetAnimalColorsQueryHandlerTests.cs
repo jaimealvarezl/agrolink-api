@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Animals.Queries.GetColors;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetColors;
@@ -11,23 +12,24 @@ public class GetAnimalColorsQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _handler = new GetAnimalColorsQueryHandler(_animalRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalColorsQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalColorsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ReturnsDistinctColors()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAnimalColorsQuery(userId);
+        const int farmId = 1;
+        var query = new GetAnimalColorsQuery(farmId);
         var expectedColors = new List<string> { "Blanco", "Negro", "Pinto Negro" };
 
-        _animalRepositoryMock
-            .Setup(r => r.GetDistinctColorsAsync(userId, It.IsAny<CancellationToken>()))
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetDistinctColorsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedColors);
 
         // Act
@@ -44,10 +46,11 @@ public class GetAnimalColorsQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenNoAnimalsExist()
     {
         // Arrange
-        const int userId = 1;
-        var query = new GetAnimalColorsQuery(userId);
-        _animalRepositoryMock
-            .Setup(r => r.GetDistinctColorsAsync(userId, It.IsAny<CancellationToken>()))
+        const int farmId = 1;
+        var query = new GetAnimalColorsQuery(farmId);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetDistinctColorsAsync(farmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act

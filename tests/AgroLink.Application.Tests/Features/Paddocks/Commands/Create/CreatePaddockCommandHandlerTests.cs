@@ -4,6 +4,7 @@ using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Paddocks.Commands.Create;
@@ -14,23 +15,11 @@ public class CreatePaddockCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-
-        _handler = new CreatePaddockCommandHandler(
-            _paddockRepositoryMock.Object,
-            _farmRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<CreatePaddockCommandHandler>();
     }
 
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private CreatePaddockCommandHandler _handler = null!;
 
     [Test]
@@ -52,15 +41,17 @@ public class CreatePaddockCommandHandlerTests
             Role = FarmMemberRoles.Owner,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(member);
 
-        _paddockRepositoryMock
+        _mocker
+            .GetMock<IPaddockRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Paddock>()))
             .Callback<Paddock>(p => p.Id = 1);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -72,8 +63,10 @@ public class CreatePaddockCommandHandlerTests
         result.FarmName.ShouldBe(farm.Name);
         result.Area.ShouldBe(area);
         result.AreaType.ShouldBe(areaType);
-        _paddockRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Paddock>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Verify(r => r.AddAsync(It.IsAny<Paddock>()), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -81,7 +74,7 @@ public class CreatePaddockCommandHandlerTests
     {
         // Arrange
         var command = new CreatePaddockCommand("Test", 99, 1, null, null);
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Farm?)null);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Farm?)null);
 
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(async () =>
@@ -97,10 +90,12 @@ public class CreatePaddockCommandHandlerTests
         var userId = 10;
         var command = new CreatePaddockCommand("Test", farmId, userId, null, null);
 
-        _farmRepositoryMock
+        _mocker
+            .GetMock<IFarmRepository>()
             .Setup(r => r.GetByIdAsync(farmId))
             .ReturnsAsync(new Farm { Id = farmId });
-        _farmMemberRepositoryMock
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync((FarmMember?)null);
 
@@ -126,8 +121,9 @@ public class CreatePaddockCommandHandlerTests
             Role = FarmMemberRoles.Owner,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(member);
 
@@ -153,8 +149,9 @@ public class CreatePaddockCommandHandlerTests
             Role = FarmMemberRoles.Owner,
         };
 
-        _farmRepositoryMock.Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _farmMemberRepositoryMock
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
             .ReturnsAsync(member);
 

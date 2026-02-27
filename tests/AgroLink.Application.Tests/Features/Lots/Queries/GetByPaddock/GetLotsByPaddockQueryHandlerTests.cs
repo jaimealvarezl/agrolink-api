@@ -1,7 +1,9 @@
 using AgroLink.Application.Features.Lots.Queries.GetByPaddock;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Lots.Queries.GetByPaddock;
@@ -12,23 +14,19 @@ public class GetLotsByPaddockQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _handler = new GetLotsByPaddockQueryHandler(
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetLotsByPaddockQueryHandler>();
     }
 
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetLotsByPaddockQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ExistingPaddockWithLots_ReturnsLotsDto()
     {
         // Arrange
-        var paddockId = 1;
+        const int paddockId = 1;
+        const int farmId = 10;
         var query = new GetLotsByPaddockQuery(paddockId);
         var lots = new List<Lot>
         {
@@ -49,10 +47,22 @@ public class GetLotsByPaddockQueryHandlerTests
                 CreatedAt = DateTime.UtcNow,
             },
         };
-        var paddock = new Paddock { Id = paddockId, Name = "Test Paddock" };
+        var paddock = new Paddock
+        {
+            Id = paddockId,
+            Name = "Test Paddock",
+            FarmId = farmId,
+        };
 
-        _lotRepositoryMock.Setup(r => r.GetByPaddockIdAsync(paddockId)).ReturnsAsync(lots);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetByPaddockIdAsync(paddockId))
+            .ReturnsAsync(lots);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -65,17 +75,56 @@ public class GetLotsByPaddockQueryHandlerTests
     }
 
     [Test]
+    public async Task Handle_PaddockFromAnotherFarm_ReturnsEmptyList()
+    {
+        // Arrange
+        const int paddockId = 1;
+        const int currentFarmId = 10;
+        const int paddockFarmId = 20;
+        var query = new GetLotsByPaddockQuery(paddockId);
+        var paddock = new Paddock
+        {
+            Id = paddockId,
+            Name = "Test Paddock",
+            FarmId = paddockFarmId,
+        };
+
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeEmpty();
+    }
+
+    [Test]
     public async Task Handle_ExistingPaddockWithNoLots_ReturnsEmptyList()
     {
         // Arrange
-        var paddockId = 1;
+        const int paddockId = 1;
+        const int farmId = 10;
         var query = new GetLotsByPaddockQuery(paddockId);
-        var paddock = new Paddock { Id = paddockId, Name = "Test Paddock" };
+        var paddock = new Paddock
+        {
+            Id = paddockId,
+            Name = "Test Paddock",
+            FarmId = farmId,
+        };
 
-        _lotRepositoryMock
+        _mocker
+            .GetMock<ILotRepository>()
             .Setup(r => r.GetByPaddockIdAsync(paddockId))
             .ReturnsAsync(new List<Lot>());
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(paddockId)).ReturnsAsync(paddock);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(paddockId))
+            .ReturnsAsync(paddock);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

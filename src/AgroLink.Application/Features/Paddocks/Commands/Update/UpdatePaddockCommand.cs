@@ -1,4 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Paddocks.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -16,6 +18,7 @@ public record UpdatePaddockCommand(
 public class UpdatePaddockCommandHandler(
     IPaddockRepository paddockRepository,
     IFarmRepository farmRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdatePaddockCommand, PaddockDto>
 {
@@ -28,6 +31,14 @@ public class UpdatePaddockCommandHandler(
         if (paddock == null)
         {
             throw new ArgumentException("Paddock not found");
+        }
+
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && paddock.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            throw new ForbiddenAccessException("You do not have access to this paddock");
         }
 
         if (request.Area.HasValue || !string.IsNullOrWhiteSpace(request.AreaType))

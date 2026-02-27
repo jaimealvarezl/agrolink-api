@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -11,7 +12,8 @@ public class GetChecklistByIdQueryHandler(
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetChecklistByIdQuery, ChecklistDto?>
 {
     public async Task<ChecklistDto?> Handle(
@@ -23,6 +25,30 @@ public class GetChecklistByIdQueryHandler(
         if (checklist == null)
         {
             return null;
+        }
+
+        // Security check: ensure checklist belongs to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            int? checklistFarmId = null;
+            if (checklist.ScopeType == "LOT")
+            {
+                var lot = await lotRepository.GetLotWithPaddockAsync(checklist.ScopeId);
+                checklistFarmId = lot?.Paddock?.FarmId;
+            }
+            else if (checklist.ScopeType == "PADDOCK")
+            {
+                var paddock = await paddockRepository.GetByIdAsync(checklist.ScopeId);
+                checklistFarmId = paddock?.FarmId;
+            }
+
+            if (
+                checklistFarmId != null
+                && checklistFarmId != currentUserService.CurrentFarmId.Value
+            )
+            {
+                return null;
+            }
         }
 
         return await MapToDtoAsync(checklist);

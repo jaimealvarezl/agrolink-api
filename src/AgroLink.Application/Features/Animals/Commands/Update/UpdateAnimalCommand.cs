@@ -19,6 +19,7 @@ public class UpdateAnimalCommandHandler(
     IAnimalPhotoRepository animalPhotoRepository,
     IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
 {
@@ -31,6 +32,15 @@ public class UpdateAnimalCommandHandler(
         if (animal == null)
         {
             throw new ArgumentException("Animal not found or access denied.");
+        }
+
+        // Security check: ensure animal belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            throw new ForbiddenAccessException("You do not have access to this animal");
         }
 
         var farmId = animal.Lot.Paddock.FarmId;

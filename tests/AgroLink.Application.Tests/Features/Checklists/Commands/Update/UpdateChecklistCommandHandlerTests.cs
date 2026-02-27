@@ -1,9 +1,11 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Checklists.Commands.Update;
@@ -14,31 +16,11 @@ public class UpdateChecklistCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _checklistRepositoryMock = new Mock<IChecklistRepository>();
-        _checklistItemRepositoryMock = new Mock<IRepository<ChecklistItem>>();
-        _userRepositoryMock = new Mock<IUserRepository>();
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new UpdateChecklistCommandHandler(
-            _checklistRepositoryMock.Object,
-            _checklistItemRepositoryMock.Object,
-            _userRepositoryMock.Object,
-            _animalRepositoryMock.Object,
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<UpdateChecklistCommandHandler>();
     }
 
-    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
-    private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private UpdateChecklistCommandHandler _handler = null!;
 
     [Test]
@@ -46,6 +28,7 @@ public class UpdateChecklistCommandHandlerTests
     {
         // Arrange
         var checklistId = 1;
+        var farmId = 10;
         var updateChecklistDto = new CreateChecklistDto
         {
             ScopeType = "LOT",
@@ -73,7 +56,12 @@ public class UpdateChecklistCommandHandlerTests
             Notes = "Old Notes",
         };
         var user = new User { Id = 1, Name = "Test User" };
-        var lot = new Lot { Id = 1, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = 1,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = farmId },
+        };
         var animal = new Animal
         {
             Id = 1,
@@ -92,19 +80,35 @@ public class UpdateChecklistCommandHandlerTests
             },
         };
 
-        _checklistRepositoryMock.Setup(r => r.GetByIdAsync(checklistId)).ReturnsAsync(checklist);
-        _checklistRepositoryMock.Setup(r => r.Update(checklist));
-        _checklistItemRepositoryMock
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Setup(r => r.GetByIdAsync(checklistId))
+            .ReturnsAsync(checklist);
+        _mocker.GetMock<IChecklistRepository>().Setup(r => r.Update(checklist));
+        _mocker
+            .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(existingItems);
-        _checklistItemRepositoryMock.Setup(r => r.RemoveRange(existingItems));
-        _checklistItemRepositoryMock
+        _mocker.GetMock<IRepository<ChecklistItem>>().Setup(r => r.RemoveRange(existingItems));
+        _mocker
+            .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.AddAsync(It.IsAny<ChecklistItem>()))
             .Returns(Task.CompletedTask);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(checklist.UserId)).ReturnsAsync(user);
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animal.Id)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.GetByIdAsync(checklist.UserId))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animal.Id))
+            .ReturnsAsync(animal);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
+            .ReturnsAsync(lot);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -114,11 +118,17 @@ public class UpdateChecklistCommandHandlerTests
         result.Id.ShouldBe(checklistId);
         result.Notes.ShouldBe(updateChecklistDto.Notes);
         result.Items.Count.ShouldBe(1);
-        _checklistRepositoryMock.Verify(r => r.GetByIdAsync(checklistId), Times.Once);
-        _checklistRepositoryMock.Verify(r => r.Update(checklist), Times.Once);
-        _checklistItemRepositoryMock.Verify(r => r.RemoveRange(existingItems), Times.Once);
-        _checklistItemRepositoryMock.Verify(r => r.AddAsync(It.IsAny<ChecklistItem>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Verify(r => r.GetByIdAsync(checklistId), Times.Once);
+        _mocker.GetMock<IChecklistRepository>().Verify(r => r.Update(checklist), Times.Once);
+        _mocker
+            .GetMock<IRepository<ChecklistItem>>()
+            .Verify(r => r.RemoveRange(existingItems), Times.Once);
+        _mocker
+            .GetMock<IRepository<ChecklistItem>>()
+            .Verify(r => r.AddAsync(It.IsAny<ChecklistItem>()), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -134,7 +144,8 @@ public class UpdateChecklistCommandHandlerTests
         };
         var command = new UpdateChecklistCommand(checklistId, updateChecklistDto);
 
-        _checklistRepositoryMock
+        _mocker
+            .GetMock<IChecklistRepository>()
             .Setup(r => r.GetByIdAsync(checklistId))
             .ReturnsAsync((Checklist?)null);
 
@@ -143,7 +154,9 @@ public class UpdateChecklistCommandHandlerTests
             _handler.Handle(command, CancellationToken.None)
         );
         exception.Message.ShouldBe("Checklist not found");
-        _checklistRepositoryMock.Verify(r => r.Update(It.IsAny<Checklist>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Verify(r => r.Update(It.IsAny<Checklist>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

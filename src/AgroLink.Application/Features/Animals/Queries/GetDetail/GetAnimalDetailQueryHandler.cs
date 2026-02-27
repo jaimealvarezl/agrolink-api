@@ -8,7 +8,8 @@ namespace AgroLink.Application.Features.Animals.Queries.GetDetail;
 
 public class GetAnimalDetailQueryHandler(
     IAnimalRepository animalRepository,
-    IStorageService storageService
+    IStorageService storageService,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetAnimalDetailQuery, AnimalDetailDto?>
 {
     public async Task<AnimalDetailDto?> Handle(
@@ -19,6 +20,15 @@ public class GetAnimalDetailQueryHandler(
         var animal = await animalRepository.GetAnimalDetailsAsync(request.Id, request.UserId);
 
         if (animal == null)
+        {
+            return null;
+        }
+
+        // Security check: ensure animal belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value
+        )
         {
             return null;
         }

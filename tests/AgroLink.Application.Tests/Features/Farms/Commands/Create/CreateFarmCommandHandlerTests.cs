@@ -4,6 +4,7 @@ using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Farms.Commands.Create;
@@ -14,26 +15,11 @@ public class CreateFarmCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _farmRepositoryMock = new Mock<IFarmRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _farmMemberRepositoryMock = new Mock<IFarmMemberRepository>();
-        _userRepositoryMock = new Mock<IUserRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-
-        _handler = new CreateFarmCommandHandler(
-            _farmRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
-            _farmMemberRepositoryMock.Object,
-            _userRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<CreateFarmCommandHandler>();
     }
 
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IFarmMemberRepository> _farmMemberRepositoryMock = null!;
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private CreateFarmCommandHandler _handler = null!;
 
     [Test]
@@ -55,17 +41,20 @@ public class CreateFarmCommandHandlerTests
             OwnerId = 5,
         };
 
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
-        _ownerRepositoryMock
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync((Owner?)null);
 
-        _ownerRepositoryMock
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Owner>()))
             .Callback<Owner>(o => o.Id = owner.Id);
 
-        _farmRepositoryMock
+        _mocker
+            .GetMock<IFarmRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
             .Callback<Farm>(f =>
             {
@@ -77,7 +66,7 @@ public class CreateFarmCommandHandlerTests
                 }
             });
 
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -89,25 +78,26 @@ public class CreateFarmCommandHandlerTests
         result.OwnerId.ShouldBe(owner.Id);
         result.Role.ShouldBe(FarmMemberRoles.Owner);
 
-        _userRepositoryMock.Verify(r => r.GetByIdAsync(userId), Times.Once);
-        _ownerRepositoryMock.Verify(
-            r => r.AddAsync(It.Is<Owner>(o => o.Name == user.Name)),
-            Times.Once
-        );
-        _farmRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Farm>()), Times.Once);
+        _mocker.GetMock<IUserRepository>().Verify(r => r.GetByIdAsync(userId), Times.Once);
+        _mocker
+            .GetMock<IOwnerRepository>()
+            .Verify(r => r.AddAsync(It.Is<Owner>(o => o.Name == user.Name)), Times.Once);
+        _mocker.GetMock<IFarmRepository>().Verify(r => r.AddAsync(It.IsAny<Farm>()), Times.Once);
         // Verify via Navigation Property as FarmId might be 0 before SaveChanges in test POCO
-        _farmMemberRepositoryMock.Verify(
-            r =>
-                r.AddAsync(
-                    It.Is<FarmMember>(m =>
-                        m.Farm.Id == farm.Id
-                        && m.UserId == userId
-                        && m.Role == FarmMemberRoles.Owner
-                    )
-                ),
-            Times.Once
-        );
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IFarmMemberRepository>()
+            .Verify(
+                r =>
+                    r.AddAsync(
+                        It.Is<FarmMember>(m =>
+                            m.Farm.Id == farm.Id
+                            && m.UserId == userId
+                            && m.Role == FarmMemberRoles.Owner
+                        )
+                    ),
+                Times.Once
+            );
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -126,14 +116,16 @@ public class CreateFarmCommandHandlerTests
             UserId = userId,
         };
 
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
         // Setup FirstOrDefaultAsync to return existing owner
-        _ownerRepositoryMock
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(existingOwner);
 
-        _farmRepositoryMock
+        _mocker
+            .GetMock<IFarmRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
             .Callback<Farm>(f =>
             {
@@ -144,7 +136,7 @@ public class CreateFarmCommandHandlerTests
                 }
             });
 
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -154,15 +146,19 @@ public class CreateFarmCommandHandlerTests
         result.OwnerId.ShouldBe(existingOwner.Id);
 
         // Verify Owner was NOT added again
-        _ownerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Never);
-        _farmRepositoryMock.Verify(
-            r =>
-                r.AddAsync(
-                    It.Is<Farm>(f => f.Owner == existingOwner || f.OwnerId == existingOwner.Id)
-                ),
-            Times.Once
-        );
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IOwnerRepository>()
+            .Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Never);
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Verify(
+                r =>
+                    r.AddAsync(
+                        It.Is<Farm>(f => f.Owner == existingOwner || f.OwnerId == existingOwner.Id)
+                    ),
+                Times.Once
+            );
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -171,7 +167,10 @@ public class CreateFarmCommandHandlerTests
         // Arrange
         var userId = 10;
         var command = new CreateFarmCommand("Test", null, null, userId);
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.GetByIdAsync(userId))
+            .ReturnsAsync((User?)null);
 
         // Act & Assert
         await Should.ThrowAsync<UnauthorizedAccessException>(async () =>

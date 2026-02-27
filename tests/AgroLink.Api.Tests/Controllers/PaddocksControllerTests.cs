@@ -3,7 +3,7 @@ using AgroLink.Api.Controllers;
 using AgroLink.Api.DTOs.Paddocks;
 using AgroLink.Application.Features.Paddocks.Commands.Create;
 using AgroLink.Application.Features.Paddocks.DTOs;
-using AgroLink.Application.Features.Paddocks.Queries.GetAll;
+using AgroLink.Application.Features.Paddocks.Queries.GetByFarm;
 using AgroLink.Application.Features.Paddocks.Queries.GetById;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -39,23 +39,24 @@ public class PaddocksControllerTests
     public async Task GetAll_ShouldReturnOk()
     {
         // Arrange
+        var farmId = 1;
         var paddocks = new List<PaddockDto>
         {
             new()
             {
                 Id = 1,
                 Name = "Paddock 1",
-                FarmId = 1,
+                FarmId = farmId,
                 FarmName = "Farm 1",
                 CreatedAt = DateTime.UtcNow,
             },
         };
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<GetAllPaddocksQuery>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<GetPaddocksByFarmQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(paddocks);
 
         // Act
-        var result = await _controller.GetAll();
+        var result = await _controller.GetAll(farmId);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -82,7 +83,7 @@ public class PaddocksControllerTests
             .ReturnsAsync(paddock);
 
         // Act
-        var result = await _controller.GetById(1);
+        var result = await _controller.GetById(1, 1);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -122,7 +123,7 @@ public class PaddocksControllerTests
 
         // Act
 
-        var result = await _controller.Create(request);
+        var result = await _controller.Create(1, request);
 
         // Assert
 

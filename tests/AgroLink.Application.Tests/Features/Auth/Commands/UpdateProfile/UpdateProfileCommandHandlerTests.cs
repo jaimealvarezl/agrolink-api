@@ -5,6 +5,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Auth.Commands.UpdateProfile;
@@ -15,22 +16,11 @@ public class UpdateProfileCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _userRepositoryMock = new Mock<IUserRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new UpdateProfileCommandHandler(
-            _userRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
-            _currentUserServiceMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<UpdateProfileCommandHandler>();
     }
 
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private UpdateProfileCommandHandler _handler = null!;
 
     [Test]
@@ -57,12 +47,13 @@ public class UpdateProfileCommandHandlerTests
             UserId = userId,
         };
 
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
-        _ownerRepositoryMock
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(owner);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -73,9 +64,9 @@ public class UpdateProfileCommandHandlerTests
         user.Name.ShouldBe(newName);
         owner.Name.ShouldBe(newName);
 
-        _userRepositoryMock.Verify(r => r.Update(user), Times.Once);
-        _ownerRepositoryMock.Verify(r => r.Update(owner), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IUserRepository>().Verify(r => r.Update(user), Times.Once);
+        _mocker.GetMock<IOwnerRepository>().Verify(r => r.Update(owner), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -96,12 +87,13 @@ public class UpdateProfileCommandHandlerTests
             Role = "USER",
         };
 
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
-        _ownerRepositoryMock
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync((Owner?)null);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -111,9 +103,9 @@ public class UpdateProfileCommandHandlerTests
         result.Name.ShouldBe(newName);
         user.Name.ShouldBe(newName);
 
-        _userRepositoryMock.Verify(r => r.Update(user), Times.Once);
-        _ownerRepositoryMock.Verify(r => r.Update(It.IsAny<Owner>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IUserRepository>().Verify(r => r.Update(user), Times.Once);
+        _mocker.GetMock<IOwnerRepository>().Verify(r => r.Update(It.IsAny<Owner>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -124,8 +116,11 @@ public class UpdateProfileCommandHandlerTests
         var request = new UpdateProfileRequest { Name = "New Name" };
         var command = new UpdateProfileCommand(request);
 
-        _currentUserServiceMock.Setup(s => s.GetRequiredUserId()).Returns(userId);
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(userId);
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.GetByIdAsync(userId))
+            .ReturnsAsync((User?)null);
 
         // Act & Assert
         await Should.ThrowAsync<UnauthorizedAccessException>(() =>

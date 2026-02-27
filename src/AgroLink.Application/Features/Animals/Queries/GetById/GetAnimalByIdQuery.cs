@@ -12,7 +12,8 @@ public class GetAnimalByIdQueryHandler(
     IOwnerRepository ownerRepository,
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
-    IStorageService storageService
+    IStorageService storageService,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetAnimalByIdQuery, AnimalDto?>
 {
     public async Task<AnimalDto?> Handle(
@@ -24,6 +25,15 @@ public class GetAnimalByIdQueryHandler(
         if (animal == null)
         {
             return null;
+        }
+
+        // Validate Farm Context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            return null; // Or throw ForbiddenAccessException
         }
 
         var mother = animal.MotherId.HasValue

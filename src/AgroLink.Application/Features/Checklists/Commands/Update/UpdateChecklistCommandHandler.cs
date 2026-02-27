@@ -1,4 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -12,6 +14,7 @@ public class UpdateChecklistCommandHandler(
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
     IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateChecklistCommand, ChecklistDto>
 {
@@ -26,11 +29,54 @@ public class UpdateChecklistCommandHandler(
             throw new ArgumentException("Checklist not found");
         }
 
-        var dto = request.Dto;
-        checklist.ScopeType = dto.ScopeType;
-        checklist.ScopeId = dto.ScopeId;
-        checklist.Date = dto.Date;
-        checklist.Notes = dto.Notes;
+        // Security check: ensure checklist and new target scope belong to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            // Check existing checklist farm
+            int? existingFarmId = null;
+            if (checklist.ScopeType == "LOT")
+            {
+                var lot = await lotRepository.GetLotWithPaddockAsync(checklist.ScopeId);
+                existingFarmId = lot?.Paddock?.FarmId;
+            }
+            else if (checklist.ScopeType == "PADDOCK")
+            {
+                var paddock = await paddockRepository.GetByIdAsync(checklist.ScopeId);
+                existingFarmId = paddock?.FarmId;
+            }
+
+            if (existingFarmId != null && existingFarmId != currentUserService.CurrentFarmId.Value)
+            {
+                throw new ForbiddenAccessException("You do not have access to this checklist");
+            }
+
+            // Check new target scope farm
+            var dto = request.Dto;
+            int? newFarmId = null;
+            if (dto.ScopeType == "LOT")
+            {
+                var lot = await lotRepository.GetLotWithPaddockAsync(dto.ScopeId);
+                newFarmId = lot?.Paddock?.FarmId;
+            }
+            else if (dto.ScopeType == "PADDOCK")
+            {
+                var paddock = await paddockRepository.GetByIdAsync(dto.ScopeId);
+                newFarmId = paddock?.FarmId;
+            }
+
+            if (newFarmId != null && newFarmId != currentUserService.CurrentFarmId.Value)
+            {
+                throw new ForbiddenAccessException(
+                    "The target scope belongs to a different farm context."
+                );
+            }
+        }
+
+        var dtoUpdate = request.Dto;
+        checklist.ScopeType = dtoUpdate.ScopeType;
+        checklist.ScopeId = dtoUpdate.ScopeId;
+        checklist.Date = dtoUpdate.Date;
+        checklist.Notes = dtoUpdate.Notes;
         checklist.UpdatedAt = DateTime.UtcNow;
 
         checklistRepository.Update(checklist);
@@ -40,7 +86,7 @@ public class UpdateChecklistCommandHandler(
         );
         checklistItemRepository.RemoveRange(existingItems);
 
-        foreach (var itemDto in dto.Items)
+        foreach (var itemDto in dtoUpdate.Items)
         {
             var item = new ChecklistItem
             {

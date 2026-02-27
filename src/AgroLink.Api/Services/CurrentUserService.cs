@@ -19,6 +19,11 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
 
     public string? Role => httpContextAccessor.HttpContext?.User?.FindFirst("role")?.Value;
 
+    public int? CurrentFarmId => httpContextAccessor.HttpContext?.Items["CurrentFarmId"] as int?;
+
+    public string? CurrentFarmRole =>
+        httpContextAccessor.HttpContext?.Items["CurrentFarmRole"] as string;
+
     public int GetRequiredUserId()
     {
         return UserId ?? throw new UnauthorizedAccessException("User is not authenticated");

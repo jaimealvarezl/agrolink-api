@@ -1,3 +1,5 @@
+using AgroLink.Application.Common.Exceptions;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -7,6 +9,7 @@ public record DeletePaddockCommand(int Id) : IRequest;
 
 public class DeletePaddockCommandHandler(
     IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<DeletePaddockCommand>
 {
@@ -16,6 +19,14 @@ public class DeletePaddockCommandHandler(
         if (paddock == null)
         {
             throw new ArgumentException("Paddock not found");
+        }
+
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && paddock.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            throw new ForbiddenAccessException("You do not have access to this paddock");
         }
 
         paddockRepository.Remove(paddock);

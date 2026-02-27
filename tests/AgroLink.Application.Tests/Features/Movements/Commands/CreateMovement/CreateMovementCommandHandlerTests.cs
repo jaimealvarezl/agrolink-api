@@ -1,8 +1,11 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.Commands.CreateMovement;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Movements.Commands.CreateMovement;
@@ -13,17 +16,18 @@ public class CreateMovementCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _movementRepositoryMock = new Mock<IMovementRepository>();
-        _handler = new CreateMovementCommandHandler(_movementRepositoryMock.Object);
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<CreateMovementCommandHandler>();
     }
 
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private CreateMovementCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidCreateMovementCommand_ReturnsMovementDto()
     {
         // Arrange
+        var farmId = 10;
         var createMovementDto = new CreateMovementDto
         {
             EntityType = "ANIMAL",
@@ -54,18 +58,52 @@ public class CreateMovementCommandHandlerTests
             Cuia = "CUIA-1",
             Name = "Test Animal",
             BirthDate = DateTime.UtcNow.AddYears(-2),
-            LotId = 1,
+            LotId = 10,
         };
-        var lotFrom = new Lot { Id = 10, Name = "Lot From" };
-        var lotTo = new Lot { Id = 20, Name = "Lot To" };
+        var lotFrom = new Lot
+        {
+            Id = 10,
+            Name = "Lot From",
+            Paddock = new Paddock { FarmId = farmId },
+        };
+        var lotTo = new Lot
+        {
+            Id = 20,
+            Name = "Lot To",
+            Paddock = new Paddock { FarmId = farmId },
+        };
 
-        _movementRepositoryMock
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(1)).ReturnsAsync(animal);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(10))
+            .ReturnsAsync(lotFrom);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(20))
+            .ReturnsAsync(lotTo);
+
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.AddMovementAsync(It.IsAny<Movement>()))
             .Callback<Movement>(m => m.Id = movement.Id); // Simulate DB ID generation
-        _movementRepositoryMock.Setup(r => r.GetUserByIdAsync(userId)).ReturnsAsync(user);
-        _movementRepositoryMock.Setup(r => r.GetAnimalByIdAsync(animal.Id)).ReturnsAsync(animal);
-        _movementRepositoryMock.Setup(r => r.GetLotByIdAsync(lotFrom.Id)).ReturnsAsync(lotFrom);
-        _movementRepositoryMock.Setup(r => r.GetLotByIdAsync(lotTo.Id)).ReturnsAsync(lotTo);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetUserByIdAsync(userId))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetAnimalByIdAsync(animal.Id))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetLotByIdAsync(lotFrom.Id))
+            .ReturnsAsync(lotFrom);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Setup(r => r.GetLotByIdAsync(lotTo.Id))
+            .ReturnsAsync(lotTo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -78,6 +116,36 @@ public class CreateMovementCommandHandlerTests
         result.FromName.ShouldBe(lotFrom.Name);
         result.ToName.ShouldBe(lotTo.Name);
         result.UserName.ShouldBe(user.Name);
-        _movementRepositoryMock.Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Once);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_AnimalFromAnotherFarmContext_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        var currentFarmId = 10;
+        var animalFarmId = 20;
+        var createMovementDto = new CreateMovementDto { EntityType = "ANIMAL", EntityId = 1 };
+        var command = new CreateMovementCommand(createMovementDto, 1);
+        var animal = new Animal { Id = 1, LotId = 100 };
+        var lot = new Lot
+        {
+            Id = 100,
+            Paddock = new Paddock { FarmId = animalFarmId },
+        };
+
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(1)).ReturnsAsync(animal);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(100))
+            .ReturnsAsync(lot);
+
+        // Act & Assert
+        await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
     }
 }

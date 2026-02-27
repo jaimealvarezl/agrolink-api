@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -7,8 +8,10 @@ namespace AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 
 public record GetAnimalGenealogyQuery(int Id, int UserId) : IRequest<AnimalGenealogyDto?>;
 
-public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
-    : IRequestHandler<GetAnimalGenealogyQuery, AnimalGenealogyDto?>
+public class GetAnimalGenealogyQueryHandler(
+    IAnimalRepository animalRepository,
+    ICurrentUserService currentUserService
+) : IRequestHandler<GetAnimalGenealogyQuery, AnimalGenealogyDto?>
 {
     public async Task<AnimalGenealogyDto?> Handle(
         GetAnimalGenealogyQuery request,
@@ -17,6 +20,15 @@ public class GetAnimalGenealogyQueryHandler(IAnimalRepository animalRepository)
     {
         var animal = await animalRepository.GetAnimalDetailsAsync(request.Id, request.UserId);
         if (animal == null)
+        {
+            return null;
+        }
+
+        // Security check: ensure animal belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && animal.Lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value
+        )
         {
             return null;
         }

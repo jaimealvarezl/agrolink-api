@@ -1,7 +1,9 @@
 using AgroLink.Application.Features.Checklists.Commands.Delete;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Checklists.Commands.Delete;
@@ -12,16 +14,11 @@ public class DeleteChecklistCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _checklistRepositoryMock = new Mock<IChecklistRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new DeleteChecklistCommandHandler(
-            _checklistRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<DeleteChecklistCommandHandler>();
     }
 
-    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private DeleteChecklistCommandHandler _handler = null!;
 
     [Test]
@@ -29,20 +26,38 @@ public class DeleteChecklistCommandHandlerTests
     {
         // Arrange
         var checklistId = 1;
+        var farmId = 10;
         var command = new DeleteChecklistCommand(checklistId);
-        var checklist = new Checklist { Id = checklistId };
+        var checklist = new Checklist
+        {
+            Id = checklistId,
+            ScopeType = "LOT",
+            ScopeId = 1,
+        };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = farmId },
+        };
 
-        _checklistRepositoryMock.Setup(r => r.GetByIdAsync(checklistId)).ReturnsAsync(checklist);
-        _checklistRepositoryMock.Setup(r => r.Remove(checklist));
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Setup(r => r.GetByIdAsync(checklistId))
+            .ReturnsAsync(checklist);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker.GetMock<IChecklistRepository>().Setup(r => r.Remove(checklist));
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _checklistRepositoryMock.Verify(r => r.GetByIdAsync(checklistId), Times.Once);
-        _checklistRepositoryMock.Verify(r => r.Remove(checklist), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Verify(r => r.GetByIdAsync(checklistId), Times.Once);
+        _mocker.GetMock<IChecklistRepository>().Verify(r => r.Remove(checklist), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
@@ -52,7 +67,8 @@ public class DeleteChecklistCommandHandlerTests
         var checklistId = 999;
         var command = new DeleteChecklistCommand(checklistId);
 
-        _checklistRepositoryMock
+        _mocker
+            .GetMock<IChecklistRepository>()
             .Setup(r => r.GetByIdAsync(checklistId))
             .ReturnsAsync((Checklist?)null);
 
@@ -61,7 +77,9 @@ public class DeleteChecklistCommandHandlerTests
             _handler.Handle(command, CancellationToken.None)
         );
         exception.Message.ShouldBe("Checklist not found");
-        _checklistRepositoryMock.Verify(r => r.Remove(It.IsAny<Checklist>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Verify(r => r.Remove(It.IsAny<Checklist>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

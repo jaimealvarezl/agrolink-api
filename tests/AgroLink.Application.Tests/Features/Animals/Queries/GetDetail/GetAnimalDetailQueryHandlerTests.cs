@@ -4,6 +4,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetDetail;
@@ -14,16 +15,11 @@ public class GetAnimalDetailQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _handler = new GetAnimalDetailQueryHandler(
-            _animalRepositoryMock.Object,
-            _storageServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalDetailQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalDetailQueryHandler _handler = null!;
 
     [Test]
@@ -32,6 +28,7 @@ public class GetAnimalDetailQueryHandlerTests
         // Arrange
         const int animalId = 1;
         const int userId = 1;
+        const int farmId = 100;
         var birthDate = DateTime.UtcNow.AddYears(-2);
         var animal = new Animal
         {
@@ -43,7 +40,7 @@ public class GetAnimalDetailQueryHandlerTests
             Lot = new Lot
             {
                 Name = "Pasture 1",
-                Paddock = new Paddock { FarmId = 100 },
+                Paddock = new Paddock { FarmId = farmId },
             },
             Mother = new Animal
             {
@@ -82,16 +79,21 @@ public class GetAnimalDetailQueryHandlerTests
             },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _storageServiceMock
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<IStorageService>()
             .Setup(s => s.GetPresignedUrl("photo-key", It.IsAny<TimeSpan>()))
             .Returns("http://signed-url.com/photo.jpg");
-        _storageServiceMock
+        _mocker
+            .GetMock<IStorageService>()
             .Setup(s => s.GetPresignedUrl("mom-key", It.IsAny<TimeSpan>()))
             .Returns("http://signed-url.com/mom.jpg");
-        _storageServiceMock
+        _mocker
+            .GetMock<IStorageService>()
             .Setup(s => s.GetPresignedUrl("dad-key", It.IsAny<TimeSpan>()))
             .Returns("http://signed-url.com/dad.jpg");
 
@@ -118,12 +120,43 @@ public class GetAnimalDetailQueryHandlerTests
     }
 
     [Test]
+    public async Task Handle_AnimalFromAnotherFarm_ReturnsNull()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 1;
+        const int currentFarmId = 100;
+        const int animalFarmId = 200;
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = animalFarmId } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
+            .ReturnsAsync(animal);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act
+        var result = await _handler.Handle(
+            new GetAnimalDetailQuery(animalId, userId),
+            CancellationToken.None
+        );
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
     public async Task Handle_UnauthorizedUser_ReturnsNull()
     {
         // Arrange
         const int animalId = 1;
         const int userId = 1;
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
@@ -142,7 +175,8 @@ public class GetAnimalDetailQueryHandlerTests
     {
         const int animalId = 99;
         const int userId = 1;
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
@@ -160,6 +194,7 @@ public class GetAnimalDetailQueryHandlerTests
         // Arrange
         const int animalId = 2;
         const int userId = 1;
+        const int farmId = 100;
         var birthDate = DateTime.UtcNow.AddDays(-20);
         var animal = new Animal
         {
@@ -170,13 +205,15 @@ public class GetAnimalDetailQueryHandlerTests
             Lot = new Lot
             {
                 Name = "Nursery",
-                Paddock = new Paddock { FarmId = 100 },
+                Paddock = new Paddock { FarmId = farmId },
             },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(
@@ -195,6 +232,7 @@ public class GetAnimalDetailQueryHandlerTests
         // Arrange
         const int animalId = 3;
         const int userId = 1;
+        const int farmId = 100;
         var birthDate = DateTime.UtcNow.AddMonths(-1).AddDays(-1);
         var animal = new Animal
         {
@@ -205,13 +243,15 @@ public class GetAnimalDetailQueryHandlerTests
             Lot = new Lot
             {
                 Name = "Nursery",
-                Paddock = new Paddock { FarmId = 100 },
+                Paddock = new Paddock { FarmId = farmId },
             },
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(

@@ -2,8 +2,8 @@ using AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
-using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.AutoMock;
 
 namespace AgroLink.Application.Tests.Features.Animals.Commands.DeletePhoto;
 
@@ -13,26 +13,11 @@ public class DeleteAnimalPhotoCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _loggerMock = new Mock<ILogger<DeleteAnimalPhotoCommandHandler>>();
-
-        _handler = new DeleteAnimalPhotoCommandHandler(
-            _animalRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object,
-            _storageServiceMock.Object,
-            _unitOfWorkMock.Object,
-            _loggerMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<DeleteAnimalPhotoCommandHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
-    private Mock<ILogger<DeleteAnimalPhotoCommandHandler>> _loggerMock = null!;
+    private AutoMocker _mocker = null!;
     private DeleteAnimalPhotoCommandHandler _handler = null!;
 
     [Test]
@@ -57,18 +42,24 @@ public class DeleteAnimalPhotoCommandHandlerTests
             StorageKey = "bucket/file.jpg",
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _animalPhotoRepositoryMock.Setup(r => r.GetByIdAsync(photoId)).ReturnsAsync(photo);
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Setup(r => r.GetByIdAsync(photoId))
+            .ReturnsAsync(photo);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _storageServiceMock.Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Once);
-        _animalPhotoRepositoryMock.Verify(r => r.Remove(photo), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.AtLeastOnce);
+        _mocker
+            .GetMock<IStorageService>()
+            .Verify(s => s.DeleteFileAsync(It.IsAny<string>()), Times.Once);
+        _mocker.GetMock<IAnimalPhotoRepository>().Verify(r => r.Remove(photo), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.AtLeastOnce);
     }
 
     [Test]
@@ -99,11 +90,16 @@ public class DeleteAnimalPhotoCommandHandlerTests
             IsProfile = false,
         };
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetAnimalDetailsAsync(animalId, userId))
             .ReturnsAsync(animal);
-        _animalPhotoRepositoryMock.Setup(r => r.GetByIdAsync(photoId)).ReturnsAsync(photo);
-        _animalPhotoRepositoryMock
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Setup(r => r.GetByIdAsync(photoId))
+            .ReturnsAsync(photo);
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
             .Setup(r => r.GetByAnimalIdAsync(animalId))
             .ReturnsAsync(new List<AnimalPhoto> { otherPhoto });
 
@@ -111,9 +107,8 @@ public class DeleteAnimalPhotoCommandHandlerTests
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _animalPhotoRepositoryMock.Verify(
-            r => r.SetProfilePhotoAsync(animalId, otherPhotoId),
-            Times.Once
-        );
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
+            .Verify(r => r.SetProfilePhotoAsync(animalId, otherPhotoId), Times.Once);
     }
 }

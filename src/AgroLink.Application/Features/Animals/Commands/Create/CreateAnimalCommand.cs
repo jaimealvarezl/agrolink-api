@@ -35,6 +35,17 @@ public class CreateAnimalCommandHandler(
 
         var farmId = lot.Paddock.FarmId;
 
+        // Security check: ensure target lot belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && farmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            throw new ForbiddenAccessException(
+                "You do not have access to create animals in this farm context."
+            );
+        }
+
         var userId = currentUserService.GetRequiredUserId();
         var isMember = await farmMemberRepository.ExistsAsync(fm =>
             fm.FarmId == farmId && fm.UserId == userId

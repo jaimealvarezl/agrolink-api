@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Lots.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -8,7 +9,8 @@ public record GetLotsByPaddockQuery(int PaddockId) : IRequest<IEnumerable<LotDto
 
 public class GetLotsByPaddockQueryHandler(
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetLotsByPaddockQuery, IEnumerable<LotDto>>
 {
     public async Task<IEnumerable<LotDto>> Handle(
@@ -16,8 +18,19 @@ public class GetLotsByPaddockQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var lots = await lotRepository.GetByPaddockIdAsync(request.PaddockId);
         var paddock = await paddockRepository.GetByIdAsync(request.PaddockId);
+
+        // Security check: ensure paddock belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && paddock != null
+            && paddock.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            return [];
+        }
+
+        var lots = await lotRepository.GetByPaddockIdAsync(request.PaddockId);
 
         return lots.Select(l => new LotDto
         {

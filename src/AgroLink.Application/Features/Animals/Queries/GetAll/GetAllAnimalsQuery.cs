@@ -5,7 +5,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Animals.Queries.GetAll;
 
-public record GetAllAnimalsQuery(int UserId) : IRequest<IEnumerable<AnimalDto>>;
+public record GetAllAnimalsQuery(int FarmId) : IRequest<IEnumerable<AnimalDto>>;
 
 public class GetAllAnimalsQueryHandler(
     IAnimalRepository animalRepository,
@@ -17,7 +17,7 @@ public class GetAllAnimalsQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animals = await animalRepository.GetAllByUserAsync(request.UserId, cancellationToken);
+        var animals = await animalRepository.GetAllByFarmAsync(request.FarmId, cancellationToken);
 
         return animals
             .Select(animal => new AnimalDto

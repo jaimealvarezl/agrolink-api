@@ -4,6 +4,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Animals.Queries.GetById;
@@ -14,25 +15,11 @@ public class GetAnimalByIdQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _ownerRepositoryMock = new Mock<IOwnerRepository>();
-        _animalOwnerRepositoryMock = new Mock<IAnimalOwnerRepository>();
-        _animalPhotoRepositoryMock = new Mock<IAnimalPhotoRepository>();
-        _storageServiceMock = new Mock<IStorageService>();
-        _handler = new GetAnimalByIdQueryHandler(
-            _animalRepositoryMock.Object,
-            _ownerRepositoryMock.Object,
-            _animalOwnerRepositoryMock.Object,
-            _animalPhotoRepositoryMock.Object,
-            _storageServiceMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetAnimalByIdQueryHandler>();
     }
 
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<IOwnerRepository> _ownerRepositoryMock = null!;
-    private Mock<IAnimalOwnerRepository> _animalOwnerRepositoryMock = null!;
-    private Mock<IAnimalPhotoRepository> _animalPhotoRepositoryMock = null!;
-    private Mock<IStorageService> _storageServiceMock = null!;
+    private AutoMocker _mocker = null!;
     private GetAnimalByIdQueryHandler _handler = null!;
 
     [Test]
@@ -41,6 +28,7 @@ public class GetAnimalByIdQueryHandlerTests
         // Arrange
         const int animalId = 1;
         const int userId = 1;
+        const int farmId = 100;
         var query = new GetAnimalByIdQuery(animalId, userId);
         var animal = new Animal
         {
@@ -52,16 +40,30 @@ public class GetAnimalByIdQueryHandlerTests
             LotId = 1,
             CreatedAt = DateTime.UtcNow,
             LifeStatus = LifeStatus.Active,
-            Lot = new Lot { Name = "Test Lot" },
+            Lot = new Lot
+            {
+                Name = "Test Lot",
+                Paddock = new Paddock { FarmId = farmId },
+            },
         };
 
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, userId)).ReturnsAsync(animal);
-        _animalOwnerRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+
+        _mocker
+            .GetMock<IAnimalOwnerRepository>()
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalOwner>());
-        _animalPhotoRepositoryMock
+
+        _mocker
+            .GetMock<IAnimalPhotoRepository>()
             .Setup(r => r.GetByAnimalIdAsync(It.IsAny<int>()))
             .ReturnsAsync(new List<AnimalPhoto>());
+
+        // Setup CurrentUserService to match FarmId
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -81,7 +83,8 @@ public class GetAnimalByIdQueryHandlerTests
         const int userId = 1;
         var query = new GetAnimalByIdQuery(animalId, userId);
 
-        _animalRepositoryMock
+        _mocker
+            .GetMock<IAnimalRepository>()
             .Setup(r => r.GetByIdAsync(animalId, userId))
             .ReturnsAsync((Animal?)null);
 
@@ -90,5 +93,44 @@ public class GetAnimalByIdQueryHandlerTests
 
         // Assert
         result.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Handle_WhenFarmIdDoesNotMatch_ReturnsNull()
+    {
+        // Arrange
+        const int animalId = 1;
+        const int userId = 1;
+        const int animalFarmId = 100;
+        const int userContextFarmId = 200; // Different Farm
+
+        var query = new GetAnimalByIdQuery(animalId, userId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            LotId = 1,
+            Lot = new Lot
+            {
+                Name = "Test Lot",
+                Paddock = new Paddock { FarmId = animalFarmId },
+            },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animalId, userId))
+            .ReturnsAsync(animal);
+
+        // Setup CurrentUserService to return a DIFFERENT FarmId
+        _mocker
+            .GetMock<ICurrentUserService>()
+            .Setup(s => s.CurrentFarmId)
+            .Returns(userContextFarmId);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeNull(); // Should filter out because of farm mismatch
     }
 }

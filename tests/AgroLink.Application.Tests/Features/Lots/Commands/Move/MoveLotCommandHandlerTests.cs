@@ -3,6 +3,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Lots.Commands.Move;
@@ -13,22 +14,11 @@ public class MoveLotCommandHandlerTests
     [SetUp]
     public void Setup()
     {
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _movementRepositoryMock = new Mock<IMovementRepository>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _handler = new MoveLotCommandHandler(
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object,
-            _movementRepositoryMock.Object,
-            _unitOfWorkMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<MoveLotCommandHandler>();
     }
 
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
-    private Mock<IMovementRepository> _movementRepositoryMock = null!;
-    private Mock<IUnitOfWork> _unitOfWorkMock = null!;
+    private AutoMocker _mocker = null!;
     private MoveLotCommandHandler _handler = null!;
 
     [Test]
@@ -49,13 +39,17 @@ public class MoveLotCommandHandlerTests
         };
         var paddockTo = new Paddock { Id = toPaddockId, Name = "Paddock To" };
 
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
-        _lotRepositoryMock.Setup(r => r.Update(lot));
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _movementRepositoryMock
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync(lot);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.Update(lot));
+        _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _mocker
+            .GetMock<IMovementRepository>()
             .Setup(r => r.AddMovementAsync(It.IsAny<Movement>()))
             .Returns(Task.CompletedTask);
-        _paddockRepositoryMock.Setup(r => r.GetByIdAsync(toPaddockId)).ReturnsAsync(paddockTo);
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.GetByIdAsync(toPaddockId))
+            .ReturnsAsync(paddockTo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -65,20 +59,22 @@ public class MoveLotCommandHandlerTests
         result.Id.ShouldBe(lotId);
         result.PaddockId.ShouldBe(toPaddockId);
         result.PaddockName.ShouldBe(paddockTo.Name);
-        _lotRepositoryMock.Verify(r => r.Update(lot), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-        _movementRepositoryMock.Verify(
-            r =>
-                r.AddMovementAsync(
-                    It.Is<Movement>(m =>
-                        m.EntityId == lotId
-                        && m.FromId == 1
-                        && m.ToId == toPaddockId
-                        && m.UserId == userId
-                    )
-                ),
-            Times.Once
-        );
+        _mocker.GetMock<ILotRepository>().Verify(r => r.Update(lot), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Verify(
+                r =>
+                    r.AddMovementAsync(
+                        It.Is<Movement>(m =>
+                            m.EntityId == lotId
+                            && m.FromId == 1
+                            && m.ToId == toPaddockId
+                            && m.UserId == userId
+                        )
+                    ),
+                Times.Once
+            );
     }
 
     [Test]
@@ -90,15 +86,20 @@ public class MoveLotCommandHandlerTests
         var userId = 1;
         var command = new MoveLotCommand(lotId, toPaddockId, "Test Reason", userId);
 
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lotId)).ReturnsAsync((Lot?)null);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetByIdAsync(lotId))
+            .ReturnsAsync((Lot?)null);
 
         // Act & Assert
         var exception = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
         exception.Message.ShouldBe("Lot not found");
-        _lotRepositoryMock.Verify(r => r.Update(It.IsAny<Lot>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
-        _movementRepositoryMock.Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Never);
+        _mocker.GetMock<ILotRepository>().Verify(r => r.Update(It.IsAny<Lot>()), Times.Never);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
+        _mocker
+            .GetMock<IMovementRepository>()
+            .Verify(r => r.AddMovementAsync(It.IsAny<Movement>()), Times.Never);
     }
 }

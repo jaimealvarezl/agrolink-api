@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Paddocks.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -8,7 +9,8 @@ public record GetPaddockByIdQuery(int Id) : IRequest<PaddockDto?>;
 
 public class GetPaddockByIdQueryHandler(
     IPaddockRepository paddockRepository,
-    IFarmRepository farmRepository
+    IFarmRepository farmRepository,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetPaddockByIdQuery, PaddockDto?>
 {
     public async Task<PaddockDto?> Handle(
@@ -18,6 +20,15 @@ public class GetPaddockByIdQueryHandler(
     {
         var paddock = await paddockRepository.GetByIdAsync(request.Id);
         if (paddock == null)
+        {
+            return null;
+        }
+
+        // Security check: ensure paddock belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && paddock.FarmId != currentUserService.CurrentFarmId.Value
+        )
         {
             return null;
         }

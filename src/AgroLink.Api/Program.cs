@@ -2,17 +2,23 @@ using System.Text;
 using System.Text.Json.Serialization;
 using AgroLink.Api;
 using AgroLink.Api.Middleware;
+using AgroLink.Api.Security;
 using AgroLink.Api.Services;
 using AgroLink.Application;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Load configuration from Secrets Manager if available
-await SecretsManagerHelper.LoadSecretsAsync(builder);
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    await SecretsManagerHelper.LoadSecretsAsync(builder);
+}
 
 // Add services to the container.
 builder
@@ -34,9 +40,14 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Caching & Security
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IAuthorizationHandler, FarmRoleHandler>();
+
 // JWT Authentication
 var jwtKey =
-    builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
+    builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("JWT Key is missing in configuration.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AgroLink";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AgroLink";
 
@@ -47,7 +58,7 @@ builder
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = true,
             ValidIssuer = jwtIssuer,
             ValidateAudience = true,
@@ -56,7 +67,29 @@ builder
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Hierarchical Policies
+    options.AddPolicy(
+        "FarmOwnerOnly",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Owner))
+    );
+
+    options.AddPolicy(
+        "FarmAdminAccess",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Admin))
+    );
+
+    options.AddPolicy(
+        "FarmEditorAccess",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Editor))
+    );
+
+    options.AddPolicy(
+        "FarmViewerAccess",
+        policy => policy.AddRequirements(new FarmRoleRequirement(FarmMemberRoles.Viewer))
+    );
+});
 
 // CORS
 builder.Services.AddCors(options =>
@@ -88,3 +121,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

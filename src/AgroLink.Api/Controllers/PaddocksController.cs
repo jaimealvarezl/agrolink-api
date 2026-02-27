@@ -3,33 +3,28 @@ using AgroLink.Application.Features.Paddocks.Commands.Create;
 using AgroLink.Application.Features.Paddocks.Commands.Delete;
 using AgroLink.Application.Features.Paddocks.Commands.Update;
 using AgroLink.Application.Features.Paddocks.DTOs;
-using AgroLink.Application.Features.Paddocks.Queries.GetAll;
 using AgroLink.Application.Features.Paddocks.Queries.GetByFarm;
 using AgroLink.Application.Features.Paddocks.Queries.GetById;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/farms/{farmId}/paddocks")]
+[Authorize(Policy = "FarmViewerAccess")]
 public class PaddocksController(IMediator mediator) : BaseController
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<PaddockDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<PaddockDto>>> GetAll(int farmId)
     {
-        var paddocks = await mediator.Send(new GetAllPaddocksQuery());
-        return Ok(paddocks);
-    }
-
-    [HttpGet("farm/{farmId}")]
-    public async Task<ActionResult<IEnumerable<PaddockDto>>> GetByFarm(int farmId)
-    {
+        // Replaces GetAll (all user paddocks) and GetByFarm with a scoped GetAll
         var paddocks = await mediator.Send(new GetPaddocksByFarmQuery(farmId));
         return Ok(paddocks);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<PaddockDto>> GetById(int id)
+    public async Task<ActionResult<PaddockDto>> GetById(int farmId, int id)
     {
         var paddock = await mediator.Send(new GetPaddockByIdQuery(id));
         if (paddock == null)
@@ -41,7 +36,11 @@ public class PaddocksController(IMediator mediator) : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<PaddockDto>> Create(CreatePaddockRequest request)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult<PaddockDto>> Create(
+        int farmId,
+        [FromBody] CreatePaddockRequest request
+    )
     {
         try
         {
@@ -50,14 +49,14 @@ public class PaddocksController(IMediator mediator) : BaseController
             var paddock = await mediator.Send(
                 new CreatePaddockCommand(
                     request.Name,
-                    request.FarmId,
+                    farmId, // Use route farmId
                     userId,
                     request.Area,
                     request.AreaType
                 )
             );
 
-            return CreatedAtAction(nameof(GetById), new { id = paddock.Id }, paddock);
+            return CreatedAtAction(nameof(GetById), new { farmId, id = paddock.Id }, paddock);
         }
         catch (Exception ex)
         {
@@ -66,7 +65,12 @@ public class PaddocksController(IMediator mediator) : BaseController
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<PaddockDto>> Update(int id, UpdatePaddockRequest request)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult<PaddockDto>> Update(
+        int farmId,
+        int id,
+        [FromBody] UpdatePaddockRequest request
+    )
     {
         try
         {
@@ -74,7 +78,7 @@ public class PaddocksController(IMediator mediator) : BaseController
                 new UpdatePaddockCommand(
                     id,
                     request.Name,
-                    request.FarmId,
+                    farmId, // Use route farmId ensures consistency
                     request.Area,
                     request.AreaType
                 )
@@ -89,7 +93,8 @@ public class PaddocksController(IMediator mediator) : BaseController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(int id)
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult> Delete(int farmId, int id)
     {
         try
         {

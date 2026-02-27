@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Lots.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -8,7 +9,8 @@ public record GetLotByIdQuery(int Id) : IRequest<LotDto?>;
 
 public class GetLotByIdQueryHandler(
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository
+    IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetLotByIdQuery, LotDto?>
 {
     public async Task<LotDto?> Handle(GetLotByIdQuery request, CancellationToken cancellationToken)
@@ -20,6 +22,16 @@ public class GetLotByIdQueryHandler(
         }
 
         var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
+
+        // Security check: ensure lot belongs to the current farm context
+        if (
+            currentUserService.CurrentFarmId.HasValue
+            && paddock != null
+            && paddock.FarmId != currentUserService.CurrentFarmId.Value
+        )
+        {
+            return null;
+        }
 
         return new LotDto
         {

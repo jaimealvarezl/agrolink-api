@@ -66,7 +66,7 @@ public class AnimalsControllerTests
             .Setup(x => x.Send(It.IsAny<GetAllAnimalsQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(animals);
 
-        var result = await _controller.GetAll(CancellationToken.None);
+        var result = await _controller.GetAll(1, CancellationToken.None);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedAnimals = okResult.Value.ShouldBeOfType<List<AnimalDto>>();
@@ -87,7 +87,7 @@ public class AnimalsControllerTests
             )
             .ReturnsAsync(animal);
 
-        var result = await _controller.GetById(animalId, CancellationToken.None);
+        var result = await _controller.GetById(1, animalId, CancellationToken.None);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedAnimal = okResult.Value.ShouldBeOfType<AnimalDto>();
@@ -108,7 +108,7 @@ public class AnimalsControllerTests
             )
             .ReturnsAsync(animals);
 
-        var result = await _controller.GetByLot(lotId, CancellationToken.None);
+        var result = await _controller.GetByLot(1, lotId, CancellationToken.None);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedAnimals = okResult.Value.ShouldBeOfType<List<AnimalDto>>();
@@ -141,7 +141,7 @@ public class AnimalsControllerTests
             )
             .ReturnsAsync(createdAnimal);
 
-        var result = await _controller.Create(createDto, CancellationToken.None);
+        var result = await _controller.Create(1, createDto, CancellationToken.None);
 
         var createdAtActionResult = result.Result.ShouldBeOfType<CreatedAtActionResult>();
         var returnedAnimal = createdAtActionResult.Value.ShouldBeOfType<AnimalDto>();
@@ -167,7 +167,7 @@ public class AnimalsControllerTests
             )
             .ReturnsAsync(updatedAnimal);
 
-        var result = await _controller.Update(animalId, updateDto, CancellationToken.None);
+        var result = await _controller.Update(1, animalId, updateDto, CancellationToken.None);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedAnimal = okResult.Value.ShouldBeOfType<AnimalDto>();
@@ -187,7 +187,7 @@ public class AnimalsControllerTests
             )
             .Returns(Task.CompletedTask);
 
-        var result = await _controller.Delete(animalId, CancellationToken.None);
+        var result = await _controller.Delete(1, animalId, CancellationToken.None);
 
         result.ShouldBeOfType<NoContentResult>();
     }
@@ -214,7 +214,7 @@ public class AnimalsControllerTests
             )
             .ReturnsAsync(genealogy);
 
-        var result = await _controller.GetGenealogy(animalId, CancellationToken.None);
+        var result = await _controller.GetGenealogy(1, animalId, CancellationToken.None);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedGenealogy = okResult.Value.ShouldBeOfType<AnimalGenealogyDto>();

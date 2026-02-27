@@ -3,7 +3,6 @@ using AgroLink.Api.Controllers;
 using AgroLink.Application.Features.Lots.Commands.Create;
 using AgroLink.Application.Features.Lots.Commands.Move;
 using AgroLink.Application.Features.Lots.DTOs;
-using AgroLink.Application.Features.Lots.Queries.GetAll;
 using AgroLink.Application.Features.Lots.Queries.GetById;
 using AgroLink.Application.Features.Lots.Queries.GetByPaddock;
 using MediatR;
@@ -37,6 +36,7 @@ public class LotsControllerTests
     private Mock<IMediator> _mediatorMock = null!;
     private LotsController _controller = null!;
 
+    /* GetAll Removed from Controller
     [Test]
     public async Task GetAll_ShouldReturnOk()
     {
@@ -67,6 +67,7 @@ public class LotsControllerTests
         var returnedLots = okResult.Value.ShouldBeOfType<List<LotDto>>();
         returnedLots.Count.ShouldBe(1);
     }
+    */
 
     [Test]
     public async Task GetById_WhenLotExists_ShouldReturnOk()
@@ -90,7 +91,7 @@ public class LotsControllerTests
             .ReturnsAsync(lot);
 
         // Act
-        var result = await _controller.GetById(1);
+        var result = await _controller.GetById(1, 1);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -108,7 +109,7 @@ public class LotsControllerTests
             .ReturnsAsync((LotDto?)null);
 
         // Act
-        var result = await _controller.GetById(999);
+        var result = await _controller.GetById(1, 999);
 
         // Assert
         result.Result.ShouldBeOfType<NotFoundResult>();
@@ -135,7 +136,7 @@ public class LotsControllerTests
             .ReturnsAsync(lotDto);
 
         // Act
-        var result = await _controller.Create(request);
+        var result = await _controller.Create(1, request);
 
         // Assert
         var createdResult = result.Result.ShouldBeOfType<CreatedAtActionResult>();
@@ -163,7 +164,7 @@ public class LotsControllerTests
             .ReturnsAsync(lotDto);
 
         // Act
-        var result = await _controller.MoveLot(1, request);
+        var result = await _controller.MoveLot(1, 1, request);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -198,7 +199,7 @@ public class LotsControllerTests
             .ReturnsAsync(lots);
 
         // Act
-        var result = await _controller.GetByPaddock(1);
+        var result = await _controller.GetByPaddock(1, 1);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();

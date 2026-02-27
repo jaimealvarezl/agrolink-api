@@ -1,20 +1,118 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Interfaces;
 using MediatR;
-
-// For IMovementRepository
 
 namespace AgroLink.Application.Features.Movements.Commands.CreateMovement;
 
-public class CreateMovementCommandHandler(IMovementRepository movementRepository)
-    : IRequestHandler<CreateMovementCommand, MovementDto>
+public class CreateMovementCommandHandler(
+    IMovementRepository movementRepository,
+    IAnimalRepository animalRepository,
+    ILotRepository lotRepository,
+    IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService
+) : IRequestHandler<CreateMovementCommand, MovementDto>
 {
     public async Task<MovementDto> Handle(
         CreateMovementCommand request,
         CancellationToken cancellationToken
     )
     {
+        // Security check: ensure all entities belong to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            var farmId = currentUserService.CurrentFarmId.Value;
+
+            // Validate EntityId
+            if (request.MovementDto.EntityType == "ANIMAL")
+            {
+                var animal = await animalRepository.GetByIdAsync(request.MovementDto.EntityId);
+                if (animal == null)
+                {
+                    throw new ArgumentException("Animal not found");
+                }
+
+                var lot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
+                if (lot == null || lot.Paddock.FarmId != farmId)
+                {
+                    throw new ForbiddenAccessException("You do not have access to this animal");
+                }
+            }
+            else if (request.MovementDto.EntityType == "LOT")
+            {
+                var lot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.EntityId);
+                if (lot == null)
+                {
+                    throw new ArgumentException("Lot not found");
+                }
+
+                if (lot.Paddock.FarmId != farmId)
+                {
+                    throw new ForbiddenAccessException("You do not have access to this lot");
+                }
+            }
+
+            // Validate FromId
+            if (request.MovementDto.FromId.HasValue)
+            {
+                if (request.MovementDto.EntityType == "ANIMAL")
+                {
+                    var lot = await lotRepository.GetLotWithPaddockAsync(
+                        request.MovementDto.FromId.Value
+                    );
+                    if (lot != null && lot.Paddock.FarmId != farmId)
+                    {
+                        throw new ForbiddenAccessException(
+                            "Source lot does not belong to this farm"
+                        );
+                    }
+                }
+                else if (request.MovementDto.EntityType == "LOT")
+                {
+                    var paddock = await paddockRepository.GetByIdAsync(
+                        request.MovementDto.FromId.Value
+                    );
+                    if (paddock != null && paddock.FarmId != farmId)
+                    {
+                        throw new ForbiddenAccessException(
+                            "Source paddock does not belong to this farm"
+                        );
+                    }
+                }
+            }
+
+            // Validate ToId
+            if (request.MovementDto.ToId.HasValue)
+            {
+                if (request.MovementDto.EntityType == "ANIMAL")
+                {
+                    var lot = await lotRepository.GetLotWithPaddockAsync(
+                        request.MovementDto.ToId.Value
+                    );
+                    if (lot != null && lot.Paddock.FarmId != farmId)
+                    {
+                        throw new ForbiddenAccessException(
+                            "Target lot does not belong to this farm"
+                        );
+                    }
+                }
+                else if (request.MovementDto.EntityType == "LOT")
+                {
+                    var paddock = await paddockRepository.GetByIdAsync(
+                        request.MovementDto.ToId.Value
+                    );
+                    if (paddock != null && paddock.FarmId != farmId)
+                    {
+                        throw new ForbiddenAccessException(
+                            "Target paddock does not belong to this farm"
+                        );
+                    }
+                }
+            }
+        }
+
         var movement = new Movement
         {
             EntityType = request.MovementDto.EntityType,

@@ -1,8 +1,10 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetById;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
+using Moq.AutoMock;
 using Shouldly;
 
 namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetById;
@@ -13,28 +15,11 @@ public class GetChecklistByIdQueryHandlerTests
     [SetUp]
     public void Setup()
     {
-        _checklistRepositoryMock = new Mock<IChecklistRepository>();
-        _checklistItemRepositoryMock = new Mock<IRepository<ChecklistItem>>();
-        _userRepositoryMock = new Mock<IUserRepository>();
-        _animalRepositoryMock = new Mock<IAnimalRepository>();
-        _lotRepositoryMock = new Mock<ILotRepository>();
-        _paddockRepositoryMock = new Mock<IPaddockRepository>();
-        _handler = new GetChecklistByIdQueryHandler(
-            _checklistRepositoryMock.Object,
-            _checklistItemRepositoryMock.Object,
-            _userRepositoryMock.Object,
-            _animalRepositoryMock.Object,
-            _lotRepositoryMock.Object,
-            _paddockRepositoryMock.Object
-        );
+        _mocker = new AutoMocker();
+        _handler = _mocker.CreateInstance<GetChecklistByIdQueryHandler>();
     }
 
-    private Mock<IChecklistRepository> _checklistRepositoryMock = null!;
-    private Mock<IRepository<ChecklistItem>> _checklistItemRepositoryMock = null!;
-    private Mock<IUserRepository> _userRepositoryMock = null!;
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private Mock<ILotRepository> _lotRepositoryMock = null!;
-    private Mock<IPaddockRepository> _paddockRepositoryMock = null!;
+    private AutoMocker _mocker = null!;
     private GetChecklistByIdQueryHandler _handler = null!;
 
     [Test]
@@ -42,6 +27,7 @@ public class GetChecklistByIdQueryHandlerTests
     {
         // Arrange
         var checklistId = 1;
+        var farmId = 10;
         var query = new GetChecklistByIdQuery(checklistId);
         var checklist = new Checklist
         {
@@ -53,7 +39,12 @@ public class GetChecklistByIdQueryHandlerTests
             Notes = "Test Notes",
         };
         var user = new User { Id = 1, Name = "Test User" };
-        var lot = new Lot { Id = 1, Name = "Test Lot" };
+        var lot = new Lot
+        {
+            Id = 1,
+            Name = "Test Lot",
+            Paddock = new Paddock { FarmId = farmId },
+        };
         var animal = new Animal
         {
             Id = 1,
@@ -70,13 +61,25 @@ public class GetChecklistByIdQueryHandlerTests
             Condition = "OK",
         };
 
-        _checklistRepositoryMock.Setup(r => r.GetByIdAsync(checklistId)).ReturnsAsync(checklist);
-        _userRepositoryMock.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
-        _checklistItemRepositoryMock
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Setup(r => r.GetByIdAsync(checklistId))
+            .ReturnsAsync(checklist);
+        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
+        _mocker
+            .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem> { checklistItem });
-        _animalRepositoryMock.Setup(r => r.GetByIdAsync(animal.Id)).ReturnsAsync(animal);
-        _lotRepositoryMock.Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdAsync(animal.Id))
+            .ReturnsAsync(animal);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
+            .ReturnsAsync(lot);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -90,13 +93,48 @@ public class GetChecklistByIdQueryHandlerTests
     }
 
     [Test]
+    public async Task Handle_ChecklistFromAnotherFarm_ReturnsNull()
+    {
+        // Arrange
+        var checklistId = 1;
+        var currentFarmId = 10;
+        var checklistFarmId = 20;
+        var query = new GetChecklistByIdQuery(checklistId);
+        var checklist = new Checklist
+        {
+            Id = checklistId,
+            ScopeType = "LOT",
+            ScopeId = 1,
+        };
+        var lot = new Lot
+        {
+            Id = 1,
+            Paddock = new Paddock { FarmId = checklistFarmId },
+        };
+
+        _mocker
+            .GetMock<IChecklistRepository>()
+            .Setup(r => r.GetByIdAsync(checklistId))
+            .ReturnsAsync(checklist);
+        _mocker.GetMock<ILotRepository>().Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Test]
     public async Task Handle_NonExistingChecklist_ReturnsNull()
     {
         // Arrange
         var checklistId = 999;
         var query = new GetChecklistByIdQuery(checklistId);
 
-        _checklistRepositoryMock
+        _mocker
+            .GetMock<IChecklistRepository>()
             .Setup(r => r.GetByIdAsync(checklistId))
             .ReturnsAsync((Checklist?)null);
 

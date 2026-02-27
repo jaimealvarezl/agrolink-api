@@ -26,20 +26,20 @@ public interface IAnimalRepository : IRepository<Animal>
         Sex? sex = null
     );
 
-    Task<IEnumerable<Animal>> GetAllByUserAsync(
-        int userId,
+    Task<IEnumerable<Animal>> GetAllByFarmAsync(
+        int farmId,
         CancellationToken cancellationToken = default
     );
 
     Task<Animal?> GetAnimalDetailsAsync(int id, int userId);
 
     Task<List<string>> GetDistinctColorsAsync(
-        int userId,
+        int farmId,
         CancellationToken cancellationToken = default
     );
 
     Task<List<string>> GetDistinctBreedsAsync(
-        int userId,
+        int farmId,
         CancellationToken cancellationToken = default
     );
 }
