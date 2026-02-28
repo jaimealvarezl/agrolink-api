@@ -20,7 +20,7 @@ public class UpdateMemberRoleCommandHandler(
     )
     {
         var member =
-            await farmMemberRepository.GetByFarmAndUserAsync(request.FarmId, request.UserId)
+            await farmMemberRepository.GetByFarmAndUserAsync(request.FarmId, request.UserId, true)
             ?? throw new NotFoundException("FarmMember", $"{request.FarmId}-{request.UserId}");
 
         // Security Check: Prevent the Owner from downgrading their own role

@@ -19,8 +19,8 @@ public class GetMembersQueryHandler(IFarmMemberRepository farmMemberRepository)
         return members.Select(m => new FarmMemberDto
         {
             UserId = m.UserId,
-            Name = m.User.Name,
-            Email = m.User.Email,
+            Name = m.User?.Name ?? string.Empty,
+            Email = m.User?.Email ?? string.Empty,
             Role = m.Role,
             JoinedAt = m.JoinedAt,
         });
