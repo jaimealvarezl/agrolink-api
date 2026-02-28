@@ -28,6 +28,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
             ArgumentException => (HttpStatusCode.BadRequest, exception.Message),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, exception.Message),
             ForbiddenAccessException => (HttpStatusCode.Forbidden, exception.Message),
+            NotFoundException => (HttpStatusCode.NotFound, exception.Message),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred"),
         };
 
