@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgroLink.Infrastructure.Migrations
 {
     [DbContext(typeof(AgroLinkDbContext))]
-    [Migration("20260305212310_UpdateOwnersTableWithFarmId")]
+    [Migration("20260305214537_UpdateOwnersTableWithFarmId")]
     partial class UpdateOwnersTableWithFarmId
     {
         /// <inheritdoc />
@@ -445,7 +445,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("FarmId")
+                    b.Property<int?>("FarmId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -712,8 +712,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasOne("AgroLink.Domain.Entities.Farm", "Farm")
                         .WithMany()
                         .HasForeignKey("FarmId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AgroLink.Domain.Entities.User", "User")
                         .WithMany()

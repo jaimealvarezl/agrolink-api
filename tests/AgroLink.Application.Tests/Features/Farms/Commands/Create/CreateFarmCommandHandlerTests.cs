@@ -97,7 +97,7 @@ public class CreateFarmCommandHandlerTests
                     ),
                 Times.Once
             );
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
     }
 
     [Test]
@@ -161,7 +161,7 @@ public class CreateFarmCommandHandlerTests
                 r => r.AddAsync(It.Is<Farm>(f => f.Owner != null && f.Owner.Id == newOwnerId)),
                 Times.Once
             );
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
     }
 
     [Test]

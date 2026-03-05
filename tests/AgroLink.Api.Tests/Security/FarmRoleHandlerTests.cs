@@ -180,7 +180,7 @@ public class FarmRoleHandlerTests
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
     }
 
-    private ClaimsPrincipal SetupUser(int userId)
+    private static ClaimsPrincipal SetupUser(int userId)
     {
         var claims = new List<Claim> { new("userid", userId.ToString()) };
         var identity = new ClaimsIdentity(claims, "test");

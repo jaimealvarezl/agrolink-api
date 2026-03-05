@@ -23,14 +23,7 @@ public class AnimalPhotoRepository(AgroLinkDbContext context)
 
         // Set new profile photo
         var newProfile = await _dbSet.FindAsync(photoId);
-        if (newProfile != null)
-        {
-            newProfile.IsProfile = true;
-            // Note: FindAsync attaches the entity, so SaveChanges (called by UnitOfWork) will persist this.
-            // However, this method returns Task, not saving changes itself.
-            // The original code relied on the UnitOfWork to save the changes made to the tracked entities.
-            // We need to ensure that behavior is preserved.
-        }
+        newProfile?.IsProfile = true;
     }
 
     public async Task<bool> HasPhotosAsync(int animalId)

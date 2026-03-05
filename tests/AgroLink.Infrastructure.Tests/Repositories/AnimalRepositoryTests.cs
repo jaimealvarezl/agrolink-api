@@ -270,7 +270,7 @@ public class AnimalRepositoryTests : TestBase
         a2.LifeStatus = LifeStatus.Missing;
 
         // Animal 3: Healthy
-        var a3 = await CreateTestAnimalAsync(_context, lot.Id, "A3");
+        _ = await CreateTestAnimalAsync(_context, lot.Id, "A3");
 
         await _context.SaveChangesAsync();
 

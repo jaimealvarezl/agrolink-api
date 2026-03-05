@@ -41,7 +41,7 @@ public class FarmsIntegrationTests : IntegrationTestBase
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/Farms", request);
+        var response = await Client.PostAsJsonAsync("/api/farms", request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Created);

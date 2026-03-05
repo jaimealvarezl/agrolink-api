@@ -39,33 +39,24 @@ public class CreateFarmCommandHandler(
             CUE = request.CUE,
         };
 
-        if (owner == null)
+        owner = new Owner
         {
-            owner = new Owner
-            {
-                Name = user.Name,
-                UserId = userId,
-                Farm = farm,
-                // Phone could be copied if available
-            };
-            await ownerRepository.AddAsync(owner);
-        }
-        else
-        {
-            // If the user already has an owner record from another farm, we still need
-            // to create a new owner record for THIS new farm, since Owner is scoped to FarmId.
-            owner = new Owner
-            {
-                Name = user.Name,
-                UserId = userId,
-                Farm = farm,
-            };
-            await ownerRepository.AddAsync(owner);
-        }
+            Name = user.Name,
+            UserId = userId,
+        };
+
+        await ownerRepository.AddAsync(owner);
 
         farm.Owner = owner;
 
         await farmRepository.AddAsync(farm);
+
+        // Save first so Farm gets an ID and Owner gets an ID. 
+        // Owner.FarmId is currently null.
+        await unitOfWork.SaveChangesAsync();
+
+        // Now assign the FarmId to the Owner
+        owner.FarmId = farm.Id;
 
         var member = new FarmMember
         {

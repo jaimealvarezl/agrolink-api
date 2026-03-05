@@ -160,7 +160,7 @@ public class JwtTokenServiceTests
             Email = "no_id@example.com",
             Role = "USER",
         };
-        var tokenWithNoUserId = _service.GenerateToken(invalidUser); // Assume GenerateToken can generate without ID for this test scenario if needed. Or create a custom token.
+        _ = _service.GenerateToken(invalidUser); // Assume GenerateToken can generate without ID for this test scenario if needed. Or create a custom token.
         // For simplicity here, let's just make a token that won't pass validation, leading to null.
 
         // More robust test would involve directly manipulating claims or using a JwtSecurityTokenHandler to create a token without specific claims
