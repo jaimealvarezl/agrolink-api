@@ -101,7 +101,7 @@ public class CreateFarmCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_ExistingOwner_UsesExistingOwnerInsteadOfCreatingNewOne()
+    public async Task Handle_ExistingOwner_CreatesNewOwnerForNewFarm()
     {
         // Arrange
         const int userId = 10;
@@ -114,7 +114,10 @@ public class CreateFarmCommandHandlerTests
             Id = 5,
             Name = "Test User",
             UserId = userId,
+            FarmId = 99 // different farm
         };
+
+        var newOwnerId = 6;
 
         _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
@@ -123,6 +126,11 @@ public class CreateFarmCommandHandlerTests
             .GetMock<IOwnerRepository>()
             .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(existingOwner);
+
+        _mocker
+            .GetMock<IOwnerRepository>()
+            .Setup(r => r.AddAsync(It.IsAny<Owner>()))
+            .Callback<Owner>(o => o.Id = newOwnerId);
 
         _mocker
             .GetMock<IFarmRepository>()
@@ -143,18 +151,18 @@ public class CreateFarmCommandHandlerTests
 
         // Assert
         result.ShouldNotBeNull();
-        result.OwnerId.ShouldBe(existingOwner.Id);
+        result.OwnerId.ShouldBe(newOwnerId);
 
-        // Verify Owner was NOT added again
+        // Verify Owner WAS added again
         _mocker
             .GetMock<IOwnerRepository>()
-            .Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Never);
+            .Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Once);
         _mocker
             .GetMock<IFarmRepository>()
             .Verify(
                 r =>
                     r.AddAsync(
-                        It.Is<Farm>(f => f.Owner == existingOwner || f.OwnerId == existingOwner.Id)
+                        It.Is<Farm>(f => f.Owner != null && f.Owner.Id == newOwnerId)
                     ),
                 Times.Once
             );
