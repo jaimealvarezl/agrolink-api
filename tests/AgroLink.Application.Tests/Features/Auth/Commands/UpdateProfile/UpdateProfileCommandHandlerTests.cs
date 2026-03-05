@@ -51,8 +51,8 @@ public class UpdateProfileCommandHandlerTests
         _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
-            .ReturnsAsync(owner);
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .ReturnsAsync(new List<Owner> { owner });
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
@@ -91,8 +91,8 @@ public class UpdateProfileCommandHandlerTests
         _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
-            .ReturnsAsync((Owner?)null);
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .ReturnsAsync(new List<Owner>());
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act

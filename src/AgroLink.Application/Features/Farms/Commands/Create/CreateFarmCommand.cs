@@ -30,49 +30,65 @@ public class CreateFarmCommandHandler(
             throw new UnauthorizedAccessException($"User with ID {userId} from token not found.");
         }
 
-        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
-
-        if (owner == null)
+        try
         {
-            owner = new Owner
-            {
-                Name = user.Name,
-                UserId = userId,
-                // Phone could be copied if available
-            };
+            await unitOfWork.BeginTransactionAsync();
+
+            // 1. Create the Owner first (with FarmId = null)
+            var owner = new Owner { Name = user.Name, UserId = userId };
+
             await ownerRepository.AddAsync(owner);
+
+            // Save to get the owner.Id
+            await unitOfWork.SaveChangesAsync();
+
+            // 2. Create the Farm (linked to the newly created Owner)
+            var farm = new Farm
+            {
+                Name = request.Name,
+                Location = request.Location,
+                CUE = request.CUE,
+                OwnerId = owner.Id, // Link via FK instead of navigation property initially
+            };
+
+            await farmRepository.AddAsync(farm);
+
+            // Save to get the farm.Id
+            await unitOfWork.SaveChangesAsync();
+
+            // 3. Link the Owner back to the Farm
+            owner.FarmId = farm.Id;
+
+            // 4. Create the FarmMember record
+            var member = new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = userId,
+                Role = FarmMemberRoles.Owner,
+            };
+
+            await farmMemberRepository.AddAsync(member);
+
+            // Final save persists the owner.FarmId link and the member
+            await unitOfWork.SaveChangesAsync();
+
+            await unitOfWork.CommitTransactionAsync();
+
+            return new FarmDto
+            {
+                Id = farm.Id,
+                Name = farm.Name,
+                Location = farm.Location,
+                CUE = farm.CUE,
+                OwnerId = farm.OwnerId,
+                Role = member.Role,
+                CreatedAt = farm.CreatedAt,
+            };
         }
-
-        var farm = new Farm
+        catch
         {
-            Name = request.Name,
-            Location = request.Location,
-            CUE = request.CUE,
-            Owner = owner,
-        };
-
-        await farmRepository.AddAsync(farm);
-
-        var member = new FarmMember
-        {
-            Farm = farm,
-            UserId = userId,
-            Role = FarmMemberRoles.Owner,
-        };
-
-        await farmMemberRepository.AddAsync(member);
-
-        await unitOfWork.SaveChangesAsync();
-
-        return new FarmDto
-        {
-            Id = farm.Id,
-            Name = farm.Name,
-            Location = farm.Location,
-            CUE = farm.CUE,
-            OwnerId = farm.OwnerId,
-            Role = member.Role,
-            CreatedAt = farm.CreatedAt,
-        };
+            await unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
     }
 }

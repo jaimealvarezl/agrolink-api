@@ -11,7 +11,18 @@ public class OwnerConfiguration : IEntityTypeConfiguration<Owner>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Phone).HasMaxLength(20);
-        builder.HasIndex(e => e.Name);
-        builder.HasIndex(e => e.UserId).IsUnique();
+
+        // Removed IsUnique from UserId since an owner can exist in multiple farms
+        builder.HasIndex(e => e.UserId);
+
+        // Composite unique index for Name and FarmId
+        builder.HasIndex(e => new { e.Name, e.FarmId }).IsUnique();
+
+        // Relationship with Farm
+        builder
+            .HasOne(e => e.Farm)
+            .WithMany()
+            .HasForeignKey(e => e.FarmId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

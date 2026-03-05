@@ -29,8 +29,8 @@ public class UpdateProfileCommandHandler(
         user.UpdatedAt = DateTime.UtcNow;
         userRepository.Update(user);
 
-        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
-        if (owner != null)
+        var owners = await ownerRepository.FindAsync(o => o.UserId == userId);
+        foreach (var owner in owners)
         {
             owner.Name = request.Request.Name;
             owner.UpdatedAt = DateTime.UtcNow;

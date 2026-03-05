@@ -16,6 +16,9 @@ public class Owner
     public int? UserId { get; set; }
     public virtual User? User { get; set; }
 
+    public int? FarmId { get; set; }
+    public virtual Farm? Farm { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

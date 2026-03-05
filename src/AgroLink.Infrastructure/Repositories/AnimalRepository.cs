@@ -256,22 +256,4 @@ public class AnimalRepository(AgroLinkDbContext context)
             .OrderBy(b => b)
             .ToListAsync(cancellationToken);
     }
-
-    private async Task<List<int>> GetUserFarmIdsAsync(
-        int userId,
-        CancellationToken cancellationToken
-    )
-    {
-        var ownedFarmIds =
-            from farm in _context.Farms
-            join owner in _context.Owners on farm.OwnerId equals owner.Id
-            where owner.UserId == userId
-            select farm.Id;
-
-        var memberFarmIds = _context
-            .FarmMembers.Where(m => m.UserId == userId)
-            .Select(m => m.FarmId);
-
-        return await ownedFarmIds.Union(memberFarmIds).ToListAsync(cancellationToken);
-    }
 }
