@@ -45,7 +45,7 @@ public class CreateFarmCommandHandler(
             {
                 Name = user.Name,
                 UserId = userId,
-                Farm = farm
+                Farm = farm,
                 // Phone could be copied if available
             };
             await ownerRepository.AddAsync(owner);
@@ -58,7 +58,7 @@ public class CreateFarmCommandHandler(
             {
                 Name = user.Name,
                 UserId = userId,
-                Farm = farm
+                Farm = farm,
             };
             await ownerRepository.AddAsync(owner);
         }

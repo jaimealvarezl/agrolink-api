@@ -114,7 +114,7 @@ public class CreateFarmCommandHandlerTests
             Id = 5,
             Name = "Test User",
             UserId = userId,
-            FarmId = 99 // different farm
+            FarmId = 99, // different farm
         };
 
         var newOwnerId = 6;
@@ -154,16 +154,11 @@ public class CreateFarmCommandHandlerTests
         result.OwnerId.ShouldBe(newOwnerId);
 
         // Verify Owner WAS added again
-        _mocker
-            .GetMock<IOwnerRepository>()
-            .Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Once);
+        _mocker.GetMock<IOwnerRepository>().Verify(r => r.AddAsync(It.IsAny<Owner>()), Times.Once);
         _mocker
             .GetMock<IFarmRepository>()
             .Verify(
-                r =>
-                    r.AddAsync(
-                        It.Is<Farm>(f => f.Owner != null && f.Owner.Id == newOwnerId)
-                    ),
+                r => r.AddAsync(It.Is<Farm>(f => f.Owner != null && f.Owner.Id == newOwnerId)),
                 Times.Once
             );
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
