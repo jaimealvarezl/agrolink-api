@@ -34,42 +34,42 @@ public class CreateFarmCommandHandler(
         {
             await unitOfWork.BeginTransactionAsync();
 
+            // 1. Create the Owner first (with FarmId = null)
+            var owner = new Owner { Name = user.Name, UserId = userId };
+
+            await ownerRepository.AddAsync(owner);
+
+            // Save to get the owner.Id
+            await unitOfWork.SaveChangesAsync();
+
+            // 2. Create the Farm (linked to the newly created Owner)
             var farm = new Farm
             {
                 Name = request.Name,
                 Location = request.Location,
                 CUE = request.CUE,
+                OwnerId = owner.Id, // Link via FK instead of navigation property initially
             };
-
-            var owner = new Owner
-            {
-                Name = user.Name,
-                UserId = userId,
-                Farm = farm, // Link them immediately to satisfy EF Core mapping
-            };
-
-            await ownerRepository.AddAsync(owner);
-
-            farm.Owner = owner;
 
             await farmRepository.AddAsync(farm);
 
-            // First save so Farm gets an ID and Owner gets an ID.
+            // Save to get the farm.Id
             await unitOfWork.SaveChangesAsync();
 
-            // Link the FarmId back to the owner
+            // 3. Link the Owner back to the Farm
             owner.FarmId = farm.Id;
 
+            // 4. Create the FarmMember record
             var member = new FarmMember
             {
-                Farm = farm,
+                FarmId = farm.Id,
                 UserId = userId,
                 Role = FarmMemberRoles.Owner,
             };
 
             await farmMemberRepository.AddAsync(member);
 
-            // Second save persists the owner.FarmId link and the member
+            // Final save persists the owner.FarmId link and the member
             await unitOfWork.SaveChangesAsync();
 
             await unitOfWork.CommitTransactionAsync();
