@@ -30,50 +30,65 @@ public class CreateFarmCommandHandler(
             throw new UnauthorizedAccessException($"User with ID {userId} from token not found.");
         }
 
-        var owner = await ownerRepository.FirstOrDefaultAsync(o => o.UserId == userId);
-
-        var farm = new Farm
+        try
         {
-            Name = request.Name,
-            Location = request.Location,
-            CUE = request.CUE,
-        };
+            await unitOfWork.BeginTransactionAsync();
 
-        owner = new Owner { Name = user.Name, UserId = userId };
+            var farm = new Farm
+            {
+                Name = request.Name,
+                Location = request.Location,
+                CUE = request.CUE,
+            };
 
-        await ownerRepository.AddAsync(owner);
+            var owner = new Owner
+            {
+                Name = user.Name,
+                UserId = userId,
+                Farm = farm, // Link them immediately to satisfy EF Core mapping
+            };
 
-        farm.Owner = owner;
+            await ownerRepository.AddAsync(owner);
 
-        await farmRepository.AddAsync(farm);
+            farm.Owner = owner;
 
-        // Save first so Farm gets an ID and Owner gets an ID.
-        // Owner.FarmId is currently null.
-        await unitOfWork.SaveChangesAsync();
+            await farmRepository.AddAsync(farm);
 
-        // Now assign the FarmId to the Owner
-        owner.FarmId = farm.Id;
+            // First save so Farm gets an ID and Owner gets an ID.
+            await unitOfWork.SaveChangesAsync();
 
-        var member = new FarmMember
+            // Link the FarmId back to the owner
+            owner.FarmId = farm.Id;
+
+            var member = new FarmMember
+            {
+                Farm = farm,
+                UserId = userId,
+                Role = FarmMemberRoles.Owner,
+            };
+
+            await farmMemberRepository.AddAsync(member);
+
+            // Second save persists the owner.FarmId link and the member
+            await unitOfWork.SaveChangesAsync();
+
+            await unitOfWork.CommitTransactionAsync();
+
+            return new FarmDto
+            {
+                Id = farm.Id,
+                Name = farm.Name,
+                Location = farm.Location,
+                CUE = farm.CUE,
+                OwnerId = farm.OwnerId,
+                Role = member.Role,
+                CreatedAt = farm.CreatedAt,
+            };
+        }
+        catch
         {
-            Farm = farm,
-            UserId = userId,
-            Role = FarmMemberRoles.Owner,
-        };
-
-        await farmMemberRepository.AddAsync(member);
-
-        await unitOfWork.SaveChangesAsync();
-
-        return new FarmDto
-        {
-            Id = farm.Id,
-            Name = farm.Name,
-            Location = farm.Location,
-            CUE = farm.CUE,
-            OwnerId = farm.OwnerId,
-            Role = member.Role,
-            CreatedAt = farm.CreatedAt,
-        };
+            await unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
     }
 }

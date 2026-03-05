@@ -33,16 +33,11 @@ public partial class UpdateOwnersTableWithFarmId : Migration
                      JOIN ""Animals"" a ON a.""Id"" = ao.""AnimalId""
                      JOIN ""Lots"" l ON l.""Id"" = a.""LotId""
                      JOIN ""Paddocks"" p ON p.""Id"" = l.""PaddockId""
-                     WHERE ao.""OwnerId"" = ""Owners"".""Id"" LIMIT 1),
-                    (SELECT ""Id"" FROM ""Farms"" ORDER BY ""Id"" LIMIT 1)
-                );
-            ");
+                     WHERE ao.""OwnerId"" = ""Owners"".""Id"" LIMIT 1)
+                     );
+                     ");
 
-        // Delete any owners that couldn't be mapped to a farm (e.g., if there are no farms in the DB)
-        migrationBuilder.Sql(@"DELETE FROM ""Owners"" WHERE ""FarmId"" IS NULL;");
-
-        migrationBuilder.CreateIndex(
-            name: "IX_Owners_FarmId",
+                     migrationBuilder.CreateIndex(            name: "IX_Owners_FarmId",
             table: "Owners",
             column: "FarmId");
 
