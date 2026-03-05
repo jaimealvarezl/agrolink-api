@@ -39,11 +39,7 @@ public class CreateFarmCommandHandler(
             CUE = request.CUE,
         };
 
-        owner = new Owner
-        {
-            Name = user.Name,
-            UserId = userId,
-        };
+        owner = new Owner { Name = user.Name, UserId = userId };
 
         await ownerRepository.AddAsync(owner);
 
@@ -51,7 +47,7 @@ public class CreateFarmCommandHandler(
 
         await farmRepository.AddAsync(farm);
 
-        // Save first so Farm gets an ID and Owner gets an ID. 
+        // Save first so Farm gets an ID and Owner gets an ID.
         // Owner.FarmId is currently null.
         await unitOfWork.SaveChangesAsync();
 
