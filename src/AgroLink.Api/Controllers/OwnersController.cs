@@ -16,52 +16,31 @@ public class OwnersController(IMediator mediator) : BaseController
     [Authorize(Policy = "FarmAdminAccess")] // Owner or Admin
     public async Task<ActionResult<IEnumerable<OwnerDto>>> GetOwners(int farmId)
     {
-        try
-        {
-            var owners = await mediator.Send(new GetOwnersByFarmIdQuery(farmId));
-            return Ok(owners);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var owners = await mediator.Send(new GetOwnersByFarmIdQuery(farmId));
+        return Ok(owners);
     }
 
     [HttpPost]
     [Authorize(Policy = "FarmAdminAccess")] // Owner or Admin
     public async Task<ActionResult<OwnerDto>> Create(int farmId, CreateOwnerRequest request)
     {
-        try
-        {
-            var owner = await mediator.Send(
-                new CreateOwnerCommand(
-                    farmId,
-                    request.Name,
-                    request.Phone,
-                    request.Email,
-                    request.UserId
-                )
-            );
-            return CreatedAtAction(nameof(GetOwners), new { farmId }, owner);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var owner = await mediator.Send(
+            new CreateOwnerCommand(
+                farmId,
+                request.Name,
+                request.Phone,
+                request.Email,
+                request.UserId
+            )
+        );
+        return CreatedAtAction(nameof(GetOwners), new { farmId }, owner);
     }
 
     [HttpDelete("{ownerId}")]
     [Authorize(Policy = "FarmOwnerOnly")] // Owner only
     public async Task<ActionResult> Delete(int farmId, int ownerId)
     {
-        try
-        {
-            await mediator.Send(new DeleteOwnerCommand(farmId, ownerId));
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(new DeleteOwnerCommand(farmId, ownerId));
+        return NoContent();
     }
 }

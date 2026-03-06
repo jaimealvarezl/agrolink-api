@@ -40,24 +40,17 @@ public class MovementsController(IMediator mediator) : BaseController
         [FromBody] CreateMovementDto dto
     )
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var movement = await mediator.Send(new CreateMovementCommand(dto, userId));
-            return CreatedAtAction(
-                nameof(GetByEntity),
-                new
-                {
-                    farmId,
-                    entityType = dto.EntityType,
-                    entityId = dto.EntityId,
-                },
-                movement
-            );
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        var movement = await mediator.Send(new CreateMovementCommand(dto, userId));
+        return CreatedAtAction(
+            nameof(GetByEntity),
+            new
+            {
+                farmId,
+                entityType = dto.EntityType,
+                entityId = dto.EntityId,
+            },
+            movement
+        );
     }
 }

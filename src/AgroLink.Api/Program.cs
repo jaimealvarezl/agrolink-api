@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using AgroLink.Api;
-using AgroLink.Api.Middleware;
+using AgroLink.Api.Filters;
 using AgroLink.Api.Security;
 using AgroLink.Api.Services;
 using AgroLink.Application;
@@ -22,7 +22,10 @@ if (!builder.Environment.IsEnvironment("Testing"))
 
 // Add services to the container.
 builder
-    .Services.AddControllers()
+    .Services.AddControllers(options =>
+    {
+        options.Filters.Add<GlobalExceptionFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -104,9 +107,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

@@ -42,26 +42,19 @@ public class PaddocksController(IMediator mediator) : BaseController
         [FromBody] CreatePaddockRequest request
     )
     {
-        try
-        {
-            var userId = GetCurrentUserId();
+        var userId = GetCurrentUserId();
 
-            var paddock = await mediator.Send(
-                new CreatePaddockCommand(
-                    request.Name,
-                    farmId, // Use route farmId
-                    userId,
-                    request.Area,
-                    request.AreaType
-                )
-            );
+        var paddock = await mediator.Send(
+            new CreatePaddockCommand(
+                request.Name,
+                farmId, // Use route farmId
+                userId,
+                request.Area,
+                request.AreaType
+            )
+        );
 
-            return CreatedAtAction(nameof(GetById), new { farmId, id = paddock.Id }, paddock);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        return CreatedAtAction(nameof(GetById), new { farmId, id = paddock.Id }, paddock);
     }
 
     [HttpPut("{id}")]
@@ -72,38 +65,24 @@ public class PaddocksController(IMediator mediator) : BaseController
         [FromBody] UpdatePaddockRequest request
     )
     {
-        try
-        {
-            var paddock = await mediator.Send(
-                new UpdatePaddockCommand(
-                    id,
-                    request.Name,
-                    farmId, // Use route farmId ensures consistency
-                    request.Area,
-                    request.AreaType
-                )
-            );
+        var paddock = await mediator.Send(
+            new UpdatePaddockCommand(
+                id,
+                request.Name,
+                farmId, // Use route farmId ensures consistency
+                request.Area,
+                request.AreaType
+            )
+        );
 
-            return Ok(paddock);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        return Ok(paddock);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult> Delete(int farmId, int id)
     {
-        try
-        {
-            await mediator.Send(new DeletePaddockCommand(id));
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(new DeletePaddockCommand(id));
+        return NoContent();
     }
 }

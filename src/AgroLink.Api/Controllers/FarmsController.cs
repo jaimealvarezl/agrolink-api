@@ -22,141 +22,83 @@ public class FarmsController(IMediator mediator) : BaseController
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FarmDto>>> GetAll()
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var farms = await mediator.Send(new GetAllFarmsQuery(userId));
-            return Ok(farms);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        var farms = await mediator.Send(new GetAllFarmsQuery(userId));
+        return Ok(farms);
     }
 
     [HttpGet("{farmId}")]
     [Authorize(Policy = "FarmViewerAccess")]
     public async Task<ActionResult<FarmDto>> GetById(int farmId)
     {
-        try
+        var userId = GetCurrentUserId();
+        var farm = await mediator.Send(new GetFarmByIdQuery(farmId, userId));
+        if (farm == null)
         {
-            var userId = GetCurrentUserId();
-            var farm = await mediator.Send(new GetFarmByIdQuery(farmId, userId));
-            if (farm == null)
-            {
-                return NotFound();
-            }
+            return NotFound();
+        }
 
-            return Ok(farm);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        return Ok(farm);
     }
 
     [HttpGet("{farmId}/hierarchy")]
     [Authorize(Policy = "FarmViewerAccess")]
     public async Task<ActionResult<FarmHierarchyDto>> GetHierarchy(int farmId)
     {
-        try
+        var userId = GetCurrentUserId();
+        var farm = await mediator.Send(new GetFarmHierarchyQuery(farmId, userId));
+        if (farm == null)
         {
-            var userId = GetCurrentUserId();
-            var farm = await mediator.Send(new GetFarmHierarchyQuery(farmId, userId));
-            if (farm == null)
-            {
-                return NotFound();
-            }
+            return NotFound();
+        }
 
-            return Ok(farm);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        return Ok(farm);
     }
 
     [HttpPost]
     public async Task<ActionResult<FarmDto>> Create(CreateFarmRequest request)
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var farm = await mediator.Send(
-                new CreateFarmCommand(request.Name, request.Location, request.CUE, userId)
-            );
-            return CreatedAtAction(nameof(GetById), new { farmId = farm.Id }, farm);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        var farm = await mediator.Send(
+            new CreateFarmCommand(request.Name, request.Location, request.CUE, userId)
+        );
+        return CreatedAtAction(nameof(GetById), new { farmId = farm.Id }, farm);
     }
 
     [HttpPut("{farmId}")]
     [Authorize(Policy = "FarmOwnerOnly")]
     public async Task<ActionResult<FarmDto>> Update(int farmId, UpdateFarmRequest request)
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var farm = await mediator.Send(
-                new UpdateFarmCommand(farmId, request.Name, request.Location, request.CUE, userId)
-            );
-            return Ok(farm);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        var farm = await mediator.Send(
+            new UpdateFarmCommand(farmId, request.Name, request.Location, request.CUE, userId)
+        );
+        return Ok(farm);
     }
 
     [HttpDelete("{farmId}")]
     [Authorize(Policy = "FarmOwnerOnly")]
     public async Task<ActionResult> Delete(int farmId)
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            await mediator.Send(new DeleteFarmCommand(farmId, userId));
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        await mediator.Send(new DeleteFarmCommand(farmId, userId));
+        return NoContent();
     }
 
     [HttpGet("{farmId}/members")]
     [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult<IEnumerable<FarmMemberDto>>> GetMembers(int farmId)
     {
-        try
-        {
-            var members = await mediator.Send(new GetMembersQuery(farmId));
-            return Ok(members);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var members = await mediator.Send(new GetMembersQuery(farmId));
+        return Ok(members);
     }
 
     [HttpPost("{farmId}/members")]
     [Authorize(Policy = "FarmOwnerOnly")]
     public async Task<ActionResult<FarmMemberDto>> AddMember(int farmId, AddMemberRequest request)
     {
-        try
-        {
-            var member = await mediator.Send(
-                new AddMemberCommand(farmId, request.Email, request.Role)
-            );
-            return Ok(member);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var member = await mediator.Send(new AddMemberCommand(farmId, request.Email, request.Role));
+        return Ok(member);
     }
 
     [HttpPatch("{farmId}/members/{userId}")]
@@ -167,32 +109,18 @@ public class FarmsController(IMediator mediator) : BaseController
         UpdateMemberRoleRequest request
     )
     {
-        try
-        {
-            var currentUserId = GetCurrentUserId();
-            var member = await mediator.Send(
-                new UpdateMemberRoleCommand(farmId, userId, request.Role, currentUserId)
-            );
-            return Ok(member);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var currentUserId = GetCurrentUserId();
+        var member = await mediator.Send(
+            new UpdateMemberRoleCommand(farmId, userId, request.Role, currentUserId)
+        );
+        return Ok(member);
     }
 
     [HttpDelete("{farmId}/members/{userId}")]
     [Authorize(Policy = "FarmOwnerOnly")]
     public async Task<ActionResult> RemoveMember(int farmId, int userId)
     {
-        try
-        {
-            await mediator.Send(new RemoveMemberCommand(farmId, userId));
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(new RemoveMemberCommand(farmId, userId));
+        return NoContent();
     }
 }
