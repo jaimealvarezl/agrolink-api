@@ -318,7 +318,12 @@ public class OwnersIntegrationTests : IntegrationTestBase
         await DbContext.SaveChangesAsync();
 
         var farm = new Farm { Name = "Test Farm" };
-        var mainOwner = new Owner { Name = "Main Owner", Phone = "123", IsActive = true };
+        var mainOwner = new Owner
+        {
+            Name = "Main Owner",
+            Phone = "123",
+            IsActive = true,
+        };
         DbContext.Owners.Add(mainOwner);
         await DbContext.SaveChangesAsync();
 
@@ -337,8 +342,14 @@ public class OwnersIntegrationTests : IntegrationTestBase
                 Role = FarmMemberRoles.Admin,
             }
         );
-        
-        var deletedOwner = new Owner { Name = "Restore Me", FarmId = farm.Id, IsActive = false, Phone = "Old Phone" };
+
+        var deletedOwner = new Owner
+        {
+            Name = "Restore Me",
+            FarmId = farm.Id,
+            IsActive = false,
+            Phone = "Old Phone",
+        };
         DbContext.Owners.Add(deletedOwner);
         await DbContext.SaveChangesAsync();
 
@@ -349,7 +360,7 @@ public class OwnersIntegrationTests : IntegrationTestBase
             Name = "Restore Me", // Must match exactly
             Phone = "New Phone",
             Email = "restored@test.com",
-            UserId = user.Id
+            UserId = user.Id,
         };
 
         // Act
@@ -357,10 +368,10 @@ public class OwnersIntegrationTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        
+
         DbContext.ChangeTracker.Clear();
         var restoredOwner = await DbContext.Owners.FindAsync(deletedOwner.Id);
-        
+
         restoredOwner.ShouldNotBeNull();
         restoredOwner.IsActive.ShouldBeTrue();
         restoredOwner.Phone.ShouldBe("New Phone");
