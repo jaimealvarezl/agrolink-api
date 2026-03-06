@@ -172,13 +172,9 @@ public class AuthControllerTests
             )
             .ThrowsAsync(new ArgumentException("User with this email already exists"));
 
-        // Act
-        var result = await _controller.Register(request);
-
-        // Assert
-        result.ShouldNotBeNull();
-        var badRequestResult = result.Result.ShouldBeOfType<BadRequestObjectResult>();
-        badRequestResult.Value.ShouldBe("User with this email already exists");
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() => _controller.Register(request));
+        ex.Message.ShouldBe("User with this email already exists");
     }
 
     [Test]

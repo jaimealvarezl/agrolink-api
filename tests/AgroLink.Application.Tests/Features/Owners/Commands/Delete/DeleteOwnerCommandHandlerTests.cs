@@ -27,12 +27,18 @@ public class DeleteOwnerCommandHandlerTests
     {
         // Arrange
         var command = new DeleteOwnerCommand(1, 10);
+        var farm = new Farm { Id = 1, OwnerId = 99 }; // Different owner ID
         var owner = new Owner
         {
             Id = 10,
             FarmId = 1,
             IsActive = true,
         };
+
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(farm);
 
         _mocker
             .GetMock<IOwnerRepository>()
@@ -49,10 +55,35 @@ public class DeleteOwnerCommandHandlerTests
     }
 
     [Test]
+    public async Task Handle_IsMainOwner_ThrowsArgumentException()
+    {
+        // Arrange
+        var command = new DeleteOwnerCommand(1, 10);
+        var farm = new Farm { Id = 1, OwnerId = 10 }; // Same owner ID
+
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(farm);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(command, CancellationToken.None)
+        );
+        ex.Message.ShouldBe("Cannot delete the main owner of the farm.");
+    }
+
+    [Test]
     public async Task Handle_OwnerNotFound_ThrowsNotFoundException()
     {
         // Arrange
         var command = new DeleteOwnerCommand(1, 10);
+        var farm = new Farm { Id = 1, OwnerId = 99 };
+
+        _mocker
+            .GetMock<IFarmRepository>()
+            .Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(farm);
 
         _mocker
             .GetMock<IOwnerRepository>()

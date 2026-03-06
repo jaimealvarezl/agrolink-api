@@ -252,4 +252,49 @@ public class OwnersIntegrationTests : IntegrationTestBase
         dbOwner.ShouldNotBeNull();
         dbOwner.IsActive.ShouldBeFalse();
     }
+
+    [Test]
+    public async Task Delete_MainOwner_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var user = new User
+        {
+            Name = "Main Owner User",
+            Email = "mainowner@owners.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
+        DbContext.Users.Add(user);
+        await DbContext.SaveChangesAsync();
+
+        var farm = new Farm { Name = "Test Farm" };
+        var mainOwner = new Owner { Name = "Main Owner", Phone = "123", IsActive = true };
+        DbContext.Owners.Add(mainOwner);
+        await DbContext.SaveChangesAsync();
+
+        farm.OwnerId = mainOwner.Id;
+        DbContext.Farms.Add(farm);
+        await DbContext.SaveChangesAsync();
+
+        mainOwner.FarmId = farm.Id;
+        await DbContext.SaveChangesAsync();
+
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Owner,
+            }
+        );
+        await DbContext.SaveChangesAsync();
+
+        Authenticate(user);
+
+        // Act
+        var response = await Client.DeleteAsync($"/api/farms/{farm.Id}/owners/{mainOwner.Id}");
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
 }
