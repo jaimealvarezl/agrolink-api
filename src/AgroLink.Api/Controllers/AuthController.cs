@@ -34,15 +34,8 @@ public class AuthController(ITokenExtractionService tokenExtractionService, IMed
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponseDto>> Register(RegisterRequest request)
     {
-        try
-        {
-            var result = await mediator.Send(new RegisterCommand(request));
-            return CreatedAtAction(nameof(GetProfile), new { id = result.User.Id }, result);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var result = await mediator.Send(new RegisterCommand(request));
+        return CreatedAtAction(nameof(GetProfile), new { id = result.User.Id }, result);
     }
 
     [HttpGet("profile")]

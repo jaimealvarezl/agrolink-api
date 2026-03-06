@@ -145,15 +145,8 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            var animal = await mediator.Send(new CreateAnimalCommand(dto), cancellationToken);
-            return CreatedAtAction(nameof(GetById), new { farmId, id = animal.Id }, animal);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var animal = await mediator.Send(new CreateAnimalCommand(dto), cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { farmId, id = animal.Id }, animal);
     }
 
     [HttpPut("{id}")]
@@ -165,33 +158,19 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            var animal = await mediator.Send(
-                new UpdateAnimalCommand(id, dto, GetCurrentUserId()),
-                cancellationToken
-            );
-            return Ok(animal);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var animal = await mediator.Send(
+            new UpdateAnimalCommand(id, dto, GetCurrentUserId()),
+            cancellationToken
+        );
+        return Ok(animal);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult> Delete(int farmId, int id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await mediator.Send(new DeleteAnimalCommand(id, GetCurrentUserId()), cancellationToken);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(new DeleteAnimalCommand(id, GetCurrentUserId()), cancellationToken);
+        return NoContent();
     }
 
     [HttpPost("{id}/move")]
@@ -203,24 +182,17 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            var animal = await mediator.Send(
-                new MoveAnimalCommand(
-                    id,
-                    request.FromLotId,
-                    request.ToLotId,
-                    GetCurrentUserId(),
-                    request.Reason
-                ),
-                cancellationToken
-            );
-            return Ok(animal);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var animal = await mediator.Send(
+            new MoveAnimalCommand(
+                id,
+                request.FromLotId,
+                request.ToLotId,
+                GetCurrentUserId(),
+                request.Reason
+            ),
+            cancellationToken
+        );
+        return Ok(animal);
     }
 
     [HttpPost("{id}/photos")]
@@ -234,26 +206,19 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            var command = new UploadAnimalPhotoCommand(
-                id,
-                stream,
-                file.FileName,
-                file.ContentType,
-                file.Length,
-                GetCurrentUserId(),
-                description
-            );
+        await using var stream = file.OpenReadStream();
+        var command = new UploadAnimalPhotoCommand(
+            id,
+            stream,
+            file.FileName,
+            file.ContentType,
+            file.Length,
+            GetCurrentUserId(),
+            description
+        );
 
-            var result = await mediator.Send(command, cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPut("{id}/photos/{photoId}/profile")]
@@ -265,18 +230,11 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            await mediator.Send(
-                new SetAnimalProfilePhotoCommand(id, photoId, GetCurrentUserId()),
-                cancellationToken
-            );
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(
+            new SetAnimalProfilePhotoCommand(id, photoId, GetCurrentUserId()),
+            cancellationToken
+        );
+        return NoContent();
     }
 
     [HttpDelete("{id}/photos/{photoId}")]
@@ -288,18 +246,11 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            await mediator.Send(
-                new DeleteAnimalPhotoCommand(id, photoId, GetCurrentUserId()),
-                cancellationToken
-            );
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(
+            new DeleteAnimalPhotoCommand(id, photoId, GetCurrentUserId()),
+            cancellationToken
+        );
+        return NoContent();
     }
 }
 

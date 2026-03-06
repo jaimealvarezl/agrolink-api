@@ -41,21 +41,14 @@ public class LotsController(IMediator mediator) : BaseController
     [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult<LotDto>> Create(int farmId, [FromBody] CreateLotRequest request)
     {
-        try
+        var dto = new CreateLotDto
         {
-            var dto = new CreateLotDto
-            {
-                Name = request.Name,
-                PaddockId = request.PaddockId,
-                Status = request.Status,
-            };
-            var lot = await mediator.Send(new CreateLotCommand(dto));
-            return CreatedAtAction(nameof(GetById), new { farmId, id = lot.Id }, lot);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+            Name = request.Name,
+            PaddockId = request.PaddockId,
+            Status = request.Status,
+        };
+        var lot = await mediator.Send(new CreateLotCommand(dto));
+        return CreatedAtAction(nameof(GetById), new { farmId, id = lot.Id }, lot);
     }
 
     [HttpPut("{id}")]
@@ -66,36 +59,22 @@ public class LotsController(IMediator mediator) : BaseController
         [FromBody] UpdateLotRequest request
     )
     {
-        try
+        var dto = new UpdateLotDto
         {
-            var dto = new UpdateLotDto
-            {
-                Name = request.Name,
-                PaddockId = request.PaddockId,
-                Status = request.Status,
-            };
-            var lot = await mediator.Send(new UpdateLotCommand(id, dto));
-            return Ok(lot);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+            Name = request.Name,
+            PaddockId = request.PaddockId,
+            Status = request.Status,
+        };
+        var lot = await mediator.Send(new UpdateLotCommand(id, dto));
+        return Ok(lot);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult> Delete(int farmId, int id)
     {
-        try
-        {
-            await mediator.Send(new DeleteLotCommand(id));
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(new DeleteLotCommand(id));
+        return NoContent();
     }
 
     [HttpPost("{id}/move")]
@@ -106,18 +85,11 @@ public class LotsController(IMediator mediator) : BaseController
         [FromBody] MoveLotRequest request
     )
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var lot = await mediator.Send(
-                new MoveLotCommand(id, request.ToPaddockId, request.Reason, userId)
-            );
-            return Ok(lot);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        var lot = await mediator.Send(
+            new MoveLotCommand(id, request.ToPaddockId, request.Reason, userId)
+        );
+        return Ok(lot);
     }
 }
 

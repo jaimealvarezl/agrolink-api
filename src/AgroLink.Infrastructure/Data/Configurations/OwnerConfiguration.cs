@@ -11,6 +11,9 @@ public class OwnerConfiguration : IEntityTypeConfiguration<Owner>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Phone).HasMaxLength(20);
+        builder.Property(e => e.Email).HasMaxLength(255);
+
+        builder.HasQueryFilter(e => e.IsActive);
 
         // Removed IsUnique from UserId since an owner can exist in multiple farms
         builder.HasIndex(e => e.UserId);

@@ -46,16 +46,9 @@ public class ChecklistsController(IMediator mediator) : BaseController
         [FromBody] CreateChecklistDto dto
     )
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var checklist = await mediator.Send(new CreateChecklistCommand(dto, userId));
-            return CreatedAtAction(nameof(GetById), new { farmId, id = checklist.Id }, checklist);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var userId = GetCurrentUserId();
+        var checklist = await mediator.Send(new CreateChecklistCommand(dto, userId));
+        return CreatedAtAction(nameof(GetById), new { farmId, id = checklist.Id }, checklist);
     }
 
     [HttpPut("{id}")]
@@ -66,29 +59,15 @@ public class ChecklistsController(IMediator mediator) : BaseController
         [FromBody] CreateChecklistDto dto
     )
     {
-        try
-        {
-            var checklist = await mediator.Send(new UpdateChecklistCommand(id, dto));
-            return Ok(checklist);
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        var checklist = await mediator.Send(new UpdateChecklistCommand(id, dto));
+        return Ok(checklist);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Policy = "FarmEditorAccess")]
     public async Task<ActionResult> Delete(int farmId, int id)
     {
-        try
-        {
-            await mediator.Send(new DeleteChecklistCommand(id));
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return HandleServiceException(ex);
-        }
+        await mediator.Send(new DeleteChecklistCommand(id));
+        return NoContent();
     }
 }

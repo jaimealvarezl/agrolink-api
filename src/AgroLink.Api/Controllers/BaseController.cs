@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,29 +16,5 @@ public abstract class BaseController : ControllerBase
         }
 
         return userId;
-    }
-
-    protected ActionResult HandleServiceException(Exception ex)
-    {
-        return ex switch
-        {
-            ArgumentException => BadRequest(ex.Message),
-            UnauthorizedAccessException => Unauthorized(ex.Message),
-            ForbiddenAccessException => Forbid(ex.Message),
-            _ => HandleUnexpectedException(ex),
-        };
-    }
-
-    private ActionResult HandleUnexpectedException(Exception ex)
-    {
-        var logger = HttpContext?.RequestServices?.GetService<ILogger<BaseController>>();
-        logger?.LogError(
-            ex,
-            "An unexpected error occurred in {Controller}: {Message}",
-            GetType().Name,
-            ex.Message
-        );
-
-        return StatusCode(500, "An unexpected error occurred");
     }
 }

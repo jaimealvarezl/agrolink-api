@@ -13,6 +13,11 @@ public class Owner
     [MaxLength(20)]
     public string? Phone { get; set; }
 
+    [MaxLength(255)]
+    public string? Email { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
     public int? UserId { get; set; }
     public virtual User? User { get; set; }
 
