@@ -4,7 +4,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Owners.Queries.GetByFarm;
 
-public record GetOwnersByFarmIdQuery(int FarmId, int UserId) : IRequest<IEnumerable<OwnerDto>>;
+public record GetOwnersByFarmIdQuery(int FarmId) : IRequest<IEnumerable<OwnerDto>>;
 
 public class GetOwnersByFarmIdQueryHandler(IOwnerRepository ownerRepository)
     : IRequestHandler<GetOwnersByFarmIdQuery, IEnumerable<OwnerDto>>

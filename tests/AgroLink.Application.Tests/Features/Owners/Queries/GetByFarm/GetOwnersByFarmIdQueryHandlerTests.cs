@@ -25,7 +25,7 @@ public class GetOwnersByFarmIdQueryHandlerTests
     public async Task Handle_ValidRequest_ReturnsActiveOwners()
     {
         // Arrange
-        var query = new GetOwnersByFarmIdQuery(1, 1);
+        var query = new GetOwnersByFarmIdQuery(1);
         var owners = new List<Owner>
         {
             new()

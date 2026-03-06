@@ -13,13 +13,12 @@ namespace AgroLink.Api.Controllers;
 public class OwnersController(IMediator mediator) : BaseController
 {
     [HttpGet]
-    [Authorize(Policy = "FarmAdminAccess")]
+    [Authorize(Policy = "FarmAdminAccess")] // Owner or Admin
     public async Task<ActionResult<IEnumerable<OwnerDto>>> GetOwners(int farmId)
     {
         try
         {
-            var userId = GetCurrentUserId();
-            var owners = await mediator.Send(new GetOwnersByFarmIdQuery(farmId, userId));
+            var owners = await mediator.Send(new GetOwnersByFarmIdQuery(farmId));
             return Ok(owners);
         }
         catch (Exception ex)
@@ -34,15 +33,13 @@ public class OwnersController(IMediator mediator) : BaseController
     {
         try
         {
-            var currentUserId = GetCurrentUserId();
             var owner = await mediator.Send(
                 new CreateOwnerCommand(
                     farmId,
                     request.Name,
                     request.Phone,
                     request.Email,
-                    request.UserId,
-                    currentUserId
+                    request.UserId
                 )
             );
             return CreatedAtAction(nameof(GetOwners), new { farmId }, owner);

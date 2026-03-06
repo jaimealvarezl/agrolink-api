@@ -26,7 +26,7 @@ public class CreateOwnerCommandHandlerTests
     public async Task Handle_ValidCommand_CreatesOwner()
     {
         // Arrange
-        var command = new CreateOwnerCommand(1, "New Owner", "123", "test@test.com", 2, 1);
+        var command = new CreateOwnerCommand(1, "New Owner", "123", "test@test.com", 2);
 
         _mocker
             .GetMock<IFarmRepository>()
@@ -59,7 +59,7 @@ public class CreateOwnerCommandHandlerTests
     public async Task Handle_FarmDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
-        var command = new CreateOwnerCommand(1, "New Owner", "123", "test@test.com", 2, 1);
+        var command = new CreateOwnerCommand(1, "New Owner", "123", "test@test.com", 2);
 
         _mocker
             .GetMock<IFarmRepository>()
@@ -76,7 +76,7 @@ public class CreateOwnerCommandHandlerTests
     public async Task Handle_ExistingActiveOwner_ThrowsArgumentException()
     {
         // Arrange
-        var command = new CreateOwnerCommand(1, "Existing Owner", "123", "test@test.com", 2, 1);
+        var command = new CreateOwnerCommand(1, "Existing Owner", "123", "test@test.com", 2);
         var existingOwner = new Owner
         {
             Id = 1,
@@ -105,7 +105,7 @@ public class CreateOwnerCommandHandlerTests
     public async Task Handle_ExistingInactiveOwner_RestoresOwner()
     {
         // Arrange
-        var command = new CreateOwnerCommand(1, "Deleted Owner", "999", "new@test.com", 2, 1);
+        var command = new CreateOwnerCommand(1, "Deleted Owner", "999", "new@test.com", 2);
         var existingOwner = new Owner
         {
             Id = 1,

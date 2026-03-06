@@ -11,8 +11,7 @@ public record CreateOwnerCommand(
     string Name,
     string? Phone,
     string? Email,
-    int? RequestUserId,
-    int CurrentUserId
+    int? RequestUserId
 ) : IRequest<OwnerDto>;
 
 public class CreateOwnerCommandHandler(
@@ -50,16 +49,7 @@ public class CreateOwnerCommandHandler(
                 ownerRepository.Update(existingOwner);
                 await unitOfWork.SaveChangesAsync();
 
-                return new OwnerDto
-                {
-                    Id = existingOwner.Id,
-                    Name = existingOwner.Name,
-                    Phone = existingOwner.Phone,
-                    Email = existingOwner.Email,
-                    UserId = existingOwner.UserId,
-                    IsActive = existingOwner.IsActive,
-                    CreatedAt = existingOwner.CreatedAt,
-                };
+                return MapToDto(existingOwner);
             }
 
             throw new ArgumentException(
@@ -80,6 +70,11 @@ public class CreateOwnerCommandHandler(
         await ownerRepository.AddAsync(owner);
         await unitOfWork.SaveChangesAsync();
 
+        return MapToDto(owner);
+    }
+
+    private static OwnerDto MapToDto(Owner owner)
+    {
         return new OwnerDto
         {
             Id = owner.Id,
