@@ -31,9 +31,7 @@ public class CreateOwnerCommandHandler(
             throw new NotFoundException($"Farm with ID {request.FarmId} not found.");
         }
 
-        var existingOwner = await ownerRepository.FirstOrDefaultAsync(o =>
-            o.FarmId == request.FarmId && o.Name == request.Name
-        );
+        var existingOwner = await ownerRepository.GetOwnerByNameAndFarmIncludingDeletedAsync(request.Name, request.FarmId);
 
         if (existingOwner != null)
         {

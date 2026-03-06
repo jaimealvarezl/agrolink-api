@@ -35,10 +35,7 @@ public class DeleteOwnerCommandHandlerTests
             IsActive = true,
         };
 
-        _mocker
-            .GetMock<IFarmRepository>()
-            .Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync(farm);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(1)).ReturnsAsync(farm);
 
         _mocker
             .GetMock<IOwnerRepository>()
@@ -61,10 +58,7 @@ public class DeleteOwnerCommandHandlerTests
         var command = new DeleteOwnerCommand(1, 10);
         var farm = new Farm { Id = 1, OwnerId = 10 }; // Same owner ID
 
-        _mocker
-            .GetMock<IFarmRepository>()
-            .Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync(farm);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(1)).ReturnsAsync(farm);
 
         // Act & Assert
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
@@ -80,10 +74,7 @@ public class DeleteOwnerCommandHandlerTests
         var command = new DeleteOwnerCommand(1, 10);
         var farm = new Farm { Id = 1, OwnerId = 99 };
 
-        _mocker
-            .GetMock<IFarmRepository>()
-            .Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync(farm);
+        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(1)).ReturnsAsync(farm);
 
         _mocker
             .GetMock<IOwnerRepository>()

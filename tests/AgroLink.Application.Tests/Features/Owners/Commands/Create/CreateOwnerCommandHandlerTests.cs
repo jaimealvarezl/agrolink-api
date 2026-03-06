@@ -35,7 +35,7 @@ public class CreateOwnerCommandHandlerTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .Setup(r => r.GetOwnerByNameAndFarmIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<int>()))
             .ReturnsAsync((Owner?)null);
 
         _mocker
@@ -92,7 +92,7 @@ public class CreateOwnerCommandHandlerTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .Setup(r => r.GetOwnerByNameAndFarmIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<int>()))
             .ReturnsAsync(existingOwner);
 
         // Act & Assert
@@ -123,7 +123,7 @@ public class CreateOwnerCommandHandlerTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .Setup(r => r.GetOwnerByNameAndFarmIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<int>()))
             .ReturnsAsync(existingOwner);
 
         // Act
