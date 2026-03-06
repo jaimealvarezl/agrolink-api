@@ -1,6 +1,7 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -17,6 +18,7 @@ public class CreateAnimalCommandHandler(
     IOwnerRepository ownerRepository,
     IFarmMemberRepository farmMemberRepository,
     ICurrentUserService currentUserService,
+    IOwnershipValidator ownershipValidator,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateAnimalCommand, AnimalDto>
 {
@@ -116,10 +118,8 @@ public class CreateAnimalCommandHandler(
                 ?? throw new ArgumentException($"Farm with ID {farmId} not found.");
             dto.Owners.Add(new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 });
         }
-        else
-        {
-            AnimalValidator.ValidateOwners(dto.Owners.Select(o => o.SharePercent));
-        }
+
+        await ownershipValidator.ValidateAsync(dto.Owners, farmId);
 
         var animal = new Animal
         {

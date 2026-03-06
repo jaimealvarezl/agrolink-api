@@ -155,6 +155,9 @@ public class AnimalsIntegrationTests : IntegrationTestBase
         DbContext.Farms.Add(farm);
         await DbContext.SaveChangesAsync();
 
+        owner.FarmId = farm.Id;
+        await DbContext.SaveChangesAsync();
+
         var member = new FarmMember
         {
             FarmId = farm.Id,

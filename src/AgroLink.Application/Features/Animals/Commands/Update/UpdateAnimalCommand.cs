@@ -1,6 +1,7 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
@@ -20,6 +21,7 @@ public class UpdateAnimalCommandHandler(
     IFarmMemberRepository farmMemberRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
+    IOwnershipValidator ownershipValidator,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
 {
@@ -188,7 +190,7 @@ public class UpdateAnimalCommandHandler(
                 throw new ArgumentException("At least one owner is required for an animal.");
             }
 
-            AnimalValidator.ValidateOwners(dto.Owners.Select(o => o.SharePercent));
+            await ownershipValidator.ValidateAsync(dto.Owners, farmId);
 
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id);
 

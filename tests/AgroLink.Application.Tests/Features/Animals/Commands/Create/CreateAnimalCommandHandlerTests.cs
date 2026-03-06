@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
@@ -582,11 +583,16 @@ public class CreateAnimalCommandHandlerTests
             .Setup(r => r.IsCuiaUniqueInFarmAsync(It.IsAny<string>(), farmId, null))
             .ReturnsAsync(true);
 
+        _mocker
+            .GetMock<IOwnershipValidator>()
+            .Setup(v => v.ValidateAsync(It.IsAny<List<AnimalOwnerCreateDto>>(), farmId))
+            .ThrowsAsync(new ArgumentException("Total ownership percentage must be exactly 100%."));
+
         // Act & Assert
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        ex.Message.ShouldContain("Total ownership percentage must be 100%");
+        ex.Message.ShouldContain("Total ownership percentage must be exactly 100%");
     }
 
     [Test]

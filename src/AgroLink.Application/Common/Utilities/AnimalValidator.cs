@@ -55,17 +55,6 @@ public static class AnimalValidator
         }
     }
 
-    public static void ValidateOwners(IEnumerable<decimal> shares)
-    {
-        var total = shares.Sum();
-        if (total != 100)
-        {
-            throw new ArgumentException(
-                $"Total ownership percentage must be 100%. Current: {total}%"
-            );
-        }
-    }
-
     public static void ValidateParentage(Animal? mother, Animal? father, int targetFarmId)
     {
         if (mother != null)
