@@ -11,6 +11,11 @@ public class OwnerDto
 
     public string? Phone { get; set; }
 
+    public string? Email { get; set; }
+
+    public int? UserId { get; set; }
+    public bool IsActive { get; set; } = true;
+
     [Required]
     public required DateTime CreatedAt { get; set; }
 }
