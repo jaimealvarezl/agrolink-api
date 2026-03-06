@@ -59,8 +59,7 @@ public class OwnersController(IMediator mediator) : BaseController
     {
         try
         {
-            var userId = GetCurrentUserId();
-            await mediator.Send(new DeleteOwnerCommand(farmId, ownerId, userId));
+            await mediator.Send(new DeleteOwnerCommand(farmId, ownerId));
             return NoContent();
         }
         catch (Exception ex)

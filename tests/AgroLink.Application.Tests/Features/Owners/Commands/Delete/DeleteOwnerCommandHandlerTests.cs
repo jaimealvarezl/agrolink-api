@@ -26,7 +26,7 @@ public class DeleteOwnerCommandHandlerTests
     public async Task Handle_ValidCommand_SoftDeletesOwner()
     {
         // Arrange
-        var command = new DeleteOwnerCommand(1, 10, 1);
+        var command = new DeleteOwnerCommand(1, 10);
         var owner = new Owner
         {
             Id = 10,
@@ -52,7 +52,7 @@ public class DeleteOwnerCommandHandlerTests
     public async Task Handle_OwnerNotFound_ThrowsNotFoundException()
     {
         // Arrange
-        var command = new DeleteOwnerCommand(1, 10, 1);
+        var command = new DeleteOwnerCommand(1, 10);
 
         _mocker
             .GetMock<IOwnerRepository>()

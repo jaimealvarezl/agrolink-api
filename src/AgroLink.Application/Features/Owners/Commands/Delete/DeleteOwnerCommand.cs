@@ -4,7 +4,7 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Owners.Commands.Delete;
 
-public record DeleteOwnerCommand(int FarmId, int OwnerId, int UserId) : IRequest;
+public record DeleteOwnerCommand(int FarmId, int OwnerId) : IRequest;
 
 public class DeleteOwnerCommandHandler(IOwnerRepository ownerRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteOwnerCommand>
