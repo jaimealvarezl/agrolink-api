@@ -26,11 +26,4 @@ public class OwnerRepository : Repository<Owner>, IOwnerRepository
                 .ThenInclude(ao => ao.Animal)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
-
-    public async Task<Owner?> GetOwnerByNameAndFarmIncludingDeletedAsync(string name, int farmId)
-    {
-        return await _dbSet
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(o => o.Name == name && o.FarmId == farmId);
-    }
 }

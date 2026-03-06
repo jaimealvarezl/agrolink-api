@@ -22,7 +22,7 @@ namespace AgroLink.Infrastructure.Migrations
                 table: "Owners",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
         /// <inheritdoc />

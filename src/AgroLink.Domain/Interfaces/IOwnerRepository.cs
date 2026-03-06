@@ -6,5 +6,4 @@ public interface IOwnerRepository : IRepository<Owner>
 {
     Task<IEnumerable<Owner>> GetOwnersByAnimalIdAsync(int animalId);
     Task<Owner?> GetOwnerWithAnimalsAsync(int id);
-    Task<Owner?> GetOwnerByNameAndFarmIncludingDeletedAsync(string name, int farmId);
 }

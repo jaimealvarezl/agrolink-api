@@ -37,6 +37,11 @@ public class Repository<T> : IRepository<T>
         return await _dbSet.FirstOrDefaultAsync(predicate);
     }
 
+    public virtual async Task<T?> FirstOrDefaultIgnoreFiltersAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await _dbSet.IgnoreQueryFilters().FirstOrDefaultAsync(predicate);
+    }
+
     public virtual async Task AddAsync(T entity)
     {
         await _dbSet.AddAsync(entity);
