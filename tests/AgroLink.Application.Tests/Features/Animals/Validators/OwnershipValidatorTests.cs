@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Domain.Entities;
@@ -32,13 +33,16 @@ public class OwnershipValidatorTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.GetByIdAsync(1))
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(
-                new Owner
+                new List<Owner>
                 {
-                    Id = 1,
-                    FarmId = targetFarmId,
-                    IsActive = true,
+                    new()
+                    {
+                        Id = 1,
+                        FarmId = targetFarmId,
+                        IsActive = true,
+                    },
                 }
             );
 
@@ -57,24 +61,22 @@ public class OwnershipValidatorTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.GetByIdAsync(1))
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(
-                new Owner
+                new List<Owner>
                 {
-                    Id = 1,
-                    FarmId = targetFarmId,
-                    IsActive = true,
-                }
-            );
-        _mocker
-            .GetMock<IOwnerRepository>()
-            .Setup(r => r.GetByIdAsync(2))
-            .ReturnsAsync(
-                new Owner
-                {
-                    Id = 2,
-                    FarmId = targetFarmId,
-                    IsActive = true,
+                    new()
+                    {
+                        Id = 1,
+                        FarmId = targetFarmId,
+                        IsActive = true,
+                    },
+                    new()
+                    {
+                        Id = 2,
+                        FarmId = targetFarmId,
+                        IsActive = true,
+                    },
                 }
             );
 
@@ -109,13 +111,16 @@ public class OwnershipValidatorTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.GetByIdAsync(1))
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(
-                new Owner
+                new List<Owner>
                 {
-                    Id = 1,
-                    FarmId = differentFarmId,
-                    IsActive = true,
+                    new()
+                    {
+                        Id = 1,
+                        FarmId = differentFarmId,
+                        IsActive = true,
+                    },
                 }
             );
 
@@ -136,13 +141,16 @@ public class OwnershipValidatorTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.GetByIdAsync(1))
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(
-                new Owner
+                new List<Owner>
                 {
-                    Id = 1,
-                    FarmId = targetFarmId,
-                    IsActive = false,
+                    new()
+                    {
+                        Id = 1,
+                        FarmId = targetFarmId,
+                        IsActive = false,
+                    },
                 }
             );
 
@@ -163,8 +171,8 @@ public class OwnershipValidatorTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync((Owner?)null);
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .ReturnsAsync(new List<Owner>());
 
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _validator.ValidateAsync(owners, targetFarmId)

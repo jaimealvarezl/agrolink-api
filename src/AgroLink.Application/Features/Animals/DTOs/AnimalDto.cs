@@ -132,6 +132,12 @@ public class AnimalOwnerCreateDto
     public required int OwnerId { get; set; }
 
     [Required]
+    [Range(
+        typeof(decimal),
+        "0.01",
+        "100.00",
+        ErrorMessage = "Share percent must be between 0.01 and 100.00"
+    )]
     public required decimal SharePercent { get; set; }
 }
 

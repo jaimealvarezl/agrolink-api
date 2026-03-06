@@ -15,10 +15,13 @@ public class OwnershipValidator(IOwnerRepository ownerRepository) : IOwnershipVa
             );
         }
 
+        var ownerIds = owners.Select(o => o.OwnerId).Distinct().ToList();
+        var existingOwners = await ownerRepository.FindAsync(o => ownerIds.Contains(o.Id));
+        var ownersDict = existingOwners.ToDictionary(o => o.Id);
+
         foreach (var ownerDto in owners)
         {
-            var owner = await ownerRepository.GetByIdAsync(ownerDto.OwnerId);
-            if (owner == null)
+            if (!ownersDict.TryGetValue(ownerDto.OwnerId, out var owner))
             {
                 throw new ArgumentException($"Owner with ID {ownerDto.OwnerId} not found.");
             }
