@@ -36,7 +36,13 @@ public class CreateMovementCommandHandler(
             throw new ArgumentException("Invalid destination lot or access denied.");
         }
 
-        var movements = new List<Movement>();
+        // Pre-fetch global data to avoid N+1 queries during DTO mapping
+        var user = await movementRepository.GetUserByIdAsync(request.UserId);
+        var userName = user?.Name ?? "";
+        var toLotName = toLot.Name;
+
+        var movementDataList =
+            new List<(Movement Movement, string? AnimalName, string? FromLotName)>();
 
         await unitOfWork.BeginTransactionAsync();
 
@@ -59,8 +65,9 @@ public class CreateMovementCommandHandler(
                     );
                 }
 
-                // Capture current lot as FromId
+                // Capture current lot as FromId and its name
                 int? fromId = animal.LotId;
+                string? fromLotName = currentLot.Name;
 
                 // Update animal's lot
                 animal.LotId = request.MovementDto.ToLotId;
@@ -79,7 +86,10 @@ public class CreateMovementCommandHandler(
                 };
 
                 await movementRepository.AddMovementAsync(movement);
-                movements.Add(movement);
+
+                // Store entity objects/strings in memory for creating the DTO later
+                // without re-querying the database
+                movementDataList.Add((movement, animal.TagVisual, fromLotName));
             }
 
             await unitOfWork.SaveChangesAsync();
@@ -91,53 +101,26 @@ public class CreateMovementCommandHandler(
             throw;
         }
 
-        var dtos = new List<MovementDto>();
-        foreach (var m in movements)
-        {
-            dtos.Add(await MapToDtoAsync(m));
-        }
+        // Map DTOs purely in memory now that EF has populated Movement Ids
+        var dtos = movementDataList
+            .Select(data => new MovementDto
+            {
+                Id = data.Movement.Id,
+                EntityType = data.Movement.EntityType,
+                EntityId = data.Movement.EntityId,
+                EntityName = data.AnimalName,
+                FromId = data.Movement.FromId,
+                FromName = data.FromLotName,
+                ToId = data.Movement.ToId,
+                ToName = toLotName,
+                At = data.Movement.At,
+                Reason = data.Movement.Reason,
+                UserId = data.Movement.UserId,
+                UserName = userName,
+                CreatedAt = data.Movement.CreatedAt,
+            })
+            .ToList();
 
         return dtos;
-    }
-
-    private async Task<MovementDto> MapToDtoAsync(Movement movement)
-    {
-        var user = await movementRepository.GetUserByIdAsync(movement.UserId);
-
-        string? entityName = null;
-        string? fromName = null;
-        string? toName = null;
-
-        var animal = await movementRepository.GetAnimalByIdAsync(movement.EntityId);
-        entityName = animal?.TagVisual;
-
-        if (movement.FromId.HasValue)
-        {
-            var lot = await movementRepository.GetLotByIdAsync(movement.FromId.Value);
-            fromName = lot?.Name;
-        }
-
-        if (movement.ToId.HasValue)
-        {
-            var lot = await movementRepository.GetLotByIdAsync(movement.ToId.Value);
-            toName = lot?.Name;
-        }
-
-        return new MovementDto
-        {
-            Id = movement.Id,
-            EntityType = movement.EntityType,
-            EntityId = movement.EntityId,
-            EntityName = entityName,
-            FromId = movement.FromId,
-            FromName = fromName,
-            ToId = movement.ToId,
-            ToName = toName,
-            At = movement.At,
-            Reason = movement.Reason,
-            UserId = movement.UserId,
-            UserName = user?.Name ?? "",
-            CreatedAt = movement.CreatedAt,
-        };
     }
 }
