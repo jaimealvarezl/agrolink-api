@@ -11,122 +11,93 @@ public class CreateMovementCommandHandler(
     IMovementRepository movementRepository,
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository,
+    IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService
-) : IRequestHandler<CreateMovementCommand, MovementDto>
+) : IRequestHandler<CreateMovementCommand, IEnumerable<MovementDto>>
 {
-    public async Task<MovementDto> Handle(
+    public async Task<IEnumerable<MovementDto>> Handle(
         CreateMovementCommand request,
         CancellationToken cancellationToken
     )
     {
-        // Security check: ensure all entities belong to the current farm context
-        if (currentUserService.CurrentFarmId.HasValue)
+        var farmId =
+            currentUserService.CurrentFarmId
+            ?? throw new UnauthorizedAccessException("Farm context is missing");
+
+        if (request.MovementDto.AnimalIds == null || !request.MovementDto.AnimalIds.Any())
         {
-            var farmId = currentUserService.CurrentFarmId.Value;
-
-            // Validate EntityId
-            if (request.MovementDto.EntityType == "ANIMAL")
-            {
-                var animal = await animalRepository.GetByIdAsync(request.MovementDto.EntityId);
-                if (animal == null)
-                {
-                    throw new ArgumentException("Animal not found");
-                }
-
-                var lot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
-                if (lot == null || lot.Paddock.FarmId != farmId)
-                {
-                    throw new ForbiddenAccessException("You do not have access to this animal");
-                }
-            }
-            else if (request.MovementDto.EntityType == "LOT")
-            {
-                var lot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.EntityId);
-                if (lot == null)
-                {
-                    throw new ArgumentException("Lot not found");
-                }
-
-                if (lot.Paddock.FarmId != farmId)
-                {
-                    throw new ForbiddenAccessException("You do not have access to this lot");
-                }
-            }
-
-            // Validate FromId
-            if (request.MovementDto.FromId.HasValue)
-            {
-                if (request.MovementDto.EntityType == "ANIMAL")
-                {
-                    var lot = await lotRepository.GetLotWithPaddockAsync(
-                        request.MovementDto.FromId.Value
-                    );
-                    if (lot != null && lot.Paddock.FarmId != farmId)
-                    {
-                        throw new ForbiddenAccessException(
-                            "Source lot does not belong to this farm"
-                        );
-                    }
-                }
-                else if (request.MovementDto.EntityType == "LOT")
-                {
-                    var paddock = await paddockRepository.GetByIdAsync(
-                        request.MovementDto.FromId.Value
-                    );
-                    if (paddock != null && paddock.FarmId != farmId)
-                    {
-                        throw new ForbiddenAccessException(
-                            "Source paddock does not belong to this farm"
-                        );
-                    }
-                }
-            }
-
-            // Validate ToId
-            if (request.MovementDto.ToId.HasValue)
-            {
-                if (request.MovementDto.EntityType == "ANIMAL")
-                {
-                    var lot = await lotRepository.GetLotWithPaddockAsync(
-                        request.MovementDto.ToId.Value
-                    );
-                    if (lot != null && lot.Paddock.FarmId != farmId)
-                    {
-                        throw new ForbiddenAccessException(
-                            "Target lot does not belong to this farm"
-                        );
-                    }
-                }
-                else if (request.MovementDto.EntityType == "LOT")
-                {
-                    var paddock = await paddockRepository.GetByIdAsync(
-                        request.MovementDto.ToId.Value
-                    );
-                    if (paddock != null && paddock.FarmId != farmId)
-                    {
-                        throw new ForbiddenAccessException(
-                            "Target paddock does not belong to this farm"
-                        );
-                    }
-                }
-            }
+            throw new ArgumentException("AnimalIds cannot be empty");
         }
 
-        var movement = new Movement
+        // Validate ToLotId
+        var toLot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.ToLotId);
+        if (toLot == null || toLot.Paddock.FarmId != farmId)
         {
-            EntityType = request.MovementDto.EntityType,
-            EntityId = request.MovementDto.EntityId,
-            FromId = request.MovementDto.FromId,
-            ToId = request.MovementDto.ToId,
-            At = request.MovementDto.At,
-            Reason = request.MovementDto.Reason,
-            UserId = request.UserId,
-        };
+            throw new ArgumentException("Invalid destination lot or access denied.");
+        }
 
-        await movementRepository.AddMovementAsync(movement);
+        var movements = new List<Movement>();
 
-        return await MapToDtoAsync(movement);
+        await unitOfWork.BeginTransactionAsync();
+
+        try
+        {
+            foreach (var animalId in request.MovementDto.AnimalIds)
+            {
+                var animal = await animalRepository.GetByIdAsync(animalId, request.UserId);
+                if (animal == null)
+                {
+                    throw new ArgumentException($"Animal {animalId} not found.");
+                }
+
+                // Check access
+                var currentLot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
+                if (currentLot == null || currentLot.Paddock.FarmId != farmId)
+                {
+                    throw new ForbiddenAccessException(
+                        $"You do not have access to animal {animalId}"
+                    );
+                }
+
+                // Capture current lot as FromId
+                int? fromId = animal.LotId;
+
+                // Update animal's lot
+                animal.LotId = request.MovementDto.ToLotId;
+                animalRepository.Update(animal);
+
+                // Create movement record
+                var movement = new Movement
+                {
+                    EntityType = "ANIMAL",
+                    EntityId = animal.Id,
+                    FromId = fromId,
+                    ToId = request.MovementDto.ToLotId,
+                    At = request.MovementDto.Date,
+                    Reason = request.MovementDto.Reason,
+                    UserId = request.UserId,
+                };
+
+                await movementRepository.AddMovementAsync(movement);
+                movements.Add(movement);
+            }
+
+            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.CommitTransactionAsync();
+        }
+        catch
+        {
+            await unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
+
+        var dtos = new List<MovementDto>();
+        foreach (var m in movements)
+        {
+            dtos.Add(await MapToDtoAsync(m));
+        }
+
+        return dtos;
     }
 
     private async Task<MovementDto> MapToDtoAsync(Movement movement)
@@ -137,46 +108,19 @@ public class CreateMovementCommandHandler(
         string? fromName = null;
         string? toName = null;
 
-        // Get entity name
-        if (movement.EntityType == "ANIMAL")
-        {
-            var animal = await movementRepository.GetAnimalByIdAsync(movement.EntityId);
-            entityName = animal?.TagVisual;
-        }
-        else if (movement.EntityType == "LOT")
-        {
-            var lot = await movementRepository.GetLotByIdAsync(movement.EntityId);
-            entityName = lot?.Name;
-        }
+        var animal = await movementRepository.GetAnimalByIdAsync(movement.EntityId);
+        entityName = animal?.TagVisual;
 
-        // Get from name
         if (movement.FromId.HasValue)
         {
-            if (movement.EntityType == "ANIMAL")
-            {
-                var lot = await movementRepository.GetLotByIdAsync(movement.FromId.Value);
-                fromName = lot?.Name;
-            }
-            else if (movement.EntityType == "LOT")
-            {
-                var paddock = await movementRepository.GetPaddockByIdAsync(movement.FromId.Value);
-                fromName = paddock?.Name;
-            }
+            var lot = await movementRepository.GetLotByIdAsync(movement.FromId.Value);
+            fromName = lot?.Name;
         }
 
-        // Get to name
         if (movement.ToId.HasValue)
         {
-            if (movement.EntityType == "ANIMAL")
-            {
-                var lot = await movementRepository.GetLotByIdAsync(movement.ToId.Value);
-                toName = lot?.Name;
-            }
-            else if (movement.EntityType == "LOT")
-            {
-                var paddock = await movementRepository.GetPaddockByIdAsync(movement.ToId.Value);
-                toName = paddock?.Name;
-            }
+            var lot = await movementRepository.GetLotByIdAsync(movement.ToId.Value);
+            toName = lot?.Name;
         }
 
         return new MovementDto

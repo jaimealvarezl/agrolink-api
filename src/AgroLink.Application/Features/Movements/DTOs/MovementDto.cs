@@ -36,16 +36,13 @@ public class MovementDto
 public class CreateMovementDto
 {
     [Required]
-    public required string EntityType { get; set; }
+    public List<int> AnimalIds { get; set; } = new();
 
     [Required]
-    public required int EntityId { get; set; }
-
-    public int? FromId { get; set; }
-    public int? ToId { get; set; }
+    public int ToLotId { get; set; }
 
     [Required]
-    public DateTime At { get; set; } = DateTime.UtcNow;
+    public DateTime Date { get; set; } = DateTime.UtcNow;
 
     public string? Reason { get; set; }
 }

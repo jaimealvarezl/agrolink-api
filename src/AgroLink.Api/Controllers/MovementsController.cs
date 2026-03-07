@@ -35,22 +35,13 @@ public class MovementsController(IMediator mediator) : BaseController
 
     [HttpPost]
     [Authorize(Policy = "FarmEditorAccess")]
-    public async Task<ActionResult<MovementDto>> Create(
+    public async Task<ActionResult<IEnumerable<MovementDto>>> Create(
         int farmId,
         [FromBody] CreateMovementDto dto
     )
     {
         var userId = GetCurrentUserId();
-        var movement = await mediator.Send(new CreateMovementCommand(dto, userId));
-        return CreatedAtAction(
-            nameof(GetByEntity),
-            new
-            {
-                farmId,
-                entityType = dto.EntityType,
-                entityId = dto.EntityId,
-            },
-            movement
-        );
+        var movements = await mediator.Send(new CreateMovementCommand(dto, userId));
+        return Ok(movements);
     }
 }
