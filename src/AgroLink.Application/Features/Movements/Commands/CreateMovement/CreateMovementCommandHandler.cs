@@ -11,6 +11,7 @@ public class CreateMovementCommandHandler(
     IMovementRepository movementRepository,
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
+    IUserRepository userRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService
 ) : IRequestHandler<CreateMovementCommand, IEnumerable<MovementDto>>
@@ -24,22 +25,45 @@ public class CreateMovementCommandHandler(
             currentUserService.CurrentFarmId
             ?? throw new UnauthorizedAccessException("Farm context is missing");
 
-        if (request.MovementDto.AnimalIds == null || !request.MovementDto.AnimalIds.Any())
+        var animalIds = request.MovementDto.AnimalIds;
+        if (animalIds == null || !animalIds.Any())
         {
             throw new ArgumentException("AnimalIds cannot be empty");
         }
 
-        // Validate ToLotId
+        // Pre-fetch the destination lot
         var toLot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.ToLotId);
         if (toLot == null || toLot.Paddock.FarmId != farmId)
         {
             throw new ArgumentException("Invalid destination lot or access denied.");
         }
 
-        // Pre-fetch global data to avoid N+1 queries during DTO mapping
-        var user = await movementRepository.GetUserByIdAsync(request.UserId);
-        var userName = user?.Name ?? "";
-        var toLotName = toLot.Name;
+        // Pre-fetch the user
+        var user = await userRepository.GetByIdAsync(request.UserId);
+        var userName = user?.Name ?? string.Empty;
+
+        // Fetch all requested animals in a single query
+        var animals = await animalRepository.FindAsync(a => animalIds.Contains(a.Id));
+        var animalsList = animals.ToList();
+
+        if (animalsList.Count != animalIds.Distinct().Count())
+        {
+            throw new ArgumentException("One or more animals were not found.");
+        }
+
+        // Extract unique source lot IDs and fetch them to validate access
+        var uniqueLotIds = animalsList.Select(a => a.LotId).Distinct().ToList();
+        var sourceLotsDict = new Dictionary<int, Lot>();
+
+        foreach (var lotId in uniqueLotIds)
+        {
+            var lot = await lotRepository.GetLotWithPaddockAsync(lotId);
+            if (lot == null || lot.Paddock.FarmId != farmId)
+            {
+                throw new ForbiddenAccessException("You do not have access to some source lots");
+            }
+            sourceLotsDict[lotId] = lot;
+        }
 
         var movementDataList =
             new List<(Movement Movement, string? AnimalName, string? FromLotName)>();
@@ -48,26 +72,11 @@ public class CreateMovementCommandHandler(
 
         try
         {
-            foreach (var animalId in request.MovementDto.AnimalIds)
+            foreach (var animal in animalsList)
             {
-                var animal = await animalRepository.GetByIdAsync(animalId, request.UserId);
-                if (animal == null)
-                {
-                    throw new ArgumentException($"Animal {animalId} not found.");
-                }
-
-                // Check access
-                var currentLot = await lotRepository.GetLotWithPaddockAsync(animal.LotId);
-                if (currentLot == null || currentLot.Paddock.FarmId != farmId)
-                {
-                    throw new ForbiddenAccessException(
-                        $"You do not have access to animal {animalId}"
-                    );
-                }
-
                 // Capture current lot as FromId and its name
                 int? fromId = animal.LotId;
-                string? fromLotName = currentLot.Name;
+                string? fromLotName = sourceLotsDict[animal.LotId].Name;
 
                 // Update animal's lot
                 animal.LotId = request.MovementDto.ToLotId;
@@ -112,7 +121,7 @@ public class CreateMovementCommandHandler(
                 FromId = data.Movement.FromId,
                 FromName = data.FromLotName,
                 ToId = data.Movement.ToId,
-                ToName = toLotName,
+                ToName = toLot.Name,
                 At = data.Movement.At,
                 Reason = data.Movement.Reason,
                 UserId = data.Movement.UserId,

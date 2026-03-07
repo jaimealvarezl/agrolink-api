@@ -74,6 +74,11 @@ public class CreateMovementCommandHandlerTests
         _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.GetByIdAsync(userId))
+            .ReturnsAsync(new User { Id = userId, Name = "Test User" });
+
+        _mocker
             .GetMock<ILotRepository>()
             .Setup(r => r.GetLotWithPaddockAsync(20))
             .ReturnsAsync(toLot);
@@ -88,21 +93,10 @@ public class CreateMovementCommandHandlerTests
 
         _mocker
             .GetMock<IAnimalRepository>()
-            .Setup(r => r.GetByIdAsync(1, userId))
-            .ReturnsAsync(animal1);
-        _mocker
-            .GetMock<IAnimalRepository>()
-            .Setup(r => r.GetByIdAsync(2, userId))
-            .ReturnsAsync(animal2);
-
-        _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetAnimalByIdAsync(1))
-            .ReturnsAsync(animal1);
-        _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetAnimalByIdAsync(2))
-            .ReturnsAsync(animal2);
+            .Setup(r =>
+                r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Animal, bool>>>())
+            )
+            .ReturnsAsync(new List<Animal> { animal1, animal2 });
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -199,12 +193,15 @@ public class CreateMovementCommandHandlerTests
             .GetMock<ILotRepository>()
             .Setup(r => r.GetLotWithPaddockAsync(10))
             .ReturnsAsync(differentFarmLot);
-        _mocker.GetMock<IAnimalRepository>().Setup(r => r.GetByIdAsync(1, 1)).ReturnsAsync(animal1);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r =>
+                r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Animal, bool>>>())
+            )
+            .ReturnsAsync(new List<Animal> { animal1 });
 
         await Should.ThrowAsync<ForbiddenAccessException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.RollbackTransactionAsync(), Times.Once);
     }
 }
