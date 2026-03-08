@@ -1,6 +1,9 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Interfaces;
 using Moq;
 using Moq.AutoMock;
 using Shouldly;
@@ -24,7 +27,7 @@ public class GetMovementsByEntityQueryHandlerTests
     public async Task Handle_ExistingEntityWithMovements_ReturnsMovementsDto()
     {
         // Arrange
-        var entityType = "ANIMAL";
+        var entityType = EntityTypes.Animal;
         var entityId = 1;
         var query = new GetMovementsByEntityQuery(entityType, entityId);
         var movements = new List<Movement>
@@ -61,31 +64,27 @@ public class GetMovementsByEntityQueryHandlerTests
         };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
+        var lotFinal = new Lot { Id = 30, Name = "Lot Final" };
 
         _mocker
             .GetMock<IMovementRepository>()
             .Setup(r => r.GetMovementsByEntityAsync(entityType, entityId))
             .ReturnsAsync(movements);
+
         _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetUserByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync(user);
+            .GetMock<IUserRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { user });
+
         _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetAnimalByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync(animal);
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
+            .ReturnsAsync(new List<Animal> { animal });
+
         _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetLotByIdAsync(10))
-            .ReturnsAsync(lotFrom);
-        _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetLotByIdAsync(20))
-            .ReturnsAsync(lotTo);
-        _mocker
-            .GetMock<IMovementRepository>()
-            .Setup(r => r.GetLotByIdAsync(30))
-            .ReturnsAsync(new Lot { Id = 30, Name = "Lot Final" });
+            .GetMock<ILotRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
+            .ReturnsAsync(new List<Lot> { lotFrom, lotTo, lotFinal });
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -94,12 +93,12 @@ public class GetMovementsByEntityQueryHandlerTests
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
 
-        // Latest movement (Movement 2)
+        // Latest movement (Movement 2) -> first in the result because of OrderByDescending
         var first = result.First();
         first.EntityType.ShouldBe(entityType);
         first.EntityName.ShouldBe(animal.TagVisual);
         first.FromName.ShouldBe(lotTo.Name); // From Lot To (20)
-        first.ToName.ShouldBe("Lot Final"); // To Lot Final (30)
+        first.ToName.ShouldBe(lotFinal.Name); // To Lot Final (30)
         first.UserName.ShouldBe(user.Name);
 
         // Oldest movement (Movement 1)
@@ -112,7 +111,7 @@ public class GetMovementsByEntityQueryHandlerTests
     public async Task Handle_ExistingEntityWithNoMovements_ReturnsEmptyList()
     {
         // Arrange
-        var entityType = "ANIMAL";
+        var entityType = EntityTypes.Animal;
         var entityId = 1;
         var query = new GetMovementsByEntityQuery(entityType, entityId);
 

@@ -1,6 +1,7 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -84,7 +85,7 @@ public class MoveAnimalCommandHandler(
         // Record movement
         var movement = new Movement
         {
-            EntityType = "ANIMAL",
+            EntityType = EntityTypes.Animal,
             EntityId = animal.Id,
             FromId = oldLotId,
             ToId = request.ToLotId,

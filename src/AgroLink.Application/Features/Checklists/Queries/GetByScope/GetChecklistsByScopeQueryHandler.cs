@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Checklists.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -25,7 +26,7 @@ public class GetChecklistsByScopeQueryHandler(
         if (currentUserService.CurrentFarmId.HasValue)
         {
             int? scopeFarmId = null;
-            if (request.ScopeType == "LOT")
+            if (request.ScopeType == EntityTypes.Lot)
             {
                 var lot = await lotRepository.GetLotWithPaddockAsync(request.ScopeId);
                 scopeFarmId = lot?.Paddock?.FarmId;
@@ -80,7 +81,7 @@ public class GetChecklistsByScopeQueryHandler(
         }
 
         string? scopeName = null;
-        if (checklist.ScopeType == "LOT")
+        if (checklist.ScopeType == EntityTypes.Lot)
         {
             var lot = await lotRepository.GetByIdAsync(checklist.ScopeId);
             scopeName = lot?.Name;

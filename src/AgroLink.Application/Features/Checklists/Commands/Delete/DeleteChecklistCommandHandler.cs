@@ -1,5 +1,6 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -28,7 +29,7 @@ public class DeleteChecklistCommandHandler(
         if (currentUserService.CurrentFarmId.HasValue)
         {
             int? checklistFarmId = null;
-            if (checklist.ScopeType == "LOT")
+            if (checklist.ScopeType == EntityTypes.Lot)
             {
                 var lot = await lotRepository.GetLotWithPaddockAsync(checklist.ScopeId);
                 checklistFarmId = lot?.Paddock?.FarmId;

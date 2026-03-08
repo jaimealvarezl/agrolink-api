@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Create;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -28,7 +29,7 @@ public class CreateChecklistCommandHandlerTests
         // Arrange
         var createChecklistDto = new CreateChecklistDto
         {
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
             Date = DateTime.Today,
             Notes = "Test Notes",
@@ -47,7 +48,7 @@ public class CreateChecklistCommandHandlerTests
         var checklist = new Checklist
         {
             Id = 1,
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
             UserId = userId,
             Date = DateTime.Today,

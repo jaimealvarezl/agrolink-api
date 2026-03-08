@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Movements.Commands.CreateMovement;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
+using AgroLink.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,28 +30,21 @@ public class MovementsController(IMediator mediator) : BaseController
         int animalId
     )
     {
-        var movements = await mediator.Send(new GetMovementsByEntityQuery("ANIMAL", animalId));
+        var movements = await mediator.Send(
+            new GetMovementsByEntityQuery(EntityTypes.Animal, animalId)
+        );
         return Ok(movements);
     }
 
     [HttpPost]
     [Authorize(Policy = "FarmEditorAccess")]
-    public async Task<ActionResult<MovementDto>> Create(
+    public async Task<ActionResult<IEnumerable<MovementDto>>> Create(
         int farmId,
         [FromBody] CreateMovementDto dto
     )
     {
         var userId = GetCurrentUserId();
-        var movement = await mediator.Send(new CreateMovementCommand(dto, userId));
-        return CreatedAtAction(
-            nameof(GetByEntity),
-            new
-            {
-                farmId,
-                entityType = dto.EntityType,
-                entityId = dto.EntityId,
-            },
-            movement
-        );
+        var movements = await mediator.Send(new CreateMovementCommand(dto, userId));
+        return Ok(movements);
     }
 }

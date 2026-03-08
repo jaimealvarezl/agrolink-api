@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetById;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -32,7 +33,7 @@ public class GetChecklistByIdQueryHandlerTests
         var checklist = new Checklist
         {
             Id = checklistId,
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
             Date = DateTime.Today,
             UserId = 1,
@@ -103,7 +104,7 @@ public class GetChecklistByIdQueryHandlerTests
         var checklist = new Checklist
         {
             Id = checklistId,
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
         };
         var lot = new Lot

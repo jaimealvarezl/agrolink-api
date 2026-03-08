@@ -23,24 +23,4 @@ public class MovementRepository(AgroLinkDbContext context) : IMovementRepository
         context.Movements.Add(movement);
         await context.SaveChangesAsync();
     }
-
-    public async Task<User?> GetUserByIdAsync(int userId)
-    {
-        return await context.Users.FindAsync(userId);
-    }
-
-    public async Task<Animal?> GetAnimalByIdAsync(int animalId)
-    {
-        return await context.Animals.FindAsync(animalId);
-    }
-
-    public async Task<Lot?> GetLotByIdAsync(int lotId)
-    {
-        return await context.Lots.FindAsync(lotId);
-    }
-
-    public async Task<Paddock?> GetPaddockByIdAsync(int paddockId)
-    {
-        return await context.Paddocks.FindAsync(paddockId);
-    }
 }
