@@ -27,4 +27,13 @@ public class LotRepository(AgroLinkDbContext context) : Repository<Lot>(context)
             .Include(l => l.Paddock)
             .FirstOrDefaultAsync(l => l.Id == id);
     }
+
+    public async Task<IEnumerable<Lot>> GetLotsWithPaddockAsync(IEnumerable<int> ids)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(l => l.Paddock)
+            .Where(l => ids.Contains(l.Id))
+            .ToListAsync();
+    }
 }

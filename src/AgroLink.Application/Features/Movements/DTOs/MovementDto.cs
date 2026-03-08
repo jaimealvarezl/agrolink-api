@@ -42,7 +42,7 @@ public class CreateMovementDto
     public int ToLotId { get; set; }
 
     [Required]
-    public DateTime Date { get; set; } = DateTime.UtcNow;
+    public DateTime At { get; set; } = DateTime.UtcNow;
 
     public string? Reason { get; set; }
 }

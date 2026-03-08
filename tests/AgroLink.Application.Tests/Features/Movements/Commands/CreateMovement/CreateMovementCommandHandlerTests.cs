@@ -33,7 +33,7 @@ public class CreateMovementCommandHandlerTests
             {
                 AnimalIds = new List<int> { 1, 2 },
                 ToLotId = 20,
-                Date = DateTime.UtcNow,
+                At = DateTime.UtcNow,
                 Reason = "Test Move",
             },
             userId
@@ -84,12 +84,8 @@ public class CreateMovementCommandHandlerTests
             .ReturnsAsync(toLot);
         _mocker
             .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(10))
-            .ReturnsAsync(lot1);
-        _mocker
-            .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(15))
-            .ReturnsAsync(lot2);
+            .Setup(r => r.GetLotsWithPaddockAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new List<Lot> { lot1, lot2 });
 
         _mocker
             .GetMock<IAnimalRepository>()
@@ -191,8 +187,8 @@ public class CreateMovementCommandHandlerTests
             .ReturnsAsync(toLot);
         _mocker
             .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(10))
-            .ReturnsAsync(differentFarmLot);
+            .Setup(r => r.GetLotsWithPaddockAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new List<Lot> { differentFarmLot });
         _mocker
             .GetMock<IAnimalRepository>()
             .Setup(r =>

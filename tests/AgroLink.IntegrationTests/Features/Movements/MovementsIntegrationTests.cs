@@ -86,7 +86,7 @@ public class MovementsIntegrationTests : IntegrationTestBase
         {
             AnimalIds = new List<int> { animal1.Id, animal2.Id },
             ToLotId = destinationLot.Id,
-            Date = DateTime.UtcNow,
+            At = DateTime.UtcNow,
             Reason = "Batch Move Test",
         };
 
@@ -178,7 +178,7 @@ public class MovementsIntegrationTests : IntegrationTestBase
         {
             AnimalIds = new List<int> { animal1.Id },
             ToLotId = 9999, // Invalid Lot
-            Date = DateTime.UtcNow,
+            At = DateTime.UtcNow,
             Reason = "Bad Move",
         };
 

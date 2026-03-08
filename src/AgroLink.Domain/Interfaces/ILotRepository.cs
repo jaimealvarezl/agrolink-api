@@ -7,4 +7,5 @@ public interface ILotRepository : IRepository<Lot>
     Task<IEnumerable<Lot>> GetByPaddockIdAsync(int paddockId);
     Task<Lot?> GetLotWithAnimalsAsync(int id);
     Task<Lot?> GetLotWithPaddockAsync(int id);
+    Task<IEnumerable<Lot>> GetLotsWithPaddockAsync(IEnumerable<int> ids);
 }

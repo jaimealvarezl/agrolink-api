@@ -53,16 +53,15 @@ public class CreateMovementCommandHandler(
 
         // Extract unique source lot IDs and fetch them to validate access
         var uniqueLotIds = animalsList.Select(a => a.LotId).Distinct().ToList();
-        var sourceLotsDict = new Dictionary<int, Lot>();
+        var sourceLots = await lotRepository.GetLotsWithPaddockAsync(uniqueLotIds);
 
-        foreach (var lotId in uniqueLotIds)
+        var sourceLotsDict = sourceLots.ToDictionary(l => l.Id);
+        if (
+            sourceLotsDict.Count != uniqueLotIds.Count
+            || sourceLotsDict.Values.Any(l => l.Paddock.FarmId != farmId)
+        )
         {
-            var lot = await lotRepository.GetLotWithPaddockAsync(lotId);
-            if (lot == null || lot.Paddock.FarmId != farmId)
-            {
-                throw new ForbiddenAccessException("You do not have access to some source lots");
-            }
-            sourceLotsDict[lotId] = lot;
+            throw new ForbiddenAccessException("You do not have access to some source lots");
         }
 
         var movementDataList =
@@ -89,7 +88,7 @@ public class CreateMovementCommandHandler(
                     EntityId = animal.Id,
                     FromId = fromId,
                     ToId = request.MovementDto.ToLotId,
-                    At = request.MovementDto.Date,
+                    At = request.MovementDto.At,
                     Reason = request.MovementDto.Reason,
                     UserId = request.UserId,
                 };
