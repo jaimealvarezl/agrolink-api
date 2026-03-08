@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetByScope;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -26,7 +27,7 @@ public class GetChecklistsByScopeQueryHandlerTests
     public async Task Handle_ExistingScopeWithChecklists_ReturnsChecklistsDto()
     {
         // Arrange
-        var scopeType = "LOT";
+        var scopeType = EntityTypes.Lot;
         var scopeId = 1;
         var farmId = 10;
         var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
@@ -87,7 +88,7 @@ public class GetChecklistsByScopeQueryHandlerTests
     public async Task Handle_ScopeFromAnotherFarm_ReturnsEmptyList()
     {
         // Arrange
-        var scopeType = "LOT";
+        var scopeType = EntityTypes.Lot;
         var scopeId = 1;
         var currentFarmId = 10;
         var scopeFarmId = 20;
@@ -116,7 +117,7 @@ public class GetChecklistsByScopeQueryHandlerTests
     public async Task Handle_ExistingScopeWithNoChecklists_ReturnsEmptyList()
     {
         // Arrange
-        var scopeType = "LOT";
+        var scopeType = EntityTypes.Lot;
         var scopeId = 1;
         var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
 

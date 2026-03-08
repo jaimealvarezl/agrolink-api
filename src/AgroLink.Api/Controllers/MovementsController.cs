@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Movements.Commands.CreateMovement;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
+using AgroLink.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,9 @@ public class MovementsController(IMediator mediator) : BaseController
         int animalId
     )
     {
-        var movements = await mediator.Send(new GetMovementsByEntityQuery("ANIMAL", animalId));
+        var movements = await mediator.Send(
+            new GetMovementsByEntityQuery(EntityTypes.Animal, animalId)
+        );
         return Ok(movements);
     }
 

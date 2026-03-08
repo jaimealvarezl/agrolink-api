@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -31,7 +32,7 @@ public class UpdateChecklistCommandHandlerTests
         var farmId = 10;
         var updateChecklistDto = new CreateChecklistDto
         {
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
             Date = DateTime.Today,
             Notes = "Updated Notes",
@@ -49,7 +50,7 @@ public class UpdateChecklistCommandHandlerTests
         var checklist = new Checklist
         {
             Id = checklistId,
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
             UserId = 1,
             Date = DateTime.Today,
@@ -138,7 +139,7 @@ public class UpdateChecklistCommandHandlerTests
         var checklistId = 999;
         var updateChecklistDto = new CreateChecklistDto
         {
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
             Notes = "Updated Notes",
         };

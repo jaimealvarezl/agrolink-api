@@ -1,6 +1,7 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Checklists.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -34,7 +35,7 @@ public class UpdateChecklistCommandHandler(
         {
             // Check existing checklist farm
             int? existingFarmId = null;
-            if (checklist.ScopeType == "LOT")
+            if (checklist.ScopeType == EntityTypes.Lot)
             {
                 var lot = await lotRepository.GetLotWithPaddockAsync(checklist.ScopeId);
                 existingFarmId = lot?.Paddock?.FarmId;
@@ -53,7 +54,7 @@ public class UpdateChecklistCommandHandler(
             // Check new target scope farm
             var dto = request.Dto;
             int? newFarmId = null;
-            if (dto.ScopeType == "LOT")
+            if (dto.ScopeType == EntityTypes.Lot)
             {
                 var lot = await lotRepository.GetLotWithPaddockAsync(dto.ScopeId);
                 newFarmId = lot?.Paddock?.FarmId;
@@ -127,7 +128,7 @@ public class UpdateChecklistCommandHandler(
         }
 
         string? scopeName = null;
-        if (checklist.ScopeType == "LOT")
+        if (checklist.ScopeType == EntityTypes.Lot)
         {
             var lot = await lotRepository.GetByIdAsync(checklist.ScopeId);
             scopeName = lot?.Name;

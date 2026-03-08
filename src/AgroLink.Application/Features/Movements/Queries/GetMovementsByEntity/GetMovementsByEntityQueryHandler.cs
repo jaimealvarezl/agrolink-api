@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -42,7 +43,7 @@ public class GetMovementsByEntityQueryHandler(
 
         foreach (var m in movementList)
         {
-            if (m.EntityType == "ANIMAL")
+            if (m.EntityType == EntityTypes.Animal)
             {
                 animalIds.Add(m.EntityId);
                 if (m.FromId.HasValue)
@@ -50,7 +51,7 @@ public class GetMovementsByEntityQueryHandler(
                 if (m.ToId.HasValue)
                     lotIds.Add(m.ToId.Value);
             }
-            else if (m.EntityType == "LOT")
+            else if (m.EntityType == EntityTypes.Lot)
             {
                 lotIds.Add(m.EntityId);
                 if (m.FromId.HasValue)
@@ -90,7 +91,7 @@ public class GetMovementsByEntityQueryHandler(
             string? fromName = null;
             string? toName = null;
 
-            if (movement.EntityType == "ANIMAL")
+            if (movement.EntityType == EntityTypes.Animal)
             {
                 entityName = animalsDict.GetValueOrDefault(movement.EntityId);
                 if (movement.FromId.HasValue)
@@ -98,7 +99,7 @@ public class GetMovementsByEntityQueryHandler(
                 if (movement.ToId.HasValue)
                     toName = lotsDict.GetValueOrDefault(movement.ToId.Value);
             }
-            else if (movement.EntityType == "LOT")
+            else if (movement.EntityType == EntityTypes.Lot)
             {
                 entityName = lotsDict.GetValueOrDefault(movement.EntityId);
                 if (movement.FromId.HasValue)

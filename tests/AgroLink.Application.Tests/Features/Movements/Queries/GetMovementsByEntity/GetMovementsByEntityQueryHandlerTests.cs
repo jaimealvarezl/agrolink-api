@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -26,7 +27,7 @@ public class GetMovementsByEntityQueryHandlerTests
     public async Task Handle_ExistingEntityWithMovements_ReturnsMovementsDto()
     {
         // Arrange
-        var entityType = "ANIMAL";
+        var entityType = EntityTypes.Animal;
         var entityId = 1;
         var query = new GetMovementsByEntityQuery(entityType, entityId);
         var movements = new List<Movement>
@@ -110,7 +111,7 @@ public class GetMovementsByEntityQueryHandlerTests
     public async Task Handle_ExistingEntityWithNoMovements_ReturnsEmptyList()
     {
         // Arrange
-        var entityType = "ANIMAL";
+        var entityType = EntityTypes.Animal;
         var entityId = 1;
         var query = new GetMovementsByEntityQuery(entityType, entityId);
 

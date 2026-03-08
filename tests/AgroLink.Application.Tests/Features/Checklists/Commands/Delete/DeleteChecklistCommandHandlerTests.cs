@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Checklists.Commands.Delete;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -31,7 +32,7 @@ public class DeleteChecklistCommandHandlerTests
         var checklist = new Checklist
         {
             Id = checklistId,
-            ScopeType = "LOT",
+            ScopeType = EntityTypes.Lot,
             ScopeId = 1,
         };
         var lot = new Lot

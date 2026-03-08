@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.Lots.DTOs;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -33,7 +34,7 @@ public class MoveLotCommandHandler(
         // Record movement
         var movement = new Movement
         {
-            EntityType = "LOT",
+            EntityType = EntityTypes.Lot,
             EntityId = request.LotId,
             FromId = fromPaddockId,
             ToId = request.ToPaddockId,
