@@ -76,21 +76,6 @@ public class LotsController(IMediator mediator) : BaseController
         await mediator.Send(new DeleteLotCommand(id));
         return NoContent();
     }
-
-    [HttpPost("{id}/move")]
-    [Authorize(Policy = "FarmEditorAccess")] // Moving cattle is operation -> Editor
-    public async Task<ActionResult<LotDto>> MoveLot(
-        int farmId,
-        int id,
-        [FromBody] MoveLotRequest request
-    )
-    {
-        var userId = GetCurrentUserId();
-        var lot = await mediator.Send(
-            new MoveLotCommand(id, request.ToPaddockId, request.Reason, userId)
-        );
-        return Ok(lot);
-    }
 }
 
 public class CreateLotRequest
@@ -105,10 +90,4 @@ public class UpdateLotRequest
     public string? Name { get; set; }
     public int? PaddockId { get; set; }
     public string? Status { get; set; }
-}
-
-public class MoveLotRequest
-{
-    public int ToPaddockId { get; set; }
-    public string? Reason { get; set; }
 }
