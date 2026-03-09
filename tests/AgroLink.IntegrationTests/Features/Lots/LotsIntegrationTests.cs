@@ -36,12 +36,10 @@ public class LotsIntegrationTests : IntegrationTestBase
 
         var farm = new Farm { Name = "Test Farm", OwnerId = owner.Id };
         DbContext.Farms.Add(farm);
+        await DbContext.SaveChangesAsync();
 
-        var paddock = new Paddock { Name = "P1", FarmId = 0 }; // Will set after farm save
-
-        // Relational save
-        farm.Paddocks.Add(paddock);
-        DbContext.Farms.Add(farm);
+        var paddock = new Paddock { Name = "P1", FarmId = farm.Id };
+        DbContext.Paddocks.Add(paddock);
         await DbContext.SaveChangesAsync();
 
         DbContext.FarmMembers.Add(
@@ -91,9 +89,11 @@ public class LotsIntegrationTests : IntegrationTestBase
         await DbContext.SaveChangesAsync();
 
         var farm = new Farm { Name = "Test Farm", OwnerId = owner.Id };
-        var paddock = new Paddock { Name = "P1", FarmId = 0 };
-        farm.Paddocks.Add(paddock);
         DbContext.Farms.Add(farm);
+        await DbContext.SaveChangesAsync();
+
+        var paddock = new Paddock { Name = "P1", FarmId = farm.Id };
+        DbContext.Paddocks.Add(paddock);
         await DbContext.SaveChangesAsync();
 
         DbContext.FarmMembers.Add(
@@ -217,11 +217,12 @@ public class LotsIntegrationTests : IntegrationTestBase
         await DbContext.SaveChangesAsync();
 
         var farm = new Farm { Name = "Test Farm", OwnerId = owner.Id };
-        var paddock1 = new Paddock { Name = "P1", FarmId = 0 };
-        var paddock2 = new Paddock { Name = "P2", FarmId = 0 };
-        farm.Paddocks.Add(paddock1);
-        farm.Paddocks.Add(paddock2);
         DbContext.Farms.Add(farm);
+        await DbContext.SaveChangesAsync();
+
+        var paddock1 = new Paddock { Name = "P1", FarmId = farm.Id };
+        var paddock2 = new Paddock { Name = "P2", FarmId = farm.Id };
+        DbContext.Paddocks.AddRange(paddock1, paddock2);
         await DbContext.SaveChangesAsync();
 
         DbContext.FarmMembers.Add(

@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
@@ -17,6 +18,20 @@ public class GetMovementsByAnimalQueryHandler(
         CancellationToken cancellationToken
     )
     {
+        // 1. Fetch Animal with its Lot/Paddock to check FarmId (IDOR Protection)
+        var animal = await animalRepository.GetLotWithPaddockAsync(request.AnimalId);
+        if (animal == null)
+        {
+            throw new NotFoundException("Animal", request.AnimalId);
+        }
+
+        // Validate that the animal belongs to the farm in the request
+        if (animal.Lot?.Paddock?.FarmId != request.FarmId)
+        {
+            throw new ForbiddenAccessException("You do not have access to this animal's data");
+        }
+
+        // 2. Fetch Movements
         var movements = await movementRepository.GetMovementsByAnimalAsync(request.AnimalId);
         var movementList = movements.ToList();
 
@@ -38,10 +53,6 @@ public class GetMovementsByAnimalQueryHandler(
         var users = await userRepository.FindAsync(u => userIds.Contains(u.Id));
         var usersDict = users.ToDictionary(u => u.Id, u => u.Name);
 
-        // Fetch Animal
-        var animal = await animalRepository.GetByIdAsync(request.AnimalId);
-        var animalName = animal?.TagVisual;
-
         // Fetch Lots
         var lotsDict = new Dictionary<int, string>();
         if (lotIds.Any())
@@ -55,7 +66,7 @@ public class GetMovementsByAnimalQueryHandler(
             {
                 Id = movement.Id,
                 AnimalId = movement.AnimalId,
-                AnimalName = animalName,
+                AnimalName = animal.TagVisual,
                 FromLotId = movement.FromLotId,
                 FromLotName = movement.FromLotId.HasValue
                     ? lotsDict.GetValueOrDefault(movement.FromLotId.Value)

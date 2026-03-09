@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.Queries.GetMovementsByAnimal;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -26,8 +27,9 @@ public class GetMovementsByAnimalQueryHandlerTests
     public async Task Handle_ExistingAnimalWithMovements_ReturnsMovementsDto()
     {
         // Arrange
+        var farmId = 1;
         var animalId = 1;
-        var query = new GetMovementsByAnimalQuery(animalId);
+        var query = new GetMovementsByAnimalQuery(farmId, animalId);
         var movements = new List<Movement>
         {
             new()
@@ -57,6 +59,7 @@ public class GetMovementsByAnimalQueryHandlerTests
             Cuia = "CUIA-Test",
             Name = "Test Animal",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
         };
         var lotFrom = new Lot { Id = 10, Name = "Lot From" };
         var lotTo = new Lot { Id = 20, Name = "Lot To" };
@@ -74,7 +77,7 @@ public class GetMovementsByAnimalQueryHandlerTests
 
         _mocker
             .GetMock<IAnimalRepository>()
-            .Setup(r => r.GetByIdAsync(animalId))
+            .Setup(r => r.GetLotWithPaddockAsync(animalId))
             .ReturnsAsync(animal);
 
         _mocker
@@ -104,11 +107,65 @@ public class GetMovementsByAnimalQueryHandlerTests
     }
 
     [Test]
+    public async Task Handle_AnimalFromDifferentFarm_ThrowsForbiddenAccessException()
+    {
+        // Arrange
+        var farmId = 1;
+        var differentFarmId = 2;
+        var animalId = 1;
+        var query = new GetMovementsByAnimalQuery(farmId, animalId);
+
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = differentFarmId } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(animalId))
+            .ReturnsAsync(animal);
+
+        // Act & Assert
+        await Should.ThrowAsync<ForbiddenAccessException>(() =>
+            _handler.Handle(query, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task Handle_AnimalNotFound_ThrowsNotFoundException()
+    {
+        // Arrange
+        var farmId = 1;
+        var animalId = 1;
+        var query = new GetMovementsByAnimalQuery(farmId, animalId);
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(animalId))
+            .ReturnsAsync((Animal?)null);
+
+        // Act & Assert
+        await Should.ThrowAsync<NotFoundException>(() => _handler.Handle(query, CancellationToken.None));
+    }
+
+    [Test]
     public async Task Handle_ExistingAnimalWithNoMovements_ReturnsEmptyList()
     {
         // Arrange
+        var farmId = 1;
         var animalId = 1;
-        var query = new GetMovementsByAnimalQuery(animalId);
+        var query = new GetMovementsByAnimalQuery(farmId, animalId);
+        var animal = new Animal
+        {
+            Id = animalId,
+            Lot = new Lot { Paddock = new Paddock { FarmId = farmId } },
+        };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(animalId))
+            .ReturnsAsync(animal);
 
         _mocker
             .GetMock<IMovementRepository>()

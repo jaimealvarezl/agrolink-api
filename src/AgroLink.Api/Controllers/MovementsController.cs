@@ -17,8 +17,7 @@ public class MovementsController(IMediator mediator) : BaseController
         int animalId
     )
     {
-        // Ideally we should validate animalId belongs to farmId
-        var movements = await mediator.Send(new GetMovementsByAnimalQuery(animalId));
+        var movements = await mediator.Send(new GetMovementsByAnimalQuery(farmId, animalId));
         return Ok(movements);
     }
 

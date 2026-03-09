@@ -32,6 +32,7 @@ public interface IAnimalRepository : IRepository<Animal>
     );
 
     Task<Animal?> GetAnimalDetailsAsync(int id, int userId);
+    Task<Animal?> GetLotWithPaddockAsync(int id);
 
     Task<List<string>> GetDistinctColorsAsync(
         int farmId,
