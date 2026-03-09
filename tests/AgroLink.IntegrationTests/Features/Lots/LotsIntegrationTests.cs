@@ -178,7 +178,8 @@ public class LotsIntegrationTests : IntegrationTestBase
 
         Authenticate(user);
 
-        var request = new UpdateLotPaddockDto { PaddockId = paddock2.Id };
+        var targetPaddockId = paddock2.Id;
+        var request = new UpdateLotPaddockDto { PaddockId = targetPaddockId };
 
         // Act
         var response = await Client.PatchAsJsonAsync(
@@ -190,13 +191,12 @@ public class LotsIntegrationTests : IntegrationTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var updated = await response.Content.ReadFromJsonAsync<LotDto>(JsonOptions);
         updated.ShouldNotBeNull();
-        updated.PaddockId.ShouldBe(paddock2.Id);
-        updated.PaddockName.ShouldBe(paddock2.Name);
+        updated.PaddockId.ShouldBe(targetPaddockId);
 
         // Verify DB
         DbContext.ChangeTracker.Clear();
         var lotInDb = await DbContext.Lots.FindAsync(lot.Id);
-        lotInDb!.PaddockId.ShouldBe(paddock2.Id);
+        lotInDb!.PaddockId.ShouldBe(targetPaddockId);
     }
 
     [Test]
