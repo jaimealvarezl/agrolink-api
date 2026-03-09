@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.Commands.CreateMovement;
 using AgroLink.Application.Features.Movements.DTOs;
@@ -89,9 +90,7 @@ public class CreateMovementCommandHandlerTests
 
         _mocker
             .GetMock<IAnimalRepository>()
-            .Setup(r =>
-                r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Animal, bool>>>())
-            )
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
             .ReturnsAsync(new List<Animal> { animal1, animal2 });
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -191,9 +190,7 @@ public class CreateMovementCommandHandlerTests
             .ReturnsAsync(new List<Lot> { differentFarmLot });
         _mocker
             .GetMock<IAnimalRepository>()
-            .Setup(r =>
-                r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Animal, bool>>>())
-            )
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
             .ReturnsAsync(new List<Animal> { animal1 });
 
         await Should.ThrowAsync<ForbiddenAccessException>(() =>

@@ -1,7 +1,6 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -76,7 +75,7 @@ public class CreateMovementCommandHandler(
             {
                 // Capture current lot as FromId and its name
                 int? fromId = animal.LotId;
-                string? fromLotName = sourceLotsDict[animal.LotId].Name;
+                var fromLotName = sourceLotsDict[animal.LotId].Name;
 
                 // Update animal's lot
                 animal.LotId = request.MovementDto.ToLotId;

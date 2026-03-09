@@ -20,8 +20,10 @@ public class GetMovementsByAnimalQueryHandler(
         var movements = await movementRepository.GetMovementsByAnimalAsync(request.AnimalId);
         var movementList = movements.ToList();
 
-        if (!movementList.Any())
+        if (movementList.Count == 0)
+        {
             return new List<MovementDto>();
+        }
 
         // Gather all unique IDs to fetch them efficiently
         var userIds = movementList.Select(m => m.UserId).Distinct().ToList();

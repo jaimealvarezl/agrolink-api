@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.Lots.Commands.Create;
 using AgroLink.Application.Features.Lots.Commands.Delete;
 using AgroLink.Application.Features.Lots.Commands.Update;
+using AgroLink.Application.Features.Lots.Commands.UpdatePaddock;
 using AgroLink.Application.Features.Lots.DTOs;
 using AgroLink.Application.Features.Lots.Queries.GetById;
 using AgroLink.Application.Features.Lots.Queries.GetByPaddock;
@@ -65,6 +66,18 @@ public class LotsController(IMediator mediator) : BaseController
             Status = request.Status,
         };
         var lot = await mediator.Send(new UpdateLotCommand(id, dto));
+        return Ok(lot);
+    }
+
+    [HttpPatch("{id}/paddock")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<LotDto>> UpdatePaddock(
+        int farmId,
+        int id,
+        [FromBody] UpdateLotPaddockDto request
+    )
+    {
+        var lot = await mediator.Send(new UpdateLotPaddockCommand(farmId, id, request.PaddockId));
         return Ok(lot);
     }
 
