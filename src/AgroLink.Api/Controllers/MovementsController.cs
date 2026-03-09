@@ -1,7 +1,6 @@
 using AgroLink.Application.Features.Movements.Commands.CreateMovement;
 using AgroLink.Application.Features.Movements.DTOs;
-using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
-using AgroLink.Domain.Constants;
+using AgroLink.Application.Features.Movements.Queries.GetMovementsByAnimal;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,27 +11,14 @@ namespace AgroLink.Api.Controllers;
 [Authorize(Policy = "FarmViewerAccess")]
 public class MovementsController(IMediator mediator) : BaseController
 {
-    [HttpGet("entity/{entityType}/{entityId}")]
-    public async Task<ActionResult<IEnumerable<MovementDto>>> GetByEntity(
-        int farmId,
-        string entityType,
-        int entityId
-    )
-    {
-        // Ideally we should validate entityId belongs to farmId
-        var movements = await mediator.Send(new GetMovementsByEntityQuery(entityType, entityId));
-        return Ok(movements);
-    }
-
     [HttpGet("animal/{animalId}/history")]
     public async Task<ActionResult<IEnumerable<MovementDto>>> GetAnimalHistory(
         int farmId,
         int animalId
     )
     {
-        var movements = await mediator.Send(
-            new GetMovementsByEntityQuery(EntityTypes.Animal, animalId)
-        );
+        // Ideally we should validate animalId belongs to farmId
+        var movements = await mediator.Send(new GetMovementsByAnimalQuery(animalId));
         return Ok(movements);
     }
 

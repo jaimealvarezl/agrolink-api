@@ -1,54 +1,50 @@
 using System.Linq.Expressions;
-using AgroLink.Application.Features.Movements.Queries.GetMovementsByEntity;
+using AgroLink.Application.Features.Movements.Queries.GetMovementsByAnimal;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Moq.AutoMock;
 using Shouldly;
 
-namespace AgroLink.Application.Tests.Features.Movements.Queries.GetMovementsByEntity;
+namespace AgroLink.Application.Tests.Features.Movements.Queries.GetMovementsByAnimal;
 
 [TestFixture]
-public class GetMovementsByEntityQueryHandlerTests
+public class GetMovementsByAnimalQueryHandlerTests
 {
     [SetUp]
     public void Setup()
     {
         _mocker = new AutoMocker();
-        _handler = _mocker.CreateInstance<GetMovementsByEntityQueryHandler>();
+        _handler = _mocker.CreateInstance<GetMovementsByAnimalQueryHandler>();
     }
 
     private AutoMocker _mocker = null!;
-    private GetMovementsByEntityQueryHandler _handler = null!;
+    private GetMovementsByAnimalQueryHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ExistingEntityWithMovements_ReturnsMovementsDto()
+    public async Task Handle_ExistingAnimalWithMovements_ReturnsMovementsDto()
     {
         // Arrange
-        var entityType = EntityTypes.Animal;
-        var entityId = 1;
-        var query = new GetMovementsByEntityQuery(entityType, entityId);
+        var animalId = 1;
+        var query = new GetMovementsByAnimalQuery(animalId);
         var movements = new List<Movement>
         {
             new()
             {
                 Id = 1,
-                EntityType = entityType,
-                EntityId = entityId,
-                FromId = 10,
-                ToId = 20,
+                AnimalId = animalId,
+                FromLotId = 10,
+                ToLotId = 20,
                 At = DateTime.UtcNow,
                 UserId = 1,
             },
             new()
             {
                 Id = 2,
-                EntityType = entityType,
-                EntityId = entityId,
-                FromId = 20,
-                ToId = 30,
+                AnimalId = animalId,
+                FromLotId = 20,
+                ToLotId = 30,
                 At = DateTime.UtcNow.AddHours(1),
                 UserId = 1,
             },
@@ -68,7 +64,7 @@ public class GetMovementsByEntityQueryHandlerTests
 
         _mocker
             .GetMock<IMovementRepository>()
-            .Setup(r => r.GetMovementsByEntityAsync(entityType, entityId))
+            .Setup(r => r.GetMovementsByAnimalAsync(animalId))
             .ReturnsAsync(movements);
 
         _mocker
@@ -78,8 +74,8 @@ public class GetMovementsByEntityQueryHandlerTests
 
         _mocker
             .GetMock<IAnimalRepository>()
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
-            .ReturnsAsync(new List<Animal> { animal });
+            .Setup(r => r.GetByIdAsync(animalId))
+            .ReturnsAsync(animal);
 
         _mocker
             .GetMock<ILotRepository>()
@@ -95,29 +91,28 @@ public class GetMovementsByEntityQueryHandlerTests
 
         // Latest movement (Movement 2) -> first in the result because of OrderByDescending
         var first = result.First();
-        first.EntityType.ShouldBe(entityType);
-        first.EntityName.ShouldBe(animal.TagVisual);
-        first.FromName.ShouldBe(lotTo.Name); // From Lot To (20)
-        first.ToName.ShouldBe(lotFinal.Name); // To Lot Final (30)
+        first.AnimalId.ShouldBe(animalId);
+        first.AnimalName.ShouldBe(animal.TagVisual);
+        first.FromLotName.ShouldBe(lotTo.Name); // From Lot To (20)
+        first.ToLotName.ShouldBe(lotFinal.Name); // To Lot Final (30)
         first.UserName.ShouldBe(user.Name);
 
         // Oldest movement (Movement 1)
         var last = result.Last();
-        last.FromName.ShouldBe(lotFrom.Name); // From Lot From (10)
-        last.ToName.ShouldBe(lotTo.Name); // To Lot To (20)
+        last.FromLotName.ShouldBe(lotFrom.Name); // From Lot From (10)
+        last.ToLotName.ShouldBe(lotTo.Name); // To Lot To (20)
     }
 
     [Test]
-    public async Task Handle_ExistingEntityWithNoMovements_ReturnsEmptyList()
+    public async Task Handle_ExistingAnimalWithNoMovements_ReturnsEmptyList()
     {
         // Arrange
-        var entityType = EntityTypes.Animal;
-        var entityId = 1;
-        var query = new GetMovementsByEntityQuery(entityType, entityId);
+        var animalId = 1;
+        var query = new GetMovementsByAnimalQuery(animalId);
 
         _mocker
             .GetMock<IMovementRepository>()
-            .Setup(r => r.GetMovementsByEntityAsync(entityType, entityId))
+            .Setup(r => r.GetMovementsByAnimalAsync(animalId))
             .ReturnsAsync(new List<Movement>());
 
         // Act

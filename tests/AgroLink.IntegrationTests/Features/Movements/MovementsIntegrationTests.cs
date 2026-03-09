@@ -101,15 +101,15 @@ public class MovementsIntegrationTests : IntegrationTestBase
         var movementsList = createdMovements.ToList();
         movementsList.Count.ShouldBe(2);
 
-        var m1 = movementsList.FirstOrDefault(m => m.EntityId == animal1.Id);
+        var m1 = movementsList.FirstOrDefault(m => m.AnimalId == animal1.Id);
         m1.ShouldNotBeNull();
-        m1.FromId.ShouldBe(sourceLot.Id);
-        m1.ToId.ShouldBe(destinationLot.Id);
+        m1.FromLotId.ShouldBe(sourceLot.Id);
+        m1.ToLotId.ShouldBe(destinationLot.Id);
 
-        var m2 = movementsList.FirstOrDefault(m => m.EntityId == animal2.Id);
+        var m2 = movementsList.FirstOrDefault(m => m.AnimalId == animal2.Id);
         m2.ShouldNotBeNull();
-        m2.FromId.ShouldBe(sourceLot.Id);
-        m2.ToId.ShouldBe(destinationLot.Id);
+        m2.FromLotId.ShouldBe(sourceLot.Id);
+        m2.ToLotId.ShouldBe(destinationLot.Id);
 
         // Verify DB State directly
         DbContext.ChangeTracker.Clear(); // Ensure fresh DB read

@@ -95,7 +95,7 @@ public class MoveAnimalCommandHandlerTests
                 r =>
                     r.AddMovementAsync(
                         It.Is<Movement>(m =>
-                            m.FromId == fromLotId && m.ToId == toLotId && m.UserId == userId
+                            m.FromLotId == fromLotId && m.ToLotId == toLotId && m.UserId == userId
                         )
                     ),
                 Times.Once

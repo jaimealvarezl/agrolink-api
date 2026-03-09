@@ -22,5 +22,4 @@ public class Lot
     // Navigation properties
     public virtual Paddock Paddock { get; set; } = null!;
     public virtual ICollection<Animal> Animals { get; set; } = new List<Animal>();
-    public virtual ICollection<Movement> Movements { get; set; } = new List<Movement>();
 }

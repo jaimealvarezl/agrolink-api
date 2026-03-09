@@ -85,10 +85,9 @@ public class MoveAnimalCommandHandler(
         // Record movement
         var movement = new Movement
         {
-            EntityType = EntityTypes.Animal,
-            EntityId = animal.Id,
-            FromId = oldLotId,
-            ToId = request.ToLotId,
+            AnimalId = animal.Id,
+            FromLotId = oldLotId,
+            ToLotId = request.ToLotId,
             At = DateTime.UtcNow,
             Reason = request.Reason,
             UserId = request.UserId,

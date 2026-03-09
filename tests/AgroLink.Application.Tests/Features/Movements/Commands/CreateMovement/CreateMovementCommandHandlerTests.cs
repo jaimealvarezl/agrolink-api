@@ -100,9 +100,9 @@ public class CreateMovementCommandHandlerTests
         result.Count().ShouldBe(2);
 
         var firstMovement = result.First();
-        firstMovement.EntityId.ShouldBe(1);
-        firstMovement.FromId.ShouldBe(10);
-        firstMovement.ToId.ShouldBe(20);
+        firstMovement.AnimalId.ShouldBe(1);
+        firstMovement.FromLotId.ShouldBe(10);
+        firstMovement.ToLotId.ShouldBe(20);
 
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.BeginTransactionAsync(), Times.Once);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
