@@ -7,14 +7,11 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class MovementRepository(AgroLinkDbContext context) : IMovementRepository
 {
-    public async Task<IEnumerable<Movement>> GetMovementsByEntityAsync(
-        string entityType,
-        int entityId
-    )
+    public async Task<IEnumerable<Movement>> GetMovementsByAnimalAsync(int animalId)
     {
         return await context
             .Movements.AsNoTracking()
-            .Where(m => m.EntityType == entityType && m.EntityId == entityId)
+            .Where(m => m.AnimalId == animalId)
             .ToListAsync();
     }
 

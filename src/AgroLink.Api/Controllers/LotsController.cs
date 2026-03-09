@@ -1,7 +1,7 @@
 using AgroLink.Application.Features.Lots.Commands.Create;
 using AgroLink.Application.Features.Lots.Commands.Delete;
-using AgroLink.Application.Features.Lots.Commands.Move;
 using AgroLink.Application.Features.Lots.Commands.Update;
+using AgroLink.Application.Features.Lots.Commands.UpdatePaddock;
 using AgroLink.Application.Features.Lots.DTOs;
 using AgroLink.Application.Features.Lots.Queries.GetById;
 using AgroLink.Application.Features.Lots.Queries.GetByPaddock;
@@ -69,27 +69,24 @@ public class LotsController(IMediator mediator) : BaseController
         return Ok(lot);
     }
 
+    [HttpPatch("{id}/paddock")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<LotDto>> UpdatePaddock(
+        int farmId,
+        int id,
+        [FromBody] UpdateLotPaddockDto request
+    )
+    {
+        var lot = await mediator.Send(new UpdateLotPaddockCommand(farmId, id, request.PaddockId));
+        return Ok(lot);
+    }
+
     [HttpDelete("{id}")]
     [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult> Delete(int farmId, int id)
     {
         await mediator.Send(new DeleteLotCommand(id));
         return NoContent();
-    }
-
-    [HttpPost("{id}/move")]
-    [Authorize(Policy = "FarmEditorAccess")] // Moving cattle is operation -> Editor
-    public async Task<ActionResult<LotDto>> MoveLot(
-        int farmId,
-        int id,
-        [FromBody] MoveLotRequest request
-    )
-    {
-        var userId = GetCurrentUserId();
-        var lot = await mediator.Send(
-            new MoveLotCommand(id, request.ToPaddockId, request.Reason, userId)
-        );
-        return Ok(lot);
     }
 }
 
@@ -105,10 +102,4 @@ public class UpdateLotRequest
     public string? Name { get; set; }
     public int? PaddockId { get; set; }
     public string? Status { get; set; }
-}
-
-public class MoveLotRequest
-{
-    public int ToPaddockId { get; set; }
-    public string? Reason { get; set; }
 }

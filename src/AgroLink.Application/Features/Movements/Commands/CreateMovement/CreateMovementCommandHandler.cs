@@ -1,7 +1,6 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Movements.DTOs;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -76,7 +75,7 @@ public class CreateMovementCommandHandler(
             {
                 // Capture current lot as FromId and its name
                 int? fromId = animal.LotId;
-                string? fromLotName = sourceLotsDict[animal.LotId].Name;
+                var fromLotName = sourceLotsDict[animal.LotId].Name;
 
                 // Update animal's lot
                 animal.LotId = request.MovementDto.ToLotId;
@@ -85,10 +84,9 @@ public class CreateMovementCommandHandler(
                 // Create movement record
                 var movement = new Movement
                 {
-                    EntityType = EntityTypes.Animal,
-                    EntityId = animal.Id,
-                    FromId = fromId,
-                    ToId = request.MovementDto.ToLotId,
+                    AnimalId = animal.Id,
+                    FromLotId = fromId,
+                    ToLotId = request.MovementDto.ToLotId,
                     At = request.MovementDto.At,
                     Reason = request.MovementDto.Reason,
                     UserId = request.UserId,
@@ -115,13 +113,12 @@ public class CreateMovementCommandHandler(
             .Select(data => new MovementDto
             {
                 Id = data.Movement.Id,
-                EntityType = data.Movement.EntityType,
-                EntityId = data.Movement.EntityId,
-                EntityName = data.AnimalName,
-                FromId = data.Movement.FromId,
-                FromName = data.FromLotName,
-                ToId = data.Movement.ToId,
-                ToName = toLot.Name,
+                AnimalId = data.Movement.AnimalId,
+                AnimalName = data.AnimalName,
+                FromLotId = data.Movement.FromLotId,
+                FromLotName = data.FromLotName,
+                ToLotId = data.Movement.ToLotId,
+                ToLotName = toLot.Name,
                 At = data.Movement.At,
                 Reason = data.Movement.Reason,
                 UserId = data.Movement.UserId,

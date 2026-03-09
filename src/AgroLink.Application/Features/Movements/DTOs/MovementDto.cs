@@ -7,16 +7,15 @@ public class MovementDto
     public required int Id { get; set; }
 
     [Required]
-    public required string EntityType { get; set; }
+    public required int AnimalId { get; set; }
 
-    [Required]
-    public required int EntityId { get; set; }
+    public string? AnimalName { get; set; }
 
-    public string? EntityName { get; set; }
-    public int? FromId { get; set; }
-    public string? FromName { get; set; }
-    public int? ToId { get; set; }
-    public string? ToName { get; set; }
+    public int? FromLotId { get; set; }
+    public string? FromLotName { get; set; }
+
+    public int? ToLotId { get; set; }
+    public string? ToLotName { get; set; }
 
     [Required]
     public required DateTime At { get; set; }

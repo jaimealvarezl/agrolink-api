@@ -4,6 +4,6 @@ namespace AgroLink.Application.Interfaces;
 
 public interface IMovementRepository
 {
-    Task<IEnumerable<Movement>> GetMovementsByEntityAsync(string entityType, int entityId);
+    Task<IEnumerable<Movement>> GetMovementsByAnimalAsync(int animalId);
     Task AddMovementAsync(Movement movement);
 }

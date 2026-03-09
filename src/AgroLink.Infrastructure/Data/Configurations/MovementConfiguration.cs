@@ -9,7 +9,6 @@ public class MovementConfiguration : IEntityTypeConfiguration<Movement>
     public void Configure(EntityTypeBuilder<Movement> builder)
     {
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.EntityType).IsRequired().HasMaxLength(20);
         builder.Property(e => e.Reason).HasMaxLength(500);
 
         builder
@@ -18,6 +17,24 @@ public class MovementConfiguration : IEntityTypeConfiguration<Movement>
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(e => new { e.EntityType, e.EntityId });
+        builder
+            .HasOne(e => e.Animal)
+            .WithMany(a => a.Movements)
+            .HasForeignKey(e => e.AnimalId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasOne(e => e.FromLot)
+            .WithMany()
+            .HasForeignKey(e => e.FromLotId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder
+            .HasOne(e => e.ToLot)
+            .WithMany()
+            .HasForeignKey(e => e.ToLotId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(e => e.AnimalId);
     }
 }

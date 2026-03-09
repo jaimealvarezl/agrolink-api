@@ -6,13 +6,10 @@ public class Movement
 {
     public int Id { get; set; }
 
-    [Required]
-    [MaxLength(20)]
-    public string EntityType { get; set; } = string.Empty; // LOT, ANIMAL
+    public int AnimalId { get; set; }
 
-    public int EntityId { get; set; }
-    public int? FromId { get; set; } // Previous location
-    public int? ToId { get; set; } // New location
+    public int? FromLotId { get; set; } // Previous lot location
+    public int? ToLotId { get; set; } // New lot location
 
     public DateTime At { get; set; } = DateTime.UtcNow;
 
@@ -24,5 +21,8 @@ public class Movement
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
+    public virtual Animal Animal { get; set; } = null!;
+    public virtual Lot? FromLot { get; set; }
+    public virtual Lot? ToLot { get; set; }
     public virtual User User { get; set; } = null!;
 }
