@@ -146,7 +146,9 @@ public class GetMovementsByAnimalQueryHandlerTests
             .ReturnsAsync((Animal?)null);
 
         // Act & Assert
-        await Should.ThrowAsync<NotFoundException>(() => _handler.Handle(query, CancellationToken.None));
+        await Should.ThrowAsync<NotFoundException>(() =>
+            _handler.Handle(query, CancellationToken.None)
+        );
     }
 
     [Test]
