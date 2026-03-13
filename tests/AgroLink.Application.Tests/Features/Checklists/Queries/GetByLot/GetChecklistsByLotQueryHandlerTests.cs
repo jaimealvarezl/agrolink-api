@@ -1,51 +1,47 @@
 using System.Linq.Expressions;
-using AgroLink.Application.Features.Checklists.Queries.GetByScope;
+using AgroLink.Application.Features.Checklists.Queries.GetByLot;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
 using Moq.AutoMock;
 using Shouldly;
 
-namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetByScope;
+namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetByLot;
 
 [TestFixture]
-public class GetChecklistsByScopeQueryHandlerTests
+public class GetChecklistsByLotQueryHandlerTests
 {
     [SetUp]
     public void Setup()
     {
         _mocker = new AutoMocker();
-        _handler = _mocker.CreateInstance<GetChecklistsByScopeQueryHandler>();
+        _handler = _mocker.CreateInstance<GetChecklistsByLotQueryHandler>();
     }
 
     private AutoMocker _mocker = null!;
-    private GetChecklistsByScopeQueryHandler _handler = null!;
+    private GetChecklistsByLotQueryHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ExistingScopeWithChecklists_ReturnsChecklistsDto()
+    public async Task Handle_ExistingLotWithChecklists_ReturnsChecklistsDto()
     {
         // Arrange
-        var scopeType = EntityTypes.Lot;
-        var scopeId = 1;
+        var lotId = 1;
         var farmId = 10;
-        var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
+        var query = new GetChecklistsByLotQuery(lotId);
         var checklists = new List<Checklist>
         {
             new()
             {
                 Id = 1,
-                ScopeType = scopeType,
-                ScopeId = scopeId,
+                LotId = lotId,
                 Date = DateTime.Today,
                 UserId = 1,
             },
             new()
             {
                 Id = 2,
-                ScopeType = scopeType,
-                ScopeId = scopeId,
+                LotId = lotId,
                 Date = DateTime.Today.AddDays(-1),
                 UserId = 1,
             },
@@ -53,26 +49,36 @@ public class GetChecklistsByScopeQueryHandlerTests
         var user = new User { Id = 1, Name = "Test User" };
         var lot = new Lot
         {
-            Id = scopeId,
+            Id = lotId,
             Name = "Test Lot",
             Paddock = new Paddock { FarmId = farmId },
         };
 
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(lotId))
+            .ReturnsAsync(lot);
         _mocker
             .GetMock<IChecklistRepository>()
-            .Setup(r => r.GetByScopeAsync(scopeType, scopeId))
+            .Setup(r => r.GetByLotIdAsync(lotId))
             .ReturnsAsync(checklists);
-        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { user });
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
+            .ReturnsAsync(new List<Lot> { lot });
         _mocker
             .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem>());
-        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
         _mocker
-            .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
-            .ReturnsAsync(lot);
-        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
+            .ReturnsAsync(new List<Animal>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -80,28 +86,27 @@ public class GetChecklistsByScopeQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        result.First().ScopeName.ShouldBe(lot.Name);
+        result.First().LotName.ShouldBe(lot.Name);
         result.First().UserName.ShouldBe(user.Name);
     }
 
     [Test]
-    public async Task Handle_ScopeFromAnotherFarm_ReturnsEmptyList()
+    public async Task Handle_LotFromAnotherFarm_ReturnsEmptyList()
     {
         // Arrange
-        var scopeType = EntityTypes.Lot;
-        var scopeId = 1;
+        var lotId = 1;
         var currentFarmId = 10;
-        var scopeFarmId = 20;
-        var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
+        var lotFarmId = 20;
+        var query = new GetChecklistsByLotQuery(lotId);
         var lot = new Lot
         {
-            Id = scopeId,
-            Paddock = new Paddock { FarmId = scopeFarmId },
+            Id = lotId,
+            Paddock = new Paddock { FarmId = lotFarmId },
         };
 
         _mocker
             .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(scopeId))
+            .Setup(r => r.GetLotWithPaddockAsync(lotId))
             .ReturnsAsync(lot);
         _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(currentFarmId);
 
@@ -114,16 +119,15 @@ public class GetChecklistsByScopeQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_ExistingScopeWithNoChecklists_ReturnsEmptyList()
+    public async Task Handle_LotWithNoChecklists_ReturnsEmptyList()
     {
         // Arrange
-        var scopeType = EntityTypes.Lot;
-        var scopeId = 1;
-        var query = new GetChecklistsByScopeQuery(scopeType, scopeId);
+        var lotId = 1;
+        var query = new GetChecklistsByLotQuery(lotId);
 
         _mocker
             .GetMock<IChecklistRepository>()
-            .Setup(r => r.GetByScopeAsync(scopeType, scopeId))
+            .Setup(r => r.GetByLotIdAsync(lotId))
             .ReturnsAsync(new List<Checklist>());
 
         // Act

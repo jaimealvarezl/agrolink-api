@@ -1,24 +1,36 @@
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
-namespace AgroLink.Application.Features.Checklists.Queries.GetAll;
+namespace AgroLink.Application.Features.Checklists.Queries.GetByLot;
 
-public class GetAllChecklistsQueryHandler(
+public class GetChecklistsByLotQueryHandler(
     IChecklistRepository checklistRepository,
     IRepository<ChecklistItem> checklistItemRepository,
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
-    ILotRepository lotRepository
-) : IRequestHandler<GetAllChecklistsQuery, IEnumerable<ChecklistDto>>
+    ILotRepository lotRepository,
+    ICurrentUserService currentUserService
+) : IRequestHandler<GetChecklistsByLotQuery, IEnumerable<ChecklistDto>>
 {
     public async Task<IEnumerable<ChecklistDto>> Handle(
-        GetAllChecklistsQuery request,
+        GetChecklistsByLotQuery request,
         CancellationToken cancellationToken
     )
     {
-        var checklists = (await checklistRepository.GetAllAsync()).ToList();
+        // Security check: ensure lot belongs to the current farm context
+        if (currentUserService.CurrentFarmId.HasValue)
+        {
+            var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId);
+            if (lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value)
+            {
+                return [];
+            }
+        }
+
+        var checklists = (await checklistRepository.GetByLotIdAsync(request.LotId)).ToList();
         if (checklists.Count == 0)
         {
             return [];

@@ -1,6 +1,5 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -9,7 +8,6 @@ namespace AgroLink.Application.Features.Checklists.Commands.Delete;
 public class DeleteChecklistCommandHandler(
     IChecklistRepository checklistRepository,
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository,
     ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<DeleteChecklistCommand, Unit>
@@ -19,34 +17,22 @@ public class DeleteChecklistCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var checklist = await checklistRepository.GetByIdAsync(request.Id);
-        if (checklist == null)
-        {
-            throw new ArgumentException("Checklist not found");
-        }
+        var checklist =
+            await checklistRepository.GetByIdAsync(request.Id)
+            ?? throw new NotFoundException($"Checklist with ID {request.Id} was not found.");
 
-        // Security check: ensure checklist belongs to the current farm context
-        if (currentUserService.CurrentFarmId.HasValue)
-        {
-            int? checklistFarmId = null;
-            if (checklist.ScopeType == EntityTypes.Lot)
-            {
-                var lot = await lotRepository.GetLotWithPaddockAsync(checklist.ScopeId);
-                checklistFarmId = lot?.Paddock?.FarmId;
-            }
-            else if (checklist.ScopeType == "PADDOCK")
-            {
-                var paddock = await paddockRepository.GetByIdAsync(checklist.ScopeId);
-                checklistFarmId = paddock?.FarmId;
-            }
+        var farmId =
+            currentUserService.CurrentFarmId
+            ?? throw new UnauthorizedAccessException(
+                "Farm context is required to delete a checklist."
+            );
 
-            if (
-                checklistFarmId != null
-                && checklistFarmId != currentUserService.CurrentFarmId.Value
-            )
-            {
-                throw new ForbiddenAccessException("You do not have access to this checklist");
-            }
+        var lot =
+            await lotRepository.GetLotWithPaddockAsync(checklist.LotId)
+            ?? throw new NotFoundException($"Lot with ID {checklist.LotId} was not found.");
+        if (lot.Paddock?.FarmId != farmId)
+        {
+            throw new ForbiddenAccessException("You do not have access to this checklist.");
         }
 
         checklistRepository.Remove(checklist);

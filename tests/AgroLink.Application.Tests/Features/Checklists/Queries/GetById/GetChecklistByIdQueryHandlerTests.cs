@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetById;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -33,8 +32,7 @@ public class GetChecklistByIdQueryHandlerTests
         var checklist = new Checklist
         {
             Id = checklistId,
-            ScopeType = EntityTypes.Lot,
-            ScopeId = 1,
+            LotId = 1,
             Date = DateTime.Today,
             UserId = 1,
             Notes = "Test Notes",
@@ -53,6 +51,7 @@ public class GetChecklistByIdQueryHandlerTests
             Cuia = "CUIA-A001",
             Name = "Test Animal",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LotId = 1,
         };
         var checklistItem = new ChecklistItem
         {
@@ -62,6 +61,7 @@ public class GetChecklistByIdQueryHandlerTests
             Condition = "OK",
         };
 
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
         _mocker
             .GetMock<IChecklistRepository>()
             .Setup(r => r.GetByIdAsync(checklistId))
@@ -73,14 +73,17 @@ public class GetChecklistByIdQueryHandlerTests
             .ReturnsAsync(new List<ChecklistItem> { checklistItem });
         _mocker
             .GetMock<IAnimalRepository>()
-            .Setup(r => r.GetByIdAsync(animal.Id))
-            .ReturnsAsync(animal);
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
+            .ReturnsAsync(new List<Animal> { animal });
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
+            .ReturnsAsync(new List<Lot> { lot });
         _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
         _mocker
             .GetMock<ILotRepository>()
             .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
             .ReturnsAsync(lot);
-        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -88,7 +91,7 @@ public class GetChecklistByIdQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(checklistId);
-        result.ScopeName.ShouldBe(lot.Name);
+        result.LotName.ShouldBe(lot.Name);
         result.Items.Count.ShouldBe(1);
         result.Items.First().AnimalCuia.ShouldBe(animal.Cuia);
     }
@@ -101,12 +104,7 @@ public class GetChecklistByIdQueryHandlerTests
         var currentFarmId = 10;
         var checklistFarmId = 20;
         var query = new GetChecklistByIdQuery(checklistId);
-        var checklist = new Checklist
-        {
-            Id = checklistId,
-            ScopeType = EntityTypes.Lot,
-            ScopeId = 1,
-        };
+        var checklist = new Checklist { Id = checklistId, LotId = 1 };
         var lot = new Lot
         {
             Id = 1,

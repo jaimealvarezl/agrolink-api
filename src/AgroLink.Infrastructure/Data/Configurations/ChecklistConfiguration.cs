@@ -9,8 +9,13 @@ public class ChecklistConfiguration : IEntityTypeConfiguration<Checklist>
     public void Configure(EntityTypeBuilder<Checklist> builder)
     {
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.ScopeType).IsRequired().HasMaxLength(20);
         builder.Property(e => e.Notes).HasMaxLength(1000);
+
+        builder
+            .HasOne(e => e.Lot)
+            .WithMany()
+            .HasForeignKey(e => e.LotId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder
             .HasOne(e => e.User)
@@ -18,11 +23,6 @@ public class ChecklistConfiguration : IEntityTypeConfiguration<Checklist>
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(e => new
-        {
-            e.ScopeType,
-            e.ScopeId,
-            e.Date,
-        });
+        builder.HasIndex(e => new { e.LotId, e.Date });
     }
 }

@@ -1,6 +1,6 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Checklists.Commands.Delete;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -29,24 +29,19 @@ public class DeleteChecklistCommandHandlerTests
         var checklistId = 1;
         var farmId = 10;
         var command = new DeleteChecklistCommand(checklistId);
-        var checklist = new Checklist
-        {
-            Id = checklistId,
-            ScopeType = EntityTypes.Lot,
-            ScopeId = 1,
-        };
+        var checklist = new Checklist { Id = checklistId, LotId = 1 };
         var lot = new Lot
         {
             Id = 1,
             Paddock = new Paddock { FarmId = farmId },
         };
 
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
         _mocker
             .GetMock<IChecklistRepository>()
             .Setup(r => r.GetByIdAsync(checklistId))
             .ReturnsAsync(checklist);
         _mocker.GetMock<ILotRepository>().Setup(r => r.GetLotWithPaddockAsync(1)).ReturnsAsync(lot);
-        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
         _mocker.GetMock<IChecklistRepository>().Setup(r => r.Remove(checklist));
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
@@ -62,7 +57,7 @@ public class DeleteChecklistCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_NonExistingChecklist_ThrowsArgumentException()
+    public async Task Handle_NonExistingChecklist_ThrowsNotFoundException()
     {
         // Arrange
         var checklistId = 999;
@@ -74,10 +69,9 @@ public class DeleteChecklistCommandHandlerTests
             .ReturnsAsync((Checklist?)null);
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<ArgumentException>(() =>
+        await Should.ThrowAsync<NotFoundException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        exception.Message.ShouldBe("Checklist not found");
         _mocker
             .GetMock<IChecklistRepository>()
             .Verify(r => r.Remove(It.IsAny<Checklist>()), Times.Never);
