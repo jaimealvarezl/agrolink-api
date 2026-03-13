@@ -50,20 +50,22 @@ public class GetAllChecklistsQueryHandlerTests
             .GetMock<IChecklistRepository>()
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(checklists);
-        _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { user });
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
+            .ReturnsAsync(new List<Lot> { lot });
         _mocker
             .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem>());
-        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
         _mocker
             .GetMock<IAnimalRepository>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
             .ReturnsAsync(new List<Animal>());
-        _mocker
-            .GetMock<ILotRepository>()
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
-            .ReturnsAsync(new List<Lot>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

@@ -9,7 +9,6 @@ namespace AgroLink.Application.Features.Checklists.Commands.Create;
 
 public class CreateChecklistCommandHandler(
     IChecklistRepository checklistRepository,
-    IRepository<ChecklistItem> checklistItemRepository,
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
@@ -68,80 +67,65 @@ public class CreateChecklistCommandHandler(
             await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id))
         ).ToDictionary(l => l.Id);
 
-        // Wrap in transaction
-        await unitOfWork.BeginTransactionAsync();
-        try
+        // Create checklist with items using EF Core relationship fix-up
+        var checklist = new Checklist
         {
-            var checklist = new Checklist
-            {
-                LotId = dto.LotId,
-                Date = dto.Date,
-                UserId = request.UserId,
-                Notes = dto.Notes,
-            };
+            LotId = dto.LotId,
+            Date = dto.Date,
+            UserId = request.UserId,
+            Notes = dto.Notes,
+        };
 
-            await checklistRepository.AddAsync(checklist);
-            await unitOfWork.SaveChangesAsync();
-
-            var checklistItems = new List<ChecklistItem>();
-            foreach (var itemDto in dto.Items)
-            {
-                var item = new ChecklistItem
+        foreach (var itemDto in dto.Items)
+        {
+            checklist.ChecklistItems.Add(
+                new ChecklistItem
                 {
-                    ChecklistId = checklist.Id,
                     AnimalId = itemDto.AnimalId,
                     Present = itemDto.Present,
                     Condition = itemDto.Condition,
                     Notes = itemDto.Notes,
-                };
-                checklistItems.Add(item);
-            }
+                }
+            );
+        }
 
-            await checklistItemRepository.AddRangeAsync(checklistItems);
-            await unitOfWork.SaveChangesAsync();
+        await checklistRepository.AddAsync(checklist);
+        await unitOfWork.SaveChangesAsync();
 
-            await unitOfWork.CommitTransactionAsync();
+        // Map to DTO using pre-fetched data
+        var user = await userRepository.GetByIdAsync(checklist.UserId);
 
-            // Map to DTO using pre-fetched data
-            var user = await userRepository.GetByIdAsync(checklist.UserId);
-
-            var itemDtos = checklistItems
-                .Select(item =>
-                {
-                    animalsDict.TryGetValue(item.AnimalId, out var animal);
-                    animalLots.TryGetValue(animal?.LotId ?? 0, out var animalLot);
-                    return new ChecklistItemDto
-                    {
-                        Id = item.Id,
-                        AnimalId = item.AnimalId,
-                        AnimalCuia = animal?.Cuia,
-                        AnimalName = animal?.Name,
-                        AnimalLotId = animal?.LotId,
-                        AnimalLotName = animalLot?.Name,
-                        Present = item.Present,
-                        Condition = item.Condition,
-                        Notes = item.Notes,
-                    };
-                })
-                .ToList();
-
-            return new ChecklistDto
+        var itemDtos = checklist
+            .ChecklistItems.Select(item =>
             {
-                Id = checklist.Id,
-                LotId = checklist.LotId,
-                LotName = lot.Name,
-                Date = checklist.Date,
-                UserId = checklist.UserId,
-                UserName = user?.Name ?? "",
-                Notes = checklist.Notes,
-                Items = itemDtos,
-                CreatedAt = checklist.CreatedAt,
-            };
-        }
-        catch
+                var animal = animalsDict[item.AnimalId];
+                animalLots.TryGetValue(animal.LotId, out var animalLot);
+                return new ChecklistItemDto
+                {
+                    Id = item.Id,
+                    AnimalId = item.AnimalId,
+                    AnimalCuia = animal.Cuia,
+                    AnimalName = animal.Name,
+                    AnimalLotId = animal.LotId,
+                    AnimalLotName = animalLot?.Name,
+                    Present = item.Present,
+                    Condition = item.Condition,
+                    Notes = item.Notes,
+                };
+            })
+            .ToList();
+
+        return new ChecklistDto
         {
-            await unitOfWork.RollbackTransactionAsync();
-            throw;
-        }
+            Id = checklist.Id,
+            LotId = checklist.LotId,
+            LotName = lot.Name,
+            Date = checklist.Date,
+            UserId = checklist.UserId,
+            UserName = user?.Name ?? "",
+            Notes = checklist.Notes,
+            Items = itemDtos,
+            CreatedAt = checklist.CreatedAt,
+        };
     }
 }

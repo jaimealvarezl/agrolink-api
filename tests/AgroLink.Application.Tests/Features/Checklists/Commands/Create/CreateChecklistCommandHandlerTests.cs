@@ -79,14 +79,6 @@ public class CreateChecklistCommandHandlerTests
             .Setup(r => r.AddAsync(It.IsAny<Checklist>()))
             .Callback<Checklist>(c => c.Id = 1);
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _mocker
-            .GetMock<IUnitOfWork>()
-            .Setup(u => u.BeginTransactionAsync())
-            .Returns(Task.CompletedTask);
-        _mocker
-            .GetMock<IUnitOfWork>()
-            .Setup(u => u.CommitTransactionAsync())
-            .Returns(Task.CompletedTask);
         _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
         // Act
@@ -101,9 +93,7 @@ public class CreateChecklistCommandHandlerTests
         _mocker
             .GetMock<IChecklistRepository>()
             .Verify(r => r.AddAsync(It.IsAny<Checklist>()), Times.Once);
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.BeginTransactionAsync(), Times.Once);
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.CommitTransactionAsync(), Times.Once);
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
+        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
