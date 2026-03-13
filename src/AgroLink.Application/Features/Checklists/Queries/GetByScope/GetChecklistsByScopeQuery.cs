@@ -3,5 +3,4 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Checklists.Queries.GetByScope;
 
-public record GetChecklistsByScopeQuery(string ScopeType, int ScopeId)
-    : IRequest<IEnumerable<ChecklistDto>>;
+public record GetChecklistsByLotQuery(int LotId) : IRequest<IEnumerable<ChecklistDto>>;

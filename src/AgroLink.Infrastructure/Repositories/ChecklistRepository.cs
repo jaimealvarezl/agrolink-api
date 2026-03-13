@@ -10,11 +10,11 @@ public class ChecklistRepository : Repository<Checklist>, IChecklistRepository
     public ChecklistRepository(AgroLinkDbContext context)
         : base(context) { }
 
-    public async Task<IEnumerable<Checklist>> GetByScopeAsync(string scopeType, int scopeId)
+    public async Task<IEnumerable<Checklist>> GetByLotIdAsync(int lotId)
     {
         return await _dbSet
             .AsNoTracking()
-            .Where(c => c.ScopeType == scopeType && c.ScopeId == scopeId)
+            .Where(c => c.LotId == lotId)
             .OrderByDescending(c => c.Date)
             .ToListAsync();
     }

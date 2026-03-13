@@ -14,8 +14,6 @@ namespace AgroLink.Api.Controllers;
 [Authorize(Policy = "FarmViewerAccess")]
 public class ChecklistsController(IMediator mediator) : BaseController
 {
-    // Removed generic GetAll as it's not useful in farm context without filtering
-
     [HttpGet("{id}")]
     public async Task<ActionResult<ChecklistDto>> GetById(int farmId, int id)
     {
@@ -28,14 +26,10 @@ public class ChecklistsController(IMediator mediator) : BaseController
         return Ok(checklist);
     }
 
-    [HttpGet("scope/{scopeType}/{scopeId}")]
-    public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetByScope(
-        int farmId,
-        string scopeType,
-        int scopeId
-    )
+    [HttpGet("lot/{lotId}")]
+    public async Task<ActionResult<IEnumerable<ChecklistDto>>> GetByLot(int farmId, int lotId)
     {
-        var checklists = await mediator.Send(new GetChecklistsByScopeQuery(scopeType, scopeId));
+        var checklists = await mediator.Send(new GetChecklistsByLotQuery(lotId));
         return Ok(checklists);
     }
 

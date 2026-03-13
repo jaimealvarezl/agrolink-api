@@ -1,8 +1,8 @@
 using System.Linq.Expressions;
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -32,8 +32,7 @@ public class UpdateChecklistCommandHandlerTests
         var farmId = 10;
         var updateChecklistDto = new CreateChecklistDto
         {
-            ScopeType = EntityTypes.Lot,
-            ScopeId = 1,
+            LotId = 1,
             Date = DateTime.Today,
             Notes = "Updated Notes",
             Items = new List<CreateChecklistItemDto>
@@ -50,8 +49,7 @@ public class UpdateChecklistCommandHandlerTests
         var checklist = new Checklist
         {
             Id = checklistId,
-            ScopeType = EntityTypes.Lot,
-            ScopeId = 1,
+            LotId = 1,
             UserId = 1,
             Date = DateTime.Today,
             Notes = "Old Notes",
@@ -70,6 +68,7 @@ public class UpdateChecklistCommandHandlerTests
             Cuia = "CUIA-A001",
             Name = "Test Animal",
             BirthDate = DateTime.UtcNow.AddYears(-2),
+            LotId = 1,
         };
         var existingItems = new List<ChecklistItem>
         {
@@ -81,35 +80,34 @@ public class UpdateChecklistCommandHandlerTests
             },
         };
 
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
         _mocker
             .GetMock<IChecklistRepository>()
             .Setup(r => r.GetByIdAsync(checklistId))
             .ReturnsAsync(checklist);
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
+            .ReturnsAsync(lot);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
+            .ReturnsAsync(new List<Animal> { animal });
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
+            .ReturnsAsync(new List<Lot> { lot });
         _mocker.GetMock<IChecklistRepository>().Setup(r => r.Update(checklist));
         _mocker
             .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(existingItems);
         _mocker.GetMock<IRepository<ChecklistItem>>().Setup(r => r.RemoveRange(existingItems));
-        _mocker
-            .GetMock<IRepository<ChecklistItem>>()
-            .Setup(r => r.AddAsync(It.IsAny<ChecklistItem>()))
-            .Returns(Task.CompletedTask);
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _mocker
             .GetMock<IUserRepository>()
             .Setup(r => r.GetByIdAsync(checklist.UserId))
             .ReturnsAsync(user);
-        _mocker
-            .GetMock<IAnimalRepository>()
-            .Setup(r => r.GetByIdAsync(animal.Id))
-            .ReturnsAsync(animal);
-        _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
-        _mocker
-            .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(lot.Id))
-            .ReturnsAsync(lot);
-        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -126,23 +124,15 @@ public class UpdateChecklistCommandHandlerTests
         _mocker
             .GetMock<IRepository<ChecklistItem>>()
             .Verify(r => r.RemoveRange(existingItems), Times.Once);
-        _mocker
-            .GetMock<IRepository<ChecklistItem>>()
-            .Verify(r => r.AddAsync(It.IsAny<ChecklistItem>()), Times.Once);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Test]
-    public async Task Handle_NonExistingChecklist_ThrowsArgumentException()
+    public async Task Handle_NonExistingChecklist_ThrowsNotFoundException()
     {
         // Arrange
         var checklistId = 999;
-        var updateChecklistDto = new CreateChecklistDto
-        {
-            ScopeType = EntityTypes.Lot,
-            ScopeId = 1,
-            Notes = "Updated Notes",
-        };
+        var updateChecklistDto = new CreateChecklistDto { LotId = 1, Notes = "Updated Notes" };
         var command = new UpdateChecklistCommand(checklistId, updateChecklistDto);
 
         _mocker
@@ -151,10 +141,9 @@ public class UpdateChecklistCommandHandlerTests
             .ReturnsAsync((Checklist?)null);
 
         // Act & Assert
-        var exception = await Should.ThrowAsync<ArgumentException>(() =>
+        await Should.ThrowAsync<NotFoundException>(() =>
             _handler.Handle(command, CancellationToken.None)
         );
-        exception.Message.ShouldBe("Checklist not found");
         _mocker
             .GetMock<IChecklistRepository>()
             .Verify(r => r.Update(It.IsAny<Checklist>()), Times.Never);

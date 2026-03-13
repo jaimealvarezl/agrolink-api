@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetAll;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -32,16 +31,14 @@ public class GetAllChecklistsQueryHandlerTests
             new()
             {
                 Id = 1,
-                ScopeType = EntityTypes.Lot,
-                ScopeId = 1,
+                LotId = 1,
                 Date = DateTime.Today,
                 UserId = 1,
             },
             new()
             {
                 Id = 2,
-                ScopeType = EntityTypes.Lot,
-                ScopeId = 1,
+                LotId = 1,
                 Date = DateTime.Today.AddDays(-1),
                 UserId = 1,
             },
@@ -59,6 +56,14 @@ public class GetAllChecklistsQueryHandlerTests
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
             .ReturnsAsync(new List<ChecklistItem>());
         _mocker.GetMock<ILotRepository>().Setup(r => r.GetByIdAsync(lot.Id)).ReturnsAsync(lot);
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
+            .ReturnsAsync(new List<Animal>());
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
+            .ReturnsAsync(new List<Lot>());
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -66,7 +71,7 @@ public class GetAllChecklistsQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        result.First().ScopeName.ShouldBe(lot.Name);
+        result.First().LotName.ShouldBe(lot.Name);
         result.First().UserName.ShouldBe(user.Name);
     }
 

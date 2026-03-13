@@ -1,52 +1,36 @@
 using AgroLink.Application.Features.Checklists.DTOs;
 using AgroLink.Application.Interfaces;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Checklists.Queries.GetByScope;
 
-public class GetChecklistsByScopeQueryHandler(
+public class GetChecklistsByLotQueryHandler(
     IChecklistRepository checklistRepository,
-    IRepository<ChecklistItem> checklistItemRepository, // Using generic repository for ChecklistItem
+    IRepository<ChecklistItem> checklistItemRepository,
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
     ILotRepository lotRepository,
-    IPaddockRepository paddockRepository,
     ICurrentUserService currentUserService
-) : IRequestHandler<GetChecklistsByScopeQuery, IEnumerable<ChecklistDto>>
+) : IRequestHandler<GetChecklistsByLotQuery, IEnumerable<ChecklistDto>>
 {
     public async Task<IEnumerable<ChecklistDto>> Handle(
-        GetChecklistsByScopeQuery request,
+        GetChecklistsByLotQuery request,
         CancellationToken cancellationToken
     )
     {
-        // Security check: ensure target scope belongs to the current farm context
+        // Security check: ensure lot belongs to the current farm context
         if (currentUserService.CurrentFarmId.HasValue)
         {
-            int? scopeFarmId = null;
-            if (request.ScopeType == EntityTypes.Lot)
-            {
-                var lot = await lotRepository.GetLotWithPaddockAsync(request.ScopeId);
-                scopeFarmId = lot?.Paddock?.FarmId;
-            }
-            else if (request.ScopeType == "PADDOCK")
-            {
-                var paddock = await paddockRepository.GetByIdAsync(request.ScopeId);
-                scopeFarmId = paddock?.FarmId;
-            }
-
-            if (scopeFarmId != null && scopeFarmId != currentUserService.CurrentFarmId.Value)
+            var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId);
+            if (lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value)
             {
                 return [];
             }
         }
 
-        var checklists = await checklistRepository.GetByScopeAsync(
-            request.ScopeType,
-            request.ScopeId
-        );
+        var checklists = await checklistRepository.GetByLotIdAsync(request.LotId);
         var result = new List<ChecklistDto>();
 
         foreach (var checklist in checklists)
@@ -60,44 +44,48 @@ public class GetChecklistsByScopeQueryHandler(
     private async Task<ChecklistDto> MapToDtoAsync(Checklist checklist)
     {
         var user = await userRepository.GetByIdAsync(checklist.UserId);
-        var items = await checklistItemRepository.FindAsync(ci => ci.ChecklistId == checklist.Id);
+        var lot = await lotRepository.GetByIdAsync(checklist.LotId);
+        var items = (
+            await checklistItemRepository.FindAsync(ci => ci.ChecklistId == checklist.Id)
+        ).ToList();
 
-        var itemDtos = new List<ChecklistItemDto>();
-        foreach (var item in items)
-        {
-            var animal = await animalRepository.GetByIdAsync(item.AnimalId);
-            itemDtos.Add(
-                new ChecklistItemDto
+        // Batch-fetch animals
+        var animalIds = items.Select(i => i.AnimalId).Distinct().ToList();
+        var animals = (
+            await animalRepository.FindAsync(a => animalIds.Contains(a.Id))
+        ).ToDictionary(a => a.Id);
+
+        // Batch-fetch animal lots
+        var animalLotIds = animals.Values.Select(a => a.LotId).Distinct().ToList();
+        var animalLots = (
+            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id))
+        ).ToDictionary(l => l.Id);
+
+        var itemDtos = items
+            .Select(item =>
+            {
+                animals.TryGetValue(item.AnimalId, out var animal);
+                animalLots.TryGetValue(animal?.LotId ?? 0, out var animalLot);
+                return new ChecklistItemDto
                 {
                     Id = item.Id,
                     AnimalId = item.AnimalId,
                     AnimalCuia = animal?.Cuia,
                     AnimalName = animal?.Name,
+                    AnimalLotId = animal?.LotId,
+                    AnimalLotName = animalLot?.Name,
                     Present = item.Present,
                     Condition = item.Condition,
                     Notes = item.Notes,
-                }
-            );
-        }
-
-        string? scopeName = null;
-        if (checklist.ScopeType == EntityTypes.Lot)
-        {
-            var lot = await lotRepository.GetByIdAsync(checklist.ScopeId);
-            scopeName = lot?.Name;
-        }
-        else if (checklist.ScopeType == "PADDOCK")
-        {
-            var paddock = await paddockRepository.GetByIdAsync(checklist.ScopeId);
-            scopeName = paddock?.Name;
-        }
+                };
+            })
+            .ToList();
 
         return new ChecklistDto
         {
             Id = checklist.Id,
-            ScopeType = checklist.ScopeType,
-            ScopeId = checklist.ScopeId,
-            ScopeName = scopeName,
+            LotId = checklist.LotId,
+            LotName = lot?.Name,
             Date = checklist.Date,
             UserId = checklist.UserId,
             UserName = user?.Name ?? "",

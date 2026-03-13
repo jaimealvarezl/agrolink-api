@@ -7,12 +7,9 @@ public class ChecklistDto
     public required int Id { get; set; }
 
     [Required]
-    public required string ScopeType { get; set; }
+    public required int LotId { get; set; }
 
-    [Required]
-    public required int ScopeId { get; set; }
-
-    public string? ScopeName { get; set; }
+    public string? LotName { get; set; }
 
     [Required]
     public required DateTime Date { get; set; }
@@ -35,10 +32,7 @@ public class ChecklistDto
 public class CreateChecklistDto
 {
     [Required]
-    public required string ScopeType { get; set; }
-
-    [Required]
-    public required int ScopeId { get; set; }
+    public required int LotId { get; set; }
 
     [Required]
     public DateTime Date { get; set; } = DateTime.UtcNow;
@@ -58,6 +52,9 @@ public class ChecklistItemDto
 
     public string? AnimalCuia { get; set; }
     public string? AnimalName { get; set; }
+
+    public int? AnimalLotId { get; set; }
+    public string? AnimalLotName { get; set; }
 
     [Required]
     public required bool Present { get; set; }
