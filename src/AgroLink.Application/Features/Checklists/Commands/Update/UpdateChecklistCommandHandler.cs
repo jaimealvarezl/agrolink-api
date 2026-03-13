@@ -94,20 +94,16 @@ public class UpdateChecklistCommandHandler(
         );
         checklistItemRepository.RemoveRange(existingItems);
 
-        var newItems = new List<ChecklistItem>();
-        foreach (var itemDto in dto.Items)
-        {
-            newItems.Add(
-                new ChecklistItem
-                {
-                    ChecklistId = request.Id,
-                    AnimalId = itemDto.AnimalId,
-                    Present = itemDto.Present,
-                    Condition = itemDto.Condition,
-                    Notes = itemDto.Notes,
-                }
-            );
-        }
+        var newItems = dto
+            .Items.Select(itemDto => new ChecklistItem
+            {
+                ChecklistId = request.Id,
+                AnimalId = itemDto.AnimalId,
+                Present = itemDto.Present,
+                Condition = itemDto.Condition,
+                Notes = itemDto.Notes,
+            })
+            .ToList();
 
         await checklistItemRepository.AddRangeAsync(newItems);
 
@@ -119,15 +115,15 @@ public class UpdateChecklistCommandHandler(
         var itemDtos = newItems
             .Select(item =>
             {
-                animalsDict.TryGetValue(item.AnimalId, out var animal);
-                animalLots.TryGetValue(animal?.LotId ?? 0, out var animalLot);
+                var animal = animalsDict[item.AnimalId];
+                animalLots.TryGetValue(animal.LotId, out var animalLot);
                 return new ChecklistItemDto
                 {
                     Id = item.Id,
                     AnimalId = item.AnimalId,
-                    AnimalCuia = animal?.Cuia,
-                    AnimalName = animal?.Name,
-                    AnimalLotId = animal?.LotId,
+                    AnimalCuia = animal.Cuia,
+                    AnimalName = animal.Name,
+                    AnimalLotId = animal.LotId,
                     AnimalLotName = animalLot?.Name,
                     Present = item.Present,
                     Condition = item.Condition,

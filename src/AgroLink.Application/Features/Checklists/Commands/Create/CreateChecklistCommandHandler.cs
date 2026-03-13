@@ -41,14 +41,14 @@ public class CreateChecklistCommandHandler(
             );
         }
 
-        // Validate items not empty
-        if (dto.Items == null || dto.Items.Count == 0)
+        // Filter null items and validate not empty
+        var validItems = dto.Items.ToList();
+        if (validItems.Count == 0)
         {
             throw new ArgumentException("At least one checklist item is required.");
         }
 
-        // Validate all animal IDs exist and batch-fetch for DTO mapping
-        var animalIds = dto.Items.Select(i => i.AnimalId).Distinct().ToList();
+        var animalIds = validItems.Select(i => i.AnimalId).Distinct().ToList();
         var animals = (await animalRepository.FindAsync(a => animalIds.Contains(a.Id))).ToList();
         if (animals.Count != animalIds.Count)
         {
@@ -76,7 +76,7 @@ public class CreateChecklistCommandHandler(
             Notes = dto.Notes,
         };
 
-        foreach (var itemDto in dto.Items)
+        foreach (var itemDto in validItems)
         {
             checklist.ChecklistItems.Add(
                 new ChecklistItem
