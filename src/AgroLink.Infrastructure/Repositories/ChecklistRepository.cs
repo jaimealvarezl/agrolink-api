@@ -5,11 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class ChecklistRepository : Repository<Checklist>, IChecklistRepository
+public class ChecklistRepository(AgroLinkDbContext context) : Repository<Checklist>(context), IChecklistRepository
 {
-    public ChecklistRepository(AgroLinkDbContext context)
-        : base(context) { }
-
     public async Task<IEnumerable<Checklist>> GetByLotIdAsync(int lotId)
     {
         return await _dbSet

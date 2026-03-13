@@ -4,7 +4,7 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
-namespace AgroLink.Application.Features.Checklists.Queries.GetByScope;
+namespace AgroLink.Application.Features.Checklists.Queries.GetByLot;
 
 public class GetChecklistsByLotQueryHandler(
     IChecklistRepository checklistRepository,

@@ -3,7 +3,7 @@ using AgroLink.Application.Features.Checklists.Commands.Delete;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
 using AgroLink.Application.Features.Checklists.Queries.GetById;
-using AgroLink.Application.Features.Checklists.Queries.GetByScope;
+using AgroLink.Application.Features.Checklists.Queries.GetByLot;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

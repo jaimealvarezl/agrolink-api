@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using AgroLink.Application.Features.Checklists.Queries.GetByScope;
+using AgroLink.Application.Features.Checklists.Queries.GetByLot;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -7,7 +7,7 @@ using Moq;
 using Moq.AutoMock;
 using Shouldly;
 
-namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetByScope;
+namespace AgroLink.Application.Tests.Features.Checklists.Queries.GetByLot;
 
 [TestFixture]
 public class GetChecklistsByLotQueryHandlerTests
