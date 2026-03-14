@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
@@ -202,5 +203,75 @@ public class AnimalsIntegrationTests : IntegrationTestBase
         var created = await response.Content.ReadFromJsonAsync<AnimalDto>(JsonOptions);
         created.ShouldNotBeNull();
         created.Name.ShouldBe("New Cow");
+    }
+
+    [Test]
+    public async Task Search_WhenValid_ShouldReturnPagedResult()
+    {
+        // Arrange
+        var user = new User
+        {
+            Name = "Search User",
+            Email = "search@example.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
+        DbContext.Users.Add(user);
+
+        var owner = new Owner { Name = "Owner", Phone = "123" };
+        DbContext.Owners.Add(owner);
+        await DbContext.SaveChangesAsync();
+
+        var farm = new Farm { Name = "Farm", OwnerId = owner.Id };
+        var paddock = new Paddock { Name = "P1", FarmId = 0 };
+        var lot = new Lot
+        {
+            Name = "L1",
+            PaddockId = 0,
+            Status = "Active",
+        };
+        paddock.Lots.Add(lot);
+        farm.Paddocks.Add(paddock);
+        DbContext.Farms.Add(farm);
+        await DbContext.SaveChangesAsync();
+
+        var animal = new Animal
+        {
+            Name = "Cow 1",
+            Sex = Sex.Female,
+            LotId = lot.Id,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+        };
+        DbContext.Animals.Add(animal);
+
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Viewer,
+            }
+        );
+        await DbContext.SaveChangesAsync();
+
+        Authenticate(user);
+
+        // Act
+        var response = await Client.GetAsync(
+            $"/api/farms/{farm.Id}/animals/search?LotId={lot.Id}&PageSize=10&Page=1"
+        );
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<AnimalListDto>>(
+            JsonOptions
+        );
+        result.ShouldNotBeNull();
+        result.Items.ShouldNotBeEmpty();
+        result.Items.First().Name.ShouldBe("Cow 1");
     }
 }
