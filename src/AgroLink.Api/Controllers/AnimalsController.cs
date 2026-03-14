@@ -62,7 +62,8 @@ public class AnimalsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var result = await mediator.Send(query, cancellationToken);
+        var queryWithFarmId = query with { FarmId = farmId };
+        var result = await mediator.Send(queryWithFarmId, cancellationToken);
         return Ok(result);
     }
 
