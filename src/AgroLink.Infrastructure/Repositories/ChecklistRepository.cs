@@ -18,24 +18,25 @@ public class ChecklistRepository(AgroLinkDbContext context)
             .ToListAsync();
     }
 
-    public async Task<Checklist?> GetChecklistWithItemsAsync(int id)
-    {
-        return await _dbSet
-            .AsNoTracking()
-            .Include(c => c.ChecklistItems)
-                .ThenInclude(ci => ci.Animal)
-            .FirstOrDefaultAsync(c => c.Id == id);
-    }
-
-    public async Task<IEnumerable<Checklist>> GetByDateRangeAsync(
-        DateTime startDate,
-        DateTime endDate
+public async Task<(IEnumerable<Checklist> Items, int TotalCount)> GetPagedByFarmAsync(
+        int farmId,
+        int page,
+        int pageSize
     )
     {
-        return await _dbSet
-            .AsNoTracking()
-            .Where(c => c.Date >= startDate && c.Date <= endDate)
-            .OrderByDescending(c => c.Date)
+        var lotIds = await _context.Lots
+            .Where(l => l.Paddock.FarmId == farmId)
+            .Select(l => l.Id)
             .ToListAsync();
+
+        var query = _dbSet
+            .AsNoTracking()
+            .Where(c => lotIds.Contains(c.LotId))
+            .OrderByDescending(c => c.Date);
+
+        var totalCount = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        return (items, totalCount);
     }
 }

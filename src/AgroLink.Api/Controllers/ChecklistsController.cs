@@ -1,7 +1,9 @@
+using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Checklists.Commands.Create;
 using AgroLink.Application.Features.Checklists.Commands.Delete;
 using AgroLink.Application.Features.Checklists.Commands.Update;
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Features.Checklists.Queries.GetByFarm;
 using AgroLink.Application.Features.Checklists.Queries.GetById;
 using AgroLink.Application.Features.Checklists.Queries.GetByLot;
 using MediatR;
@@ -14,6 +16,17 @@ namespace AgroLink.Api.Controllers;
 [Authorize(Policy = "FarmViewerAccess")]
 public class ChecklistsController(IMediator mediator) : BaseController
 {
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<ChecklistDto>>> GetByFarm(
+        int farmId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20
+    )
+    {
+        var result = await mediator.Send(new GetChecklistsByFarmQuery(farmId, page, pageSize));
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ChecklistDto>> GetById(int farmId, int id)
     {
