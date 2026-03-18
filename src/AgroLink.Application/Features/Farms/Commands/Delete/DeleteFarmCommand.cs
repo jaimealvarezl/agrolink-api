@@ -1,4 +1,3 @@
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -6,11 +5,8 @@ namespace AgroLink.Application.Features.Farms.Commands.Delete;
 
 public record DeleteFarmCommand(int Id, int UserId) : IRequest;
 
-public class DeleteFarmCommandHandler(
-    IFarmRepository farmRepository,
-    IFarmMemberRepository farmMemberRepository,
-    IUnitOfWork unitOfWork
-) : IRequestHandler<DeleteFarmCommand>
+public class DeleteFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWork unitOfWork)
+    : IRequestHandler<DeleteFarmCommand>
 {
     public async Task Handle(DeleteFarmCommand request, CancellationToken cancellationToken)
     {
@@ -18,16 +14,6 @@ public class DeleteFarmCommandHandler(
         if (farm is not { IsActive: true })
         {
             // Idempotency: If already deleted or not found, return success.
-            return;
-        }
-
-        var membership = await farmMemberRepository.FirstOrDefaultAsync(m =>
-            m.FarmId == request.Id && m.UserId == request.UserId
-        );
-
-        if (membership == null || membership.Role != FarmMemberRoles.Owner)
-        {
-            // Mimic behavior of non-existent farm to prevent information leakage
             return;
         }
 

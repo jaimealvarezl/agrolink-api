@@ -10,6 +10,7 @@ using AgroLink.Application.Features.Farms.Queries.GetAll;
 using AgroLink.Application.Features.Farms.Queries.GetById;
 using AgroLink.Application.Features.Farms.Queries.GetFarmHierarchy;
 using AgroLink.Application.Features.Farms.Queries.GetMembers;
+using AgroLink.Application.Features.Farms.Queries.GetPermissions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +40,14 @@ public class FarmsController(IMediator mediator) : BaseController
         }
 
         return Ok(farm);
+    }
+
+    [HttpGet("{farmId}/permissions")]
+    [Authorize(Policy = "FarmViewerAccess")]
+    public async Task<ActionResult<FarmPermissionsDto>> GetPermissions(int farmId)
+    {
+        var permissions = await mediator.Send(new GetFarmPermissionsQuery());
+        return Ok(permissions);
     }
 
     [HttpGet("{farmId}/hierarchy")]

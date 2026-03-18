@@ -18,14 +18,14 @@ public class ChecklistRepository(AgroLinkDbContext context)
             .ToListAsync();
     }
 
-public async Task<(IEnumerable<Checklist> Items, int TotalCount)> GetPagedByFarmAsync(
+    public async Task<(IEnumerable<Checklist> Items, int TotalCount)> GetPagedByFarmAsync(
         int farmId,
         int page,
         int pageSize
     )
     {
-        var lotIds = await _context.Lots
-            .Where(l => l.Paddock.FarmId == farmId)
+        var lotIds = await _context
+            .Lots.Where(l => l.Paddock.FarmId == farmId)
             .Select(l => l.Id)
             .ToListAsync();
 

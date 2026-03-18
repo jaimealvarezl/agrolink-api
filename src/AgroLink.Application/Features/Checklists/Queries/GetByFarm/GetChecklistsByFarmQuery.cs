@@ -4,8 +4,5 @@ using MediatR;
 
 namespace AgroLink.Application.Features.Checklists.Queries.GetByFarm;
 
-public record GetChecklistsByFarmQuery(
-    int FarmId,
-    int Page = 1,
-    int PageSize = 20
-) : IRequest<PagedResult<ChecklistDto>>;
+public record GetChecklistsByFarmQuery(int FarmId, int Page = 1, int PageSize = 20)
+    : IRequest<PagedResult<ChecklistDto>>;

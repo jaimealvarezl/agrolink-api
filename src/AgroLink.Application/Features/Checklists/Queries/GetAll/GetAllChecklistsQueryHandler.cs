@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Checklists.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -10,7 +11,9 @@ public class GetAllChecklistsQueryHandler(
     IRepository<ChecklistItem> checklistItemRepository,
     IUserRepository userRepository,
     IAnimalRepository animalRepository,
-    ILotRepository lotRepository
+    ILotRepository lotRepository,
+    IPaddockRepository paddockRepository,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetAllChecklistsQuery, IEnumerable<ChecklistDto>>
 {
     public async Task<IEnumerable<ChecklistDto>> Handle(
@@ -18,7 +21,39 @@ public class GetAllChecklistsQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var checklists = (await checklistRepository.GetAllAsync()).ToList();
+        var farmId = currentUserService.CurrentFarmId;
+        if (farmId == null)
+        {
+            return [];
+        }
+
+        var allChecklists = (await checklistRepository.GetAllAsync()).ToList();
+        if (allChecklists.Count == 0)
+        {
+            return [];
+        }
+
+        // Filter to current farm via lot → paddock → farm
+        var lotIds = allChecklists.Select(c => c.LotId).Distinct().ToList();
+        var lots = (await lotRepository.FindAsync(l => lotIds.Contains(l.Id))).ToDictionary(l =>
+            l.Id
+        );
+
+        var paddockIds = lots.Values.Select(l => l.PaddockId).Distinct().ToList();
+        var farmPaddockIds = (
+            await paddockRepository.FindAsync(p =>
+                paddockIds.Contains(p.Id) && p.FarmId == farmId.Value
+            )
+        )
+            .Select(p => p.Id)
+            .ToHashSet();
+
+        var checklists = allChecklists
+            .Where(c =>
+                lots.TryGetValue(c.LotId, out var lot) && farmPaddockIds.Contains(lot.PaddockId)
+            )
+            .ToList();
+
         if (checklists.Count == 0)
         {
             return [];
@@ -27,19 +62,18 @@ public class GetAllChecklistsQueryHandler(
         // Batch-fetch all related data upfront
         var checklistIds = checklists.Select(c => c.Id).ToList();
         var userIds = checklists.Select(c => c.UserId).Distinct().ToList();
-        var lotIds = checklists.Select(c => c.LotId).Distinct().ToList();
+        var checklistLotIds = checklists.Select(c => c.LotId).Distinct().ToList();
 
         var users = (await userRepository.FindAsync(u => userIds.Contains(u.Id))).ToDictionary(u =>
             u.Id
         );
-        var lots = (await lotRepository.FindAsync(l => lotIds.Contains(l.Id))).ToDictionary(l =>
-            l.Id
-        );
+        var checklistLots = (
+            await lotRepository.FindAsync(l => checklistLotIds.Contains(l.Id))
+        ).ToDictionary(l => l.Id);
         var allItems = (
             await checklistItemRepository.FindAsync(ci => checklistIds.Contains(ci.ChecklistId))
         ).ToList();
 
-        // Batch-fetch animals from all items
         var animalIds = allItems.Select(i => i.AnimalId).Distinct().ToList();
         var animals =
             animalIds.Count > 0
@@ -48,7 +82,6 @@ public class GetAllChecklistsQueryHandler(
                 )
                 : new Dictionary<int, Animal>();
 
-        // Batch-fetch animal lots
         var animalLotIds = animals.Values.Select(a => a.LotId).Distinct().ToList();
         var animalLots =
             animalLotIds.Count > 0
@@ -57,17 +90,15 @@ public class GetAllChecklistsQueryHandler(
                 )
                 : new Dictionary<int, Lot>();
 
-        // Group items by checklist
         var itemsByChecklist = allItems
             .GroupBy(i => i.ChecklistId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Map to DTOs using pre-fetched data
         return checklists
             .Select(checklist =>
             {
                 users.TryGetValue(checklist.UserId, out var user);
-                lots.TryGetValue(checklist.LotId, out var lot);
+                checklistLots.TryGetValue(checklist.LotId, out var lot);
                 var items = itemsByChecklist.GetValueOrDefault(checklist.Id, []);
 
                 var itemDtos = items

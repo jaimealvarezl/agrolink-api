@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Farms.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -8,7 +9,7 @@ public record GetFarmByIdQuery(int Id, int UserId) : IRequest<FarmDto?>;
 
 public class GetFarmByIdQueryHandler(
     IFarmRepository farmRepository,
-    IFarmMemberRepository farmMemberRepository
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetFarmByIdQuery, FarmDto?>
 {
     public async Task<FarmDto?> Handle(
@@ -22,15 +23,6 @@ public class GetFarmByIdQueryHandler(
             return null;
         }
 
-        var membership = await farmMemberRepository.FirstOrDefaultAsync(m =>
-            m.FarmId == request.Id && m.UserId == request.UserId
-        );
-
-        if (membership == null)
-        {
-            return null;
-        }
-
         return new FarmDto
         {
             Id = farm.Id,
@@ -38,7 +30,7 @@ public class GetFarmByIdQueryHandler(
             Location = farm.Location,
             CUE = farm.CUE,
             OwnerId = farm.OwnerId,
-            Role = membership.Role,
+            Role = currentUserService.CurrentFarmRole ?? string.Empty,
             CreatedAt = farm.CreatedAt,
         };
     }

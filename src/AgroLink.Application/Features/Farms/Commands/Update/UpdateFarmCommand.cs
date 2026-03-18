@@ -1,5 +1,5 @@
 using AgroLink.Application.Features.Farms.DTOs;
-using AgroLink.Domain.Constants;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -10,7 +10,7 @@ public record UpdateFarmCommand(int Id, string Name, string? Location, string? C
 
 public class UpdateFarmCommandHandler(
     IFarmRepository farmRepository,
-    IFarmMemberRepository farmMemberRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<UpdateFarmCommand, FarmDto>
 {
@@ -21,20 +21,6 @@ public class UpdateFarmCommandHandler(
     {
         var farm = await farmRepository.GetByIdAsync(request.Id);
         if (farm == null)
-        {
-            throw new ArgumentException("Farm not found");
-        }
-
-        var membership = await farmMemberRepository.FirstOrDefaultAsync(m =>
-            m.FarmId == request.Id && m.UserId == request.UserId
-        );
-
-        if (
-            membership == null
-            || (
-                membership.Role != FarmMemberRoles.Owner && membership.Role != FarmMemberRoles.Admin
-            )
-        )
         {
             throw new ArgumentException("Farm not found");
         }
@@ -63,7 +49,7 @@ public class UpdateFarmCommandHandler(
             Location = farm.Location,
             CUE = farm.CUE,
             OwnerId = farm.OwnerId,
-            Role = membership.Role,
+            Role = currentUserService.CurrentFarmRole ?? string.Empty,
             CreatedAt = farm.CreatedAt,
         };
     }
