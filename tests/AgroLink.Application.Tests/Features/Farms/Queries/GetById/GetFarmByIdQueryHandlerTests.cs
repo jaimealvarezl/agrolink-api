@@ -1,5 +1,5 @@
-using System.Linq.Expressions;
 using AgroLink.Application.Features.Farms.Queries.GetById;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -23,12 +23,10 @@ public class GetFarmByIdQueryHandlerTests
     private GetFarmByIdQueryHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ExistingFarmWithAccess_ReturnsFarmDto()
+    public async Task Handle_ExistingFarm_ReturnsFarmDtoWithCurrentRole()
     {
-        // Arrange
         var farmId = 1;
-        var userId = 10;
-        var query = new GetFarmByIdQuery(farmId, userId);
+        var query = new GetFarmByIdQuery(farmId, 10);
         var farm = new Farm
         {
             Id = farmId,
@@ -36,23 +34,15 @@ public class GetFarmByIdQueryHandlerTests
             Location = "Test Location",
             CreatedAt = DateTime.UtcNow,
         };
-        var membership = new FarmMember
-        {
-            FarmId = farmId,
-            UserId = userId,
-            Role = FarmMemberRoles.Owner,
-        };
 
         _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
         _mocker
-            .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(membership);
+            .GetMock<ICurrentUserService>()
+            .Setup(s => s.CurrentFarmRole)
+            .Returns(FarmMemberRoles.Owner);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe(farmId);
         result.Name.ShouldBe(farm.Name);
@@ -60,44 +50,17 @@ public class GetFarmByIdQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_ExistingFarmWithoutAccess_ReturnsNull()
-    {
-        // Arrange
-        var farmId = 1;
-        var userId = 10;
-        var query = new GetFarmByIdQuery(farmId, userId);
-        var farm = new Farm { Id = farmId, Name = "Test Farm" };
-
-        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _mocker
-            .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync((FarmMember?)null);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.ShouldBeNull();
-    }
-
-    [Test]
     public async Task Handle_NonExistingFarm_ReturnsNull()
     {
-        // Arrange
-        var farmId = 999;
-        var userId = 10;
-        var query = new GetFarmByIdQuery(farmId, userId);
+        var query = new GetFarmByIdQuery(999, 10);
 
         _mocker
             .GetMock<IFarmRepository>()
-            .Setup(r => r.GetByIdAsync(farmId))
+            .Setup(r => r.GetByIdAsync(999))
             .ReturnsAsync((Farm?)null);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.ShouldBeNull();
     }
 }

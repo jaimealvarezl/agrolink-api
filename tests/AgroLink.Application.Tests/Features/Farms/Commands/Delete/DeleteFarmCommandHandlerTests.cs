@@ -1,6 +1,4 @@
-using System.Linq.Expressions;
 using AgroLink.Application.Features.Farms.Commands.Delete;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -23,31 +21,17 @@ public class DeleteFarmCommandHandlerTests
     private DeleteFarmCommandHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ExistingFarmByOwner_SoftDeletesFarm()
+    public async Task Handle_ExistingFarm_SoftDeletesFarm()
     {
-        // Arrange
         var farmId = 1;
-        var userId = 10;
-        var command = new DeleteFarmCommand(farmId, userId);
+        var command = new DeleteFarmCommand(farmId, 10);
         var farm = new Farm { Id = farmId, IsActive = true };
-        var membership = new FarmMember
-        {
-            FarmId = farmId,
-            UserId = userId,
-            Role = FarmMemberRoles.Owner,
-        };
 
         _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _mocker
-            .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(membership);
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         farm.IsActive.ShouldBeFalse();
         farm.DeletedAt.ShouldNotBeNull();
         _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(farm), Times.Once);
@@ -55,51 +39,17 @@ public class DeleteFarmCommandHandlerTests
     }
 
     [Test]
-    public async Task Handle_NotOwner_ReturnsSuccessfullyToPreventInformationLeakage()
-    {
-        // Arrange
-        var farmId = 1;
-        var userId = 10;
-        var command = new DeleteFarmCommand(farmId, userId);
-        var farm = new Farm { Id = farmId, IsActive = true };
-        var membership = new FarmMember
-        {
-            FarmId = farmId,
-            UserId = userId,
-            Role = FarmMemberRoles.Admin,
-        };
-
-        _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
-        _mocker
-            .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(membership);
-
-        // Act
-        await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
-        _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
-    }
-
-    [Test]
     public async Task Handle_NonExistingFarm_ReturnsSuccessfullyForIdempotency()
     {
-        // Arrange
-        var farmId = 999;
-        var userId = 10;
-        var command = new DeleteFarmCommand(farmId, userId);
+        var command = new DeleteFarmCommand(999, 10);
 
         _mocker
             .GetMock<IFarmRepository>()
-            .Setup(r => r.GetByIdAsync(farmId))
+            .Setup(r => r.GetByIdAsync(999))
             .ReturnsAsync((Farm?)null);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }
@@ -107,18 +57,14 @@ public class DeleteFarmCommandHandlerTests
     [Test]
     public async Task Handle_AlreadyDeletedFarm_ReturnsSuccessfullyForIdempotency()
     {
-        // Arrange
         var farmId = 1;
-        var userId = 10;
-        var command = new DeleteFarmCommand(farmId, userId);
+        var command = new DeleteFarmCommand(farmId, 10);
         var farm = new Farm { Id = farmId, IsActive = false };
 
         _mocker.GetMock<IFarmRepository>().Setup(r => r.GetByIdAsync(farmId)).ReturnsAsync(farm);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         _mocker.GetMock<IFarmRepository>().Verify(r => r.Update(It.IsAny<Farm>()), Times.Never);
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Never);
     }

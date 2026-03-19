@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Features.Checklists.Queries.GetAll;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -22,10 +23,10 @@ public class GetAllChecklistsQueryHandlerTests
     private GetAllChecklistsQueryHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ReturnsAllChecklists()
+    public async Task Handle_ReturnsChecklistsForCurrentFarm()
     {
-        // Arrange
-        var query = new GetAllChecklistsQuery();
+        var farmId = 5;
+        var paddockId = 10;
         var checklists = new List<Checklist>
         {
             new()
@@ -43,21 +44,32 @@ public class GetAllChecklistsQueryHandlerTests
                 UserId = 1,
             },
         };
+        var lot = new Lot
+        {
+            Id = 1,
+            Name = "Test Lot",
+            PaddockId = paddockId,
+        };
+        var paddock = new Paddock { Id = paddockId, FarmId = farmId };
         var user = new User { Id = 1, Name = "Test User" };
-        var lot = new Lot { Id = 1, Name = "Test Lot" };
 
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(farmId);
         _mocker
             .GetMock<IChecklistRepository>()
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(checklists);
         _mocker
-            .GetMock<IUserRepository>()
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
-            .ReturnsAsync(new List<User> { user });
-        _mocker
             .GetMock<ILotRepository>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Lot, bool>>>()))
             .ReturnsAsync(new List<Lot> { lot });
+        _mocker
+            .GetMock<IPaddockRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Paddock, bool>>>()))
+            .ReturnsAsync(new List<Paddock> { paddock });
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { user });
         _mocker
             .GetMock<IRepository<ChecklistItem>>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<ChecklistItem, bool>>>()))
@@ -67,10 +79,8 @@ public class GetAllChecklistsQueryHandlerTests
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Animal, bool>>>()))
             .ReturnsAsync(new List<Animal>());
 
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(new GetAllChecklistsQuery(), CancellationToken.None);
 
-        // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
         result.First().LotName.ShouldBe(lot.Name);
@@ -78,20 +88,27 @@ public class GetAllChecklistsQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_ReturnsEmptyList_WhenNoChecklistsExist()
+    public async Task Handle_NoFarmContext_ReturnsEmpty()
     {
-        // Arrange
-        var query = new GetAllChecklistsQuery();
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns((int?)null);
+
+        var result = await _handler.Handle(new GetAllChecklistsQuery(), CancellationToken.None);
+
+        result.ShouldBeEmpty();
+        _mocker.GetMock<IChecklistRepository>().Verify(r => r.GetAllAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_NoChecklistsExist_ReturnsEmpty()
+    {
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.CurrentFarmId).Returns(1);
         _mocker
             .GetMock<IChecklistRepository>()
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<Checklist>());
 
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(new GetAllChecklistsQuery(), CancellationToken.None);
 
-        // Assert
-        result.ShouldNotBeNull();
         result.ShouldBeEmpty();
     }
 }
