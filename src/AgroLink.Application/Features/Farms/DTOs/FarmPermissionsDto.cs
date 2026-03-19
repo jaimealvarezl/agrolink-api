@@ -7,9 +7,9 @@ public record FarmPermissionsDto
     public bool CanUpdateAnimalBio { get; init; }
     public bool CanDeleteAnimal { get; init; }
 
-    // Operations
-    public bool CanLogOperations { get; init; }
+    // Checklists
     public bool CanViewChecklists { get; init; }
+    public bool CanCreateChecklist { get; init; }
 
     // Financials
     public bool CanViewFinancials { get; init; }

@@ -34,7 +34,7 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeTrue();
         result.CanUpdateAnimalBio.ShouldBeTrue();
         result.CanDeleteAnimal.ShouldBeTrue();
-        result.CanLogOperations.ShouldBeTrue();
+        result.CanCreateChecklist.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
         result.CanViewFinancials.ShouldBeTrue();
         result.CanUpdateFinancials.ShouldBeTrue();
@@ -55,7 +55,7 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeTrue();
         result.CanUpdateAnimalBio.ShouldBeTrue();
         result.CanDeleteAnimal.ShouldBeTrue();
-        result.CanLogOperations.ShouldBeTrue();
+        result.CanCreateChecklist.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
         result.CanViewFinancials.ShouldBeTrue();
         result.CanUpdateFinancials.ShouldBeTrue();
@@ -76,7 +76,7 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeTrue();
         result.CanUpdateAnimalBio.ShouldBeTrue();
         result.CanDeleteAnimal.ShouldBeFalse();
-        result.CanLogOperations.ShouldBeTrue();
+        result.CanCreateChecklist.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
         result.CanViewFinancials.ShouldBeFalse();
         result.CanUpdateFinancials.ShouldBeFalse();
@@ -98,7 +98,7 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeFalse();
         result.CanUpdateAnimalBio.ShouldBeFalse();
         result.CanDeleteAnimal.ShouldBeFalse();
-        result.CanLogOperations.ShouldBeFalse();
+        result.CanCreateChecklist.ShouldBeFalse();
         result.CanViewFinancials.ShouldBeFalse();
         result.CanUpdateFinancials.ShouldBeFalse();
         result.CanManageLocations.ShouldBeFalse();
@@ -119,7 +119,7 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeFalse();
         result.CanUpdateAnimalBio.ShouldBeFalse();
         result.CanDeleteAnimal.ShouldBeFalse();
-        result.CanLogOperations.ShouldBeFalse();
+        result.CanCreateChecklist.ShouldBeFalse();
         result.CanViewFinancials.ShouldBeFalse();
         result.CanUpdateFinancials.ShouldBeFalse();
         result.CanManageLocations.ShouldBeFalse();

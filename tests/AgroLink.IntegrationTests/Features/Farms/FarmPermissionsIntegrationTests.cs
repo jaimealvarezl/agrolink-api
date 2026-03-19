@@ -101,7 +101,7 @@ public class FarmPermissionsIntegrationTests : IntegrationTestBase
         var permissions = await response.Content.ReadFromJsonAsync<FarmPermissionsDto>(JsonOptions);
         permissions.ShouldNotBeNull();
         permissions.CanCreateAnimal.ShouldBeTrue();
-        permissions.CanLogOperations.ShouldBeTrue();
+        permissions.CanCreateChecklist.ShouldBeTrue();
         permissions.CanViewChecklists.ShouldBeTrue();
         permissions.CanDeleteAnimal.ShouldBeFalse();
         permissions.CanManageLocations.ShouldBeFalse();
