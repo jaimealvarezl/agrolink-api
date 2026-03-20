@@ -233,6 +233,11 @@ public class AnimalRepository(AgroLinkDbContext context)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<Animal?> GetByIdInFarmAsync(int id, int farmId)
+    {
+        return await _dbSet.FirstOrDefaultAsync(a => a.Id == id && a.Lot.Paddock.FarmId == farmId);
+    }
+
     public async Task<List<string>> GetDistinctColorsAsync(
         int farmId,
         CancellationToken cancellationToken = default

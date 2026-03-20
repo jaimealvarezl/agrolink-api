@@ -34,6 +34,8 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeTrue();
         result.CanUpdateAnimalBio.ShouldBeTrue();
         result.CanDeleteAnimal.ShouldBeTrue();
+        result.CanViewAnimalNotes.ShouldBeTrue();
+        result.CanCreateAnimalNote.ShouldBeTrue();
         result.CanCreateChecklist.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
         result.CanViewFinancials.ShouldBeTrue();
@@ -55,6 +57,8 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeTrue();
         result.CanUpdateAnimalBio.ShouldBeTrue();
         result.CanDeleteAnimal.ShouldBeTrue();
+        result.CanViewAnimalNotes.ShouldBeTrue();
+        result.CanCreateAnimalNote.ShouldBeTrue();
         result.CanCreateChecklist.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
         result.CanViewFinancials.ShouldBeTrue();
@@ -76,6 +80,8 @@ public class GetFarmPermissionsQueryHandlerTests
         result.CanCreateAnimal.ShouldBeTrue();
         result.CanUpdateAnimalBio.ShouldBeTrue();
         result.CanDeleteAnimal.ShouldBeFalse();
+        result.CanViewAnimalNotes.ShouldBeTrue();
+        result.CanCreateAnimalNote.ShouldBeTrue();
         result.CanCreateChecklist.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
         result.CanViewFinancials.ShouldBeFalse();
@@ -94,7 +100,9 @@ public class GetFarmPermissionsQueryHandlerTests
 
         var result = await _handler.Handle(new GetFarmPermissionsQuery(), CancellationToken.None);
 
+        result.CanViewAnimalNotes.ShouldBeTrue();
         result.CanViewChecklists.ShouldBeTrue();
+        result.CanCreateAnimalNote.ShouldBeFalse();
         result.CanCreateAnimal.ShouldBeFalse();
         result.CanUpdateAnimalBio.ShouldBeFalse();
         result.CanDeleteAnimal.ShouldBeFalse();
@@ -115,6 +123,8 @@ public class GetFarmPermissionsQueryHandlerTests
 
         var result = await _handler.Handle(new GetFarmPermissionsQuery(), CancellationToken.None);
 
+        result.CanViewAnimalNotes.ShouldBeFalse();
+        result.CanCreateAnimalNote.ShouldBeFalse();
         result.CanViewChecklists.ShouldBeFalse();
         result.CanCreateAnimal.ShouldBeFalse();
         result.CanUpdateAnimalBio.ShouldBeFalse();

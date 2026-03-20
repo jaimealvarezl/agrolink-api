@@ -11,4 +11,6 @@ public interface IChecklistRepository : IRepository<Checklist>
         int page,
         int pageSize
     );
+
+    Task<IEnumerable<ChecklistItem>> GetItemsByAnimalIdAsync(int animalId);
 }

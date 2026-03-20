@@ -7,6 +7,10 @@ public record FarmPermissionsDto
     public bool CanUpdateAnimalBio { get; init; }
     public bool CanDeleteAnimal { get; init; }
 
+    // Animal notes & timeline
+    public bool CanViewAnimalNotes { get; init; }
+    public bool CanCreateAnimalNote { get; init; }
+
     // Checklists
     public bool CanViewChecklists { get; init; }
     public bool CanCreateChecklist { get; init; }
