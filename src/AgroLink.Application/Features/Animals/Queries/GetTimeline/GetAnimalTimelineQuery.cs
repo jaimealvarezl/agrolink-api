@@ -29,7 +29,8 @@ public class GetAnimalTimelineQueryHandler(
             ?? throw new NotFoundException("Animal", request.AnimalId);
 
         var notes = await animalNoteRepository.GetByAnimalIdAsync(request.AnimalId);
-        var timelineItems = notes.Select(note => new AnimalTimelineItemDto
+        var timelineItems = notes
+            .Select(note => new AnimalTimelineItemDto
             {
                 Type = "note",
                 OccurredAt = note.CreatedAt,
@@ -44,7 +45,6 @@ public class GetAnimalTimelineQueryHandler(
                 },
             })
             .ToList();
-
 
         var movements = (
             await movementRepository.GetMovementsByAnimalAsync(request.AnimalId)
@@ -72,52 +72,56 @@ public class GetAnimalTimelineQueryHandler(
                 lots = lotsResult.ToDictionary(l => l.Id, l => l.Name);
             }
 
-            timelineItems.AddRange(movements.Select(movement => new AnimalTimelineItemDto
-            {
-                Type = "movement",
-                OccurredAt = movement.At,
-                Movement = new MovementDto
+            timelineItems.AddRange(
+                movements.Select(movement => new AnimalTimelineItemDto
                 {
-                    Id = movement.Id,
-                    AnimalId = movement.AnimalId,
-                    AnimalName = animal.Name,
-                    FromLotId = movement.FromLotId,
-                    FromLotName = movement.FromLotId.HasValue
-                        ? lots.GetValueOrDefault(movement.FromLotId.Value)
-                        : null,
-                    ToLotId = movement.ToLotId,
-                    ToLotName = movement.ToLotId.HasValue
-                        ? lots.GetValueOrDefault(movement.ToLotId.Value)
-                        : null,
-                    At = movement.At,
-                    Reason = movement.Reason,
-                    UserId = movement.UserId,
-                    UserName = users.GetValueOrDefault(movement.UserId, string.Empty),
-                    CreatedAt = movement.CreatedAt,
-                },
-            }));
+                    Type = "movement",
+                    OccurredAt = movement.At,
+                    Movement = new MovementDto
+                    {
+                        Id = movement.Id,
+                        AnimalId = movement.AnimalId,
+                        AnimalName = animal.Name,
+                        FromLotId = movement.FromLotId,
+                        FromLotName = movement.FromLotId.HasValue
+                            ? lots.GetValueOrDefault(movement.FromLotId.Value)
+                            : null,
+                        ToLotId = movement.ToLotId,
+                        ToLotName = movement.ToLotId.HasValue
+                            ? lots.GetValueOrDefault(movement.ToLotId.Value)
+                            : null,
+                        At = movement.At,
+                        Reason = movement.Reason,
+                        UserId = movement.UserId,
+                        UserName = users.GetValueOrDefault(movement.UserId, string.Empty),
+                        CreatedAt = movement.CreatedAt,
+                    },
+                })
+            );
         }
 
         var checklistItems = (
             await checklistRepository.GetItemsByAnimalIdAsync(request.AnimalId)
         ).ToList();
 
-        timelineItems.AddRange(checklistItems.Select(item => new AnimalTimelineItemDto
-        {
-            Type = "checklist",
-            OccurredAt = item.Checklist.Date,
-            ChecklistItem = new AnimalChecklistTimelineDto
+        timelineItems.AddRange(
+            checklistItems.Select(item => new AnimalTimelineItemDto
             {
-                ChecklistId = item.ChecklistId,
-                ChecklistItemId = item.Id,
-                Date = item.Checklist.Date,
-                LotId = item.Checklist.LotId,
-                LotName = item.Checklist.Lot?.Name,
-                Present = item.Present,
-                Condition = item.Condition,
-                Notes = item.Notes,
-            },
-        }));
+                Type = "checklist",
+                OccurredAt = item.Checklist.Date,
+                ChecklistItem = new AnimalChecklistTimelineDto
+                {
+                    ChecklistId = item.ChecklistId,
+                    ChecklistItemId = item.Id,
+                    Date = item.Checklist.Date,
+                    LotId = item.Checklist.LotId,
+                    LotName = item.Checklist.Lot?.Name,
+                    Present = item.Present,
+                    Condition = item.Condition,
+                    Notes = item.Notes,
+                },
+            })
+        );
 
         return timelineItems.OrderByDescending(i => i.OccurredAt);
     }
