@@ -27,6 +27,8 @@ public class GetFarmPermissionsQueryHandler(ICurrentUserService currentUserServi
             CanCreateAnimal = isEditor,
             CanUpdateAnimalBio = isEditor,
             CanDeleteAnimal = isAdmin,
+            CanViewAnimalNotes = isViewer,
+            CanCreateAnimalNote = isEditor,
             CanViewChecklists = isViewer,
             CanCreateChecklist = isEditor,
             CanViewFinancials = isAdmin,
