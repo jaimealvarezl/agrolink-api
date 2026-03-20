@@ -1,6 +1,8 @@
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.Commands.Create;
+using AgroLink.Application.Features.Animals.Commands.CreateNote;
 using AgroLink.Application.Features.Animals.Commands.Delete;
+using AgroLink.Application.Features.Animals.Commands.DeleteNote;
 using AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 using AgroLink.Application.Features.Animals.Commands.Move;
 using AgroLink.Application.Features.Animals.Commands.SetProfilePhoto;
@@ -14,7 +16,9 @@ using AgroLink.Application.Features.Animals.Queries.GetByLot;
 using AgroLink.Application.Features.Animals.Queries.GetColors;
 using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
+using AgroLink.Application.Features.Animals.Queries.GetNotes;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
+using AgroLink.Application.Features.Animals.Queries.GetTimeline;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -253,11 +257,61 @@ public class AnimalsController(IMediator mediator) : BaseController
         );
         return NoContent();
     }
-}
 
-public class MoveAnimalRequest
-{
-    public int FromLotId { get; set; }
-    public int ToLotId { get; set; }
-    public string? Reason { get; set; }
+    [HttpGet("{id}/notes")]
+    public async Task<ActionResult<IEnumerable<AnimalNoteDto>>> GetNotes(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
+    {
+        var notes = await mediator.Send(new GetAnimalNotesQuery(id, farmId), cancellationToken);
+        return Ok(notes);
+    }
+
+    [HttpPost("{id}/notes")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<AnimalNoteDto>> CreateNote(
+        int farmId,
+        int id,
+        [FromBody] CreateAnimalNoteDto dto,
+        CancellationToken cancellationToken
+    )
+    {
+        var note = await mediator.Send(
+            new CreateAnimalNoteCommand(farmId, id, dto.Content, GetCurrentUserId()),
+            cancellationToken
+        );
+        return CreatedAtAction(nameof(GetNotes), new { farmId, id }, note);
+    }
+
+    [HttpDelete("{id}/notes/{noteId}")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult> DeleteNote(
+        int farmId,
+        int id,
+        int noteId,
+        CancellationToken cancellationToken
+    )
+    {
+        await mediator.Send(
+            new DeleteAnimalNoteCommand(id, noteId, GetCurrentUserId()),
+            cancellationToken
+        );
+        return NoContent();
+    }
+
+    [HttpGet("{id}/timeline")]
+    public async Task<ActionResult<IEnumerable<AnimalTimelineItemDto>>> GetTimeline(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
+    {
+        var timeline = await mediator.Send(
+            new GetAnimalTimelineQuery(id, farmId),
+            cancellationToken
+        );
+        return Ok(timeline);
+    }
 }

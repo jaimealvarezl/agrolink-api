@@ -3,11 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Data;
 
-public class AgroLinkDbContext : DbContext
+public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : DbContext(options)
 {
-    public AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options)
-        : base(options) { }
-
     public DbSet<Farm> Farms { get; set; }
     public DbSet<Paddock> Paddocks { get; set; }
     public DbSet<Lot> Lots { get; set; }
@@ -18,6 +15,7 @@ public class AgroLinkDbContext : DbContext
     public DbSet<Checklist> Checklists { get; set; }
     public DbSet<ChecklistItem> ChecklistItems { get; set; }
     public DbSet<AnimalPhoto> AnimalPhotos { get; set; }
+    public DbSet<AnimalNote> AnimalNotes { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<FarmMember> FarmMembers { get; set; }
 

@@ -18,6 +18,17 @@ public class ChecklistRepository(AgroLinkDbContext context)
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<ChecklistItem>> GetItemsByAnimalIdAsync(int animalId)
+    {
+        return await _context
+            .ChecklistItems.AsNoTracking()
+            .Include(ci => ci.Checklist)
+                .ThenInclude(c => c.Lot)
+            .Where(ci => ci.AnimalId == animalId)
+            .OrderByDescending(ci => ci.Checklist.Date)
+            .ToListAsync();
+    }
+
     public async Task<(IEnumerable<Checklist> Items, int TotalCount)> GetPagedByFarmAsync(
         int farmId,
         int page,
