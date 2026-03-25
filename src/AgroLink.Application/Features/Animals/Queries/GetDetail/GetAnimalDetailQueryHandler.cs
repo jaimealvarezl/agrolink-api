@@ -59,7 +59,7 @@ public class GetAnimalDetailQueryHandler(
                 Size = p.Size,
                 Description = p.Description,
                 UploadedAt = p.UploadedAt,
-                CreatedAt = p.CreatedAt,
+                CreatedAt = p.CreatedAt
             })
             .ToList();
 
@@ -80,20 +80,20 @@ public class GetAnimalDetailQueryHandler(
             ProductionStatus = animal.ProductionStatus,
             HealthStatus = animal.HealthStatus,
             ReproductiveStatus = animal.ReproductiveStatus,
+            MotherId = animal.Mother?.Id,
             MotherName = animal.Mother is { } mother ? mother.Name ?? mother.TagVisual : null,
             MotherPhotoUrl = motherPhotoUrl,
+            FatherId = animal.Father?.Id,
             FatherName = animal.Father is { } father ? father.Name ?? father.TagVisual : null,
             FatherPhotoUrl = fatherPhotoUrl,
             Owners = animal
                 .AnimalOwners.Select(ao => new AnimalOwnerDto
                 {
-                    OwnerId = ao.OwnerId,
-                    OwnerName = ao.Owner.Name,
-                    SharePercent = ao.SharePercent,
+                    OwnerId = ao.OwnerId, OwnerName = ao.Owner.Name, SharePercent = ao.SharePercent
                 })
                 .ToList(),
             PrimaryPhotoUrl = primaryPhotoUrl,
-            Photos = photoDtos,
+            Photos = photoDtos
         };
     }
 
