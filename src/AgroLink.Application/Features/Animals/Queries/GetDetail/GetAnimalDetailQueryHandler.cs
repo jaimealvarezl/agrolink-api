@@ -59,7 +59,7 @@ public class GetAnimalDetailQueryHandler(
                 Size = p.Size,
                 Description = p.Description,
                 UploadedAt = p.UploadedAt,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
             })
             .ToList();
 
@@ -89,11 +89,13 @@ public class GetAnimalDetailQueryHandler(
             Owners = animal
                 .AnimalOwners.Select(ao => new AnimalOwnerDto
                 {
-                    OwnerId = ao.OwnerId, OwnerName = ao.Owner.Name, SharePercent = ao.SharePercent
+                    OwnerId = ao.OwnerId,
+                    OwnerName = ao.Owner.Name,
+                    SharePercent = ao.SharePercent,
                 })
                 .ToList(),
             PrimaryPhotoUrl = primaryPhotoUrl,
-            Photos = photoDtos
+            Photos = photoDtos,
         };
     }
 
