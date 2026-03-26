@@ -11,7 +11,7 @@ public class RetireAnimalRequest
     [Required]
     public DateTime At { get; set; }
 
-    [Range(0, double.MaxValue, ErrorMessage = "SalePrice must be a non-negative value.")]
+    [Range(0, (double)decimal.MaxValue, ErrorMessage = "SalePrice must be a non-negative value.")]
     public decimal? SalePrice { get; set; }
 
     [MaxLength(2000)]

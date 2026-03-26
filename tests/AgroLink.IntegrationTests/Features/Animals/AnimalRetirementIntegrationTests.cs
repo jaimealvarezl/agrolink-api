@@ -204,21 +204,20 @@ public class AnimalRetirementIntegrationTests : IntegrationTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
-    [Test]
-    public async Task Retire_AlreadyRetired_ShouldReturnError()
+    [TestCase(LifeStatus.Sold)]
+    [TestCase(LifeStatus.Dead)]
+    [TestCase(LifeStatus.Retired)]
+    [TestCase(LifeStatus.Missing)]
+    public async Task Retire_NonActiveAnimal_ShouldReturnConflict(LifeStatus status)
     {
         var (farm, animal, user) = await SetupFarmWithAnimalAndMemberAsync(FarmMemberRoles.Editor);
 
-        animal.LifeStatus = LifeStatus.Sold;
+        animal.LifeStatus = status;
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
 
-        var request = new RetireAnimalRequest
-        {
-            Reason = RetirementReason.Other,
-            At = DateTime.UtcNow,
-        };
+        var request = new RetireAnimalRequest { Reason = RetirementReason.Other, At = DateTime.UtcNow };
 
         var response = await Client.PostAsJsonAsync(
             $"/api/farms/{farm.Id}/animals/{animal.Id}/retire",

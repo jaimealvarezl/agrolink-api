@@ -33,7 +33,7 @@ public class RetireAnimalCommandHandler(
             await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId)
             ?? throw new NotFoundException("Animal", request.AnimalId);
 
-        if (animal.LifeStatus is not (LifeStatus.Active or LifeStatus.Missing))
+        if (animal.LifeStatus != LifeStatus.Active)
         {
             throw new ConflictException("Animal is already retired.");
         }
@@ -46,7 +46,8 @@ public class RetireAnimalCommandHandler(
             RetirementReason.Other => LifeStatus.Retired,
             _ => LifeStatus.Retired,
         };
-        animal.UpdatedAt = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        animal.UpdatedAt = now;
 
         var retirement = new AnimalRetirement
         {
@@ -56,25 +57,14 @@ public class RetireAnimalCommandHandler(
             At = request.At,
             SalePrice = request.SalePrice,
             Notes = request.Notes,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = now,
         };
 
         await animalRetirementRepository.AddAsync(retirement);
         await unitOfWork.SaveChangesAsync();
 
-        var user = await userRepository.GetByIdAsync(request.UserId);
+        retirement.User = await userRepository.GetByIdAsync(request.UserId) ?? retirement.User;
 
-        return new AnimalRetirementDto
-        {
-            Id = retirement.Id,
-            AnimalId = retirement.AnimalId,
-            UserId = retirement.UserId,
-            UserName = user?.Name ?? string.Empty,
-            Reason = retirement.Reason,
-            At = retirement.At,
-            SalePrice = retirement.SalePrice,
-            Notes = retirement.Notes,
-            CreatedAt = retirement.CreatedAt,
-        };
+        return AnimalRetirementDto.From(retirement);
     }
 }
