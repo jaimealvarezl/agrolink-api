@@ -7,4 +7,5 @@ public enum LifeStatus
     Dead,
     Missing,
     Deleted,
+    Retired,
 }

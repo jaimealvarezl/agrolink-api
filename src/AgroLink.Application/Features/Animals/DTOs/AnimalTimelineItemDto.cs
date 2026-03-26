@@ -4,7 +4,6 @@ namespace AgroLink.Application.Features.Animals.DTOs;
 
 public class AnimalTimelineItemDto
 {
-    /// <summary>"note" | "movement" | "checklist"</summary>
     public string Type { get; set; } = string.Empty;
 
     public DateTime OccurredAt { get; set; }
@@ -12,6 +11,7 @@ public class AnimalTimelineItemDto
     public AnimalNoteDto? Note { get; set; }
     public MovementDto? Movement { get; set; }
     public AnimalChecklistTimelineDto? ChecklistItem { get; set; }
+    public AnimalRetirementDto? Retirement { get; set; }
 }
 
 public class AnimalChecklistTimelineDto

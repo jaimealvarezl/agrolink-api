@@ -16,6 +16,7 @@ public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : Db
     public DbSet<ChecklistItem> ChecklistItems { get; set; }
     public DbSet<AnimalPhoto> AnimalPhotos { get; set; }
     public DbSet<AnimalNote> AnimalNotes { get; set; }
+    public DbSet<AnimalRetirement> AnimalRetirements { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<FarmMember> FarmMembers { get; set; }
 

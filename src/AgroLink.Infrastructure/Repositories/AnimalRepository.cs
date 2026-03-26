@@ -1,3 +1,4 @@
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -105,12 +106,10 @@ public class AnimalRepository(AgroLinkDbContext context)
         int? excludeAnimalId = null
     )
     {
-        var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
-
         var query = _dbSet.Where(a =>
             a.Name.ToLower() == name.ToLower()
             && a.Lot.Paddock.FarmId == farmId
-            && activeStatuses.Contains(a.LifeStatus)
+            && AnimalConstants.ActiveStatuses.Contains(a.LifeStatus)
         );
 
         if (excludeAnimalId.HasValue)
@@ -130,7 +129,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         bool isSick = false,
         bool isPregnant = false,
         bool isMissing = false,
-        Sex? sex = null
+        Sex? sex = null,
+        bool includeRetired = false
     )
     {
         var query = _dbSet
@@ -138,6 +138,11 @@ public class AnimalRepository(AgroLinkDbContext context)
                 .ThenInclude(l => l.Paddock)
             .Include(a => a.Photos)
             .Where(a => a.Lot.Paddock.FarmId == farmId);
+
+        if (!includeRetired)
+        {
+            query = query.Where(a => AnimalConstants.ActiveStatuses.Contains(a.LifeStatus));
+        }
 
         if (lotId.HasValue)
         {

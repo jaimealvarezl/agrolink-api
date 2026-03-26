@@ -23,7 +23,8 @@ public interface IAnimalRepository : IRepository<Animal>
         bool isSick = false,
         bool isPregnant = false,
         bool isMissing = false,
-        Sex? sex = null
+        Sex? sex = null,
+        bool includeRetired = false
     );
 
     Task<IEnumerable<Animal>> GetAllByFarmAsync(
