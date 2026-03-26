@@ -226,7 +226,7 @@ public class AnimalRetirementIntegrationTests : IntegrationTestBase
             JsonOptions
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Test]

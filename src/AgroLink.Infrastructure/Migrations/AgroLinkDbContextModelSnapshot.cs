@@ -706,7 +706,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasOne("AgroLink.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Animal");

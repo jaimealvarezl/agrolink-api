@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgroLink.Infrastructure.Migrations
 {
     [DbContext(typeof(AgroLinkDbContext))]
-    [Migration("20260326000516_AddAnimalRetirements")]
+    [Migration("20260326005901_AddAnimalRetirements")]
     partial class AddAnimalRetirements
     {
         /// <inheritdoc />
@@ -709,7 +709,7 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasOne("AgroLink.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Animal");

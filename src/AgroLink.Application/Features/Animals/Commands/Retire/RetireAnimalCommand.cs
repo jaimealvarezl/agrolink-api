@@ -33,10 +33,9 @@ public class RetireAnimalCommandHandler(
             await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId)
             ?? throw new NotFoundException("Animal", request.AnimalId);
 
-        var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
-        if (!activeStatuses.Contains(animal.LifeStatus))
+        if (animal.LifeStatus is not (LifeStatus.Active or LifeStatus.Missing))
         {
-            throw new InvalidOperationException("Animal is already retired.");
+            throw new ConflictException("Animal is already retired.");
         }
 
         animal.LifeStatus = request.Reason switch
