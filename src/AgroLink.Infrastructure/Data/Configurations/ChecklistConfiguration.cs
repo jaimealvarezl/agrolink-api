@@ -8,6 +8,8 @@ public class ChecklistConfiguration : IEntityTypeConfiguration<Checklist>
 {
     public void Configure(EntityTypeBuilder<Checklist> builder)
     {
+        builder.HasQueryFilter(e => e.Lot.Paddock.Farm.IsActive);
+
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Notes).HasMaxLength(1000);
 

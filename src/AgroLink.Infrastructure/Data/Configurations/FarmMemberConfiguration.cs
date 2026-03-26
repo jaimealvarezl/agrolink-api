@@ -8,6 +8,8 @@ public class FarmMemberConfiguration : IEntityTypeConfiguration<FarmMember>
 {
     public void Configure(EntityTypeBuilder<FarmMember> builder)
     {
+        builder.HasQueryFilter(e => e.Farm.IsActive);
+
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Role).IsRequired().HasMaxLength(50);
 

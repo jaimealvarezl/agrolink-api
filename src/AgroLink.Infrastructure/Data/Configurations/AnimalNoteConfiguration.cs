@@ -1,4 +1,5 @@
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,6 +9,10 @@ public class AnimalNoteConfiguration : IEntityTypeConfiguration<AnimalNote>
 {
     public void Configure(EntityTypeBuilder<AnimalNote> builder)
     {
+        builder.HasQueryFilter(e =>
+            e.Animal.LifeStatus != LifeStatus.Deleted && e.Animal.Lot.Paddock.Farm.IsActive
+        );
+
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Content).HasMaxLength(2000).IsRequired();
