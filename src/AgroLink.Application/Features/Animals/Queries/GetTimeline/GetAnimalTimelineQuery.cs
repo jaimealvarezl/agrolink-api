@@ -127,12 +127,14 @@ public class GetAnimalTimelineQueryHandler(
         var retirement = await animalRetirementRepository.GetByAnimalIdAsync(request.AnimalId);
         if (retirement != null)
         {
-            timelineItems.Add(new AnimalTimelineItemDto
-            {
-                Type = "retirement",
-                OccurredAt = retirement.At,
-                Retirement = AnimalRetirementDto.From(retirement),
-            });
+            timelineItems.Add(
+                new AnimalTimelineItemDto
+                {
+                    Type = "retirement",
+                    OccurredAt = retirement.At,
+                    Retirement = AnimalRetirementDto.From(retirement),
+                }
+            );
         }
 
         return timelineItems.OrderByDescending(i => i.OccurredAt);

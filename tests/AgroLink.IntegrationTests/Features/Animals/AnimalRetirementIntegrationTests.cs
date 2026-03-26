@@ -217,7 +217,11 @@ public class AnimalRetirementIntegrationTests : IntegrationTestBase
 
         Authenticate(user);
 
-        var request = new RetireAnimalRequest { Reason = RetirementReason.Other, At = DateTime.UtcNow };
+        var request = new RetireAnimalRequest
+        {
+            Reason = RetirementReason.Other,
+            At = DateTime.UtcNow,
+        };
 
         var response = await Client.PostAsJsonAsync(
             $"/api/farms/{farm.Id}/animals/{animal.Id}/retire",

@@ -15,8 +15,9 @@ public class AnimalRetirementDto
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    public static AnimalRetirementDto From(AnimalRetirement retirement) =>
-        new()
+    public static AnimalRetirementDto From(AnimalRetirement retirement)
+    {
+        return new AnimalRetirementDto
         {
             Id = retirement.Id,
             AnimalId = retirement.AnimalId,
@@ -28,4 +29,5 @@ public class AnimalRetirementDto
             Notes = retirement.Notes,
             CreatedAt = retirement.CreatedAt,
         };
+    }
 }
