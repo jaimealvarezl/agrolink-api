@@ -51,4 +51,5 @@ public class Animal
 
     public virtual ICollection<AnimalPhoto> Photos { get; set; } = new List<AnimalPhoto>();
     public virtual ICollection<AnimalNote> Notes { get; set; } = new List<AnimalNote>();
+    public virtual AnimalRetirement? Retirement { get; set; }
 }

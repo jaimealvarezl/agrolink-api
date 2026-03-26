@@ -130,7 +130,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         bool isSick = false,
         bool isPregnant = false,
         bool isMissing = false,
-        Sex? sex = null
+        Sex? sex = null,
+        bool includeRetired = false
     )
     {
         var query = _dbSet
@@ -138,6 +139,12 @@ public class AnimalRepository(AgroLinkDbContext context)
                 .ThenInclude(l => l.Paddock)
             .Include(a => a.Photos)
             .Where(a => a.Lot.Paddock.FarmId == farmId);
+
+        if (!includeRetired)
+        {
+            var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
+            query = query.Where(a => activeStatuses.Contains(a.LifeStatus));
+        }
 
         if (lotId.HasValue)
         {

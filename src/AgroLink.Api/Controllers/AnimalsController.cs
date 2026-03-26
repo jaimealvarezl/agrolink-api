@@ -5,6 +5,7 @@ using AgroLink.Application.Features.Animals.Commands.Delete;
 using AgroLink.Application.Features.Animals.Commands.DeleteNote;
 using AgroLink.Application.Features.Animals.Commands.DeletePhoto;
 using AgroLink.Application.Features.Animals.Commands.Move;
+using AgroLink.Application.Features.Animals.Commands.Retire;
 using AgroLink.Application.Features.Animals.Commands.SetProfilePhoto;
 using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
@@ -299,6 +300,30 @@ public class AnimalsController(IMediator mediator) : BaseController
             cancellationToken
         );
         return NoContent();
+    }
+
+    [HttpPost("{id}/retire")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<AnimalRetirementDto>> Retire(
+        int farmId,
+        int id,
+        [FromBody] RetireAnimalRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await mediator.Send(
+            new RetireAnimalCommand(
+                farmId,
+                id,
+                GetCurrentUserId(),
+                request.Reason,
+                request.At,
+                request.SalePrice,
+                request.Notes
+            ),
+            cancellationToken
+        );
+        return Ok(result);
     }
 
     [HttpGet("{id}/timeline")]

@@ -14,5 +14,6 @@ public record GetAnimalsPagedListQuery(
     bool IsSick = false,
     bool IsPregnant = false,
     bool IsMissing = false,
-    Sex? Sex = null
+    Sex? Sex = null,
+    bool IncludeRetired = false
 ) : IRequest<PagedResult<AnimalListDto>>;

@@ -39,7 +39,8 @@ public class GetAnimalsPagedListQueryHandler(
             request.IsSick,
             request.IsPregnant,
             request.IsMissing,
-            request.Sex
+            request.Sex,
+            request.IncludeRetired
         );
 
         var dtos = items.Select(a =>

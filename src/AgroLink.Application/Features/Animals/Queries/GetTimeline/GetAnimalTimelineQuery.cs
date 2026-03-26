@@ -13,6 +13,7 @@ public record GetAnimalTimelineQuery(int AnimalId, int FarmId)
 public class GetAnimalTimelineQueryHandler(
     IAnimalRepository animalRepository,
     IAnimalNoteRepository animalNoteRepository,
+    IAnimalRetirementRepository animalRetirementRepository,
     IMovementRepository movementRepository,
     IChecklistRepository checklistRepository,
     IUserRepository userRepository,
@@ -122,6 +123,30 @@ public class GetAnimalTimelineQueryHandler(
                 },
             })
         );
+
+        var retirement = await animalRetirementRepository.GetByAnimalIdAsync(request.AnimalId);
+        if (retirement != null)
+        {
+            timelineItems.Add(
+                new AnimalTimelineItemDto
+                {
+                    Type = "retirement",
+                    OccurredAt = retirement.At,
+                    Retirement = new AnimalRetirementDto
+                    {
+                        Id = retirement.Id,
+                        AnimalId = retirement.AnimalId,
+                        UserId = retirement.UserId,
+                        UserName = retirement.User?.Name ?? string.Empty,
+                        Reason = retirement.Reason,
+                        At = retirement.At,
+                        SalePrice = retirement.SalePrice,
+                        Notes = retirement.Notes,
+                        CreatedAt = retirement.CreatedAt,
+                    },
+                }
+            );
+        }
 
         return timelineItems.OrderByDescending(i => i.OccurredAt);
     }
