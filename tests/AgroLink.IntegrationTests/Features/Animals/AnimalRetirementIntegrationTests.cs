@@ -300,7 +300,8 @@ public class AnimalRetirementIntegrationTests : IntegrationTestBase
             FarmMemberRoles.Editor
         );
 
-        retiredAnimal.LifeStatus = LifeStatus.Retired;
+        // Sold is the most common retirement reason — sets LifeStatus.Sold, not LifeStatus.Retired
+        retiredAnimal.LifeStatus = LifeStatus.Sold;
 
         // Add a second active animal in the same farm
         var paddock = DbContext.Paddocks.First(p => p.FarmId == farm.Id);

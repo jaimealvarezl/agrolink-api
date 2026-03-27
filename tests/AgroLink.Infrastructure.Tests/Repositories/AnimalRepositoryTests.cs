@@ -305,7 +305,7 @@ public class AnimalRepositoryTests : TestBase
     }
 
     [Test]
-    public async Task GetPagedListAsync_WhenIncludeRetiredTrue_ShouldReturnOnlyRetiredAnimals()
+    public async Task GetPagedListAsync_WhenIncludeRetiredTrue_ShouldReturnAllNonActiveAnimals()
     {
         // Arrange
         var farm = await CreateTestFarmAsync(_context);
@@ -313,6 +313,10 @@ public class AnimalRepositoryTests : TestBase
         var lot = await CreateTestLotAsync(_context, paddock.Id);
 
         var active = await CreateTestAnimalAsync(_context, lot.Id, "ACTIVE");
+        var sold = await CreateTestAnimalAsync(_context, lot.Id, "SOLD");
+        sold.LifeStatus = LifeStatus.Sold;
+        var dead = await CreateTestAnimalAsync(_context, lot.Id, "DEAD");
+        dead.LifeStatus = LifeStatus.Dead;
         var retired = await CreateTestAnimalAsync(_context, lot.Id, "RETIRED");
         retired.LifeStatus = LifeStatus.Retired;
 
@@ -322,8 +326,10 @@ public class AnimalRepositoryTests : TestBase
         var result = await _repository.GetPagedListAsync(farm.Id, 1, 10, includeRetired: true);
 
         // Assert
-        result.Items.Count().ShouldBe(1);
-        result.Items.First().TagVisual.ShouldBe("RETIRED");
+        result.Items.Count().ShouldBe(3);
+        result.Items.ShouldContain(a => a.Id == sold.Id);
+        result.Items.ShouldContain(a => a.Id == dead.Id);
+        result.Items.ShouldContain(a => a.Id == retired.Id);
         result.Items.ShouldNotContain(a => a.Id == active.Id);
     }
 

@@ -139,7 +139,9 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.Photos)
             .Where(a => a.Lot.Paddock.FarmId == farmId);
 
-        query = includeRetired ? query.Where(a => a.LifeStatus == LifeStatus.Retired) : query.Where(a => AnimalConstants.ActiveStatuses.Contains(a.LifeStatus));
+        query = includeRetired
+            ? query.Where(a => !AnimalConstants.ActiveStatuses.Contains(a.LifeStatus))
+            : query.Where(a => AnimalConstants.ActiveStatuses.Contains(a.LifeStatus));
 
         if (lotId.HasValue)
         {
