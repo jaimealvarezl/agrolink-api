@@ -305,6 +305,51 @@ public class AnimalRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetPagedListAsync_WhenIncludeRetiredTrue_ShouldReturnOnlyRetiredAnimals()
+    {
+        // Arrange
+        var farm = await CreateTestFarmAsync(_context);
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id);
+        var lot = await CreateTestLotAsync(_context, paddock.Id);
+
+        var active = await CreateTestAnimalAsync(_context, lot.Id, "ACTIVE");
+        var retired = await CreateTestAnimalAsync(_context, lot.Id, "RETIRED");
+        retired.LifeStatus = LifeStatus.Retired;
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetPagedListAsync(farm.Id, 1, 10, includeRetired: true);
+
+        // Assert
+        result.Items.Count().ShouldBe(1);
+        result.Items.First().TagVisual.ShouldBe("RETIRED");
+        result.Items.ShouldNotContain(a => a.Id == active.Id);
+    }
+
+    [Test]
+    public async Task GetPagedListAsync_WhenIncludeRetiredFalse_ShouldExcludeRetiredAnimals()
+    {
+        // Arrange
+        var farm = await CreateTestFarmAsync(_context);
+        var paddock = await CreateTestPaddockAsync(_context, farm.Id);
+        var lot = await CreateTestLotAsync(_context, paddock.Id);
+
+        var active = await CreateTestAnimalAsync(_context, lot.Id, "ACTIVE");
+        var retired = await CreateTestAnimalAsync(_context, lot.Id, "RETIRED");
+        retired.LifeStatus = LifeStatus.Retired;
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetPagedListAsync(farm.Id, 1, 10, includeRetired: false);
+
+        // Assert
+        result.Items.ShouldContain(a => a.Id == active.Id);
+        result.Items.ShouldNotContain(a => a.Id == retired.Id);
+    }
+
+    [Test]
     public async Task GetAnimalDetailsAsync_ShouldReturnDetailsWithIncludes()
     {
         // Arrange

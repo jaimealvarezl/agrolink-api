@@ -294,11 +294,29 @@ public class AnimalRetirementIntegrationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task Search_IncludeRetiredTrue_ReturnsAllAnimals()
+    public async Task Search_IncludeRetiredTrue_ReturnsOnlyRetiredAnimals()
     {
-        var (farm, animal, user) = await SetupFarmWithAnimalAndMemberAsync(FarmMemberRoles.Editor);
+        var (farm, retiredAnimal, user) = await SetupFarmWithAnimalAndMemberAsync(
+            FarmMemberRoles.Editor
+        );
 
-        animal.LifeStatus = LifeStatus.Retired;
+        retiredAnimal.LifeStatus = LifeStatus.Retired;
+
+        // Add a second active animal in the same farm
+        var paddock = DbContext.Paddocks.First(p => p.FarmId == farm.Id);
+        var lot = DbContext.Lots.First(l => l.PaddockId == paddock.Id);
+        var activeAnimal = new Animal
+        {
+            Name = "ActiveCow",
+            Sex = Sex.Female,
+            LotId = lot.Id,
+            BirthDate = DateTime.UtcNow.AddYears(-2),
+            LifeStatus = LifeStatus.Active,
+            ProductionStatus = ProductionStatus.Calf,
+            HealthStatus = HealthStatus.Healthy,
+            ReproductiveStatus = ReproductiveStatus.NotApplicable,
+        };
+        DbContext.Animals.Add(activeAnimal);
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
@@ -312,7 +330,8 @@ public class AnimalRetirementIntegrationTests : IntegrationTestBase
             JsonOptions
         );
         result.ShouldNotBeNull();
-        result.Items.ShouldContain(a => a.Id == animal.Id);
+        result.Items.ShouldContain(a => a.Id == retiredAnimal.Id);
+        result.Items.ShouldNotContain(a => a.Id == activeAnimal.Id);
     }
 
     [Test]
