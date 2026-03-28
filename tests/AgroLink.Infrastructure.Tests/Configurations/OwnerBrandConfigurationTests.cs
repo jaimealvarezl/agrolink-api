@@ -8,8 +8,6 @@ namespace AgroLink.Infrastructure.Tests.Configurations;
 [TestFixture]
 public class OwnerBrandConfigurationTests : TestBase
 {
-    private AgroLinkDbContext _context = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -21,6 +19,8 @@ public class OwnerBrandConfigurationTests : TestBase
     {
         _context.Dispose();
     }
+
+    private AgroLinkDbContext _context = null!;
 
     [Test]
     public async Task OwnerBrand_ShouldPersistAllFields()
@@ -43,7 +43,9 @@ public class OwnerBrandConfigurationTests : TestBase
 
         // Act
         _context.ChangeTracker.Clear();
-        var result = await _context.OwnerBrands.IgnoreQueryFilters().FirstAsync(b => b.Id == brand.Id);
+        var result = await _context
+            .OwnerBrands.IgnoreQueryFilters()
+            .FirstAsync(b => b.Id == brand.Id);
 
         // Assert
         result.OwnerId.ShouldBe(owner.Id);
@@ -71,7 +73,9 @@ public class OwnerBrandConfigurationTests : TestBase
         await _context.SaveChangesAsync();
 
         _context.ChangeTracker.Clear();
-        var result = await _context.OwnerBrands.IgnoreQueryFilters().FirstAsync(b => b.Id == brand.Id);
+        var result = await _context
+            .OwnerBrands.IgnoreQueryFilters()
+            .FirstAsync(b => b.Id == brand.Id);
 
         result.PhotoUrl.ShouldBeNull();
     }
@@ -116,8 +120,18 @@ public class OwnerBrandConfigurationTests : TestBase
         var owner2 = await CreateTestOwnerAsync(_context, "Owner Two");
 
         _context.OwnerBrands.AddRange(
-            new OwnerBrand { OwnerId = owner1.Id, RegistrationNumber = "REG-SHARED", Description = "Brand A" },
-            new OwnerBrand { OwnerId = owner2.Id, RegistrationNumber = "REG-SHARED", Description = "Brand B" }
+            new OwnerBrand
+            {
+                OwnerId = owner1.Id,
+                RegistrationNumber = "REG-SHARED",
+                Description = "Brand A",
+            },
+            new OwnerBrand
+            {
+                OwnerId = owner2.Id,
+                RegistrationNumber = "REG-SHARED",
+                Description = "Brand B",
+            }
         );
 
         // Act & Assert — should not throw

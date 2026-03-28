@@ -9,8 +9,6 @@ namespace AgroLink.Infrastructure.Tests.Configurations;
 [TestFixture]
 public class AnimalBrandConfigurationTests : TestBase
 {
-    private AgroLinkDbContext _context = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -22,6 +20,8 @@ public class AnimalBrandConfigurationTests : TestBase
     {
         _context.Dispose();
     }
+
+    private AgroLinkDbContext _context = null!;
 
     private async Task<OwnerBrand> CreateTestOwnerBrandAsync(
         AgroLinkDbContext context,
@@ -67,7 +67,9 @@ public class AnimalBrandConfigurationTests : TestBase
 
         // Act
         _context.ChangeTracker.Clear();
-        var result = await _context.AnimalBrands.IgnoreQueryFilters().FirstAsync(ab => ab.Id == animalBrand.Id);
+        var result = await _context
+            .AnimalBrands.IgnoreQueryFilters()
+            .FirstAsync(ab => ab.Id == animalBrand.Id);
 
         // Assert
         result.AnimalId.ShouldBe(animal.Id);
@@ -99,7 +101,9 @@ public class AnimalBrandConfigurationTests : TestBase
         await _context.SaveChangesAsync();
 
         _context.ChangeTracker.Clear();
-        var result = await _context.AnimalBrands.IgnoreQueryFilters().FirstAsync(ab => ab.Id == animalBrand.Id);
+        var result = await _context
+            .AnimalBrands.IgnoreQueryFilters()
+            .FirstAsync(ab => ab.Id == animalBrand.Id);
 
         result.AppliedAt.ShouldBeNull();
         result.Notes.ShouldBeNull();
@@ -112,7 +116,7 @@ public class AnimalBrandConfigurationTests : TestBase
         var farm = await CreateTestFarmAsync(_context);
         var paddock = await CreateTestPaddockAsync(_context, farm.Id);
         var lot = await CreateTestLotAsync(_context, paddock.Id);
-        var activeAnimal = await CreateTestAnimalAsync(_context, lot.Id, "A001");
+        var activeAnimal = await CreateTestAnimalAsync(_context, lot.Id);
         var deletedAnimal = await CreateTestAnimalAsync(_context, lot.Id, "A002");
         deletedAnimal.LifeStatus = LifeStatus.Deleted;
         await _context.SaveChangesAsync();
@@ -145,7 +149,7 @@ public class AnimalBrandConfigurationTests : TestBase
 
         var owner1 = await CreateTestOwnerAsync(_context, "Owner One");
         var owner2 = await CreateTestOwnerAsync(_context, "Owner Two");
-        var brand1 = await CreateTestOwnerBrandAsync(_context, owner1.Id, "REG-001");
+        var brand1 = await CreateTestOwnerBrandAsync(_context, owner1.Id);
         var brand2 = await CreateTestOwnerBrandAsync(_context, owner2.Id, "REG-002");
 
         _context.AnimalBrands.AddRange(
@@ -155,7 +159,8 @@ public class AnimalBrandConfigurationTests : TestBase
         await _context.SaveChangesAsync();
 
         // Act
-        var results = await _context.AnimalBrands.IgnoreQueryFilters()
+        var results = await _context
+            .AnimalBrands.IgnoreQueryFilters()
             .Where(ab => ab.AnimalId == animal.Id)
             .ToListAsync();
 
