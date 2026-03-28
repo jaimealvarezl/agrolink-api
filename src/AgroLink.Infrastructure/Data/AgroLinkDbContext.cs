@@ -17,6 +17,8 @@ public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : Db
     public DbSet<AnimalPhoto> AnimalPhotos { get; set; }
     public DbSet<AnimalNote> AnimalNotes { get; set; }
     public DbSet<AnimalRetirement> AnimalRetirements { get; set; }
+    public DbSet<OwnerBrand> OwnerBrands { get; set; }
+    public DbSet<AnimalBrand> AnimalBrands { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<FarmMember> FarmMembers { get; set; }
 

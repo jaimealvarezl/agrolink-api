@@ -30,4 +30,5 @@ public class Owner
     // Navigation properties
     public virtual ICollection<AnimalOwner> AnimalOwners { get; set; } = new List<AnimalOwner>();
     public virtual ICollection<Farm> Farms { get; set; } = new List<Farm>();
+    public virtual ICollection<OwnerBrand> OwnerBrands { get; set; } = new List<OwnerBrand>();
 }
