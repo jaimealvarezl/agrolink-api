@@ -23,16 +23,11 @@ public class AnimalBrandConfigurationTests : TestBase
 
     private AgroLinkDbContext _context = null!;
 
-    private async Task<OwnerBrand> CreateTestOwnerBrandAsync(
-        AgroLinkDbContext context,
-        int ownerId,
-        string registrationNumber = "REG-001"
-    )
+    private async Task<OwnerBrand> CreateTestOwnerBrandAsync(AgroLinkDbContext context, int ownerId)
     {
         var brand = new OwnerBrand
         {
             OwnerId = ownerId,
-            RegistrationNumber = registrationNumber,
             Description = "Test Brand",
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -150,7 +145,7 @@ public class AnimalBrandConfigurationTests : TestBase
         var owner1 = await CreateTestOwnerAsync(_context, "Owner One");
         var owner2 = await CreateTestOwnerAsync(_context, "Owner Two");
         var brand1 = await CreateTestOwnerBrandAsync(_context, owner1.Id);
-        var brand2 = await CreateTestOwnerBrandAsync(_context, owner2.Id, "REG-002");
+        var brand2 = await CreateTestOwnerBrandAsync(_context, owner2.Id);
 
         _context.AnimalBrands.AddRange(
             new AnimalBrand { AnimalId = animal.Id, OwnerBrandId = brand1.Id },
