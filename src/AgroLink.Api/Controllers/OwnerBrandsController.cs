@@ -2,6 +2,7 @@ using AgroLink.Api.DTOs.OwnerBrands;
 using AgroLink.Application.Features.OwnerBrands.Commands.Create;
 using AgroLink.Application.Features.OwnerBrands.Commands.Delete;
 using AgroLink.Application.Features.OwnerBrands.Commands.Update;
+using AgroLink.Application.Features.OwnerBrands.Commands.UploadPhoto;
 using AgroLink.Application.Features.OwnerBrands.DTOs;
 using AgroLink.Application.Features.OwnerBrands.Queries.GetByOwner;
 using MediatR;
@@ -21,7 +22,10 @@ public class OwnerBrandsController(IMediator mediator) : BaseController
         CancellationToken cancellationToken
     )
     {
-        var brands = await mediator.Send(new GetOwnerBrandsQuery(farmId, ownerId), cancellationToken);
+        var brands = await mediator.Send(
+            new GetOwnerBrandsQuery(farmId, ownerId),
+            cancellationToken
+        );
         return Ok(brands);
     }
 
@@ -34,13 +38,7 @@ public class OwnerBrandsController(IMediator mediator) : BaseController
     )
     {
         var brand = await mediator.Send(
-            new CreateOwnerBrandCommand(
-                farmId,
-                ownerId,
-                request.RegistrationNumber,
-                request.Description,
-                request.PhotoUrl
-            )
+            new CreateOwnerBrandCommand(farmId, ownerId, request.Description)
         );
         return CreatedAtAction(nameof(GetBrands), new { farmId, ownerId }, brand);
     }
@@ -55,14 +53,33 @@ public class OwnerBrandsController(IMediator mediator) : BaseController
     )
     {
         var brand = await mediator.Send(
-            new UpdateOwnerBrandCommand(
+            new UpdateOwnerBrandCommand(farmId, ownerId, brandId, request.Description)
+        );
+        return Ok(brand);
+    }
+
+    [HttpPost("{brandId}/photo")]
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult<OwnerBrandDto>> UploadPhoto(
+        int farmId,
+        int ownerId,
+        int brandId,
+        IFormFile file,
+        CancellationToken cancellationToken
+    )
+    {
+        await using var stream = file.OpenReadStream();
+        var brand = await mediator.Send(
+            new UploadOwnerBrandPhotoCommand(
                 farmId,
                 ownerId,
                 brandId,
-                request.RegistrationNumber,
-                request.Description,
-                request.PhotoUrl
-            )
+                stream,
+                file.FileName,
+                file.ContentType,
+                file.Length
+            ),
+            cancellationToken
         );
         return Ok(brand);
     }

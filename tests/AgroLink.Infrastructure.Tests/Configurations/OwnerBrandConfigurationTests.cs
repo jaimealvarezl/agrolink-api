@@ -31,7 +31,6 @@ public class OwnerBrandConfigurationTests : TestBase
         var brand = new OwnerBrand
         {
             OwnerId = owner.Id,
-            RegistrationNumber = "REG-001",
             Description = "Tres rayas / Letra J",
             PhotoUrl = "https://storage/brand.jpg",
             IsActive = true,
@@ -49,7 +48,6 @@ public class OwnerBrandConfigurationTests : TestBase
 
         // Assert
         result.OwnerId.ShouldBe(owner.Id);
-        result.RegistrationNumber.ShouldBe("REG-001");
         result.Description.ShouldBe("Tres rayas / Letra J");
         result.PhotoUrl.ShouldBe("https://storage/brand.jpg");
         result.IsActive.ShouldBeTrue();
@@ -64,7 +62,6 @@ public class OwnerBrandConfigurationTests : TestBase
         var brand = new OwnerBrand
         {
             OwnerId = owner.Id,
-            RegistrationNumber = "REG-002",
             Description = "Cruz doble",
             PhotoUrl = null,
         };
@@ -81,27 +78,25 @@ public class OwnerBrandConfigurationTests : TestBase
     }
 
     [Test]
-    public async Task OwnerBrand_QueryFilter_ShouldExcludeInactiveOwnerBrands()
+    public async Task OwnerBrand_QueryFilter_ShouldExcludeInactiveBrands()
     {
         // Arrange
         var owner = await CreateTestOwnerAsync(_context);
 
-        var activeBrand = new OwnerBrand
-        {
-            OwnerId = owner.Id,
-            RegistrationNumber = "REG-ACTIVE",
-            Description = "Active brand",
-            IsActive = true,
-        };
-        var inactiveBrand = new OwnerBrand
-        {
-            OwnerId = owner.Id,
-            RegistrationNumber = "REG-INACTIVE",
-            Description = "Inactive brand",
-            IsActive = false,
-        };
-
-        _context.OwnerBrands.AddRange(activeBrand, inactiveBrand);
+        _context.OwnerBrands.AddRange(
+            new OwnerBrand
+            {
+                OwnerId = owner.Id,
+                Description = "Active brand",
+                IsActive = true,
+            },
+            new OwnerBrand
+            {
+                OwnerId = owner.Id,
+                Description = "Inactive brand",
+                IsActive = false,
+            }
+        );
         await _context.SaveChangesAsync();
 
         // Act
@@ -109,32 +104,6 @@ public class OwnerBrandConfigurationTests : TestBase
 
         // Assert
         results.Count.ShouldBe(1);
-        results[0].RegistrationNumber.ShouldBe("REG-ACTIVE");
-    }
-
-    [Test]
-    public async Task OwnerBrand_SameRegistrationNumber_AllowedForDifferentOwners()
-    {
-        // Arrange
-        var owner1 = await CreateTestOwnerAsync(_context, "Owner One");
-        var owner2 = await CreateTestOwnerAsync(_context, "Owner Two");
-
-        _context.OwnerBrands.AddRange(
-            new OwnerBrand
-            {
-                OwnerId = owner1.Id,
-                RegistrationNumber = "REG-SHARED",
-                Description = "Brand A",
-            },
-            new OwnerBrand
-            {
-                OwnerId = owner2.Id,
-                RegistrationNumber = "REG-SHARED",
-                Description = "Brand B",
-            }
-        );
-
-        // Act & Assert — should not throw
-        await Should.NotThrowAsync(() => _context.SaveChangesAsync());
+        results[0].Description.ShouldBe("Active brand");
     }
 }

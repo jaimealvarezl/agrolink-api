@@ -12,15 +12,15 @@ namespace AgroLink.Application.Tests.Features.OwnerBrands.Queries.GetByOwner;
 [TestFixture]
 public class GetOwnerBrandsQueryHandlerTests
 {
-    private AutoMocker _mocker = null!;
-    private GetOwnerBrandsQueryHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<GetOwnerBrandsQueryHandler>();
     }
+
+    private AutoMocker _mocker = null!;
+    private GetOwnerBrandsQueryHandler _handler = null!;
 
     [Test]
     public async Task Handle_ValidRequest_ReturnsBrandsForOwner()
@@ -29,15 +29,31 @@ public class GetOwnerBrandsQueryHandlerTests
         var query = new GetOwnerBrandsQuery(1, 10);
         var brands = new List<OwnerBrand>
         {
-            new() { Id = 1, OwnerId = 10, RegistrationNumber = "REG-001", Description = "Brand 1", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new() { Id = 2, OwnerId = 10, RegistrationNumber = "REG-002", Description = "Brand 2", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new()
+            {
+                Id = 1,
+                OwnerId = 10,
+                Description = "Brand 1",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+            },
+            new()
+            {
+                Id = 2,
+                OwnerId = 10,
+                Description = "Brand 2",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+            },
         };
 
-        _mocker.GetMock<IOwnerRepository>()
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(true);
 
-        _mocker.GetMock<IOwnerBrandRepository>()
+        _mocker
+            .GetMock<IOwnerBrandRepository>()
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<OwnerBrand, bool>>>()))
             .ReturnsAsync(brands);
 
@@ -47,8 +63,8 @@ public class GetOwnerBrandsQueryHandlerTests
         // Assert
         result.ShouldNotBeNull();
         result.Count().ShouldBe(2);
-        result.ShouldContain(b => b.RegistrationNumber == "REG-001");
-        result.ShouldContain(b => b.RegistrationNumber == "REG-002");
+        result.ShouldContain(b => b.Description == "Brand 1");
+        result.ShouldContain(b => b.Description == "Brand 2");
     }
 
     [Test]
@@ -57,7 +73,8 @@ public class GetOwnerBrandsQueryHandlerTests
         // Arrange
         var query = new GetOwnerBrandsQuery(1, 99);
 
-        _mocker.GetMock<IOwnerRepository>()
+        _mocker
+            .GetMock<IOwnerRepository>()
             .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
             .ReturnsAsync(false);
 

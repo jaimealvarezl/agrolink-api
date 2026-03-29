@@ -1,3 +1,4 @@
+using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.OwnerBrands.DTOs;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -20,25 +21,23 @@ public class GetOwnerBrandsQueryHandler(
             o.Id == request.OwnerId && o.FarmId == request.FarmId
         );
         if (!ownerExists)
-            throw new Application.Common.Exceptions.NotFoundException(
+        {
+            throw new NotFoundException(
                 $"Owner with ID {request.OwnerId} not found in farm {request.FarmId}."
             );
+        }
 
         var brands = await ownerBrandRepository.FindAsync(b => b.OwnerId == request.OwnerId);
 
-        return brands.Select(MapToDto);
-    }
-
-    private static OwnerBrandDto MapToDto(Domain.Entities.OwnerBrand b) =>
-        new()
+        return brands.Select(b => new OwnerBrandDto
         {
             Id = b.Id,
             OwnerId = b.OwnerId,
-            RegistrationNumber = b.RegistrationNumber,
             Description = b.Description,
             PhotoUrl = b.PhotoUrl,
             IsActive = b.IsActive,
             CreatedAt = b.CreatedAt,
             UpdatedAt = b.UpdatedAt,
-        };
+        });
+    }
 }

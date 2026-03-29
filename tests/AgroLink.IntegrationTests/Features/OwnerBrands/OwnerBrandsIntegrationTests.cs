@@ -32,34 +32,43 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
 
-        var owner = new Owner { Name = "Main Owner", Phone = "123", IsActive = true };
+        var owner = new Owner
+        {
+            Name = "Main Owner",
+            Phone = "123",
+            IsActive = true,
+        };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
         var farm = new Farm { Name = "Test Farm", OwnerId = owner.Id };
         DbContext.Farms.Add(farm);
         await DbContext.SaveChangesAsync();
-
         owner.FarmId = farm.Id;
-        DbContext.FarmMembers.Add(new FarmMember
-        {
-            FarmId = farm.Id,
-            UserId = user.Id,
-            Role = FarmMemberRoles.Admin,
-        });
+
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Admin,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
         return (farm, owner, user);
     }
 
-    private async Task<OwnerBrand> CreateOwnerBrandAsync(int ownerId, string regNumber = "REG-001")
+    private async Task<OwnerBrand> CreateOwnerBrandAsync(
+        int ownerId,
+        string description = "Test brand"
+    )
     {
         var brand = new OwnerBrand
         {
             OwnerId = ownerId,
-            RegistrationNumber = regNumber,
-            Description = "Test brand",
+            Description = description,
             IsActive = true,
         };
         DbContext.OwnerBrands.Add(brand);
@@ -74,15 +83,17 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
     {
         // Arrange
         var (farm, owner, _) = await SetupFarmWithAdminAsync("get1");
-        await CreateOwnerBrandAsync(owner.Id, "REG-001");
-        await CreateOwnerBrandAsync(owner.Id, "REG-002");
+        await CreateOwnerBrandAsync(owner.Id, "Brand One");
+        await CreateOwnerBrandAsync(owner.Id, "Brand Two");
 
         // Act
         var response = await Client.GetAsync($"/api/farms/{farm.Id}/owners/{owner.Id}/brands");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var brands = await response.Content.ReadFromJsonAsync<IEnumerable<OwnerBrandDto>>(JsonOptions);
+        var brands = await response.Content.ReadFromJsonAsync<IEnumerable<OwnerBrandDto>>(
+            JsonOptions
+        );
         brands.ShouldNotBeNull();
         brands.Count().ShouldBe(2);
     }
@@ -91,11 +102,22 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
     public async Task GetBrands_AsViewer_ReturnsForbidden()
     {
         // Arrange
-        var user = new User { Name = "Viewer", Email = "viewer@brands.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Viewer",
+            Email = "viewer@brands.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
 
-        var owner = new Owner { Name = "Owner", Phone = "123", IsActive = true };
+        var owner = new Owner
+        {
+            Name = "Owner",
+            Phone = "123",
+            IsActive = true,
+        };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
@@ -104,7 +126,14 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
         await DbContext.SaveChangesAsync();
         owner.FarmId = farm.Id;
 
-        DbContext.FarmMembers.Add(new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Viewer });
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Viewer,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
@@ -121,10 +150,16 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
     {
         // Arrange
         var (farm, owner, _) = await SetupFarmWithAdminAsync("get2");
-        await CreateOwnerBrandAsync(owner.Id, "REG-ACTIVE");
+        await CreateOwnerBrandAsync(owner.Id, "Active brand");
 
-        var inactiveBrand = new OwnerBrand { OwnerId = owner.Id, RegistrationNumber = "REG-INACTIVE", Description = "Inactive", IsActive = false };
-        DbContext.OwnerBrands.Add(inactiveBrand);
+        DbContext.OwnerBrands.Add(
+            new OwnerBrand
+            {
+                OwnerId = owner.Id,
+                Description = "Inactive brand",
+                IsActive = false,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         // Act
@@ -132,10 +167,12 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var brands = await response.Content.ReadFromJsonAsync<IEnumerable<OwnerBrandDto>>(JsonOptions);
+        var brands = await response.Content.ReadFromJsonAsync<IEnumerable<OwnerBrandDto>>(
+            JsonOptions
+        );
         brands.ShouldNotBeNull();
         brands.Count().ShouldBe(1);
-        brands.First().RegistrationNumber.ShouldBe("REG-ACTIVE");
+        brands.First().Description.ShouldBe("Active brand");
     }
 
     // POST tests
@@ -146,56 +183,44 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
         // Arrange
         var (farm, owner, _) = await SetupFarmWithAdminAsync("post1");
 
-        var request = new CreateOwnerBrandRequest
-        {
-            RegistrationNumber = "REG-NEW",
-            Description = "Tres rayas / Letra J",
-            PhotoUrl = "https://storage/brand.jpg",
-        };
+        var request = new CreateOwnerBrandRequest { Description = "Tres rayas / Letra J" };
 
         // Act
         var response = await Client.PostAsJsonAsync(
-            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands", request
+            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands",
+            request
         );
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var created = await response.Content.ReadFromJsonAsync<OwnerBrandDto>(JsonOptions);
         created.ShouldNotBeNull();
-        created.RegistrationNumber.ShouldBe("REG-NEW");
         created.Description.ShouldBe("Tres rayas / Letra J");
-        created.PhotoUrl.ShouldBe("https://storage/brand.jpg");
+        created.PhotoUrl.ShouldBeNull();
         created.OwnerId.ShouldBe(owner.Id);
         created.IsActive.ShouldBeTrue();
-    }
-
-    [Test]
-    public async Task Create_DuplicateRegistrationNumber_ReturnsBadRequest()
-    {
-        // Arrange
-        var (farm, owner, _) = await SetupFarmWithAdminAsync("post2");
-        await CreateOwnerBrandAsync(owner.Id, "REG-DUP");
-
-        var request = new CreateOwnerBrandRequest { RegistrationNumber = "REG-DUP", Description = "Duplicate" };
-
-        // Act
-        var response = await Client.PostAsJsonAsync(
-            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands", request
-        );
-
-        // Assert
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Test]
     public async Task Create_AsForeman_ReturnsForbidden()
     {
         // Arrange
-        var user = new User { Name = "Foreman", Email = "foreman@brands.com", PasswordHash = "hash", Role = "USER" };
+        var user = new User
+        {
+            Name = "Foreman",
+            Email = "foreman@brands.com",
+            PasswordHash = "hash",
+            Role = "USER",
+        };
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
 
-        var owner = new Owner { Name = "Owner", Phone = "123", IsActive = true };
+        var owner = new Owner
+        {
+            Name = "Owner",
+            Phone = "123",
+            IsActive = true,
+        };
         DbContext.Owners.Add(owner);
         await DbContext.SaveChangesAsync();
 
@@ -204,16 +229,24 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
         await DbContext.SaveChangesAsync();
         owner.FarmId = farm.Id;
 
-        DbContext.FarmMembers.Add(new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Editor });
+        DbContext.FarmMembers.Add(
+            new FarmMember
+            {
+                FarmId = farm.Id,
+                UserId = user.Id,
+                Role = FarmMemberRoles.Editor,
+            }
+        );
         await DbContext.SaveChangesAsync();
 
         Authenticate(user);
 
-        var request = new CreateOwnerBrandRequest { RegistrationNumber = "REG-001", Description = "Brand" };
+        var request = new CreateOwnerBrandRequest { Description = "Brand" };
 
         // Act
         var response = await Client.PostAsJsonAsync(
-            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands", request
+            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands",
+            request
         );
 
         // Assert
@@ -227,31 +260,28 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
     {
         // Arrange
         var (farm, owner, _) = await SetupFarmWithAdminAsync("put1");
-        var brand = await CreateOwnerBrandAsync(owner.Id, "REG-OLD");
+        var brand = await CreateOwnerBrandAsync(owner.Id, "Old description");
 
-        var request = new UpdateOwnerBrandRequest
-        {
-            RegistrationNumber = "REG-UPDATED",
-            Description = "Updated description",
-            PhotoUrl = null,
-        };
+        var request = new UpdateOwnerBrandRequest { Description = "Updated description" };
 
         // Act
         var response = await Client.PutAsJsonAsync(
-            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands/{brand.Id}", request
+            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands/{brand.Id}",
+            request
         );
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var updated = await response.Content.ReadFromJsonAsync<OwnerBrandDto>(JsonOptions);
         updated.ShouldNotBeNull();
-        updated.RegistrationNumber.ShouldBe("REG-UPDATED");
         updated.Description.ShouldBe("Updated description");
         updated.UpdatedAt.ShouldNotBeNull();
 
         DbContext.ChangeTracker.Clear();
-        var dbBrand = await DbContext.OwnerBrands.IgnoreQueryFilters().FirstAsync(b => b.Id == brand.Id);
-        dbBrand.RegistrationNumber.ShouldBe("REG-UPDATED");
+        var dbBrand = await DbContext
+            .OwnerBrands.IgnoreQueryFilters()
+            .FirstAsync(b => b.Id == brand.Id);
+        dbBrand.Description.ShouldBe("Updated description");
     }
 
     [Test]
@@ -260,11 +290,12 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
         // Arrange
         var (farm, owner, _) = await SetupFarmWithAdminAsync("put2");
 
-        var request = new UpdateOwnerBrandRequest { RegistrationNumber = "REG-001", Description = "Brand" };
+        var request = new UpdateOwnerBrandRequest { Description = "Brand" };
 
         // Act
         var response = await Client.PutAsJsonAsync(
-            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands/9999", request
+            $"/api/farms/{farm.Id}/owners/{owner.Id}/brands/9999",
+            request
         );
 
         // Assert
@@ -289,7 +320,9 @@ public class OwnerBrandsIntegrationTests : IntegrationTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         DbContext.ChangeTracker.Clear();
-        var dbBrand = await DbContext.OwnerBrands.IgnoreQueryFilters().FirstAsync(b => b.Id == brand.Id);
+        var dbBrand = await DbContext
+            .OwnerBrands.IgnoreQueryFilters()
+            .FirstAsync(b => b.Id == brand.Id);
         dbBrand.IsActive.ShouldBeFalse();
         dbBrand.UpdatedAt.ShouldNotBeNull();
     }

@@ -14,4 +14,13 @@ public class StoragePathProvider : IStoragePathProvider
 
         return $"f/{f}/a/{a}/{p}{extension}";
     }
+
+    public string GetOwnerBrandPhotoPath(int farmId, int brandId, string fileName)
+    {
+        var f = IdSerializer.Encode("Farm", farmId);
+        var b = IdSerializer.Encode("OwnerBrand", brandId);
+        var extension = Path.GetExtension(fileName).ToLower();
+
+        return $"f/{f}/ob/{b}{extension}";
+    }
 }
