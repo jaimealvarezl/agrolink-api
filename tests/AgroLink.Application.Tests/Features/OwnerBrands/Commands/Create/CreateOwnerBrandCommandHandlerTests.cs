@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.OwnerBrands.Commands.Create;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -50,6 +51,10 @@ public class CreateOwnerBrandCommandHandlerTests
         result.IsActive.ShouldBeTrue();
 
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
+        // No photo on creation — presigned URL should not be called
+        _mocker
+            .GetMock<IStorageService>()
+            .Verify(s => s.GetPresignedUrl(It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Never);
     }
 
     [Test]

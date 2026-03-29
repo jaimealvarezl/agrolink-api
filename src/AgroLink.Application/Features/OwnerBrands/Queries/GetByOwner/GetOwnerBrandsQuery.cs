@@ -1,5 +1,6 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.OwnerBrands.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -9,7 +10,8 @@ public record GetOwnerBrandsQuery(int FarmId, int OwnerId) : IRequest<IEnumerabl
 
 public class GetOwnerBrandsQueryHandler(
     IOwnerBrandRepository ownerBrandRepository,
-    IOwnerRepository ownerRepository
+    IOwnerRepository ownerRepository,
+    IStorageService storageService
 ) : IRequestHandler<GetOwnerBrandsQuery, IEnumerable<OwnerBrandDto>>
 {
     public async Task<IEnumerable<OwnerBrandDto>> Handle(
@@ -29,15 +31,6 @@ public class GetOwnerBrandsQueryHandler(
 
         var brands = await ownerBrandRepository.FindAsync(b => b.OwnerId == request.OwnerId);
 
-        return brands.Select(b => new OwnerBrandDto
-        {
-            Id = b.Id,
-            OwnerId = b.OwnerId,
-            Description = b.Description,
-            PhotoUrl = b.PhotoUrl,
-            IsActive = b.IsActive,
-            CreatedAt = b.CreatedAt,
-            UpdatedAt = b.UpdatedAt,
-        });
+        return brands.Select(b => b.ToDto(storageService));
     }
 }

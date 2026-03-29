@@ -1,5 +1,6 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.OwnerBrands.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -12,6 +13,7 @@ public record CreateOwnerBrandCommand(int FarmId, int OwnerId, string Descriptio
 public class CreateOwnerBrandCommandHandler(
     IOwnerBrandRepository ownerBrandRepository,
     IOwnerRepository ownerRepository,
+    IStorageService storageService,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateOwnerBrandCommand, OwnerBrandDto>
 {
@@ -41,20 +43,6 @@ public class CreateOwnerBrandCommandHandler(
         await ownerBrandRepository.AddAsync(brand);
         await unitOfWork.SaveChangesAsync();
 
-        return MapToDto(brand);
-    }
-
-    private static OwnerBrandDto MapToDto(OwnerBrand b)
-    {
-        return new OwnerBrandDto
-        {
-            Id = b.Id,
-            OwnerId = b.OwnerId,
-            Description = b.Description,
-            PhotoUrl = b.PhotoUrl,
-            IsActive = b.IsActive,
-            CreatedAt = b.CreatedAt,
-            UpdatedAt = b.UpdatedAt,
-        };
+        return brand.ToDto(storageService);
     }
 }
