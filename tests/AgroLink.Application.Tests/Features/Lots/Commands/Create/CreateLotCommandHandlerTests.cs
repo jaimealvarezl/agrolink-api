@@ -44,7 +44,7 @@ public class CreateLotCommandHandlerTests
         _mocker
             .GetMock<ILotRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Lot>()))
-            .Callback<Lot>(l => l.Id = lot.Id); // Simulate DB ID generation
+            .Callback<Lot, CancellationToken>((l, _) => l.Id = lot.Id); // Simulate DB ID generation
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _mocker
             .GetMock<IPaddockRepository>()

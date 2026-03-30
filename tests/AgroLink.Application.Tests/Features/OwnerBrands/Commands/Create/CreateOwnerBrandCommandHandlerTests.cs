@@ -37,7 +37,7 @@ public class CreateOwnerBrandCommandHandlerTests
         _mocker
             .GetMock<IOwnerBrandRepository>()
             .Setup(r => r.AddAsync(It.IsAny<OwnerBrand>()))
-            .Callback<OwnerBrand>(b => b.Id = 5);
+            .Callback<OwnerBrand, CancellationToken>((b, _) => b.Id = 5);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

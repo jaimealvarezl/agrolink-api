@@ -50,7 +50,7 @@ public class CreatePaddockCommandHandlerTests
         _mocker
             .GetMock<IPaddockRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Paddock>()))
-            .Callback<Paddock>(p => p.Id = 1);
+            .Callback<Paddock, CancellationToken>((p, _) => p.Id = 1);
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act

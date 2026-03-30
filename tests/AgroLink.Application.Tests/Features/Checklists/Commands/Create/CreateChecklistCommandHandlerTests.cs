@@ -77,7 +77,7 @@ public class CreateChecklistCommandHandlerTests
         _mocker
             .GetMock<IChecklistRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Checklist>()))
-            .Callback<Checklist>(c => c.Id = 1);
+            .Callback<Checklist, CancellationToken>((c, _) => c.Id = 1);
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _mocker.GetMock<IUserRepository>().Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
