@@ -17,41 +17,48 @@ public class Repository<T> : IRepository<T>
         _dbSet = context.Set<T>();
     }
 
-    public virtual async Task<T?> GetByIdAsync(int id)
+    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
     {
-        return await _dbSet.FindAsync(id);
+        return await _dbSet.FindAsync([id], ct);
     }
 
-    public virtual async Task<IEnumerable<T>> GetAllAsync()
+    public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
     {
-        return await _dbSet.ToListAsync();
+        return await _dbSet.ToListAsync(ct);
     }
 
-    public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+    public virtual async Task<IEnumerable<T>> FindAsync(
+        Expression<Func<T, bool>> predicate,
+        CancellationToken ct = default
+    )
     {
-        return await _dbSet.Where(predicate).ToListAsync();
+        return await _dbSet.Where(predicate).ToListAsync(ct);
     }
 
-    public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+    public virtual async Task<T?> FirstOrDefaultAsync(
+        Expression<Func<T, bool>> predicate,
+        CancellationToken ct = default
+    )
     {
-        return await _dbSet.FirstOrDefaultAsync(predicate);
+        return await _dbSet.FirstOrDefaultAsync(predicate, ct);
     }
 
     public virtual async Task<T?> FirstOrDefaultIgnoreFiltersAsync(
-        Expression<Func<T, bool>> predicate
+        Expression<Func<T, bool>> predicate,
+        CancellationToken ct = default
     )
     {
-        return await _dbSet.IgnoreQueryFilters().FirstOrDefaultAsync(predicate);
+        return await _dbSet.IgnoreQueryFilters().FirstOrDefaultAsync(predicate, ct);
     }
 
-    public virtual async Task AddAsync(T entity)
+    public virtual async Task AddAsync(T entity, CancellationToken ct = default)
     {
-        await _dbSet.AddAsync(entity);
+        await _dbSet.AddAsync(entity, ct);
     }
 
-    public virtual async Task AddRangeAsync(IEnumerable<T> entities)
+    public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken ct = default)
     {
-        await _dbSet.AddRangeAsync(entities);
+        await _dbSet.AddRangeAsync(entities, ct);
     }
 
     public virtual void Update(T entity)
@@ -74,18 +81,24 @@ public class Repository<T> : IRepository<T>
         _dbSet.RemoveRange(entities);
     }
 
-    public virtual async Task<int> CountAsync()
+    public virtual async Task<int> CountAsync(CancellationToken ct = default)
     {
-        return await _dbSet.CountAsync();
+        return await _dbSet.CountAsync(ct);
     }
 
-    public virtual async Task<int> CountAsync(Expression<Func<T, bool>> predicate)
+    public virtual async Task<int> CountAsync(
+        Expression<Func<T, bool>> predicate,
+        CancellationToken ct = default
+    )
     {
-        return await _dbSet.CountAsync(predicate);
+        return await _dbSet.CountAsync(predicate, ct);
     }
 
-    public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+    public virtual async Task<bool> ExistsAsync(
+        Expression<Func<T, bool>> predicate,
+        CancellationToken ct = default
+    )
     {
-        return await _dbSet.AnyAsync(predicate);
+        return await _dbSet.AnyAsync(predicate, ct);
     }
 }

@@ -2,7 +2,7 @@ namespace AgroLink.Domain.Interfaces;
 
 public interface IUnitOfWork
 {
-    Task<int> SaveChangesAsync();
+    Task<int> SaveChangesAsync(CancellationToken ct = default);
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();

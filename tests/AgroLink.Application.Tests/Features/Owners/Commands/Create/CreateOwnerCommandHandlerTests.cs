@@ -43,7 +43,7 @@ public class CreateOwnerCommandHandlerTests
         _mocker
             .GetMock<IOwnerRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Owner>()))
-            .Callback<Owner>(o => o.Id = 10);
+            .Callback<Owner, CancellationToken>((o, _) => o.Id = 10);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

@@ -3,24 +3,18 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AgroLink.Infrastructure.Data;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(AgroLinkDbContext context) : IUnitOfWork
 {
-    private readonly AgroLinkDbContext _context;
     private IDbContextTransaction? _transaction;
 
-    public UnitOfWork(AgroLinkDbContext context)
+    public Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        _context = context;
-    }
-
-    public Task<int> SaveChangesAsync()
-    {
-        return _context.SaveChangesAsync();
+        return context.SaveChangesAsync(ct);
     }
 
     public async Task BeginTransactionAsync()
     {
-        _transaction = await _context.Database.BeginTransactionAsync();
+        _transaction = await context.Database.BeginTransactionAsync();
     }
 
     public async Task CommitTransactionAsync()

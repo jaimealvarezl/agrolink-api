@@ -81,7 +81,7 @@ public class CreateAnimalCommandHandlerTests
         _mocker
             .GetMock<IAnimalRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Animal>()))
-            .Callback<Animal>(a => a.Id = 1);
+            .Callback<Animal, CancellationToken>((a, _) => a.Id = 1);
         _mocker
             .GetMock<IOwnerRepository>()
             .Setup(r => r.GetByIdAsync(owner.Id))
