@@ -14,7 +14,11 @@ public class RemoveAnimalBrandCommandHandler(
 {
     public async Task Handle(RemoveAnimalBrandCommand request, CancellationToken cancellationToken)
     {
-        var animal = await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId);
+        var animal = await animalRepository.GetByIdInFarmAsync(
+            request.AnimalId,
+            request.FarmId,
+            cancellationToken
+        );
         if (animal is null)
         {
             throw new NotFoundException(
@@ -22,8 +26,9 @@ public class RemoveAnimalBrandCommandHandler(
             );
         }
 
-        var animalBrand = await animalBrandRepository.FirstOrDefaultAsync(ab =>
-            ab.Id == request.AnimalBrandId && ab.AnimalId == request.AnimalId
+        var animalBrand = await animalBrandRepository.FirstOrDefaultAsync(
+            ab => ab.Id == request.AnimalBrandId && ab.AnimalId == request.AnimalId,
+            cancellationToken
         );
         if (animalBrand is null)
         {
@@ -33,6 +38,6 @@ public class RemoveAnimalBrandCommandHandler(
         }
 
         animalBrandRepository.Remove(animalBrand);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

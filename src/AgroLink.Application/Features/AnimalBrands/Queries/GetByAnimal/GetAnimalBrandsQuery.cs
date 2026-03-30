@@ -20,7 +20,11 @@ public class GetAnimalBrandsQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId);
+        var animal = await animalRepository.GetByIdInFarmAsync(
+            request.AnimalId,
+            request.FarmId,
+            cancellationToken
+        );
         if (animal is null)
         {
             throw new NotFoundException(
@@ -28,7 +32,10 @@ public class GetAnimalBrandsQueryHandler(
             );
         }
 
-        var brands = await animalBrandRepository.GetByAnimalIdAsync(request.AnimalId);
+        var brands = await animalBrandRepository.GetByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         return brands.Select(b => b.ToDto(storageService));
     }
 }

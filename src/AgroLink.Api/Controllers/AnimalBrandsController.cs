@@ -34,7 +34,8 @@ public class AnimalBrandsController(IMediator mediator) : BaseController
     public async Task<ActionResult<AnimalBrandDto>> AddBrand(
         int farmId,
         int animalId,
-        AddAnimalBrandRequest request
+        AddAnimalBrandRequest request,
+        CancellationToken cancellationToken
     )
     {
         var brand = await mediator.Send(
@@ -44,16 +45,25 @@ public class AnimalBrandsController(IMediator mediator) : BaseController
                 request.OwnerBrandId,
                 request.AppliedAt,
                 request.Notes
-            )
+            ),
+            cancellationToken
         );
         return CreatedAtAction(nameof(GetBrands), new { farmId, animalId }, brand);
     }
 
     [HttpDelete("brands/{animalBrandId}")]
     [Authorize(Policy = "FarmEditorAccess")]
-    public async Task<ActionResult> RemoveBrand(int farmId, int animalId, int animalBrandId)
+    public async Task<ActionResult> RemoveBrand(
+        int farmId,
+        int animalId,
+        int animalBrandId,
+        CancellationToken cancellationToken
+    )
     {
-        await mediator.Send(new RemoveAnimalBrandCommand(farmId, animalId, animalBrandId));
+        await mediator.Send(
+            new RemoveAnimalBrandCommand(farmId, animalId, animalBrandId),
+            cancellationToken
+        );
         return NoContent();
     }
 

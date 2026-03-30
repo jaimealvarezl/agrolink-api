@@ -28,7 +28,11 @@ public class AddAnimalBrandCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId);
+        var animal = await animalRepository.GetByIdInFarmAsync(
+            request.AnimalId,
+            request.FarmId,
+            cancellationToken
+        );
         if (animal is null)
         {
             throw new NotFoundException(
@@ -36,8 +40,9 @@ public class AddAnimalBrandCommandHandler(
             );
         }
 
-        var ownerBrand = await ownerBrandRepository.FirstOrDefaultAsync(ob =>
-            ob.Id == request.OwnerBrandId && ob.Owner.FarmId == request.FarmId
+        var ownerBrand = await ownerBrandRepository.FirstOrDefaultAsync(
+            ob => ob.Id == request.OwnerBrandId && ob.Owner.FarmId == request.FarmId,
+            cancellationToken
         );
         if (ownerBrand is null)
         {
@@ -55,8 +60,8 @@ public class AddAnimalBrandCommandHandler(
             CreatedAt = DateTime.UtcNow,
         };
 
-        await animalBrandRepository.AddAsync(animalBrand);
-        await unitOfWork.SaveChangesAsync();
+        await animalBrandRepository.AddAsync(animalBrand, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         animalBrand.OwnerBrand = ownerBrand;
         return animalBrand.ToDto(storageService);

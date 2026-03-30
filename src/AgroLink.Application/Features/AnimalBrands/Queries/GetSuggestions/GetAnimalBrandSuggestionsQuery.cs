@@ -21,7 +21,11 @@ public class GetAnimalBrandSuggestionsQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId);
+        var animal = await animalRepository.GetByIdInFarmAsync(
+            request.AnimalId,
+            request.FarmId,
+            cancellationToken
+        );
         if (animal is null)
         {
             throw new NotFoundException(
@@ -37,8 +41,9 @@ public class GetAnimalBrandSuggestionsQueryHandler(
             return [];
         }
 
-        var ownerBrands = await ownerBrandRepository.FindAsync(ob =>
-            ownerIds.Contains(ob.OwnerId) && ob.IsActive
+        var ownerBrands = await ownerBrandRepository.FindAsync(
+            ob => ownerIds.Contains(ob.OwnerId) && ob.IsActive,
+            cancellationToken
         );
 
         return ownerBrands.Select(ob => ob.ToDto(storageService));

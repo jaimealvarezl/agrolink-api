@@ -9,12 +9,15 @@ public class AnimalBrandRepository(AgroLinkDbContext context)
     : Repository<AnimalBrand>(context),
         IAnimalBrandRepository
 {
-    public async Task<IEnumerable<AnimalBrand>> GetByAnimalIdAsync(int animalId)
+    public async Task<IEnumerable<AnimalBrand>> GetByAnimalIdAsync(
+        int animalId,
+        CancellationToken ct = default
+    )
     {
         return await _dbSet
             .AsNoTracking()
             .Where(ab => ab.AnimalId == animalId)
             .Include(ab => ab.OwnerBrand)
-            .ToListAsync();
+            .ToListAsync(ct);
     }
 }
