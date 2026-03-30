@@ -56,15 +56,17 @@ public class CreateFarmCommandHandlerTests
         _mocker
             .GetMock<IFarmRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
-            .Callback<Farm, CancellationToken>((f, _) =>
-            {
-                f.Id = farm.Id;
-                // Simulate EF Core Foreign Key Fixup
-                if (f.Owner != null)
+            .Callback<Farm, CancellationToken>(
+                (f, _) =>
                 {
-                    f.OwnerId = f.Owner.Id;
+                    f.Id = farm.Id;
+                    // Simulate EF Core Foreign Key Fixup
+                    if (f.Owner != null)
+                    {
+                        f.OwnerId = f.Owner.Id;
+                    }
                 }
-            });
+            );
 
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
@@ -133,14 +135,16 @@ public class CreateFarmCommandHandlerTests
         _mocker
             .GetMock<IFarmRepository>()
             .Setup(r => r.AddAsync(It.IsAny<Farm>()))
-            .Callback<Farm, CancellationToken>((f, _) =>
-            {
-                f.Id = 2;
-                if (f.Owner != null)
+            .Callback<Farm, CancellationToken>(
+                (f, _) =>
                 {
-                    f.OwnerId = f.Owner.Id;
+                    f.Id = 2;
+                    if (f.Owner != null)
+                    {
+                        f.OwnerId = f.Owner.Id;
+                    }
                 }
-            });
+            );
 
         _mocker.GetMock<IUnitOfWork>().Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
