@@ -84,6 +84,7 @@ public static class DependencyInjection
         services.AddScoped<IAnimalNoteRepository, AnimalNoteRepository>();
         services.AddScoped<IAnimalRetirementRepository, AnimalRetirementRepository>();
         services.AddScoped<IOwnerBrandRepository, OwnerBrandRepository>();
+        services.AddScoped<IAnimalBrandRepository, AnimalBrandRepository>();
         services.AddScoped<IFarmMemberRepository, FarmMemberRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
