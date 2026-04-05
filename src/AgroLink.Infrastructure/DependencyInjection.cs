@@ -70,6 +70,24 @@ public static class DependencyInjection
         services.AddScoped<IRepository<ChecklistItem>, Repository<ChecklistItem>>();
         services.AddScoped<IRepository<Movement>, Repository<Movement>>();
         services.AddScoped<IRepository<User>, Repository<User>>();
+        services.AddScoped<IRepository<ClinicalCase>, Repository<ClinicalCase>>();
+        services.AddScoped<IRepository<ClinicalCaseEvent>, Repository<ClinicalCaseEvent>>();
+        services.AddScoped<
+            IRepository<ClinicalRecommendation>,
+            Repository<ClinicalRecommendation>
+        >();
+        services.AddScoped<IRepository<ClinicalAlert>, Repository<ClinicalAlert>>();
+        services.AddScoped<IRepository<Medication>, Repository<Medication>>();
+        services.AddScoped<IRepository<MedicationRule>, Repository<MedicationRule>>();
+        services.AddScoped<IRepository<MedicationImage>, Repository<MedicationImage>>();
+        services.AddScoped<
+            IRepository<TelegramInboundEventLog>,
+            Repository<TelegramInboundEventLog>
+        >();
+        services.AddScoped<
+            IRepository<TelegramOutboundMessage>,
+            Repository<TelegramOutboundMessage>
+        >();
 
         // Specific Repositories
         services.AddScoped<IFarmRepository, FarmRepository>();
@@ -87,6 +105,11 @@ public static class DependencyInjection
         services.AddScoped<IAnimalBrandRepository, AnimalBrandRepository>();
         services.AddScoped<IFarmMemberRepository, FarmMemberRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IClinicalCaseRepository, ClinicalCaseRepository>();
+        services.AddScoped<IClinicalCaseEventRepository, ClinicalCaseEventRepository>();
+        services.AddScoped<IClinicalRecommendationRepository, ClinicalRecommendationRepository>();
+        services.AddScoped<ITelegramInboundEventLogRepository, TelegramInboundEventLogRepository>();
+        services.AddScoped<ITelegramOutboundMessageRepository, TelegramOutboundMessageRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -96,6 +119,16 @@ public static class DependencyInjection
         services.AddScoped<IStorageService, S3StorageService>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddHttpClient<ITelegramGateway, TelegramGateway>();
+        services.AddHttpClient<
+            IClinicalMedicationAdvisorService,
+            OpenAiClinicalMedicationAdvisorService
+        >();
+        services.AddHttpClient<
+            IClinicalAudioTranscriptionService,
+            OpenAiClinicalAudioTranscriptionService
+        >();
+        services.AddHttpClient<IClinicalTextToSpeechService, OpenAiClinicalTextToSpeechService>();
 
         return services;
     }

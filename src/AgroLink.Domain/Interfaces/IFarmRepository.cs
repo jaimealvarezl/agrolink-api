@@ -8,4 +8,5 @@ public interface IFarmRepository : IRepository<Farm>
     Task<IEnumerable<Farm>> GetFarmsWithPaddocksAsync();
     Task<Farm?> GetFarmWithPaddocksAsync(int id);
     Task<FarmHierarchy?> GetFarmHierarchyAsync(int id);
+    Task<Farm?> FindByReferenceAsync(string reference, CancellationToken ct = default);
 }

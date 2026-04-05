@@ -363,6 +363,179 @@ namespace AgroLink.Infrastructure.Migrations
                     b.ToTable("ChecklistItems");
                 });
 
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalAlert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AlertType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("ClinicalCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicalCaseId", "CreatedAt");
+
+                    b.ToTable("ClinicalAlerts");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalCase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AnimalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AnimalReferenceText")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EarTag")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("FarmId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FarmReferenceText")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("FarmId", "AnimalId", "OpenedAt");
+
+                    b.HasIndex("FarmId", "EarTag", "OpenedAt");
+
+                    b.ToTable("ClinicalCases");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalCaseEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClinicalCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RawPayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("StructuredDataJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Transcript")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicalCaseId", "CreatedAt");
+
+                    b.ToTable("ClinicalCaseEvents");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalRecommendation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdviceText")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<int>("ClinicalCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Disclaimer")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RawModelResponse")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("RecommendationSource")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicalCaseId", "CreatedAt");
+
+                    b.ToTable("ClinicalRecommendations");
+                });
+
             modelBuilder.Entity("AgroLink.Domain.Entities.Farm", b =>
                 {
                     b.Property<int>("Id")
@@ -474,6 +647,117 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("PaddockId");
 
                     b.ToTable("Lots");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.Medication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TechnicalSheet")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Active");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Medications");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.MedicationImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("MedicationId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicationId");
+
+                    b.ToTable("MedicationImages");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.MedicationRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Contraindications")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("DoseFormula")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("MedicationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Species")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SymptomTags")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal?>("WeightMax")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("WeightMin")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicationId");
+
+                    b.HasIndex("Species", "Active");
+
+                    b.ToTable("MedicationRules");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Movement", b =>
@@ -644,6 +928,102 @@ namespace AgroLink.Infrastructure.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("Paddocks");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.TelegramInboundEventLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long?>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("MessageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProcessingStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RawPayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<long>("TelegramUpdateId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TelegramUpdateId")
+                        .IsUnique();
+
+                    b.HasIndex("ChatId", "CreatedAt");
+
+                    b.ToTable("TelegramInboundEventLogs");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.TelegramOutboundMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("ClinicalCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<long?>("TelegramMessageId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicalCaseId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("ChatId", "CreatedAt");
+
+                    b.ToTable("TelegramOutboundMessages");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.User", b =>
@@ -844,6 +1224,57 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Checklist");
                 });
 
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalAlert", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.ClinicalCase", "ClinicalCase")
+                        .WithMany("Alerts")
+                        .HasForeignKey("ClinicalCaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClinicalCase");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalCase", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.Animal", "Animal")
+                        .WithMany()
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AgroLink.Domain.Entities.Farm", "Farm")
+                        .WithMany()
+                        .HasForeignKey("FarmId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("Farm");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalCaseEvent", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.ClinicalCase", "ClinicalCase")
+                        .WithMany("Events")
+                        .HasForeignKey("ClinicalCaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClinicalCase");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalRecommendation", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.ClinicalCase", "ClinicalCase")
+                        .WithMany("Recommendations")
+                        .HasForeignKey("ClinicalCaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClinicalCase");
+                });
+
             modelBuilder.Entity("AgroLink.Domain.Entities.Farm", b =>
                 {
                     b.HasOne("AgroLink.Domain.Entities.Owner", "Owner")
@@ -883,6 +1314,28 @@ namespace AgroLink.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Paddock");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.MedicationImage", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.Medication", "Medication")
+                        .WithMany("Images")
+                        .HasForeignKey("MedicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medication");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.MedicationRule", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.Medication", "Medication")
+                        .WithMany("Rules")
+                        .HasForeignKey("MedicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medication");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Movement", b =>
@@ -956,6 +1409,16 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("Farm");
                 });
 
+            modelBuilder.Entity("AgroLink.Domain.Entities.TelegramOutboundMessage", b =>
+                {
+                    b.HasOne("AgroLink.Domain.Entities.ClinicalCase", "ClinicalCase")
+                        .WithMany()
+                        .HasForeignKey("ClinicalCaseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ClinicalCase");
+                });
+
             modelBuilder.Entity("AgroLink.Domain.Entities.Animal", b =>
                 {
                     b.Navigation("AnimalOwners");
@@ -980,6 +1443,15 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Navigation("ChecklistItems");
                 });
 
+            modelBuilder.Entity("AgroLink.Domain.Entities.ClinicalCase", b =>
+                {
+                    b.Navigation("Alerts");
+
+                    b.Navigation("Events");
+
+                    b.Navigation("Recommendations");
+                });
+
             modelBuilder.Entity("AgroLink.Domain.Entities.Farm", b =>
                 {
                     b.Navigation("Members");
@@ -990,6 +1462,13 @@ namespace AgroLink.Infrastructure.Migrations
             modelBuilder.Entity("AgroLink.Domain.Entities.Lot", b =>
                 {
                     b.Navigation("Animals");
+                });
+
+            modelBuilder.Entity("AgroLink.Domain.Entities.Medication", b =>
+                {
+                    b.Navigation("Images");
+
+                    b.Navigation("Rules");
                 });
 
             modelBuilder.Entity("AgroLink.Domain.Entities.Owner", b =>

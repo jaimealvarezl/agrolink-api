@@ -49,6 +49,69 @@ public class AnimalRepository(AgroLinkDbContext context)
             .FirstOrDefaultAsync();
     }
 
+    public async Task<Animal?> GetByEarTagInFarmAsync(
+        int farmId,
+        string earTag,
+        CancellationToken ct = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(earTag))
+        {
+            return null;
+        }
+
+        var normalized = earTag.Trim().ToLowerInvariant();
+        return await _dbSet.FirstOrDefaultAsync(
+            a =>
+                a.Lot.Paddock.FarmId == farmId
+                && (
+                    (a.TagVisual != null && a.TagVisual.ToLower() == normalized)
+                    || (a.Cuia != null && a.Cuia.ToLower() == normalized)
+                ),
+            ct
+        );
+    }
+
+    public async Task<Animal?> FindByReferenceInFarmAsync(
+        int farmId,
+        string reference,
+        CancellationToken ct = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return null;
+        }
+
+        var normalized = reference.Trim().ToLowerInvariant();
+        var exact = await _dbSet.FirstOrDefaultAsync(
+            a =>
+                a.Lot.Paddock.FarmId == farmId
+                && (
+                    (a.TagVisual != null && a.TagVisual.ToLower() == normalized)
+                    || (a.Cuia != null && a.Cuia.ToLower() == normalized)
+                    || a.Name.ToLower() == normalized
+                ),
+            ct
+        );
+
+        if (exact != null)
+        {
+            return exact;
+        }
+
+        return await _dbSet.FirstOrDefaultAsync(
+            a =>
+                a.Lot.Paddock.FarmId == farmId
+                && (
+                    (a.TagVisual != null && a.TagVisual.ToLower().Contains(normalized))
+                    || (a.Cuia != null && a.Cuia.ToLower().Contains(normalized))
+                    || a.Name.ToLower().Contains(normalized)
+                ),
+            ct
+        );
+    }
+
     public async Task<Animal?> GetAnimalWithOwnersAsync(int id)
     {
         return await _dbSet

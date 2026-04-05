@@ -17,7 +17,6 @@ COPY tests/AgroLink.Application.Tests/*.csproj ./tests/AgroLink.Application.Test
 COPY tests/AgroLink.Domain.Tests/*.csproj ./tests/AgroLink.Domain.Tests/
 COPY tests/AgroLink.Infrastructure.Tests/*.csproj ./tests/AgroLink.Infrastructure.Tests/
 COPY tests/AgroLink.IntegrationTests/*.csproj ./tests/AgroLink.IntegrationTests/
-COPY tests/TestProject1/*.csproj ./tests/TestProject1/
 
 # Restore dependencies
 RUN dotnet restore
