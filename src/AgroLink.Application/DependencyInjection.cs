@@ -13,6 +13,8 @@ public static class DependencyInjection
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AnimalDto).Assembly));
         services.AddScoped<ITokenExtractionService, TokenExtractionService>();
         services.AddScoped<IOwnershipValidator, OwnershipValidator>();
+        services.AddScoped<IClinicalExtractionService, HeuristicClinicalExtractionService>();
+        services.AddScoped<IFarmAnimalResolver, FarmAnimalResolver>();
 
         return services;
     }

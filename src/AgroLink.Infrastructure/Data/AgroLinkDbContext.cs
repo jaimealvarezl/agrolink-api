@@ -21,6 +21,15 @@ public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : Db
     public DbSet<AnimalBrand> AnimalBrands { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<FarmMember> FarmMembers { get; set; }
+    public DbSet<ClinicalCase> ClinicalCases { get; set; }
+    public DbSet<ClinicalCaseEvent> ClinicalCaseEvents { get; set; }
+    public DbSet<ClinicalRecommendation> ClinicalRecommendations { get; set; }
+    public DbSet<ClinicalAlert> ClinicalAlerts { get; set; }
+    public DbSet<Medication> Medications { get; set; }
+    public DbSet<MedicationRule> MedicationRules { get; set; }
+    public DbSet<MedicationImage> MedicationImages { get; set; }
+    public DbSet<TelegramInboundEventLog> TelegramInboundEventLogs { get; set; }
+    public DbSet<TelegramOutboundMessage> TelegramOutboundMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

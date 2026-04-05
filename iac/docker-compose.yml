@@ -13,6 +13,9 @@ services:
       - AWS__SecretKey=minio12345
       - AWS__S3BucketName=agrolink-storage-bucket
       - AWS__ForcePathStyle=true
+      - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
+      - Telegram__WebhookSecretToken=${TELEGRAM_WEBHOOK_SECRET:-}
+      - OpenAI__ApiKey=${OPENAI_API_KEY:-}
     ports:
       - "5001:8080"
     depends_on:

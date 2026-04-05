@@ -47,4 +47,37 @@ public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(contex
             })
             .FirstOrDefaultAsync();
     }
+
+    public async Task<Farm?> FindByReferenceAsync(string reference, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return null;
+        }
+
+        var normalized = reference.Trim().ToLowerInvariant();
+
+        var exact = await _dbSet
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                f =>
+                    f.Name.ToLower() == normalized
+                    || (f.CUE != null && f.CUE.ToLower() == normalized),
+                ct
+            );
+
+        if (exact != null)
+        {
+            return exact;
+        }
+
+        return await _dbSet
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                f =>
+                    f.Name.ToLower().Contains(normalized)
+                    || (f.CUE != null && f.CUE.ToLower().Contains(normalized)),
+                ct
+            );
+    }
 }

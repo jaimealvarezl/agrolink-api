@@ -89,3 +89,21 @@ variable "alert_email" {
   type        = string
   default     = "jaimealv994@gmail.com" # Defaulting to the user's email based on git log
 }
+
+variable "telegram_bot_token" {
+  description = "Telegram bot token for webhook integrations"
+  type        = string
+  sensitive   = true
+}
+
+variable "telegram_webhook_secret_token" {
+  description = "Secret token expected in Telegram webhook header"
+  type        = string
+  sensitive   = true
+}
+
+variable "openai_api_key" {
+  description = "OpenAI API key used by clinical AI services"
+  type        = string
+  sensitive   = true
+}
