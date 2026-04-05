@@ -9,10 +9,6 @@ namespace AgroLink.Application.Tests.Features.ClinicalCases.Services;
 [TestFixture]
 public class FarmAnimalResolverTests
 {
-    private Mock<IFarmRepository> _farmRepositoryMock = null!;
-    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
-    private FarmAnimalResolver _resolver = null!;
-
     [SetUp]
     public void SetUp()
     {
@@ -23,6 +19,10 @@ public class FarmAnimalResolverTests
             _animalRepositoryMock.Object
         );
     }
+
+    private Mock<IFarmRepository> _farmRepositoryMock = null!;
+    private Mock<IAnimalRepository> _animalRepositoryMock = null!;
+    private FarmAnimalResolver _resolver = null!;
 
     [Test]
     public async Task ResolveAsync_WhenFarmReferenceIsMissing_ShouldReturnUnresolvedResult()

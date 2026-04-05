@@ -14,9 +14,6 @@ namespace AgroLink.Application.Tests.Features.ClinicalCases.Commands.ReceiveTele
 [TestFixture]
 public class ReceiveTelegramUpdateCommandHandlerTests
 {
-    private AutoMocker _mocker = null!;
-    private ReceiveTelegramUpdateCommandHandler _handler = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -36,6 +33,9 @@ public class ReceiveTelegramUpdateCommandHandlerTests
             )
             .ReturnsAsync(new ClinicalTextToSpeechResult { Success = false });
     }
+
+    private AutoMocker _mocker = null!;
+    private ReceiveTelegramUpdateCommandHandler _handler = null!;
 
     [Test]
     public async Task Handle_WhenAnimalNotFoundButFarmExists_ShouldStillReturnRecommendationDelivered()

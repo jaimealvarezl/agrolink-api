@@ -16,8 +16,10 @@ public class OpenAiClinicalMedicationAdvisorService(
 ) : IClinicalMedicationAdvisorService
 {
     private readonly string _apiKey = configuration["OpenAI:ApiKey"] ?? string.Empty;
+
     private readonly string _baseUrl =
         configuration["OpenAI:BaseUrl"] ?? "https://api.openai.com/v1/responses";
+
     private readonly string _model = configuration["OpenAI:Model"] ?? "gpt-4o-mini";
 
     public async Task<ClinicalMedicationAdviceResult> GetAdviceAsync(

@@ -168,8 +168,8 @@ public class ReceiveTelegramUpdateCommandHandler(
                     extraction.AnimalReference ?? "animal no identificado",
                     extraction.EarTag,
                     adviceWithoutFarm,
-                    animalMissingInDb: true,
-                    farmMissingInDb: true,
+                    true,
+                    true,
                     farmMissingTemporaryCaseCode
                 );
 
@@ -342,7 +342,7 @@ public class ReceiveTelegramUpdateCommandHandler(
                 earTag,
                 advice,
                 animalMissingInDb,
-                farmMissingInDb: false,
+                false,
                 temporaryCaseCode
             );
             await SendAndLogOutboundAsync(
@@ -453,7 +453,7 @@ public class ReceiveTelegramUpdateCommandHandler(
             ttsResult.AudioContent,
             ttsResult.FileName,
             ttsResult.MimeType,
-            caption: "Respuesta en audio",
+            "Respuesta en audio",
             ct
         );
 

@@ -14,9 +14,11 @@ public class OpenAiClinicalAudioTranscriptionService(
 ) : IClinicalAudioTranscriptionService
 {
     private readonly string _apiKey = configuration["OpenAI:ApiKey"] ?? string.Empty;
+
     private readonly string _baseUrl =
         configuration["OpenAI:TranscriptionBaseUrl"]
         ?? "https://api.openai.com/v1/audio/transcriptions";
+
     private readonly string _model = configuration["OpenAI:TranscriptionModel"] ?? "whisper-1";
 
     public async Task<string?> TranscribeAsync(

@@ -15,11 +15,13 @@ public class OpenAiClinicalTextToSpeechService(
 ) : IClinicalTextToSpeechService
 {
     private readonly string _apiKey = configuration["OpenAI:ApiKey"] ?? string.Empty;
+
     private readonly string _baseUrl =
         configuration["OpenAI:TtsBaseUrl"] ?? "https://api.openai.com/v1/audio/speech";
+
+    private readonly string _format = configuration["OpenAI:TtsFormat"] ?? "mp3";
     private readonly string _model = configuration["OpenAI:TtsModel"] ?? "gpt-4o-mini-tts";
     private readonly string _voice = configuration["OpenAI:TtsVoice"] ?? "alloy";
-    private readonly string _format = configuration["OpenAI:TtsFormat"] ?? "mp3";
 
     public async Task<ClinicalTextToSpeechResult?> SynthesizeAsync(
         ClinicalTextToSpeechRequest request,

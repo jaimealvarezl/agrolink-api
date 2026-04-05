@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.ClinicalCases.Models;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 
 namespace AgroLink.Application.Common.Services;
@@ -33,7 +34,7 @@ public class FarmAnimalResolver(IFarmRepository farmRepository, IAnimalRepositor
             };
         }
 
-        var animal = default(AgroLink.Domain.Entities.Animal);
+        var animal = default(Animal);
 
         if (!string.IsNullOrWhiteSpace(earTag))
         {

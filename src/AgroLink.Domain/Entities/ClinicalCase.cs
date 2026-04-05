@@ -29,6 +29,7 @@ public class ClinicalCase
 
     public virtual Farm Farm { get; set; } = null!;
     public virtual Animal? Animal { get; set; }
+
     public virtual ICollection<ClinicalCaseEvent> Events { get; set; } =
         new List<ClinicalCaseEvent>();
 
