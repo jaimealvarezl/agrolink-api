@@ -12,17 +12,25 @@ public class TelegramWebhookController(IMediator mediator, IConfiguration config
 {
     [HttpPost("webhook")]
     public async Task<ActionResult<ReceiveTelegramUpdateResult>> ReceiveWebhook(
+        [FromServices] ILogger<TelegramWebhookController> logger,
         CancellationToken cancellationToken
     )
     {
-        var configuredSecret = configuration["Telegram:WebhookSecretToken"];
+        var configuredSecret = configuration["Telegram:WebhookSecretToken"]?.Trim();
         if (!string.IsNullOrWhiteSpace(configuredSecret))
         {
             var incomingSecret = Request
                 .Headers["X-Telegram-Bot-Api-Secret-Token"]
-                .FirstOrDefault();
+                .FirstOrDefault()
+                ?.Trim();
+
             if (!string.Equals(configuredSecret, incomingSecret, StringComparison.Ordinal))
             {
+                logger.LogWarning(
+                    "Telegram webhook 401: Secret mismatch. Configured length: {ConfigLength}, Incoming length: {IncomingLength}",
+                    configuredSecret.Length,
+                    incomingSecret?.Length ?? 0
+                );
                 return Unauthorized("Invalid Telegram webhook secret.");
             }
         }
