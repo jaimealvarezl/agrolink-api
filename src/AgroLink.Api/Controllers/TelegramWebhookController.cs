@@ -1,5 +1,7 @@
 using System.Text;
 using AgroLink.Application.Features.ClinicalCases.Commands.ReceiveTelegramUpdate;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,8 +9,11 @@ namespace AgroLink.Api.Controllers;
 
 [ApiController]
 [Route("api/integrations/telegram")]
-public class TelegramWebhookController(IMediator mediator, IConfiguration configuration)
-    : ControllerBase
+public class TelegramWebhookController(
+    IMediator mediator,
+    IConfiguration configuration,
+    IAmazonSQS sqsClient
+) : ControllerBase
 {
     [HttpPost("webhook")]
     public async Task<ActionResult<ReceiveTelegramUpdateResult>> ReceiveWebhook(
@@ -44,10 +49,49 @@ public class TelegramWebhookController(IMediator mediator, IConfiguration config
             return BadRequest("Webhook payload is empty.");
         }
 
-        var result = await mediator.Send(
-            new ReceiveTelegramUpdateCommand(rawPayload),
-            cancellationToken
-        );
-        return Ok(result);
+        var queueUrl = configuration["Telegram:SqsQueueUrl"];
+
+        if (string.IsNullOrWhiteSpace(queueUrl))
+        {
+            logger.LogWarning(
+                "Telegram:SqsQueueUrl is not configured. Falling back to synchronous processing."
+            );
+            var syncResult = await mediator.Send(
+                new ReceiveTelegramUpdateCommand(rawPayload),
+                cancellationToken
+            );
+            return Ok(syncResult);
+        }
+
+        try
+        {
+            var sendMessageRequest = new SendMessageRequest
+            {
+                QueueUrl = queueUrl,
+                MessageBody = rawPayload,
+            };
+
+            await sqsClient.SendMessageAsync(sendMessageRequest, cancellationToken);
+
+            return Ok(
+                new ReceiveTelegramUpdateResult
+                {
+                    Processed = true,
+                    Status = "Queued",
+                    Message = "Update received and queued for background processing.",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error pushing Telegram update to SQS queue {QueueUrl}", queueUrl);
+
+            // Fallback to sync processing if SQS fails to avoid losing the update
+            var fallbackResult = await mediator.Send(
+                new ReceiveTelegramUpdateCommand(rawPayload),
+                cancellationToken
+            );
+            return Ok(fallbackResult);
+        }
     }
 }

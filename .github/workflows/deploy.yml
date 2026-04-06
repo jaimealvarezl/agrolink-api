@@ -298,7 +298,7 @@ jobs:
 
       - name: Deploy Lambda function
         run: |
-          echo "🚀 Deploying Lambda function..."
+          echo "🚀 Deploying API Lambda function..."
           dotnet lambda deploy-function \
             --project-location ./src/AgroLink.Api \
             --function-name AgroLinkAPI-AspNetCoreFunction \
@@ -306,7 +306,19 @@ jobs:
             --function-handler AgroLink.Api \
             --package AspNetCoreFunction.zip \
             --region ${{ env.AWS_REGION }}
-          echo "✅ Lambda function deployed successfully!"
+          echo "✅ API Lambda function deployed successfully!"
+
+      - name: Deploy SQS consumer Lambda function
+        run: |
+          echo "🚀 Deploying SQS consumer Lambda function..."
+          dotnet lambda deploy-function \
+            --project-location ./src/AgroLink.Api \
+            --function-name AgroLink-TelegramSqsConsumer \
+            --function-runtime dotnet10 \
+            --function-handler "AgroLink.Api::AgroLink.Api.SqsFunction::FunctionHandler" \
+            --package AspNetCoreFunction.zip \
+            --region ${{ env.AWS_REGION }}
+          echo "✅ SQS consumer Lambda function deployed successfully!"
 
       - name: Upload Lambda package
         uses: actions/upload-artifact@v4

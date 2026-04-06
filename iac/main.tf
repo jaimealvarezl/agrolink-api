@@ -82,3 +82,13 @@ output "migration_lambda_vpc_config" {
   description = "Migration Lambda VPC configuration (should show subnet_ids and security_group_ids)"
   value       = aws_lambda_function.migration.vpc_config
 }
+
+output "telegram_sqs_consumer_function_name" {
+  description = "Telegram SQS consumer Lambda function name"
+  value       = aws_lambda_function.telegram_sqs_consumer.function_name
+}
+
+output "telegram_sqs_consumer_function_arn" {
+  description = "Telegram SQS consumer Lambda function ARN"
+  value       = aws_lambda_function.telegram_sqs_consumer.arn
+}

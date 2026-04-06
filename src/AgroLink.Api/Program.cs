@@ -8,6 +8,7 @@ using AgroLink.Application;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Constants;
 using AgroLink.Infrastructure;
+using Amazon.SQS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -38,6 +39,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.CustomSchemaIds(type => type.FullName);
 });
+
+// AWS Services
+builder.Services.AddAWSService<IAmazonSQS>();
 
 // Layer Dependencies
 builder.Services.AddApplication();

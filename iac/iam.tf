@@ -102,7 +102,9 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         ],
         Resource = [
           aws_lambda_function.agro_link.arn,
-          "${aws_lambda_function.agro_link.arn}:*"
+          "${aws_lambda_function.agro_link.arn}:*",
+          aws_lambda_function.telegram_sqs_consumer.arn,
+          "${aws_lambda_function.telegram_sqs_consumer.arn}:*"
         ]
       },
       {
@@ -121,7 +123,10 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
           "logs:DescribeLogStreams",
           "logs:GetLogEvents"
         ],
-        Resource = "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.agro_link.function_name}:*"
+        Resource = [
+          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.agro_link.function_name}:*",
+          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.telegram_sqs_consumer.function_name}:*"
+        ]
       },
       {
         Sid    = "EC2ReadAccess",
@@ -280,6 +285,30 @@ resource "aws_iam_role_policy" "lambda_secrets_access" {
         Effect   = "Allow",
         Action   = ["kms:Decrypt"],
         Resource = aws_kms_key.rds_encryption_key_id.arn
+      }
+    ]
+  })
+}
+
+# Allow Lambda to send and receive messages from SQS
+resource "aws_iam_role_policy" "lambda_sqs_access" {
+  name = "AgroLinkLambdaSQSAccess"
+  role = aws_iam_role.lambda_function_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ],
+        Resource = [
+          aws_sqs_queue.telegram_updates.arn,
+          aws_sqs_queue.telegram_updates_dlq.arn
+        ]
       }
     ]
   })

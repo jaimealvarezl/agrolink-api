@@ -101,8 +101,36 @@ public class ReceiveTelegramUpdateCommandHandler(
                 Processed = false,
                 ProcessingStatus = "Received",
             };
-            await inboundEventLogRepository.AddAsync(inboundLog, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await inboundEventLogRepository.AddAsync(inboundLog, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                var existingAfterConflict =
+                    await inboundEventLogRepository.GetByTelegramUpdateIdAsync(
+                        updateId,
+                        cancellationToken
+                    );
+
+                if (existingAfterConflict != null)
+                {
+                    logger.LogInformation(
+                        ex,
+                        "Detected concurrent duplicate Telegram update {UpdateId}.",
+                        updateId
+                    );
+                    return new ReceiveTelegramUpdateResult
+                    {
+                        Processed = false,
+                        Status = "Duplicate",
+                        Message = "Update already processed.",
+                    };
+                }
+
+                throw;
+            }
 
             if (messageElement.ValueKind == JsonValueKind.Undefined)
             {
