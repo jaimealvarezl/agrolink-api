@@ -122,3 +122,15 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
 
   tags = merge(local.common_tags, { Name = "cloudwatch-logs-vpce" })
 }
+
+# Interface endpoint for SQS so Lambdas in private subnets can reach SQS without NAT
+resource "aws_vpc_endpoint" "sqs" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.region}.sqs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private[0].id] # ONLY ONE SUBNET
+  security_group_ids  = [aws_security_group.vpce_sg.id]
+  private_dns_enabled = true
+
+  tags = merge(local.common_tags, { Name = "sqs-vpce" })
+}
