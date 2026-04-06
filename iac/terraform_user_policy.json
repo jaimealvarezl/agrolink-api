@@ -9,6 +9,7 @@
         "rds:*",
         "s3:*",
         "lambda:*",
+        "sqs:*",
         "apigateway:*",
         "cloudfront:*",
         "route53:*",

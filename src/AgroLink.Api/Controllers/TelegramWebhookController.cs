@@ -43,7 +43,7 @@ public class TelegramWebhookController(
         }
 
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);
-        var rawPayload = await reader.ReadToEndAsync();
+        var rawPayload = await reader.ReadToEndAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(rawPayload))
         {
             return BadRequest("Webhook payload is empty.");
