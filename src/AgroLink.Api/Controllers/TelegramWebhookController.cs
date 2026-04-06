@@ -26,10 +26,12 @@ public class TelegramWebhookController(IMediator mediator, IConfiguration config
 
             if (!string.Equals(configuredSecret, incomingSecret, StringComparison.Ordinal))
             {
+                var headersList = string.Join(", ", Request.Headers.Keys);
                 logger.LogWarning(
-                    "Telegram webhook 401: Secret mismatch. Configured length: {ConfigLength}, Incoming length: {IncomingLength}",
+                    "Telegram webhook 401: Secret mismatch. Configured length: {ConfigLength}, Incoming length: {IncomingLength}. Received headers: {Headers}",
                     configuredSecret.Length,
-                    incomingSecret?.Length ?? 0
+                    incomingSecret?.Length ?? 0,
+                    headersList
                 );
                 return Unauthorized("Invalid Telegram webhook secret.");
             }
