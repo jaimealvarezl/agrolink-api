@@ -36,7 +36,7 @@ public class SqsFunction
         // All calls are proxied through ExternalApiWorkerFunction which runs outside the VPC.
         builder.Services.AddSingleton<IAmazonSQS, AmazonSQSClient>();
         builder.Services.AddSingleton<IExternalApiWorkerClient, SqsExternalApiWorkerClient>();
-        builder.Services.AddHttpClient<ITelegramGateway, SqsTelegramGateway>();
+        builder.Services.AddScoped<ITelegramGateway, SqsTelegramGateway>();
         builder.Services.AddSingleton<
             IClinicalMedicationAdvisorService,
             SqsClinicalMedicationAdvisorService
