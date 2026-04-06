@@ -1,9 +1,12 @@
 using AgroLink.Application;
 using AgroLink.Application.Features.ClinicalCases.Commands.ReceiveTelegramUpdate;
+using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure;
+using AgroLink.Infrastructure.Services;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Amazon.Lambda.SQSEvents;
+using Amazon.SQS;
 using MediatR;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -20,7 +23,6 @@ public class SqsFunction
     {
         var builder = WebApplication.CreateBuilder();
 
-        // Standard setup from Program.cs
         if (!builder.Environment.IsEnvironment("Testing"))
         {
             SecretsManagerHelper.LoadSecretsAsync(builder).GetAwaiter().GetResult();
@@ -28,6 +30,25 @@ public class SqsFunction
 
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
+
+        // Replace direct external-API services with SQS-dispatching adapters.
+        // The VPC has no NAT gateway so OpenAI/Telegram are unreachable from within the VPC.
+        // All calls are proxied through ExternalApiWorkerFunction which runs outside the VPC.
+        builder.Services.AddSingleton<IAmazonSQS, AmazonSQSClient>();
+        builder.Services.AddSingleton<IExternalApiWorkerClient, SqsExternalApiWorkerClient>();
+        builder.Services.AddHttpClient<ITelegramGateway, SqsTelegramGateway>();
+        builder.Services.AddSingleton<
+            IClinicalMedicationAdvisorService,
+            SqsClinicalMedicationAdvisorService
+        >();
+        builder.Services.AddSingleton<
+            IClinicalAudioTranscriptionService,
+            SqsClinicalAudioTranscriptionService
+        >();
+        builder.Services.AddSingleton<
+            IClinicalTextToSpeechService,
+            SqsClinicalTextToSpeechService
+        >();
 
         var app = builder.Build();
         _serviceProvider = app.Services;

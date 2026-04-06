@@ -29,6 +29,11 @@
     <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.5" />
   </ItemGroup>
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>AgroLink.Api.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
     <ProjectReference Include="..\AgroLink.Infrastructure\AgroLink.Infrastructure.csproj" />
     <ProjectReference Include="..\AgroLink.Application\AgroLink.Application.csproj" />

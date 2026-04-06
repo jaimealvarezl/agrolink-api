@@ -19,13 +19,15 @@ resource "aws_lambda_function" "agro_link" {
   environment {
     variables = {
       # Secret ARNs - read from Secrets Manager at runtime
-      AgroLink__DbSecretArn        = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn       = aws_secretsmanager_secret.jwt_secret_key.arn
-      AgroLink__S3BucketName       = aws_s3_bucket.file_storage.bucket
-      Telegram__BotToken           = var.telegram_bot_token
-      Telegram__WebhookSecretToken = var.telegram_webhook_secret_token
-      Telegram__SqsQueueUrl        = aws_sqs_queue.telegram_updates.url
-      OpenAI__ApiKey               = var.openai_api_key
+      AgroLink__DbSecretArn             = aws_secretsmanager_secret.agro_link_db_connection.arn
+      AgroLink__JwtSecretArn            = aws_secretsmanager_secret.jwt_secret_key.arn
+      AgroLink__S3BucketName            = aws_s3_bucket.file_storage.bucket
+      Telegram__BotToken                = var.telegram_bot_token
+      Telegram__WebhookSecretToken      = var.telegram_webhook_secret_token
+      Telegram__SqsQueueUrl             = aws_sqs_queue.telegram_updates.url
+      ExternalWorkers__RequestsQueueUrl = aws_sqs_queue.external_api_requests.url
+      ExternalWorkers__ResultsQueueUrl  = aws_sqs_queue.external_api_results.url
+      OpenAI__ApiKey                    = var.openai_api_key
     }
   }
 
@@ -55,13 +57,42 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
 
   environment {
     variables = {
-      AgroLink__DbSecretArn        = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn       = aws_secretsmanager_secret.jwt_secret_key.arn
-      AgroLink__S3BucketName       = aws_s3_bucket.file_storage.bucket
-      Telegram__BotToken           = var.telegram_bot_token
-      Telegram__WebhookSecretToken = var.telegram_webhook_secret_token
-      Telegram__SqsQueueUrl        = aws_sqs_queue.telegram_updates.url
-      OpenAI__ApiKey               = var.openai_api_key
+      AgroLink__DbSecretArn             = aws_secretsmanager_secret.agro_link_db_connection.arn
+      AgroLink__JwtSecretArn            = aws_secretsmanager_secret.jwt_secret_key.arn
+      AgroLink__S3BucketName            = aws_s3_bucket.file_storage.bucket
+      Telegram__BotToken                = var.telegram_bot_token
+      Telegram__WebhookSecretToken      = var.telegram_webhook_secret_token
+      Telegram__SqsQueueUrl             = aws_sqs_queue.telegram_updates.url
+      ExternalWorkers__RequestsQueueUrl = aws_sqs_queue.external_api_requests.url
+      ExternalWorkers__ResultsQueueUrl  = aws_sqs_queue.external_api_results.url
+      OpenAI__ApiKey                    = var.openai_api_key
+    }
+  }
+
+  tags = merge(local.common_tags, {
+    AWSServerlessAppNETCore = true,
+    "lambda:createdBy"      = "SAM"
+  })
+}
+
+resource "aws_lambda_function" "external_api_worker" {
+  function_name = "AgroLink-ExternalApiWorker"
+  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Api::AgroLink.Api.ExternalApiWorkerFunction::FunctionHandler"
+  runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
+  role          = aws_iam_role.lambda_function_role.arn
+  memory_size   = 512
+  timeout       = 300
+  architectures = ["arm64"]
+
+  s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
+  s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
+  depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  environment {
+    variables = {
+      Telegram__BotToken               = var.telegram_bot_token
+      OpenAI__ApiKey                   = var.openai_api_key
+      ExternalWorkers__ResultsQueueUrl = aws_sqs_queue.external_api_results.url
     }
   }
 
@@ -82,6 +113,15 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
 
 resource "aws_cloudwatch_log_group" "telegram_sqs_consumer_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.telegram_sqs_consumer.function_name}"
+  retention_in_days = 30
+  tags = {
+    Service     = "AgroLink",
+    Environment = "Production"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "external_api_worker_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.external_api_worker.function_name}"
   retention_in_days = 30
   tags = {
     Service     = "AgroLink",
@@ -110,5 +150,12 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn = aws_sqs_queue.telegram_updates.arn
   function_name    = aws_lambda_function.telegram_sqs_consumer.arn
   batch_size       = 1 # Process one Telegram update at a time
+  enabled          = true
+}
+
+resource "aws_lambda_event_source_mapping" "external_api_worker_trigger" {
+  event_source_arn = aws_sqs_queue.external_api_requests.arn
+  function_name    = aws_lambda_function.external_api_worker.arn
+  batch_size       = 1
   enabled          = true
 }

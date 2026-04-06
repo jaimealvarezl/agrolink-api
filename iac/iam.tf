@@ -104,7 +104,9 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
           aws_lambda_function.agro_link.arn,
           "${aws_lambda_function.agro_link.arn}:*",
           aws_lambda_function.telegram_sqs_consumer.arn,
-          "${aws_lambda_function.telegram_sqs_consumer.arn}:*"
+          "${aws_lambda_function.telegram_sqs_consumer.arn}:*",
+          aws_lambda_function.external_api_worker.arn,
+          "${aws_lambda_function.external_api_worker.arn}:*"
         ]
       },
       {
@@ -125,7 +127,8 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         ],
         Resource = [
           "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.agro_link.function_name}:*",
-          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.telegram_sqs_consumer.function_name}:*"
+          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.telegram_sqs_consumer.function_name}:*",
+          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.external_api_worker.function_name}:*"
         ]
       },
       {
@@ -303,11 +306,16 @@ resource "aws_iam_role_policy" "lambda_sqs_access" {
           "sqs:SendMessage",
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
+          "sqs:ChangeMessageVisibility",
           "sqs:GetQueueAttributes"
         ],
         Resource = [
           aws_sqs_queue.telegram_updates.arn,
-          aws_sqs_queue.telegram_updates_dlq.arn
+          aws_sqs_queue.telegram_updates_dlq.arn,
+          aws_sqs_queue.external_api_requests.arn,
+          aws_sqs_queue.external_api_requests_dlq.arn,
+          aws_sqs_queue.external_api_results.arn,
+          aws_sqs_queue.external_api_results_dlq.arn
         ]
       }
     ]

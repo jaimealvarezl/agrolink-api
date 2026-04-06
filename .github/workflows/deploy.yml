@@ -296,29 +296,58 @@ jobs:
           echo "✅ Uploaded AspNetCoreFunction.zip to s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.API/latest.zip"
 
 
-      - name: Deploy Lambda function
+      - name: Verify Lambda functions exist (Terraform ownership)
         run: |
-          echo "🚀 Deploying API Lambda function..."
-          dotnet lambda deploy-function \
-            --project-location ./src/AgroLink.Api \
-            --function-name AgroLinkAPI-AspNetCoreFunction \
-            --function-runtime dotnet10 \
-            --function-handler AgroLink.Api \
-            --package AspNetCoreFunction.zip \
-            --region ${{ env.AWS_REGION }}
-          echo "✅ API Lambda function deployed successfully!"
+          set -euo pipefail
 
-      - name: Deploy SQS consumer Lambda function
+          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-ExternalApiWorker; do
+            if ! aws lambda get-function --function-name "$fn" --region "${AWS_REGION}" > /dev/null 2>&1; then
+              echo "❌ Lambda function '$fn' does not exist."
+              echo "Run Terraform apply first so infrastructure creates/manages this function."
+              exit 1
+            fi
+          done
+
+          echo "✅ Lambda functions exist."
+
+      - name: Update API Lambda code
         run: |
-          echo "🚀 Deploying SQS consumer Lambda function..."
-          dotnet lambda deploy-function \
-            --project-location ./src/AgroLink.Api \
+          echo "🚀 Updating API Lambda code..."
+          aws lambda update-function-code \
+            --function-name AgroLinkAPI-AspNetCoreFunction \
+            --zip-file fileb://AspNetCoreFunction.zip \
+            --region "${AWS_REGION}" > /tmp/api-update-response.json
+
+          aws lambda wait function-updated \
+            --function-name AgroLinkAPI-AspNetCoreFunction \
+            --region "${AWS_REGION}"
+          echo "✅ API Lambda code updated successfully!"
+
+      - name: Update SQS consumer Lambda code
+        run: |
+          echo "🚀 Updating SQS consumer Lambda code..."
+          aws lambda update-function-code \
             --function-name AgroLink-TelegramSqsConsumer \
-            --function-runtime dotnet10 \
-            --function-handler "AgroLink.Api::AgroLink.Api.SqsFunction::FunctionHandler" \
-            --package AspNetCoreFunction.zip \
-            --region ${{ env.AWS_REGION }}
-          echo "✅ SQS consumer Lambda function deployed successfully!"
+            --zip-file fileb://AspNetCoreFunction.zip \
+            --region "${AWS_REGION}" > /tmp/sqs-update-response.json
+
+          aws lambda wait function-updated \
+            --function-name AgroLink-TelegramSqsConsumer \
+            --region "${AWS_REGION}"
+          echo "✅ SQS consumer Lambda code updated successfully!"
+
+      - name: Update external API worker Lambda code
+        run: |
+          echo "🚀 Updating external API worker Lambda code..."
+          aws lambda update-function-code \
+            --function-name AgroLink-ExternalApiWorker \
+            --zip-file fileb://AspNetCoreFunction.zip \
+            --region "${AWS_REGION}" > /tmp/external-worker-update-response.json
+
+          aws lambda wait function-updated \
+            --function-name AgroLink-ExternalApiWorker \
+            --region "${AWS_REGION}"
+          echo "✅ External API worker Lambda code updated successfully!"
 
       - name: Upload Lambda package
         uses: actions/upload-artifact@v4

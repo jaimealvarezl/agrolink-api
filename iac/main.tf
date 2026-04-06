@@ -92,3 +92,13 @@ output "telegram_sqs_consumer_function_arn" {
   description = "Telegram SQS consumer Lambda function ARN"
   value       = aws_lambda_function.telegram_sqs_consumer.arn
 }
+
+output "external_api_worker_function_name" {
+  description = "External API worker Lambda function name"
+  value       = aws_lambda_function.external_api_worker.function_name
+}
+
+output "external_api_worker_function_arn" {
+  description = "External API worker Lambda function ARN"
+  value       = aws_lambda_function.external_api_worker.arn
+}
