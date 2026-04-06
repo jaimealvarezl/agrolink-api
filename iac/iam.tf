@@ -311,11 +311,7 @@ resource "aws_iam_role_policy" "lambda_sqs_access" {
         ],
         Resource = [
           aws_sqs_queue.telegram_updates.arn,
-          aws_sqs_queue.telegram_updates_dlq.arn,
-          aws_sqs_queue.external_api_requests.arn,
-          aws_sqs_queue.external_api_requests_dlq.arn,
-          aws_sqs_queue.external_api_results.arn,
-          aws_sqs_queue.external_api_results_dlq.arn
+          aws_sqs_queue.telegram_updates_dlq.arn
         ]
       }
     ]

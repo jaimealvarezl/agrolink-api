@@ -25,8 +25,6 @@ resource "aws_lambda_function" "agro_link" {
       Telegram__BotToken                = var.telegram_bot_token
       Telegram__WebhookSecretToken      = var.telegram_webhook_secret_token
       Telegram__SqsQueueUrl             = aws_sqs_queue.telegram_updates.url
-      ExternalWorkers__RequestsQueueUrl = aws_sqs_queue.external_api_requests.url
-      ExternalWorkers__ResultsQueueUrl  = aws_sqs_queue.external_api_results.url
       OpenAI__ApiKey                    = var.openai_api_key
     }
   }
@@ -57,15 +55,14 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
 
   environment {
     variables = {
-      AgroLink__DbSecretArn             = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn            = aws_secretsmanager_secret.jwt_secret_key.arn
-      AgroLink__S3BucketName            = aws_s3_bucket.file_storage.bucket
-      Telegram__BotToken                = var.telegram_bot_token
-      Telegram__WebhookSecretToken      = var.telegram_webhook_secret_token
-      Telegram__SqsQueueUrl             = aws_sqs_queue.telegram_updates.url
-      ExternalWorkers__RequestsQueueUrl = aws_sqs_queue.external_api_requests.url
-      ExternalWorkers__ResultsQueueUrl  = aws_sqs_queue.external_api_results.url
-      OpenAI__ApiKey                    = var.openai_api_key
+      AgroLink__DbSecretArn               = aws_secretsmanager_secret.agro_link_db_connection.arn
+      AgroLink__JwtSecretArn              = aws_secretsmanager_secret.jwt_secret_key.arn
+      AgroLink__S3BucketName              = aws_s3_bucket.file_storage.bucket
+      Telegram__BotToken                  = var.telegram_bot_token
+      Telegram__WebhookSecretToken        = var.telegram_webhook_secret_token
+      Telegram__SqsQueueUrl               = aws_sqs_queue.telegram_updates.url
+      ExternalWorkers__WorkerFunctionName = aws_lambda_function.external_api_worker.function_name
+      OpenAI__ApiKey                      = var.openai_api_key
     }
   }
 
@@ -90,9 +87,8 @@ resource "aws_lambda_function" "external_api_worker" {
 
   environment {
     variables = {
-      Telegram__BotToken               = var.telegram_bot_token
-      OpenAI__ApiKey                   = var.openai_api_key
-      ExternalWorkers__ResultsQueueUrl = aws_sqs_queue.external_api_results.url
+      Telegram__BotToken = var.telegram_bot_token
+      OpenAI__ApiKey     = var.openai_api_key
     }
   }
 
@@ -153,9 +149,3 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   enabled          = true
 }
 
-resource "aws_lambda_event_source_mapping" "external_api_worker_trigger" {
-  event_source_arn = aws_sqs_queue.external_api_requests.arn
-  function_name    = aws_lambda_function.external_api_worker.arn
-  batch_size       = 1
-  enabled          = true
-}

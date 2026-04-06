@@ -4,9 +4,6 @@ using AgroLink.Application.Features.ExternalWorkers.Models;
 using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure.Services;
 using Amazon.Lambda.Core;
-using Amazon.Lambda.SQSEvents;
-using Amazon.SQS;
-using Amazon.SQS.Model;
 
 namespace AgroLink.Api;
 
@@ -18,7 +15,6 @@ public class ExternalApiWorkerFunction
     };
 
     private readonly ILogger<ExternalApiWorkerFunction> _logger;
-    private readonly string _resultsQueueUrl;
     private readonly IServiceProvider _serviceProvider;
 
     public ExternalApiWorkerFunction()
@@ -38,52 +34,40 @@ public class ExternalApiWorkerFunction
             IClinicalTextToSpeechService,
             OpenAiClinicalTextToSpeechService
         >();
-        builder.Services.AddSingleton<IAmazonSQS, AmazonSQSClient>();
 
         var app = builder.Build();
         _serviceProvider = app.Services;
         _logger = _serviceProvider.GetRequiredService<ILogger<ExternalApiWorkerFunction>>();
-        _resultsQueueUrl = builder.Configuration["ExternalWorkers:ResultsQueueUrl"] ?? string.Empty;
     }
 
-    internal ExternalApiWorkerFunction(IServiceProvider serviceProvider, string resultsQueueUrl)
+    internal ExternalApiWorkerFunction(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = serviceProvider.GetRequiredService<ILogger<ExternalApiWorkerFunction>>();
-        _resultsQueueUrl = resultsQueueUrl;
     }
 
-    public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
+    public async Task<ExternalWorkerResponse> FunctionHandler(
+        ExternalWorkerRequest request,
+        ILambdaContext context
+    )
     {
-        foreach (var message in evnt.Records)
-        {
-            await ProcessMessageAsync(message);
-        }
-    }
+        _logger.LogInformation(
+            "Processing external worker request. CorrelationId: {CorrelationId}, Operation: {Operation}",
+            request.CorrelationId,
+            request.Operation
+        );
 
-    private async Task ProcessMessageAsync(SQSEvent.SQSMessage message)
-    {
         try
         {
-            var request =
-                JsonSerializer.Deserialize<ExternalWorkerRequest>(message.Body, JsonOptions)
-                ?? throw new InvalidOperationException("Invalid request payload.");
-
-            _logger.LogInformation(
-                "Processing external worker request. CorrelationId: {CorrelationId}, Operation: {Operation}",
-                request.CorrelationId,
-                request.Operation
-            );
-
-            var response = await ExecuteOperationAsync(request);
-            await PublishResultAsync(response);
+            return await ExecuteOperationAsync(request);
         }
         catch (Exception ex)
         {
             _logger.LogError(
                 ex,
-                "External worker failed processing message {MessageId}",
-                message.MessageId
+                "External worker failed. CorrelationId: {CorrelationId}, Operation: {Operation}",
+                request.CorrelationId,
+                request.Operation
             );
             throw;
         }
@@ -270,31 +254,12 @@ public class ExternalApiWorkerFunction
             ToElement(
                 new
                 {
-                    Base64Content = Convert.ToBase64String(result.Content),
+                    Base64Content = result.Content is not null ? Convert.ToBase64String(result.Content) : null,
                     result.FilePath,
                     result.ContentType,
                 }
             ),
             result.Success ? null : result.ProviderResponse
-        );
-    }
-
-    private async Task PublishResultAsync(ExternalWorkerResponse response)
-    {
-        if (string.IsNullOrWhiteSpace(_resultsQueueUrl))
-        {
-            _logger.LogWarning(
-                "ExternalWorkers:ResultsQueueUrl is not configured. Dropping result for correlation {CorrelationId}",
-                response.CorrelationId
-            );
-            return;
-        }
-
-        var sqs = _serviceProvider.GetRequiredService<IAmazonSQS>();
-        var body = JsonSerializer.Serialize(response, JsonOptions);
-        await sqs.SendMessageAsync(
-            new SendMessageRequest { QueueUrl = _resultsQueueUrl, MessageBody = body },
-            CancellationToken.None
         );
     }
 }
