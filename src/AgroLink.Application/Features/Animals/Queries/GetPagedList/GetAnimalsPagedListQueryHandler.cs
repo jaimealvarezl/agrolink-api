@@ -59,6 +59,8 @@ public class GetAnimalsPagedListQueryHandler(
                 Name = a.Name,
                 PhotoUrl = photoUrl,
                 LotName = a.Lot.Name,
+                Sex = a.Sex,
+                BirthDate = a.BirthDate,
                 IsSick = a.HealthStatus == HealthStatus.Sick,
                 IsPregnant = a.ReproductiveStatus == ReproductiveStatus.Pregnant,
                 IsMissing = a.LifeStatus == LifeStatus.Missing,

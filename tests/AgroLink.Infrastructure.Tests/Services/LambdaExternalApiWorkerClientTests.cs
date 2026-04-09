@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text;
 using System.Text.Json;
 using AgroLink.Application.Features.ExternalWorkers.Models;
@@ -15,16 +14,6 @@ namespace AgroLink.Infrastructure.Tests.Services;
 [TestFixture]
 public class LambdaExternalApiWorkerClientTests
 {
-    private const string FunctionName = "agrolink-external-worker";
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
-    private Mock<IAmazonLambda> _lambdaMock = null!;
-    private LambdaExternalApiWorkerClient _client = null!;
-
     [SetUp]
     public void Setup()
     {
@@ -46,6 +35,16 @@ public class LambdaExternalApiWorkerClientTests
         );
     }
 
+    private const string FunctionName = "agrolink-external-worker";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
+    private Mock<IAmazonLambda> _lambdaMock = null!;
+    private LambdaExternalApiWorkerClient _client = null!;
+
     private static InvokeResponse BuildInvokeResponse(ExternalWorkerResponse response)
     {
         var json = JsonSerializer.Serialize(response, JsonOptions);
@@ -61,7 +60,13 @@ public class LambdaExternalApiWorkerClientTests
             JsonSerializer.SerializeToElement(new { })
         );
 
-        var expectedResponse = new ExternalWorkerResponse("corr-1", request.Operation, true, null, null);
+        var expectedResponse = new ExternalWorkerResponse(
+            "corr-1",
+            request.Operation,
+            true,
+            null,
+            null
+        );
         InvokeRequest? capturedInvokeRequest = null;
 
         _lambdaMock
@@ -122,14 +127,18 @@ public class LambdaExternalApiWorkerClientTests
 
         _lambdaMock
             .Setup(l => l.InvokeAsync(It.IsAny<InvokeRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new InvokeResponse
-            {
-                FunctionError = "Unhandled",
-                Payload = new MemoryStream(Encoding.UTF8.GetBytes("{\"errorMessage\":\"boom\"}")),
-            });
+            .ReturnsAsync(
+                new InvokeResponse
+                {
+                    FunctionError = "Unhandled",
+                    Payload = new MemoryStream(
+                        Encoding.UTF8.GetBytes("{\"errorMessage\":\"boom\"}")
+                    ),
+                }
+            );
 
-        await Should.ThrowAsync<InvalidOperationException>(
-            () => _client.ExecuteAsync(request, CancellationToken.None)
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+            _client.ExecuteAsync(request, CancellationToken.None)
         );
     }
 
@@ -156,7 +165,13 @@ public class LambdaExternalApiWorkerClientTests
             JsonSerializer.SerializeToElement(new { })
         );
 
-        var expectedResponse = new ExternalWorkerResponse("corr-4", request.Operation, true, null, null);
+        var expectedResponse = new ExternalWorkerResponse(
+            "corr-4",
+            request.Operation,
+            true,
+            null,
+            null
+        );
         using var cts = new CancellationTokenSource();
         CancellationToken capturedToken = default;
 

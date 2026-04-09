@@ -254,7 +254,9 @@ public class ExternalApiWorkerFunction
             ToElement(
                 new
                 {
-                    Base64Content = result.Content is not null ? Convert.ToBase64String(result.Content) : null,
+                    Base64Content = result.Content is not null
+                        ? Convert.ToBase64String(result.Content)
+                        : null,
                     result.FilePath,
                     result.ContentType,
                 }

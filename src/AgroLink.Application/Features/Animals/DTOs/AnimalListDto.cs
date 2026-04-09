@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AgroLink.Domain.Enums;
 
 namespace AgroLink.Application.Features.Animals.DTOs;
 
@@ -14,6 +15,9 @@ public class AnimalListDto
 
     [Required]
     public required string LotName { get; set; }
+
+    public Sex Sex { get; set; }
+    public DateTime? BirthDate { get; set; }
 
     // Status Flags
     public bool IsSick { get; set; }
