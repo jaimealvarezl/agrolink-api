@@ -61,6 +61,15 @@ public class GetAnimalsPagedListQueryHandler(
                 LotName = a.Lot.Name,
                 Sex = a.Sex,
                 BirthDate = a.BirthDate,
+                Cuia = a.Cuia,
+                Owners = a
+                    .AnimalOwners.Select(ao => new AnimalOwnerDto
+                    {
+                        OwnerId = ao.OwnerId,
+                        OwnerName = ao.Owner.Name,
+                        SharePercent = ao.SharePercent,
+                    })
+                    .ToList(),
                 IsSick = a.HealthStatus == HealthStatus.Sick,
                 IsPregnant = a.ReproductiveStatus == ReproductiveStatus.Pregnant,
                 IsMissing = a.LifeStatus == LifeStatus.Missing,

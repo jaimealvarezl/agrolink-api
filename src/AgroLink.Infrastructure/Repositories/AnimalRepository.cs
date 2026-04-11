@@ -200,6 +200,8 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.Lot)
                 .ThenInclude(l => l.Paddock)
             .Include(a => a.Photos)
+            .Include(a => a.AnimalOwners)
+                .ThenInclude(ao => ao.Owner)
             .Where(a => a.Lot.Paddock.FarmId == farmId);
 
         query = includeRetired

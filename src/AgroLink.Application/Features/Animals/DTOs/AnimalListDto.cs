@@ -19,6 +19,9 @@ public class AnimalListDto
     public Sex Sex { get; set; }
     public DateTime? BirthDate { get; set; }
 
+    public string? Cuia { get; set; }
+    public List<AnimalOwnerDto> Owners { get; set; } = [];
+
     // Status Flags
     public bool IsSick { get; set; }
     public bool IsPregnant { get; set; }
