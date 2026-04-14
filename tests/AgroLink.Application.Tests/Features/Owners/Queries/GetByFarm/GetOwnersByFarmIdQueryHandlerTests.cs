@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using AgroLink.Application.Features.Owners.Queries.GetByFarm;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -46,7 +45,7 @@ public class GetOwnersByFarmIdQueryHandlerTests
 
         _mocker
             .GetMock<IOwnerRepository>()
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Owner, bool>>>()))
+            .Setup(r => r.GetOwnersByFarmAsync(query.FarmId))
             .ReturnsAsync(owners);
 
         // Act
