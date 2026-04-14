@@ -26,4 +26,14 @@ public class OwnerRepository : Repository<Owner>, IOwnerRepository
                 .ThenInclude(ao => ao.Animal)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
+
+    public async Task<IEnumerable<Owner>> GetOwnersByFarmAsync(int farmId)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(o => o.AnimalOwners)
+            .Where(o => o.FarmId == farmId)
+            .OrderBy(o => o.Name)
+            .ToListAsync();
+    }
 }

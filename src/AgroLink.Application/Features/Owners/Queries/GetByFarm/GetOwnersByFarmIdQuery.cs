@@ -14,7 +14,7 @@ public class GetOwnersByFarmIdQueryHandler(IOwnerRepository ownerRepository)
         CancellationToken cancellationToken
     )
     {
-        var owners = await ownerRepository.FindAsync(o => o.FarmId == request.FarmId && o.IsActive);
+        var owners = await ownerRepository.GetOwnersByFarmAsync(request.FarmId);
 
         return owners.Select(o => new OwnerDto
         {
@@ -24,6 +24,7 @@ public class GetOwnersByFarmIdQueryHandler(IOwnerRepository ownerRepository)
             Email = o.Email,
             UserId = o.UserId,
             IsActive = o.IsActive,
+            AnimalCount = o.AnimalOwners.Count,
             CreatedAt = o.CreatedAt,
         });
     }

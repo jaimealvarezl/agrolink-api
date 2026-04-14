@@ -16,6 +16,8 @@ public class OwnerDto
     public int? UserId { get; set; }
     public bool IsActive { get; set; } = true;
 
+    public int AnimalCount { get; set; }
+
     [Required]
     public required DateTime CreatedAt { get; set; }
 }
