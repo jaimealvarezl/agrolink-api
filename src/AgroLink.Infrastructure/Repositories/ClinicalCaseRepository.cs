@@ -130,4 +130,15 @@ public class ClinicalCaseRepository(AgroLinkDbContext context)
             .Include(c => c.Alerts)
             .FirstOrDefaultAsync(c => c.Id == caseId, ct);
     }
+
+    public async Task<IEnumerable<ClinicalCase>> GetByAnimalIdAsync(
+        int animalId,
+        CancellationToken ct = default
+    )
+    {
+        return await _dbSet
+            .Where(c => c.AnimalId == animalId)
+            .OrderByDescending(c => c.OpenedAt)
+            .ToListAsync(ct);
+    }
 }

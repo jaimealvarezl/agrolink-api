@@ -12,6 +12,7 @@ public class AnimalTimelineItemDto
     public MovementDto? Movement { get; set; }
     public AnimalChecklistTimelineDto? ChecklistItem { get; set; }
     public AnimalRetirementDto? Retirement { get; set; }
+    public ClinicalCaseTimelineDto? ClinicalCase { get; set; }
 }
 
 public class AnimalChecklistTimelineDto
