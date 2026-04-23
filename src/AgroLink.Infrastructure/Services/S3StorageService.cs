@@ -162,6 +162,26 @@ public class S3StorageService(
         }
     }
 
+    public async Task<byte[]?> GetFileBytesAsync(
+        string key,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var request = new GetObjectRequest { BucketName = _bucketName, Key = key };
+            using var response = await s3Client.GetObjectAsync(request, cancellationToken);
+            using var ms = new MemoryStream();
+            await response.ResponseStream.CopyToAsync(ms, cancellationToken);
+            return ms.ToArray();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not fetch file bytes for key {Key}", key);
+            return null;
+        }
+    }
+
     public string GetKeyFromUrl(string url)
     {
         if (string.IsNullOrEmpty(url))

@@ -7,4 +7,5 @@ public interface IStorageService
     string GetFileUrl(string key);
     string GetPresignedUrl(string key, TimeSpan expiration);
     string GetKeyFromUrl(string url);
+    Task<byte[]?> GetFileBytesAsync(string key, CancellationToken cancellationToken = default);
 }
