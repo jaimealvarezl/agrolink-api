@@ -5,21 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class PaddockRepository : Repository<Paddock>, IPaddockRepository
+public class PaddockRepository(AgroLinkDbContext context)
+    : Repository<Paddock>(context),
+        IPaddockRepository
 {
-    public PaddockRepository(AgroLinkDbContext context)
-        : base(context) { }
-
     public async Task<IEnumerable<Paddock>> GetByFarmIdAsync(int farmId)
     {
         return await _dbSet.AsNoTracking().Where(p => p.FarmId == farmId).ToListAsync();
-    }
-
-    public async Task<Paddock?> GetPaddockWithLotsAsync(int id)
-    {
-        return await _dbSet
-            .AsNoTracking()
-            .Include(p => p.Lots)
-            .FirstOrDefaultAsync(p => p.Id == id);
     }
 }

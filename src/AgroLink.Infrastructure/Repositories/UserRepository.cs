@@ -11,18 +11,4 @@ public class UserRepository(AgroLinkDbContext context) : Repository<User>(contex
     {
         return await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
     }
-
-    public async Task<IEnumerable<User>> GetActiveUsersAsync()
-    {
-        return await _dbSet
-            .AsNoTracking()
-            .Where(u => u.IsActive)
-            .OrderBy(u => u.Name)
-            .ToListAsync();
-    }
-
-    public async Task<bool> EmailExistsAsync(string email)
-    {
-        return await _dbSet.AnyAsync(u => u.Email == email);
-    }
 }

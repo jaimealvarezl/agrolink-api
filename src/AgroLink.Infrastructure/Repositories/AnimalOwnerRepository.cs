@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroLink.Infrastructure.Repositories;
 
-public class AnimalOwnerRepository(AgroLinkDbContext context) : Repository<AnimalOwner>(context), IAnimalOwnerRepository
+public class AnimalOwnerRepository(AgroLinkDbContext context)
+    : Repository<AnimalOwner>(context),
+        IAnimalOwnerRepository
 {
     public async Task<IEnumerable<AnimalOwner>> GetByAnimalIdAsync(int animalId)
     {
