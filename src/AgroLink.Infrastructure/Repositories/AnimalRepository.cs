@@ -112,23 +112,6 @@ public class AnimalRepository(AgroLinkDbContext context)
         );
     }
 
-    public async Task<Animal?> GetAnimalWithOwnersAsync(int id)
-    {
-        return await _dbSet
-            .Include(a => a.AnimalOwners)
-                .ThenInclude(ao => ao.Owner)
-            .FirstOrDefaultAsync(a => a.Id == id);
-    }
-
-    public async Task<Animal?> GetAnimalWithGenealogyAsync(int id)
-    {
-        return await _dbSet
-            .Include(a => a.Mother)
-            .Include(a => a.Father)
-            .Include(a => a.Children)
-            .FirstOrDefaultAsync(a => a.Id == id);
-    }
-
     public async Task<IEnumerable<Animal>> GetChildrenAsync(int parentId)
     {
         return await _dbSet

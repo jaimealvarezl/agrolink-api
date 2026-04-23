@@ -17,7 +17,8 @@ public class GetAnimalTimelineQueryHandler(
     IMovementRepository movementRepository,
     IChecklistRepository checklistRepository,
     IUserRepository userRepository,
-    ILotRepository lotRepository
+    ILotRepository lotRepository,
+    IClinicalCaseRepository clinicalCaseRepository
 ) : IRequestHandler<GetAnimalTimelineQuery, IEnumerable<AnimalTimelineItemDto>>
 {
     public async Task<IEnumerable<AnimalTimelineItemDto>> Handle(
@@ -136,6 +137,27 @@ public class GetAnimalTimelineQueryHandler(
                 }
             );
         }
+
+        var clinicalCases = await clinicalCaseRepository.GetByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
+
+        timelineItems.AddRange(
+            clinicalCases.Select(cc => new AnimalTimelineItemDto
+            {
+                Type = "clinicalcase",
+                OccurredAt = cc.OpenedAt,
+                ClinicalCase = new ClinicalCaseTimelineDto
+                {
+                    Id = cc.Id,
+                    State = cc.State,
+                    RiskLevel = cc.RiskLevel,
+                    OpenedAt = cc.OpenedAt,
+                    ClosedAt = cc.ClosedAt,
+                },
+            })
+        );
 
         return timelineItems.OrderByDescending(i => i.OccurredAt);
     }
