@@ -33,6 +33,7 @@ public interface IClinicalCaseRepository : IRepository<ClinicalCase>
     );
 
     Task<ClinicalCase?> GetByIdWithDetailsAsync(int caseId, CancellationToken ct = default);
+
     Task<IEnumerable<ClinicalCase>> GetByAnimalIdAsync(
         int animalId,
         CancellationToken ct = default
