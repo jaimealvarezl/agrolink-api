@@ -19,6 +19,7 @@ using AgroLink.Application.Features.Animals.Queries.GetDetail;
 using AgroLink.Application.Features.Animals.Queries.GetGenealogy;
 using AgroLink.Application.Features.Animals.Queries.GetNotes;
 using AgroLink.Application.Features.Animals.Queries.GetPagedList;
+using AgroLink.Application.Features.Animals.Queries.GetTheftAlertPdf;
 using AgroLink.Application.Features.Animals.Queries.GetTimeline;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -324,6 +325,26 @@ public class AnimalsController(IMediator mediator) : BaseController
             cancellationToken
         );
         return Ok(result);
+    }
+
+    [HttpGet("{id}/theft-alert")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<IActionResult> GetTheftAlertPdf(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
+    {
+        var pdf = await mediator.Send(
+            new GetTheftAlertPdfQuery(id, GetCurrentUserId()),
+            cancellationToken
+        );
+        if (pdf == null)
+        {
+            return NotFound();
+        }
+
+        return File(pdf, "application/pdf", $"alerta-robo-{id}.pdf");
     }
 
     [HttpGet("{id}/timeline")]
