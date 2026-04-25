@@ -1,17 +1,17 @@
 namespace AgroLink.Application.Features.VoiceCommands.Commands.ProcessVoiceCommand;
 
 public record ParsedIntentResponse(
-    string Intent,
-    double Confidence,
-    int? AnimalId,
-    int? LotId,
-    int? TargetPaddockId,
-    int? MotherId,
-    string? Sex,
-    string? NewbornEarTag,
-    string? NoteText
-)
-{
-    public ParsedIntentResponse()
-        : this("unknown", 0.0, null, null, null, null, null, null, null) { }
-}
+    string Intent = "unknown",
+    double Confidence = 0.0,
+    int? AnimalId = null,
+    int? LotId = null,
+    int? TargetPaddockId = null,
+    int? MotherId = null,
+    string? Sex = null,
+    string? NoteText = null,
+    string? AnimalName = null,
+    string? EarTag = null,
+    string? Color = null,
+    string? BirthDate = null,
+    string[]? OwnerNames = null
+);

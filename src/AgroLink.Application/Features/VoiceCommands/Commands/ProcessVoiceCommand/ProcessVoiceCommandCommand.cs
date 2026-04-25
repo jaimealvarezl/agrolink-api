@@ -300,14 +300,34 @@ public class ProcessVoiceCommandHandler(
             entities["sex"] = parsed.Sex;
         }
 
-        if (parsed.NewbornEarTag != null)
-        {
-            entities["newbornEarTag"] = parsed.NewbornEarTag;
-        }
-
         if (parsed.NoteText != null)
         {
             entities["noteText"] = parsed.NoteText;
+        }
+
+        if (parsed.AnimalName != null)
+        {
+            entities["animalName"] = parsed.AnimalName;
+        }
+
+        if (parsed.EarTag != null)
+        {
+            entities["earTag"] = parsed.EarTag;
+        }
+
+        if (parsed.Color != null)
+        {
+            entities["color"] = parsed.Color;
+        }
+
+        if (parsed.BirthDate != null)
+        {
+            entities["birthDate"] = parsed.BirthDate;
+        }
+
+        if (parsed.OwnerNames is { Length: > 0 })
+        {
+            entities["ownerNames"] = parsed.OwnerNames;
         }
 
         return JsonSerializer.SerializeToElement(entities, JsonOptions);

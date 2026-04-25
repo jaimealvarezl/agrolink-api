@@ -19,11 +19,13 @@ public class OpenAiVoiceIntentService(
         + "Extract a structured intent from a Spanish voice command. "
         + "You will be given the transcription and a JSON roster of animals and lots on this farm. "
         + "Return ONLY a JSON object — no markdown, no explanation. "
-        + "Only use IDs that appear verbatim in the roster. "
-        + "If you cannot find a confident match, set the ID field to null. "
-        + "Supported intents: create_note, move_animal, move_lot, register_newborn. "
+        + "To identify an existing animal, match the spoken reference against its name, earTag (visual tag / arete), or cuia field — any of the three is sufficient. "
+        + "Only use IDs that appear in the roster. If you cannot find a confident match, set the ID field to null. "
+        + "Supported intents: create_animal, create_note, move_animal, move_lot, register_newborn. "
         + "If the command does not match a supported intent, return intent \"unknown\" with confidence 0.0. "
-        + "JSON fields: intent, confidence, animalId, lotId, targetPaddockId, motherId, sex, newbornEarTag, noteText.";
+        + "For create_animal: extract animalName (the name given), earTag (tag or CUIA number spoken), sex (vaca/ternera→female, toro/ternero→male), color (coat color if mentioned), lotId (resolved from lot name), ownerNames (array of owner names mentioned), motherId (resolved from roster if calf of a known mother), birthDate (ISO 8601, resolve relative dates like hoy/ayer using today's date). "
+        + "For register_newborn: extract motherId (resolved from roster), sex, color (coat color if mentioned), birthDate (ISO 8601). "
+        + "JSON fields: intent, confidence, animalId, lotId, targetPaddockId, motherId, sex, noteText, animalName, earTag, color, birthDate, ownerNames.";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -63,7 +65,7 @@ public class OpenAiVoiceIntentService(
                     new { role = "user", content = userMessage },
                 },
                 response_format = new { type = "json_object" },
-                max_tokens = 300,
+                max_tokens = 400,
             }
         );
 

@@ -42,17 +42,7 @@ public static class VoiceIntentValidator
 
         if (Math.Round(confidence, 4) < 0.5)
         {
-            return new ParsedIntentResponse(
-                "unknown",
-                0.0,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            );
+            return new ParsedIntentResponse();
         }
 
         return intent with

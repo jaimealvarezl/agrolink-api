@@ -136,7 +136,7 @@ public class ProcessVoiceCommandHandlerTests
         var job = BuildJob("pending");
         SetupJob(job);
         SetupS3(AudioBytes);
-        SetupTranscription(true, "");
+        SetupTranscription(true);
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
 
@@ -346,6 +346,93 @@ public class ProcessVoiceCommandHandlerTests
         result.GetProperty("confidence").GetDouble().ShouldBe(0.0);
     }
 
+    // ── create_animal ──────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task Handle_HappyPath_CreateAnimal_CompletesWithAllEntities()
+    {
+        var job = BuildJob("pending");
+        SetupJob(job);
+        SetupS3(AudioBytes);
+        SetupTranscription(
+            true,
+            "registrar vaca colorada arete 017683344, la milagro, lote forro, pertenece a Carla y Jaime"
+        );
+        SetupRoster(RosterWithAnimalsAndLots);
+        SetupIntentExtraction(
+            true,
+            """
+            {
+              "intent": "create_animal",
+              "confidence": 0.91,
+              "lotId": 1,
+              "sex": "female",
+              "animalName": "la milagro",
+              "earTag": "017683344",
+              "color": "colorada",
+              "ownerNames": ["Carla", "Jaime"]
+            }
+            """
+        );
+
+        await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
+
+        job.Status.ShouldBe("completed");
+        var result = JsonSerializer.Deserialize<JsonElement>(
+            job.ResultJson!,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        );
+        result.GetProperty("intent").GetString().ShouldBe("create_animal");
+        result.GetProperty("confidence").GetDouble().ShouldBe(0.91);
+        var entities = result.GetProperty("entities");
+        entities.GetProperty("animalName").GetString().ShouldBe("la milagro");
+        entities.GetProperty("earTag").GetString().ShouldBe("017683344");
+        entities.GetProperty("color").GetString().ShouldBe("colorada");
+        entities.GetProperty("lotId").GetInt32().ShouldBe(1);
+        var owners = entities
+            .GetProperty("ownerNames")
+            .EnumerateArray()
+            .Select(e => e.GetString())
+            .ToList();
+        owners.ShouldBe(["Carla", "Jaime"]);
+    }
+
+    [Test]
+    public async Task Handle_HappyPath_RegisterNewborn_CompletesWithColorAndBirthDate()
+    {
+        var job = BuildJob("pending");
+        SetupJob(job);
+        SetupS3(AudioBytes);
+        SetupTranscription(true, "la bonita tuvo ternero macho colorado ayer");
+        SetupRoster(RosterWithAnimalsAndLots);
+        SetupIntentExtraction(
+            true,
+            """
+            {
+              "intent": "register_newborn",
+              "confidence": 0.89,
+              "motherId": 10,
+              "sex": "male",
+              "color": "colorado",
+              "birthDate": "2024-05-21"
+            }
+            """
+        );
+
+        await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
+
+        job.Status.ShouldBe("completed");
+        var result = JsonSerializer.Deserialize<JsonElement>(
+            job.ResultJson!,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        );
+        result.GetProperty("intent").GetString().ShouldBe("register_newborn");
+        var entities = result.GetProperty("entities");
+        entities.GetProperty("motherId").GetInt32().ShouldBe(10);
+        entities.GetProperty("color").GetString().ShouldBe("colorado");
+        entities.GetProperty("birthDate").GetString().ShouldBe("2024-05-21");
+    }
+
     // ── S3 cleanup ─────────────────────────────────────────────────────────────
 
     [Test]
@@ -374,7 +461,7 @@ public class ProcessVoiceCommandHandlerTests
         var job = BuildJob("pending");
         SetupJob(job);
         SetupS3(AudioBytes);
-        SetupTranscription(true, "");
+        SetupTranscription(true);
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
 
