@@ -104,15 +104,13 @@ public class EntityResolutionServiceTests : TestBase
     }
 
     [Test]
-    public async Task ResolveAsync_LevenshteinFallback_FindsCloseMatch()
+    public async Task ResolveAsync_ArticleOnlyMention_ReturnsNull()
     {
-        var (farm, _, _, animal) = await SeedAsync("bonita");
-        animal.SearchText = null; // forces Levenshtein tier
-        await _context.SaveChangesAsync();
+        var (farm, _, _, _) = await SeedAsync("rosa");
 
-        var result = await _service.ResolveAsync(farm.Id, "bonita", null, null, null);
+        var result = await _service.ResolveAsync(farm.Id, "la", null, null, null);
 
-        result.AnimalId.ShouldBe(animal.Id);
+        result.AnimalId.ShouldBeNull();
     }
 
     // ── lot resolution ─────────────────────────────────────────────────────────

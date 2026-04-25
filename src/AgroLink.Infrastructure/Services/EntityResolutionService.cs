@@ -55,6 +55,10 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
     private async Task<int?> ResolveAnimalAsync(int farmId, string mention, CancellationToken ct)
     {
         var norm = Normalize(mention);
+        if (string.IsNullOrEmpty(norm))
+        {
+            return null;
+        }
 
         // Tier 1: exact normalized match on SearchText
         var exact = await context
@@ -96,31 +100,18 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
             // In-memory provider does not support ILike — fall through
         }
 
-        // Tier 3: Levenshtein in-memory fallback
-        var candidates = await context
-            .Animals.Where(a => a.Lot.Paddock.FarmId == farmId && a.LifeStatus == LifeStatus.Active)
-            .Select(a => new
-            {
-                a.Id,
-                NameNorm = a.SearchText
-                    ?? Normalize(a.Name + " " + (a.TagVisual ?? "") + " " + (a.Cuia ?? "")),
-            })
-            .Take(200)
-            .ToListAsync(ct);
-
-        var threshold = Math.Max(2, norm.Length / 4);
-        var best = candidates
-            .Select(c => new { c.Id, Dist = Levenshtein(norm, c.NameNorm) })
-            .Where(c => c.Dist <= threshold)
-            .MinBy(c => c.Dist);
-
-        return best?.Id;
+        return null;
     }
 
     private async Task<int?> ResolveLotAsync(int farmId, string mention, CancellationToken ct)
     {
         var norm = Normalize(mention);
+        if (string.IsNullOrEmpty(norm))
+        {
+            return null;
+        }
 
+        // Tier 1: exact normalized match on SearchText
         var exact = await context
             .Lots.Where(l =>
                 l.Paddock.FarmId == farmId
@@ -136,6 +127,7 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
             return exact;
         }
 
+        // Tier 2: ILIKE containment on SearchText
         try
         {
             var ilike = await context
@@ -155,62 +147,43 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         }
         catch (InvalidOperationException) { }
 
-        var candidates = await context
-            .Lots.Where(l => l.Paddock.FarmId == farmId && l.Status == "ACTIVE")
-            .Select(l => new { l.Id, NameNorm = l.SearchText ?? Normalize(l.Name) })
-            .Take(200)
-            .ToListAsync(ct);
-
-        var threshold = Math.Max(2, norm.Length / 4);
-        var best = candidates
-            .Select(c => new { c.Id, Dist = Levenshtein(norm, c.NameNorm) })
-            .Where(c => c.Dist <= threshold)
-            .MinBy(c => c.Dist);
-
-        return best?.Id;
+        return null;
     }
 
     private async Task<int?> ResolvePaddockAsync(int farmId, string mention, CancellationToken ct)
     {
         var norm = Normalize(mention);
-
-        var exact = await context
-            .Paddocks.Where(p => p.FarmId == farmId && Normalize(p.Name) == norm)
-            .Select(p => (int?)p.Id)
-            .FirstOrDefaultAsync(ct);
-
-        if (exact.HasValue)
+        if (string.IsNullOrEmpty(norm))
         {
-            return exact;
+            return null;
         }
 
-        try
-        {
-            var ilike = await context
-                .Paddocks.Where(p =>
-                    p.FarmId == farmId && EF.Functions.ILike(p.Name, $"%{mention}%")
-                )
-                .Select(p => (int?)p.Id)
-                .FirstOrDefaultAsync(ct);
-
-            if (ilike.HasValue)
-            {
-                return ilike;
-            }
-        }
-        catch (InvalidOperationException) { }
-
-        var candidates = await context
+        // Paddocks have no SearchText column — load all for the farm (typically few) and match in memory
+        var paddocks = await context
             .Paddocks.Where(p => p.FarmId == farmId)
-            .Select(p => new { p.Id, NameNorm = Normalize(p.Name) })
-            .Take(100)
+            .Select(p => new { p.Id, p.Name })
             .ToListAsync(ct);
 
+        // Tier 1: exact normalized match
+        var exact = paddocks.FirstOrDefault(p => Normalize(p.Name) == norm);
+        if (exact != null)
+        {
+            return exact.Id;
+        }
+
+        // Tier 2: normalized containment
+        var contains = paddocks.FirstOrDefault(p => Normalize(p.Name).Contains(norm));
+        if (contains != null)
+        {
+            return contains.Id;
+        }
+
+        // Tier 3: Levenshtein (acceptable here since paddock count per farm is small)
         var threshold = Math.Max(2, norm.Length / 4);
-        var best = candidates
-            .Select(c => new { c.Id, Dist = Levenshtein(norm, c.NameNorm) })
-            .Where(c => c.Dist <= threshold)
-            .MinBy(c => c.Dist);
+        var best = paddocks
+            .Select(p => new { p.Id, Dist = Levenshtein(norm, Normalize(p.Name)) })
+            .Where(p => p.Dist <= threshold)
+            .MinBy(p => p.Dist);
 
         return best?.Id;
     }
@@ -223,23 +196,15 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
             return string.Empty;
         }
 
-        var lower = input.ToLowerInvariant();
-
-        var accents = lower
+        var accents = input
+            .ToLowerInvariant()
             .Replace('á', 'a')
             .Replace('é', 'e')
             .Replace('í', 'i')
             .Replace('ó', 'o')
             .Replace('ú', 'u')
             .Replace('ü', 'u')
-            .Replace('ñ', 'n')
-            .Replace('Á', 'a')
-            .Replace('É', 'e')
-            .Replace('Í', 'i')
-            .Replace('Ó', 'o')
-            .Replace('Ú', 'u')
-            .Replace('Ü', 'u')
-            .Replace('Ñ', 'n');
+            .Replace('ñ', 'n');
 
         var noArticles = ArticleRegex.Replace(accents, " ");
 
