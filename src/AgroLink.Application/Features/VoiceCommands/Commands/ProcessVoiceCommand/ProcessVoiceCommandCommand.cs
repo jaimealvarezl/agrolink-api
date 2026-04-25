@@ -15,6 +15,7 @@ public class ProcessVoiceCommandHandler(
     IVoiceCommandJobRepository jobRepository,
     IStorageService storageService,
     IFarmRosterService rosterService,
+    IEntityResolutionService resolutionService,
     IExternalApiWorkerClient workerClient,
     IUnitOfWork unitOfWork,
     ILogger<ProcessVoiceCommandHandler> logger
@@ -92,17 +93,14 @@ public class ProcessVoiceCommandHandler(
             return;
         }
 
-        // Step 4: Load farm roster (5-min cached)
-        var roster = await rosterService.GetRosterAsync(request.FarmId, cancellationToken);
-
-        // Step 5: Extract intent via GPT-4o (5-second timeout)
+        // Step 4: Extract raw intent via GPT-4o (5-second timeout, no roster)
         using var intentCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         intentCts.CancelAfter(TimeSpan.FromSeconds(5));
 
         ParsedIntentResponse parsed;
         try
         {
-            parsed = await ExtractIntentAsync(transcript, roster, request.JobId, intentCts.Token);
+            parsed = await ExtractIntentAsync(transcript, request.JobId, intentCts.Token);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -117,8 +115,24 @@ public class ProcessVoiceCommandHandler(
             return;
         }
 
-        // Step 6: Server-side entity validation
-        var validated = VoiceIntentValidator.Validate(parsed, roster);
+        // Step 5: Server-side entity resolution (mentions → IDs) + roster load run concurrently
+        var resolveTask = resolutionService.ResolveAsync(
+            request.FarmId,
+            parsed.AnimalMention,
+            parsed.LotMention,
+            parsed.TargetPaddockMention,
+            parsed.MotherMention,
+            cancellationToken
+        );
+        var rosterTask = rosterService.GetRosterAsync(request.FarmId, cancellationToken);
+
+        await Task.WhenAll(resolveTask, rosterTask);
+
+        var resolved = BuildResolvedIntent(parsed, await resolveTask);
+        var roster = await rosterTask;
+
+        // Step 6: Server-side entity validation against roster
+        var validated = VoiceIntentValidator.Validate(resolved, roster);
 
         // Step 7: Persist result
         await CompleteJobAsync(
@@ -180,12 +194,11 @@ public class ProcessVoiceCommandHandler(
 
     private async Task<ParsedIntentResponse> ExtractIntentAsync(
         string transcript,
-        FarmRosterDto roster,
         Guid jobId,
         CancellationToken ct
     )
     {
-        var payload = new ExtractVoiceIntentPayload(transcript, roster);
+        var payload = new ExtractVoiceIntentPayload(transcript);
         var request = new ExternalWorkerRequest(
             jobId.ToString(),
             ExternalWorkerOperations.ExtractVoiceIntent,
@@ -217,16 +230,38 @@ public class ProcessVoiceCommandHandler(
         }
     }
 
+    private static ResolvedIntentResponse BuildResolvedIntent(
+        ParsedIntentResponse parsed,
+        EntityResolutionResult resolution
+    )
+    {
+        return new ResolvedIntentResponse(
+            parsed.Intent,
+            parsed.Confidence,
+            resolution.AnimalId,
+            resolution.LotId,
+            resolution.TargetPaddockId,
+            resolution.MotherId,
+            parsed.Sex,
+            parsed.NoteText,
+            parsed.AnimalName,
+            parsed.EarTag,
+            parsed.Color,
+            parsed.BirthDate,
+            parsed.OwnerNames
+        );
+    }
+
     private async Task CompleteJobAsync(
         VoiceCommandJob job,
         string intent,
         double confidence,
         string transcript,
-        ParsedIntentResponse? parsed,
+        ResolvedIntentResponse? resolved,
         CancellationToken ct
     )
     {
-        var entities = BuildEntitiesElement(parsed);
+        var entities = BuildEntitiesElement(resolved);
         var result = new VoiceCommandResultDto(intent, confidence, entities, transcript);
 
         job.Status = "completed";
@@ -266,68 +301,68 @@ public class ProcessVoiceCommandHandler(
         }
     }
 
-    private static JsonElement BuildEntitiesElement(ParsedIntentResponse? parsed)
+    private static JsonElement BuildEntitiesElement(ResolvedIntentResponse? resolved)
     {
-        if (parsed == null)
+        if (resolved == null)
         {
             return JsonSerializer.SerializeToElement(new { }, JsonOptions);
         }
 
         var entities = new Dictionary<string, object?>();
 
-        if (parsed.AnimalId.HasValue)
+        if (resolved.AnimalId.HasValue)
         {
-            entities["animalId"] = parsed.AnimalId.Value;
+            entities["animalId"] = resolved.AnimalId.Value;
         }
 
-        if (parsed.LotId.HasValue)
+        if (resolved.LotId.HasValue)
         {
-            entities["lotId"] = parsed.LotId.Value;
+            entities["lotId"] = resolved.LotId.Value;
         }
 
-        if (parsed.TargetPaddockId.HasValue)
+        if (resolved.TargetPaddockId.HasValue)
         {
-            entities["targetPaddockId"] = parsed.TargetPaddockId.Value;
+            entities["targetPaddockId"] = resolved.TargetPaddockId.Value;
         }
 
-        if (parsed.MotherId.HasValue)
+        if (resolved.MotherId.HasValue)
         {
-            entities["motherId"] = parsed.MotherId.Value;
+            entities["motherId"] = resolved.MotherId.Value;
         }
 
-        if (parsed.Sex != null)
+        if (resolved.Sex != null)
         {
-            entities["sex"] = parsed.Sex;
+            entities["sex"] = resolved.Sex;
         }
 
-        if (parsed.NoteText != null)
+        if (resolved.NoteText != null)
         {
-            entities["noteText"] = parsed.NoteText;
+            entities["noteText"] = resolved.NoteText;
         }
 
-        if (parsed.AnimalName != null)
+        if (resolved.AnimalName != null)
         {
-            entities["animalName"] = parsed.AnimalName;
+            entities["animalName"] = resolved.AnimalName;
         }
 
-        if (parsed.EarTag != null)
+        if (resolved.EarTag != null)
         {
-            entities["earTag"] = parsed.EarTag;
+            entities["earTag"] = resolved.EarTag;
         }
 
-        if (parsed.Color != null)
+        if (resolved.Color != null)
         {
-            entities["color"] = parsed.Color;
+            entities["color"] = resolved.Color;
         }
 
-        if (parsed.BirthDate != null)
+        if (resolved.BirthDate != null)
         {
-            entities["birthDate"] = parsed.BirthDate;
+            entities["birthDate"] = resolved.BirthDate;
         }
 
-        if (parsed.OwnerNames is { Length: > 0 })
+        if (resolved.OwnerNames is { Length: > 0 })
         {
-            entities["ownerNames"] = parsed.OwnerNames;
+            entities["ownerNames"] = resolved.OwnerNames;
         }
 
         return JsonSerializer.SerializeToElement(entities, JsonOptions);

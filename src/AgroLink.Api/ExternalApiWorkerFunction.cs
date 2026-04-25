@@ -314,7 +314,6 @@ public class ExternalApiWorkerFunction
 
         var intentJson = await intentService.ExtractIntentAsync(
             payload.Transcript,
-            payload.Roster,
             CancellationToken.None
         );
 

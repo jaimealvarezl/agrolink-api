@@ -1,7 +1,6 @@
 using System.Text.Json;
 using AgroLink.Application.Features.ClinicalCases.Models;
 using AgroLink.Application.Features.ExternalWorkers.Models;
-using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -354,22 +353,12 @@ public class ExternalApiWorkerFunctionTests
     public async Task FunctionHandler_ExtractVoiceIntent_ReturnsIntentJson()
     {
         const string intentJson =
-            """{"intent":"move_animal","confidence":0.92,"animalId":10,"lotId":1}""";
+            """{"intent":"move_animal","confidence":0.92,"animalMention":"Rosa","lotMention":"lote norte"}""";
         _voiceIntentMock
-            .Setup(s =>
-                s.ExtractIntentAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<FarmRosterDto>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(s => s.ExtractIntentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(intentJson);
 
-        var roster = new FarmRosterDto(
-            [new AnimalRosterEntry(10, "Rosa", "042", null, 1, "Lote Norte")],
-            [new LotRosterEntry(1, "Lote Norte", 100, "Potrero Grande")]
-        );
-        var payload = new ExtractVoiceIntentPayload("mover Rosa al lote norte", roster);
+        var payload = new ExtractVoiceIntentPayload("mover Rosa al lote norte");
         var request = new ExternalWorkerRequest(
             "corr-vi-1",
             ExternalWorkerOperations.ExtractVoiceIntent,
@@ -388,16 +377,10 @@ public class ExternalApiWorkerFunctionTests
     public async Task FunctionHandler_ExtractVoiceIntent_WhenServiceReturnsNull_ReturnsFailure()
     {
         _voiceIntentMock
-            .Setup(s =>
-                s.ExtractIntentAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<FarmRosterDto>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(s => s.ExtractIntentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        var payload = new ExtractVoiceIntentPayload("algo", new FarmRosterDto([], []));
+        var payload = new ExtractVoiceIntentPayload("algo");
         var request = new ExternalWorkerRequest(
             "corr-vi-2",
             ExternalWorkerOperations.ExtractVoiceIntent,
@@ -412,23 +395,13 @@ public class ExternalApiWorkerFunctionTests
     }
 
     [Test]
-    public async Task FunctionHandler_ExtractVoiceIntent_PassesTranscriptAndRosterToService()
+    public async Task FunctionHandler_ExtractVoiceIntent_PassesTranscriptToService()
     {
         _voiceIntentMock
-            .Setup(s =>
-                s.ExtractIntentAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<FarmRosterDto>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(s => s.ExtractIntentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("""{"intent":"unknown","confidence":0.0}""");
 
-        var roster = new FarmRosterDto(
-            [new AnimalRosterEntry(5, "Lola", null, null, 2, "Lote Sur")],
-            [new LotRosterEntry(2, "Lote Sur", 200, "Potrero Sur")]
-        );
-        var payload = new ExtractVoiceIntentPayload("nota para Lola", roster);
+        var payload = new ExtractVoiceIntentPayload("nota para Lola");
         var request = new ExternalWorkerRequest(
             "c",
             ExternalWorkerOperations.ExtractVoiceIntent,
@@ -438,12 +411,7 @@ public class ExternalApiWorkerFunctionTests
         await _function.FunctionHandler(request, null!);
 
         _voiceIntentMock.Verify(
-            s =>
-                s.ExtractIntentAsync(
-                    "nota para Lola",
-                    It.Is<FarmRosterDto>(r => r.Animals.Count == 1 && r.Animals[0].Name == "Lola"),
-                    It.IsAny<CancellationToken>()
-                ),
+            s => s.ExtractIntentAsync("nota para Lola", It.IsAny<CancellationToken>()),
             Times.Once
         );
     }

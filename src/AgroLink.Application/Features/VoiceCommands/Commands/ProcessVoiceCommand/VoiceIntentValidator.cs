@@ -4,7 +4,10 @@ namespace AgroLink.Application.Features.VoiceCommands.Commands.ProcessVoiceComma
 
 public static class VoiceIntentValidator
 {
-    public static ParsedIntentResponse Validate(ParsedIntentResponse intent, FarmRosterDto roster)
+    public static ResolvedIntentResponse Validate(
+        ResolvedIntentResponse intent,
+        FarmRosterDto roster
+    )
     {
         var validAnimalIds = new HashSet<int>(roster.Animals.Select(a => a.Id));
         var validLotIds = new HashSet<int>(roster.Lots.Select(l => l.Id));
@@ -42,7 +45,7 @@ public static class VoiceIntentValidator
 
         if (Math.Round(confidence, 4) < 0.5)
         {
-            return new ParsedIntentResponse();
+            return new ResolvedIntentResponse();
         }
 
         return intent with

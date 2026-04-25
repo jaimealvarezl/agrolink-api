@@ -10,6 +10,7 @@ public class LotConfiguration : IEntityTypeConfiguration<Lot>
     {
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
+        builder.Property(e => e.SearchText).IsRequired(false).HasMaxLength(200);
         builder.Property(e => e.Status).IsRequired().HasMaxLength(50);
         builder
             .HasOne(e => e.Paddock)

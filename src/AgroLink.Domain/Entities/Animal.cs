@@ -17,6 +17,9 @@ public class Animal
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(600)]
+    public string? SearchText { get; set; }
+
     [MaxLength(100)]
     public string? Color { get; set; }
 

@@ -31,7 +31,7 @@ public class VoiceIntentValidatorTests
     public void Validate_AllValidIds_ConfidenceUnchanged()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse("move_animal", 0.9, 1, 10);
+        var intent = new ResolvedIntentResponse("move_animal", 0.9, 1, 10);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -45,7 +45,7 @@ public class VoiceIntentValidatorTests
     public void Validate_InvalidAnimalId_NulledAndConfidencePenalized()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse("move_animal", 0.9, 999, 10);
+        var intent = new ResolvedIntentResponse("move_animal", 0.9, 999, 10);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -58,7 +58,7 @@ public class VoiceIntentValidatorTests
     public void Validate_InvalidLotId_NulledAndConfidencePenalized()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse("move_animal", 0.9, 1, 999);
+        var intent = new ResolvedIntentResponse("move_animal", 0.9, 1, 999);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -70,7 +70,7 @@ public class VoiceIntentValidatorTests
     public void Validate_InvalidPaddockId_NulledAndConfidencePenalized()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse("move_lot", 0.8, null, 10, 999);
+        var intent = new ResolvedIntentResponse("move_lot", 0.8, LotId: 10, TargetPaddockId: 999);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -82,7 +82,7 @@ public class VoiceIntentValidatorTests
     public void Validate_InvalidMotherId_NulledAndConfidencePenalized()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse("register_newborn", 0.85, null, null, null, 999, "F");
+        var intent = new ResolvedIntentResponse("register_newborn", 0.85, MotherId: 999, Sex: "F");
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -94,7 +94,7 @@ public class VoiceIntentValidatorTests
     public void Validate_MultipleInvalidIds_ConfidencePenalizedPerInvalid()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse("move_animal", 0.9, 999, 999);
+        var intent = new ResolvedIntentResponse("move_animal", 0.9, 999, 999);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -109,7 +109,7 @@ public class VoiceIntentValidatorTests
     {
         var roster = BuildRoster();
         // 3 invalid IDs from 0.9 → 0.9 - 0.6 = 0.3 < 0.5
-        var intent = new ParsedIntentResponse("move_animal", 0.9, 999, 999, 999);
+        var intent = new ResolvedIntentResponse("move_animal", 0.9, 999, 999, 999);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -125,7 +125,7 @@ public class VoiceIntentValidatorTests
     {
         var emptyRoster = new FarmRosterDto([], []);
         // 0.8 - 0.2 (animal) - 0.2 (lot) = 0.4 < 0.5 → downgrade
-        var intent = new ParsedIntentResponse("move_animal", 0.8, 1, 10);
+        var intent = new ResolvedIntentResponse("move_animal", 0.8, 1, 10);
 
         var result = VoiceIntentValidator.Validate(intent, emptyRoster);
 
@@ -139,7 +139,7 @@ public class VoiceIntentValidatorTests
     public void Validate_NullEntityIds_NoConfidencePenalty()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse();
+        var intent = new ResolvedIntentResponse();
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -152,16 +152,7 @@ public class VoiceIntentValidatorTests
     {
         var roster = BuildRoster();
         // One invalid ID from 0.7 → 0.5, which is NOT < 0.5
-        var intent = new ParsedIntentResponse(
-            "create_note",
-            0.7,
-            999,
-            null,
-            null,
-            null,
-            null,
-            "some note"
-        );
+        var intent = new ResolvedIntentResponse("create_note", 0.7, 999, NoteText: "some note");
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 
@@ -174,20 +165,16 @@ public class VoiceIntentValidatorTests
     public void Validate_CreateAnimal_ValidLotId_PassesThrough()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse(
+        var intent = new ResolvedIntentResponse(
             "create_animal",
             0.91,
-            null,
-            10,
-            null,
-            null,
-            "female",
-            null,
-            "la milagro",
-            "017683344",
-            "colorada",
-            "2020-05-22",
-            ["Carla", "Jaime"]
+            LotId: 10,
+            Sex: "female",
+            AnimalName: "la milagro",
+            EarTag: "017683344",
+            Color: "colorada",
+            BirthDate: "2020-05-22",
+            OwnerNames: ["Carla", "Jaime"]
         );
 
         var result = VoiceIntentValidator.Validate(intent, roster);
@@ -206,17 +193,13 @@ public class VoiceIntentValidatorTests
     public void Validate_CreateAnimal_InvalidLotId_PenalizesConfidence()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse(
+        var intent = new ResolvedIntentResponse(
             "create_animal",
             0.9,
-            null,
-            999,
-            null,
-            null,
-            "female",
-            null,
-            "la milagro",
-            "017683344"
+            LotId: 999,
+            Sex: "female",
+            AnimalName: "la milagro",
+            EarTag: "017683344"
         );
 
         var result = VoiceIntentValidator.Validate(intent, roster);
@@ -230,19 +213,13 @@ public class VoiceIntentValidatorTests
     public void Validate_RegisterNewborn_ColorAndBirthDatePassThrough()
     {
         var roster = BuildRoster();
-        var intent = new ParsedIntentResponse(
+        var intent = new ResolvedIntentResponse(
             "register_newborn",
             0.88,
-            null,
-            null,
-            null,
-            1,
-            "male",
-            null,
-            null,
-            null,
-            "colorado",
-            "2024-05-22"
+            MotherId: 1,
+            Sex: "male",
+            Color: "colorado",
+            BirthDate: "2024-05-22"
         );
 
         var result = VoiceIntentValidator.Validate(intent, roster);
@@ -257,7 +234,7 @@ public class VoiceIntentValidatorTests
     public void Validate_ValidPaddockIdFromLots_NotPenalized()
     {
         var roster = BuildRoster(paddockIds: [100, 101]);
-        var intent = new ParsedIntentResponse("move_lot", 0.85, null, 10, 100);
+        var intent = new ResolvedIntentResponse("move_lot", 0.85, LotId: 10, TargetPaddockId: 100);
 
         var result = VoiceIntentValidator.Validate(intent, roster);
 

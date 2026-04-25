@@ -19,6 +19,9 @@ public class ProcessVoiceCommandHandlerTests
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<ProcessVoiceCommandHandler>();
+
+        // Default: resolution returns all nulls
+        SetupResolution(new EntityResolutionResult(null, null, null, null));
     }
 
     private AutoMocker _mocker = null!;
@@ -121,9 +124,17 @@ public class ProcessVoiceCommandHandlerTests
 
         job.Status.ShouldBe("failed");
         _mocker
-            .GetMock<IFarmRosterService>()
+            .GetMock<IEntityResolutionService>()
             .Verify(
-                r => r.GetRosterAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+                r =>
+                    r.ResolveAsync(
+                        It.IsAny<int>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<CancellationToken>()
+                    ),
                 Times.Never
             );
     }
@@ -146,9 +157,17 @@ public class ProcessVoiceCommandHandlerTests
         result.GetProperty("intent").GetString().ShouldBe("unknown");
 
         _mocker
-            .GetMock<IFarmRosterService>()
+            .GetMock<IEntityResolutionService>()
             .Verify(
-                r => r.GetRosterAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+                r =>
+                    r.ResolveAsync(
+                        It.IsAny<int>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<CancellationToken>()
+                    ),
                 Times.Never
             );
         VerifyGpt4oNotCalled();
@@ -177,7 +196,6 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
 
         _mocker
             .GetMock<IExternalApiWorkerClient>()
@@ -204,7 +222,6 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
         SetupIntentExtraction(false);
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -239,11 +256,10 @@ public class ProcessVoiceCommandHandlerTests
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
         SetupRoster(RosterWithAnimalsAndLots);
+        SetupResolution(new EntityResolutionResult(10, 1, null, null));
         SetupIntentExtraction(
             true,
-            """
-            { "intent": "move_animal", "confidence": 0.92, "animalId": 10, "lotId": 1 }
-            """
+            """{ "intent": "move_animal", "confidence": 0.92, "animalMention": "Rosa", "lotMention": "lote norte" }"""
         );
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -269,11 +285,10 @@ public class ProcessVoiceCommandHandlerTests
         SetupS3(AudioBytes);
         SetupTranscription(true, "nota para Rosa: cojea de la pata");
         SetupRoster(RosterWithAnimalsAndLots);
+        SetupResolution(new EntityResolutionResult(10, null, null, null));
         SetupIntentExtraction(
             true,
-            """
-            { "intent": "create_note", "confidence": 0.88, "animalId": 10, "noteText": "cojea de la pata" }
-            """
+            """{ "intent": "create_note", "confidence": 0.88, "animalMention": "Rosa", "noteText": "cojea de la pata" }"""
         );
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -289,22 +304,109 @@ public class ProcessVoiceCommandHandlerTests
         entities.GetProperty("noteText").GetString().ShouldBe("cojea de la pata");
     }
 
+    // ── create_animal ──────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task Handle_HappyPath_CreateAnimal_CompletesWithAllEntities()
+    {
+        var job = BuildJob("pending");
+        SetupJob(job);
+        SetupS3(AudioBytes);
+        SetupTranscription(
+            true,
+            "registrar vaca colorada arete 017683344, la milagro, lote forro, pertenece a Carla y Jaime"
+        );
+        SetupRoster(RosterWithAnimalsAndLots);
+        SetupResolution(new EntityResolutionResult(null, 1, null, null));
+        SetupIntentExtraction(
+            true,
+            """
+            {
+              "intent": "create_animal",
+              "confidence": 0.91,
+              "lotMention": "lote forro",
+              "sex": "female",
+              "animalName": "la milagro",
+              "earTag": "017683344",
+              "color": "colorada",
+              "ownerNames": ["Carla", "Jaime"]
+            }
+            """
+        );
+
+        await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
+
+        job.Status.ShouldBe("completed");
+        var result = JsonSerializer.Deserialize<JsonElement>(
+            job.ResultJson!,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        );
+        result.GetProperty("intent").GetString().ShouldBe("create_animal");
+        var entities = result.GetProperty("entities");
+        entities.GetProperty("animalName").GetString().ShouldBe("la milagro");
+        entities.GetProperty("earTag").GetString().ShouldBe("017683344");
+        entities.GetProperty("color").GetString().ShouldBe("colorada");
+        entities.GetProperty("lotId").GetInt32().ShouldBe(1);
+        var owners = entities
+            .GetProperty("ownerNames")
+            .EnumerateArray()
+            .Select(e => e.GetString())
+            .ToList();
+        owners.ShouldBe(["Carla", "Jaime"]);
+    }
+
+    [Test]
+    public async Task Handle_HappyPath_RegisterNewborn_CompletesWithColorAndBirthDate()
+    {
+        var job = BuildJob("pending");
+        SetupJob(job);
+        SetupS3(AudioBytes);
+        SetupTranscription(true, "la bonita tuvo ternero macho colorado ayer");
+        SetupRoster(RosterWithAnimalsAndLots);
+        SetupResolution(new EntityResolutionResult(null, null, null, 10));
+        SetupIntentExtraction(
+            true,
+            """
+            {
+              "intent": "register_newborn",
+              "confidence": 0.89,
+              "motherMention": "la bonita",
+              "sex": "male",
+              "color": "colorado",
+              "birthDate": "2024-05-21"
+            }
+            """
+        );
+
+        await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
+
+        job.Status.ShouldBe("completed");
+        var result = JsonSerializer.Deserialize<JsonElement>(
+            job.ResultJson!,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        );
+        result.GetProperty("intent").GetString().ShouldBe("register_newborn");
+        var entities = result.GetProperty("entities");
+        entities.GetProperty("motherId").GetInt32().ShouldBe(10);
+        entities.GetProperty("color").GetString().ShouldBe("colorado");
+        entities.GetProperty("birthDate").GetString().ShouldBe("2024-05-21");
+    }
+
     // ── entity validation ──────────────────────────────────────────────────────
 
     [Test]
-    public async Task Handle_WhenLlmHallucinatesAnimalId_NullsIdAndPenalizesConfidence()
+    public async Task Handle_WhenResolutionReturnsInvalidId_NullsIdAndPenalizesConfidence()
     {
         var job = BuildJob("pending");
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover el toro al lote norte");
         SetupRoster(RosterWithAnimalsAndLots);
-        // animalId 999 not in roster → penalized
+        // Resolution returns ID not in the cached roster (stale cache scenario)
+        SetupResolution(new EntityResolutionResult(999, 1, null, null));
         SetupIntentExtraction(
             true,
-            """
-            { "intent": "move_animal", "confidence": 0.85, "animalId": 999, "lotId": 1 }
-            """
+            """{ "intent": "move_animal", "confidence": 0.85, "animalMention": "el toro", "lotMention": "lote norte" }"""
         );
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -327,12 +429,11 @@ public class ProcessVoiceCommandHandlerTests
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover algo a algún lado");
         SetupRoster(RosterWithAnimalsAndLots);
-        // Both IDs hallucinated: 0.8 - 0.4 = 0.4 < 0.5
+        // Both resolved IDs stale: 0.8 - 0.4 = 0.4 < 0.5
+        SetupResolution(new EntityResolutionResult(999, 999, null, null));
         SetupIntentExtraction(
             true,
-            """
-            { "intent": "move_animal", "confidence": 0.8, "animalId": 999, "lotId": 999 }
-            """
+            """{ "intent": "move_animal", "confidence": 0.8, "animalMention": "algo", "lotMention": "algún lado" }"""
         );
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -346,93 +447,6 @@ public class ProcessVoiceCommandHandlerTests
         result.GetProperty("confidence").GetDouble().ShouldBe(0.0);
     }
 
-    // ── create_animal ──────────────────────────────────────────────────────────
-
-    [Test]
-    public async Task Handle_HappyPath_CreateAnimal_CompletesWithAllEntities()
-    {
-        var job = BuildJob("pending");
-        SetupJob(job);
-        SetupS3(AudioBytes);
-        SetupTranscription(
-            true,
-            "registrar vaca colorada arete 017683344, la milagro, lote forro, pertenece a Carla y Jaime"
-        );
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupIntentExtraction(
-            true,
-            """
-            {
-              "intent": "create_animal",
-              "confidence": 0.91,
-              "lotId": 1,
-              "sex": "female",
-              "animalName": "la milagro",
-              "earTag": "017683344",
-              "color": "colorada",
-              "ownerNames": ["Carla", "Jaime"]
-            }
-            """
-        );
-
-        await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
-
-        job.Status.ShouldBe("completed");
-        var result = JsonSerializer.Deserialize<JsonElement>(
-            job.ResultJson!,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-        );
-        result.GetProperty("intent").GetString().ShouldBe("create_animal");
-        result.GetProperty("confidence").GetDouble().ShouldBe(0.91);
-        var entities = result.GetProperty("entities");
-        entities.GetProperty("animalName").GetString().ShouldBe("la milagro");
-        entities.GetProperty("earTag").GetString().ShouldBe("017683344");
-        entities.GetProperty("color").GetString().ShouldBe("colorada");
-        entities.GetProperty("lotId").GetInt32().ShouldBe(1);
-        var owners = entities
-            .GetProperty("ownerNames")
-            .EnumerateArray()
-            .Select(e => e.GetString())
-            .ToList();
-        owners.ShouldBe(["Carla", "Jaime"]);
-    }
-
-    [Test]
-    public async Task Handle_HappyPath_RegisterNewborn_CompletesWithColorAndBirthDate()
-    {
-        var job = BuildJob("pending");
-        SetupJob(job);
-        SetupS3(AudioBytes);
-        SetupTranscription(true, "la bonita tuvo ternero macho colorado ayer");
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupIntentExtraction(
-            true,
-            """
-            {
-              "intent": "register_newborn",
-              "confidence": 0.89,
-              "motherId": 10,
-              "sex": "male",
-              "color": "colorado",
-              "birthDate": "2024-05-21"
-            }
-            """
-        );
-
-        await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
-
-        job.Status.ShouldBe("completed");
-        var result = JsonSerializer.Deserialize<JsonElement>(
-            job.ResultJson!,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-        );
-        result.GetProperty("intent").GetString().ShouldBe("register_newborn");
-        var entities = result.GetProperty("entities");
-        entities.GetProperty("motherId").GetInt32().ShouldBe(10);
-        entities.GetProperty("color").GetString().ShouldBe("colorado");
-        entities.GetProperty("birthDate").GetString().ShouldBe("2024-05-21");
-    }
-
     // ── S3 cleanup ─────────────────────────────────────────────────────────────
 
     [Test]
@@ -443,11 +457,10 @@ public class ProcessVoiceCommandHandlerTests
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
         SetupRoster(RosterWithAnimalsAndLots);
+        SetupResolution(new EntityResolutionResult(10, 1, null, null));
         SetupIntentExtraction(
             true,
-            """
-            { "intent": "move_animal", "confidence": 0.9, "animalId": 10, "lotId": 1 }
-            """
+            """{ "intent": "move_animal", "confidence": 0.9, "animalMention": "Rosa", "lotMention": "lote norte" }"""
         );
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -493,11 +506,10 @@ public class ProcessVoiceCommandHandlerTests
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
         SetupRoster(RosterWithAnimalsAndLots);
+        SetupResolution(new EntityResolutionResult(10, 1, null, null));
         SetupIntentExtraction(
             true,
-            """
-            { "intent": "move_animal", "confidence": 0.9, "animalId": 10, "lotId": 1 }
-            """
+            """{ "intent": "move_animal", "confidence": 0.9, "animalMention": "Rosa", "lotMention": "lote norte" }"""
         );
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -576,6 +588,23 @@ public class ProcessVoiceCommandHandlerTests
             .GetMock<IFarmRosterService>()
             .Setup(r => r.GetRosterAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(roster);
+    }
+
+    private void SetupResolution(EntityResolutionResult result)
+    {
+        _mocker
+            .GetMock<IEntityResolutionService>()
+            .Setup(r =>
+                r.ResolveAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(result);
     }
 
     private void SetupIntentExtraction(bool success, string intentJson = "")

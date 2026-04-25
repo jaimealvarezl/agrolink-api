@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -14,18 +13,19 @@ public class OpenAiVoiceIntentService(
     ILogger<OpenAiVoiceIntentService> logger
 ) : IVoiceIntentService
 {
-    private const string SystemPrompt =
+    private const string SystemPromptTemplate =
         "You are an agricultural assistant for a cattle ranch in Nicaragua. "
         + "Extract a structured intent from a Spanish voice command. "
-        + "You will be given the transcription and a JSON roster of animals and lots on this farm. "
         + "Return ONLY a JSON object — no markdown, no explanation. "
-        + "To identify an existing animal, match the spoken reference against its name, earTag (visual tag / arete), or cuia field — any of the three is sufficient. "
-        + "Only use IDs that appear in the roster. If you cannot find a confident match, set the ID field to null. "
+        + "Do NOT resolve entity names to IDs. Instead, return the exact spoken text for each entity reference. "
         + "Supported intents: create_animal, create_note, move_animal, move_lot, register_newborn. "
         + "If the command does not match a supported intent, return intent \"unknown\" with confidence 0.0. "
-        + "For create_animal: extract animalName (the name given), earTag (tag or CUIA number spoken), sex (vaca/ternera→female, toro/ternero→male), color (coat color if mentioned), lotId (resolved from lot name), ownerNames (array of owner names mentioned), motherId (resolved from roster if calf of a known mother), birthDate (ISO 8601, resolve relative dates like hoy/ayer using today's date). "
-        + "For register_newborn: extract motherId (resolved from roster), sex, color (coat color if mentioned), birthDate (ISO 8601). "
-        + "JSON fields: intent, confidence, animalId, lotId, targetPaddockId, motherId, sex, noteText, animalName, earTag, color, birthDate, ownerNames.";
+        + "For move_animal: set animalMention (spoken animal reference), lotMention (spoken lot name). "
+        + "For move_lot: set lotMention (spoken lot name), targetPaddockMention (spoken paddock name). "
+        + "For create_note: set animalMention (spoken animal reference), noteText. "
+        + "For register_newborn: set motherMention (spoken mother reference), sex, color (coat color if mentioned), birthDate (ISO 8601 — today is {today}). "
+        + "For create_animal: set animalName (name given), earTag (tag or CUIA number spoken), sex (vaca/ternera→female, toro/ternero→male), color, lotMention (spoken lot name), ownerNames (array), motherId (resolved from motherMention if calf of known mother), birthDate (ISO 8601 — today is {today}). "
+        + "JSON fields: intent, confidence, animalMention, lotMention, targetPaddockMention, motherMention, sex, noteText, animalName, earTag, color, birthDate, ownerNames.";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -40,11 +40,7 @@ public class OpenAiVoiceIntentService(
 
     private readonly string _model = configuration["OpenAI:VoiceIntentModel"] ?? "gpt-4o";
 
-    public async Task<string?> ExtractIntentAsync(
-        string transcript,
-        FarmRosterDto roster,
-        CancellationToken ct = default
-    )
+    public async Task<string?> ExtractIntentAsync(string transcript, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_apiKey))
         {
@@ -52,8 +48,8 @@ public class OpenAiVoiceIntentService(
             return null;
         }
 
-        var rosterJson = JsonSerializer.Serialize(roster, JsonOptions);
-        var userMessage = $"Transcription: {transcript}\n\nRoster:\n{rosterJson}";
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var systemPrompt = SystemPromptTemplate.Replace("{today}", today);
 
         var payload = JsonSerializer.Serialize(
             new
@@ -61,11 +57,11 @@ public class OpenAiVoiceIntentService(
                 model = _model,
                 messages = new object[]
                 {
-                    new { role = "system", content = SystemPrompt },
-                    new { role = "user", content = userMessage },
+                    new { role = "system", content = systemPrompt },
+                    new { role = "user", content = $"Transcription: {transcript}" },
                 },
                 response_format = new { type = "json_object" },
-                max_tokens = 400,
+                max_tokens = 250,
             }
         );
 
