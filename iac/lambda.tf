@@ -290,6 +290,11 @@ resource "aws_lambda_function" "voice_command_sqs_consumer" {
   })
 }
 
+import {
+  to = aws_cloudwatch_log_group.voice_command_sqs_consumer_log_group
+  id = "/aws/lambda/AgroLink-VoiceCommandSqsConsumer"
+}
+
 resource "aws_cloudwatch_log_group" "voice_command_sqs_consumer_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.voice_command_sqs_consumer.function_name}"
   retention_in_days = 30
