@@ -16,6 +16,11 @@ resource "aws_lambda_function" "agro_link" {
     apply_on = var.use_placeholder ? "None" : "PublishedVersions"
   }
 
+  timeouts {
+    create = "20m"
+    update = "20m"
+  }
+
   vpc_config {
     subnet_ids         = [aws_subnet.private[0].id] # PIN TO AZ 0
     security_group_ids = [aws_security_group.lambda_sg.id]
@@ -55,6 +60,11 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
 
   snap_start {
     apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+  }
+
+  timeouts {
+    create = "20m"
+    update = "20m"
   }
 
   vpc_config {
@@ -98,6 +108,10 @@ resource "aws_lambda_function" "external_api_worker" {
     apply_on = var.use_placeholder ? "None" : "PublishedVersions"
   }
 
+  timeouts {
+    create = "20m"
+    update = "20m"
+  }
   environment {
     variables = {
       Telegram__BotToken = var.telegram_bot_token
@@ -214,6 +228,11 @@ resource "aws_lambda_function" "voice_command_cleanup" {
 
   snap_start {
     apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+  }
+
+  timeouts {
+    create = "20m"
+    update = "20m"
   }
 
   vpc_config {
