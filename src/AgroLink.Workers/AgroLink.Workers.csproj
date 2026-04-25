@@ -13,6 +13,7 @@
     <PackageReference Include="MediatR" Version="12.5.0" />
     <PackageReference Include="Amazon.Lambda.SQSEvents" Version="2.2.1" />
     <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
