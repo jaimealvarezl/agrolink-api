@@ -115,6 +115,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Infrastructure Services
+        services.AddMemoryCache();
+        services.AddScoped<IFarmRosterService, FarmRosterService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IStorageService, S3StorageService>();
