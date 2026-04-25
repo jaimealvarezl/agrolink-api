@@ -43,7 +43,7 @@ variable "lambda_package_key" {
 variable "use_placeholder" {
   description = "If true, deploy a minimal placeholder Lambda until real code is ready"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "lambda_placeholder_key" {
