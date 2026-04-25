@@ -18,6 +18,7 @@
         "kms:*",
         "logs:*",
         "cloudwatch:*",
+        "events:*",
         "sns:*",
         "wafv2:*",
         "networkmanager:*",
