@@ -311,7 +311,9 @@ public class ProcessVoiceCommandHandler(
     private static JsonElement BuildEntitiesElement(ResolvedIntentResponse? resolved)
     {
         if (resolved == null)
+        {
             return JsonSerializer.SerializeToElement(new { }, EntitiesJsonOptions);
+        }
 
         return JsonSerializer.SerializeToElement(
             new

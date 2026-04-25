@@ -6,10 +6,15 @@ resource "aws_lambda_function" "agro_link" {
   memory_size   = 512
   timeout       = 300
   architectures = ["arm64"]
+  publish       = true
 
   s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
   s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
 
   vpc_config {
     subnet_ids         = [aws_subnet.private[0].id] # PIN TO AZ 0
@@ -18,14 +23,13 @@ resource "aws_lambda_function" "agro_link" {
 
   environment {
     variables = {
-      # Secret ARNs - read from Secrets Manager at runtime
-      AgroLink__DbSecretArn        = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn       = aws_secretsmanager_secret.jwt_secret_key.arn
-      AgroLink__S3BucketName       = aws_s3_bucket.file_storage.bucket
-      Telegram__BotToken           = var.telegram_bot_token
-      Telegram__WebhookSecretToken = var.telegram_webhook_secret_token
-      Telegram__SqsQueueUrl        = aws_sqs_queue.telegram_updates.url
-      OpenAI__ApiKey               = var.openai_api_key
+      ConnectionStrings__DefaultConnection = "Host=${aws_rds_cluster.serverless_db.endpoint};Port=5432;Database=${var.db_name};Username=agrolink_app;SSL Mode=Require"
+      Jwt__Key                             = random_password.random_jwt_secret_key.result
+      AgroLink__S3BucketName               = aws_s3_bucket.file_storage.bucket
+      Telegram__BotToken                   = var.telegram_bot_token
+      Telegram__WebhookSecretToken         = var.telegram_webhook_secret_token
+      Telegram__SqsQueueUrl                = aws_sqs_queue.telegram_updates.url
+      OpenAI__ApiKey                       = var.openai_api_key
     }
   }
 
@@ -43,10 +47,15 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
   memory_size   = 512
   timeout       = 300
   architectures = ["arm64"]
+  publish       = true
 
   s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
   s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
 
   vpc_config {
     subnet_ids         = [aws_subnet.private[0].id] # PIN TO AZ 0
@@ -55,14 +64,13 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
 
   environment {
     variables = {
-      AgroLink__DbSecretArn               = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn              = aws_secretsmanager_secret.jwt_secret_key.arn
-      AgroLink__S3BucketName              = aws_s3_bucket.file_storage.bucket
-      Telegram__BotToken                  = var.telegram_bot_token
-      Telegram__WebhookSecretToken        = var.telegram_webhook_secret_token
-      Telegram__SqsQueueUrl               = aws_sqs_queue.telegram_updates.url
-      ExternalWorkers__WorkerFunctionName = aws_lambda_function.external_api_worker.function_name
-      OpenAI__ApiKey                      = var.openai_api_key
+      ConnectionStrings__DefaultConnection = "Host=${aws_rds_cluster.serverless_db.endpoint};Port=5432;Database=${var.db_name};Username=agrolink_app;SSL Mode=Require"
+      AgroLink__S3BucketName               = aws_s3_bucket.file_storage.bucket
+      Telegram__BotToken                   = var.telegram_bot_token
+      Telegram__WebhookSecretToken         = var.telegram_webhook_secret_token
+      Telegram__SqsQueueUrl                = aws_sqs_queue.telegram_updates.url
+      ExternalWorkers__WorkerFunctionName  = aws_lambda_alias.external_api_worker_live.arn
+      OpenAI__ApiKey                       = var.openai_api_key
     }
   }
 
@@ -80,10 +88,15 @@ resource "aws_lambda_function" "external_api_worker" {
   memory_size   = 512
   timeout       = 300
   architectures = ["arm64"]
+  publish       = true
 
   s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
   s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
 
   environment {
     variables = {
@@ -125,10 +138,53 @@ resource "aws_cloudwatch_log_group" "external_api_worker_log_group" {
   }
 }
 
+# SnapStart aliases — CI/CD publishes new versions and updates these after each deploy.
+# ignore_changes on function_version prevents Terraform from overwriting CI/CD-managed versions.
+resource "aws_lambda_alias" "agro_link_live" {
+  name             = "live"
+  function_name    = aws_lambda_function.agro_link.function_name
+  function_version = aws_lambda_function.agro_link.version
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
+resource "aws_lambda_alias" "telegram_sqs_consumer_live" {
+  name             = "live"
+  function_name    = aws_lambda_function.telegram_sqs_consumer.function_name
+  function_version = aws_lambda_function.telegram_sqs_consumer.version
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
+resource "aws_lambda_alias" "external_api_worker_live" {
+  name             = "live"
+  function_name    = aws_lambda_function.external_api_worker.function_name
+  function_version = aws_lambda_function.external_api_worker.version
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
+resource "aws_lambda_alias" "voice_command_cleanup_live" {
+  name             = "live"
+  function_name    = aws_lambda_function.voice_command_cleanup.function_name
+  function_version = aws_lambda_function.voice_command_cleanup.version
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
 resource "aws_lambda_permission" "agro_link_lambda_permission" {
   statement_id  = "AgroLinkAPI-AspNetCoreFunctionProxyResourcePermissionProd"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.agro_link.function_name
+  qualifier     = aws_lambda_alias.agro_link_live.name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.agro_link_api.execution_arn}/*/*/*"
 }
@@ -137,6 +193,7 @@ resource "aws_lambda_permission" "agro_link_root_lambda_permission" {
   statement_id  = "AgroLinkAPI-AspNetCoreFunctionRootResourcePermissionProd"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.agro_link.function_name
+  qualifier     = aws_lambda_alias.agro_link_live.name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.agro_link_api.execution_arn}/*/*/"
 }
@@ -149,10 +206,15 @@ resource "aws_lambda_function" "voice_command_cleanup" {
   memory_size   = 256
   timeout       = 60
   architectures = ["arm64"]
+  publish       = true
 
   s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
   s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
 
   vpc_config {
     subnet_ids         = [aws_subnet.private[0].id]
@@ -161,8 +223,7 @@ resource "aws_lambda_function" "voice_command_cleanup" {
 
   environment {
     variables = {
-      AgroLink__DbSecretArn  = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn = aws_secretsmanager_secret.jwt_secret_key.arn
+      ConnectionStrings__DefaultConnection = "Host=${aws_rds_cluster.serverless_db.endpoint};Port=5432;Database=${var.db_name};Username=agrolink_app;SSL Mode=Require"
     }
   }
 
@@ -187,13 +248,14 @@ resource "aws_cloudwatch_event_rule" "voice_command_cleanup_schedule" {
 resource "aws_cloudwatch_event_target" "voice_command_cleanup_target" {
   rule      = aws_cloudwatch_event_rule.voice_command_cleanup_schedule.name
   target_id = "VoiceCommandCleanupLambda"
-  arn       = aws_lambda_function.voice_command_cleanup.arn
+  arn       = aws_lambda_alias.voice_command_cleanup_live.arn
 }
 
 resource "aws_lambda_permission" "allow_eventbridge_invoke_cleanup" {
   statement_id  = "AllowEventBridgeInvokeCleanup"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.voice_command_cleanup.function_name
+  qualifier     = aws_lambda_alias.voice_command_cleanup_live.name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.voice_command_cleanup_schedule.arn
 }
@@ -201,7 +263,7 @@ resource "aws_lambda_permission" "allow_eventbridge_invoke_cleanup" {
 # SQS Trigger for the Lambda function
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn = aws_sqs_queue.telegram_updates.arn
-  function_name    = aws_lambda_function.telegram_sqs_consumer.arn
+  function_name    = aws_lambda_alias.telegram_sqs_consumer_live.arn
   batch_size       = 1 # Process one Telegram update at a time
   enabled          = true
 }

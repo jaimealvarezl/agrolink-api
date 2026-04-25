@@ -39,7 +39,7 @@ resource "aws_api_gateway_integration" "proxy_integration" {
   cache_namespace         = "urvzgl"
   cache_key_parameters    = []
   integration_http_method = "POST"
-  uri                     = aws_lambda_function.agro_link.invoke_arn
+  uri                     = aws_lambda_alias.agro_link_live.invoke_arn
 }
 
 resource "aws_api_gateway_integration" "root_integration" {
@@ -50,7 +50,7 @@ resource "aws_api_gateway_integration" "root_integration" {
   cache_key_parameters    = []
   cache_namespace         = "tj6b3q7qpj"
   integration_http_method = "POST"
-  uri                     = aws_lambda_function.agro_link.invoke_arn
+  uri                     = aws_lambda_alias.agro_link_live.invoke_arn
 }
 
 resource "aws_api_gateway_deployment" "api_gateway_deployment" {

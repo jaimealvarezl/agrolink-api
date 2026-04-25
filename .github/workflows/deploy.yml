@@ -364,6 +364,39 @@ jobs:
             --region "${AWS_REGION}"
           echo "✅ Voice command cleanup Lambda code updated successfully!"
 
+      - name: Publish versions and promote live aliases (SnapStart)
+        run: |
+          set -euo pipefail
+
+          publish_and_promote() {
+            local fn="$1"
+            echo "📸 Publishing new version for ${fn}..."
+
+            VERSION=$(aws lambda publish-version \
+              --function-name "${fn}" \
+              --region "${AWS_REGION}" \
+              --query 'Version' --output text)
+
+            echo "⏳ Waiting for SnapStart snapshot on ${fn}:${VERSION}..."
+            aws lambda wait function-active-v2 \
+              --function-name "${fn}:${VERSION}" \
+              --region "${AWS_REGION}"
+
+            echo "🔀 Promoting live alias to version ${VERSION}..."
+            aws lambda update-alias \
+              --function-name "${fn}" \
+              --name live \
+              --function-version "${VERSION}" \
+              --region "${AWS_REGION}" > /dev/null
+
+            echo "✅ ${fn}:live → v${VERSION}"
+          }
+
+          publish_and_promote AgroLinkAPI-AspNetCoreFunction
+          publish_and_promote AgroLink-TelegramSqsConsumer
+          publish_and_promote AgroLink-ExternalApiWorker
+          publish_and_promote AgroLink-VoiceCommandCleanup
+
       - name: Upload Lambda packages
         uses: actions/upload-artifact@v4
         if: always()

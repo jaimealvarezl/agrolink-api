@@ -15,13 +15,8 @@ public class CleanupFunction
     {
         var builder = WebApplication.CreateBuilder();
 
-        if (!builder.Environment.IsEnvironment("Testing"))
-        {
-            SecretsManagerHelper.LoadSecretsAsync(builder.Configuration).GetAwaiter().GetResult();
-        }
-
         builder.Services.AddApplication();
-        builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddInfrastructureCore(builder.Configuration);
 
         var app = builder.Build();
         _serviceProvider = app.Services;

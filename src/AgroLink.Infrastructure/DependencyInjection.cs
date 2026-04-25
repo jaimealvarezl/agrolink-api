@@ -7,10 +7,12 @@ using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Amazon;
 using Amazon.Lambda;
+using Amazon.RDS.Util;
 using Amazon.S3;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace AgroLink.Infrastructure;
 
@@ -21,17 +23,69 @@ public static class DependencyInjection
         IConfiguration configuration
     )
     {
+        return services.AddInfrastructureCore(configuration).AddInfrastructureHttpClients();
+    }
+
+    public static IServiceCollection AddInfrastructureCore(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
         // Database
         services.AddSingleton<SearchTextInterceptor>();
-        services.AddDbContext<AgroLinkDbContext>(
-            (sp, options) =>
-                options
-                    .UseNpgsql(
-                        configuration.GetConnectionString("DefaultConnection"),
-                        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-                    )
-                    .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
+
+        var connectionString =
+            configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException(
+                "ConnectionStrings:DefaultConnection is required."
+            );
+
+        var isLambda = !string.IsNullOrEmpty(
+            Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME")
         );
+
+        if (isLambda)
+        {
+            // In Lambda, use IAM auth tokens instead of a static password so that
+            // SnapStart cold-start restores are never blocked by rotated credentials.
+            var dataSource = new NpgsqlDataSourceBuilder(connectionString)
+                .UsePeriodicPasswordProvider(
+                    async (settings, _) =>
+                        await RDSAuthTokenGenerator.GenerateAuthTokenAsync(
+                            RegionEndpoint.GetBySystemName(
+                                Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1"
+                            ),
+                            settings.Host!,
+                            settings.Port,
+                            "agrolink_app"
+                        ),
+                    TimeSpan.FromMinutes(10),
+                    TimeSpan.FromSeconds(30)
+                )
+                .Build();
+
+            services.AddDbContext<AgroLinkDbContext>(
+                (sp, options) =>
+                    options
+                        .UseNpgsql(
+                            dataSource,
+                            o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+                        )
+                        .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
+            );
+        }
+        else
+        {
+            services.AddDbContext<AgroLinkDbContext>(
+                (sp, options) =>
+                    options
+                        .UseNpgsql(
+                            connectionString,
+                            o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+                        )
+                        .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
+            );
+        }
 
         // AWS S3 / MinIO Configuration
         services.AddSingleton<IAmazonS3>(sp =>
@@ -133,6 +187,11 @@ public static class DependencyInjection
         services.AddSingleton<IAmazonLambda, AmazonLambdaClient>();
         services.AddScoped<IExternalApiWorkerClient, LambdaExternalApiWorkerClient>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddInfrastructureHttpClients(this IServiceCollection services)
+    {
         services.AddHttpClient<ITelegramGateway, TelegramGateway>();
         services.AddHttpClient<
             IClinicalMedicationAdvisorService,

@@ -4,18 +4,6 @@ resource "random_password" "random_jwt_secret_key" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-resource "aws_secretsmanager_secret" "jwt_secret_key" {
-  name = "agrolink/jwt-secret"
-
-  tags = {
-    Scope = "AgroLink"
-  }
-}
-
-resource "aws_secretsmanager_secret_version" "jwt_settings_secret_key" {
-  secret_id     = aws_secretsmanager_secret.jwt_secret_key.id
-  secret_string = random_password.random_jwt_secret_key.result
-}
 
 resource "random_password" "agro_link_db_password" {
   length           = 20

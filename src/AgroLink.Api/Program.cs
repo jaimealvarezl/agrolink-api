@@ -14,12 +14,6 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load configuration from Secrets Manager if available
-if (!builder.Environment.IsEnvironment("Testing"))
-{
-    await SecretsManagerHelper.LoadSecretsAsync(builder.Configuration);
-}
-
 // Add services to the container.
 builder
     .Services.AddControllers(options =>

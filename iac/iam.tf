@@ -163,8 +163,7 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         ],
         Resource = [
           aws_secretsmanager_secret.agro_link_db_connection.arn,
-          aws_secretsmanager_secret.agro_link_db_password.arn,
-          aws_secretsmanager_secret.jwt_secret_key.arn
+          aws_secretsmanager_secret.agro_link_db_password.arn
         ]
       },
       {
@@ -271,27 +270,33 @@ resource "aws_iam_role_policy" "lambda_s3_storage_access" {
   })
 }
 
-# Allow Lambda to read secrets from Secrets Manager and decrypt if needed
-resource "aws_iam_role_policy" "lambda_secrets_access" {
-  name = "AgroLinkLambdaSecretsAccess"
+resource "aws_iam_role_policy" "lambda_kms_decrypt" {
+  name = "AgroLinkLambdaKmsDecrypt"
   role = aws_iam_role.lambda_function_role.id
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
-      {
-        Effect = "Allow",
-        Action = ["secretsmanager:GetSecretValue"],
-        Resource = [
-          aws_secretsmanager_secret.agro_link_db_connection.arn,
-          aws_secretsmanager_secret.jwt_secret_key.arn
-        ]
-      },
       {
         Effect   = "Allow",
         Action   = ["kms:Decrypt"],
         Resource = aws_kms_key.rds_encryption_key_id.arn
       }
     ]
+  })
+}
+
+# Allow Lambda to authenticate to Aurora using IAM instead of a static password
+resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
+  name = "AgroLinkLambdaRdsIamAuth"
+  role = aws_iam_role.lambda_function_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "rds-db:connect"
+      Resource = "arn:aws:rds-db:${var.region}:${data.aws_caller_identity.current.account_id}:dbuser:${aws_rds_cluster.serverless_db.cluster_resource_id}/agrolink_app"
+    }]
   })
 }
 

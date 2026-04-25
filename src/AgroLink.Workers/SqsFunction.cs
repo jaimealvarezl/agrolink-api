@@ -22,13 +22,8 @@ public class SqsFunction
     {
         var builder = WebApplication.CreateBuilder();
 
-        if (!builder.Environment.IsEnvironment("Testing"))
-        {
-            SecretsManagerHelper.LoadSecretsAsync(builder.Configuration).GetAwaiter().GetResult();
-        }
-
         builder.Services.AddApplication();
-        builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddInfrastructureCore(builder.Configuration);
 
         // Replace direct external-API services with Lambda-dispatching adapters.
         // The VPC has no NAT gateway so OpenAI/Telegram are unreachable from within the VPC.
