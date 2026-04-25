@@ -251,6 +251,77 @@ resource "aws_lambda_function" "voice_command_cleanup" {
   })
 }
 
+resource "aws_lambda_function" "voice_command_sqs_consumer" {
+  function_name = "AgroLink-VoiceCommandSqsConsumer"
+  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Workers::AgroLink.Workers.SqsVoiceCommandFunction::FunctionHandler"
+  runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
+  role          = aws_iam_role.lambda_function_role.arn
+  memory_size   = 512
+  timeout       = 300
+  architectures = ["arm64"]
+  publish       = true
+
+  s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
+  s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
+  depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  snap_start {
+    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+  }
+
+  timeouts {
+    create = "20m"
+    update = "20m"
+  }
+
+  vpc_config {
+    subnet_ids         = [aws_subnet.private[0].id]
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
+
+  environment {
+    variables = {
+      ConnectionStrings__DefaultConnection = "Host=${aws_rds_cluster.serverless_db.endpoint};Port=5432;Database=${var.db_name};Username=agrolink_app;SSL Mode=Require"
+    }
+  }
+
+  tags = merge(local.common_tags, {
+    AWSServerlessAppNETCore = true
+  })
+}
+
+resource "aws_cloudwatch_log_group" "voice_command_sqs_consumer_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.voice_command_sqs_consumer.function_name}"
+  retention_in_days = 30
+  tags              = local.common_tags
+}
+
+resource "aws_lambda_alias" "voice_command_sqs_consumer_live" {
+  name             = "live"
+  function_name    = aws_lambda_function.voice_command_sqs_consumer.function_name
+  function_version = aws_lambda_function.voice_command_sqs_consumer.version
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "voice_commands_sqs_trigger" {
+  event_source_arn = aws_sqs_queue.voice_commands.arn
+  function_name    = aws_lambda_alias.voice_command_sqs_consumer_live.arn
+  batch_size       = 1
+  enabled          = true
+}
+
+resource "aws_lambda_permission" "allow_sqs_invoke_voice_command_consumer" {
+  statement_id  = "AllowSQSInvokeVoiceCommandConsumer"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.voice_command_sqs_consumer.function_name
+  qualifier     = aws_lambda_alias.voice_command_sqs_consumer_live.name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = aws_sqs_queue.voice_commands.arn
+}
+
 resource "aws_cloudwatch_log_group" "voice_command_cleanup_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.voice_command_cleanup.function_name}"
   retention_in_days = 30

@@ -108,7 +108,9 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
           aws_lambda_function.external_api_worker.arn,
           "${aws_lambda_function.external_api_worker.arn}:*",
           aws_lambda_function.voice_command_cleanup.arn,
-          "${aws_lambda_function.voice_command_cleanup.arn}:*"
+          "${aws_lambda_function.voice_command_cleanup.arn}:*",
+          aws_lambda_function.voice_command_sqs_consumer.arn,
+          "${aws_lambda_function.voice_command_sqs_consumer.arn}:*"
         ]
       },
       {
@@ -130,7 +132,8 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
         Resource = [
           "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.agro_link.function_name}:*",
           "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.telegram_sqs_consumer.function_name}:*",
-          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.external_api_worker.function_name}:*"
+          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.external_api_worker.function_name}:*",
+          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.voice_command_sqs_consumer.function_name}:*"
         ]
       },
       {
