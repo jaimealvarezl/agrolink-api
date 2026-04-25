@@ -51,6 +51,7 @@
       "Effect": "Allow",
       "Action": [
         "rds:*",
+        "rds-data:*",
         "kms:*"
       ],
       "Resource": "*"

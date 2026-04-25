@@ -1,7 +1,7 @@
 resource "aws_rds_cluster" "serverless_db" {
   cluster_identifier                  = var.db_identifier
   engine                              = "aurora-postgresql"
-  engine_version                      = "16.8"
+  engine_version                      = "16.11"
   engine_mode                         = "provisioned"
   master_username                     = var.db_master_username
   master_password                     = random_password.agro_link_db_password.result
