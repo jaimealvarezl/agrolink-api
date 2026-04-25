@@ -110,6 +110,7 @@ public static class DependencyInjection
         services.AddScoped<IClinicalRecommendationRepository, ClinicalRecommendationRepository>();
         services.AddScoped<ITelegramInboundEventLogRepository, TelegramInboundEventLogRepository>();
         services.AddScoped<ITelegramOutboundMessageRepository, TelegramOutboundMessageRepository>();
+        services.AddScoped<IVoiceCommandJobRepository, VoiceCommandJobRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -117,6 +118,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IVoiceCommandQueue, SqsVoiceCommandQueue>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddHttpClient<ITelegramGateway, TelegramGateway>();

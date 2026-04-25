@@ -106,7 +106,9 @@ resource "aws_iam_policy" "lambda_code_deploy_policy" {
           aws_lambda_function.telegram_sqs_consumer.arn,
           "${aws_lambda_function.telegram_sqs_consumer.arn}:*",
           aws_lambda_function.external_api_worker.arn,
-          "${aws_lambda_function.external_api_worker.arn}:*"
+          "${aws_lambda_function.external_api_worker.arn}:*",
+          aws_lambda_function.voice_command_cleanup.arn,
+          "${aws_lambda_function.voice_command_cleanup.arn}:*"
         ]
       },
       {
@@ -311,7 +313,9 @@ resource "aws_iam_role_policy" "lambda_sqs_access" {
         ],
         Resource = [
           aws_sqs_queue.telegram_updates.arn,
-          aws_sqs_queue.telegram_updates_dlq.arn
+          aws_sqs_queue.telegram_updates_dlq.arn,
+          aws_sqs_queue.voice_commands.arn,
+          aws_sqs_queue.voice_commands_dlq.arn
         ]
       }
     ]

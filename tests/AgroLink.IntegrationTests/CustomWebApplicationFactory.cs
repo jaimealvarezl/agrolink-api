@@ -1,3 +1,4 @@
+using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,12 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                 // Ensure the database is created and migrations applied
                 db.Database.Migrate();
             }
+
+            // Replace S3 with a no-op fake so tests don't need real AWS credentials
+            services.AddScoped<IStorageService, FakeStorageService>();
+
+            // Replace SQS queue with a no-op fake so tests don't need real AWS credentials
+            services.AddScoped<IVoiceCommandQueue, FakeVoiceCommandQueue>();
         });
     }
 
@@ -85,5 +92,54 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
     public new async Task DisposeAsync()
     {
         await _dbContainer.StopAsync();
+    }
+}
+
+internal class FakeStorageService : IStorageService
+{
+    public Task UploadFileAsync(
+        string key,
+        Stream fileStream,
+        string contentType,
+        long contentLength
+    )
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteFileAsync(string key)
+    {
+        return Task.CompletedTask;
+    }
+
+    public string GetFileUrl(string key)
+    {
+        return $"https://fake-storage/{key}";
+    }
+
+    public string GetPresignedUrl(string key, TimeSpan expiration)
+    {
+        return $"https://fake-storage/{key}";
+    }
+
+    public string GetKeyFromUrl(string url)
+    {
+        return url.Replace("https://fake-storage/", string.Empty);
+    }
+
+    public Task<byte[]?> GetFileBytesAsync(
+        string key,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Task.FromResult<byte[]?>(null);
+    }
+}
+
+internal class FakeVoiceCommandQueue : IVoiceCommandQueue
+{
+    public Task EnqueueAsync(Guid jobId, int farmId, int userId, CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
     }
 }

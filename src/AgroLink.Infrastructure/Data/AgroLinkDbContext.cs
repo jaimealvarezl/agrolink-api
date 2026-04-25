@@ -30,6 +30,7 @@ public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : Db
     public DbSet<MedicationImage> MedicationImages { get; set; }
     public DbSet<TelegramInboundEventLog> TelegramInboundEventLogs { get; set; }
     public DbSet<TelegramOutboundMessage> TelegramOutboundMessages { get; set; }
+    public DbSet<VoiceCommandJob> VoiceCommandJobs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
