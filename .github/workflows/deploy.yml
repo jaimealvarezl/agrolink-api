@@ -302,7 +302,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-ExternalApiWorker AgroLink-VoiceCommandCleanup; do
+          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-ExternalApiWorker AgroLink-VoiceCommandCleanup AgroLink-VoiceCommandSqsConsumer; do
             if ! aws lambda get-function --function-name "$fn" --region "${AWS_REGION}" > /dev/null 2>&1; then
               echo "❌ Lambda function '$fn' does not exist."
               echo "Run Terraform apply first so infrastructure creates/manages this function."
@@ -364,6 +364,19 @@ jobs:
             --region "${AWS_REGION}"
           echo "✅ Voice command cleanup Lambda code updated successfully!"
 
+      - name: Update voice command SQS consumer Lambda code
+        run: |
+          echo "🚀 Updating voice command SQS consumer Lambda code..."
+          aws lambda update-function-code \
+            --function-name AgroLink-VoiceCommandSqsConsumer \
+            --zip-file fileb://Workers.zip \
+            --region "${AWS_REGION}" > /tmp/voice-sqs-update-response.json
+
+          aws lambda wait function-updated \
+            --function-name AgroLink-VoiceCommandSqsConsumer \
+            --region "${AWS_REGION}"
+          echo "✅ Voice command SQS consumer Lambda code updated successfully!"
+
       - name: Publish versions and promote live aliases (SnapStart)
         run: |
           set -euo pipefail
@@ -396,6 +409,7 @@ jobs:
           publish_and_promote AgroLink-TelegramSqsConsumer
           publish_and_promote AgroLink-ExternalApiWorker
           publish_and_promote AgroLink-VoiceCommandCleanup
+          publish_and_promote AgroLink-VoiceCommandSqsConsumer
 
       - name: Upload Lambda packages
         uses: actions/upload-artifact@v4
