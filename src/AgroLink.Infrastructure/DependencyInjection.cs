@@ -2,6 +2,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
+using AgroLink.Infrastructure.Data.Interceptors;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Amazon;
@@ -20,11 +21,15 @@ public static class DependencyInjection
     )
     {
         // Database
-        services.AddDbContext<AgroLinkDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
-                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-            )
+        services.AddSingleton<SearchTextInterceptor>();
+        services.AddDbContext<AgroLinkDbContext>(
+            (sp, options) =>
+                options
+                    .UseNpgsql(
+                        configuration.GetConnectionString("DefaultConnection"),
+                        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+                    )
+                    .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
         );
 
         // AWS S3 / MinIO Configuration
