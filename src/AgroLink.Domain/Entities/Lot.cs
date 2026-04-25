@@ -10,6 +10,9 @@ public class Lot
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(200)]
+    public string? SearchText { get; set; }
+
     public int PaddockId { get; set; }
 
     [Required]

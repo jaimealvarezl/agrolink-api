@@ -34,6 +34,11 @@ public class ExternalApiWorkerFunction
             IClinicalTextToSpeechService,
             OpenAiClinicalTextToSpeechService
         >();
+        builder.Services.AddHttpClient<
+            IVoiceTranscriptionService,
+            OpenAiVoiceTranscriptionService
+        >();
+        builder.Services.AddHttpClient<IVoiceIntentService, OpenAiVoiceIntentService>();
 
         var app = builder.Build();
         _serviceProvider = app.Services;
@@ -101,6 +106,14 @@ public class ExternalApiWorkerFunction
                 services
             ),
             ExternalWorkerOperations.DownloadTelegramFile => await HandleDownloadTelegramFileAsync(
+                request,
+                services
+            ),
+            ExternalWorkerOperations.TranscribeVoiceAudio => await HandleTranscribeVoiceAudioAsync(
+                request,
+                services
+            ),
+            ExternalWorkerOperations.ExtractVoiceIntent => await HandleExtractVoiceIntentAsync(
                 request,
                 services
             ),
@@ -262,6 +275,66 @@ public class ExternalApiWorkerFunction
                 }
             ),
             result.Success ? null : result.ProviderResponse
+        );
+    }
+
+    private async Task<ExternalWorkerResponse> HandleTranscribeVoiceAudioAsync(
+        ExternalWorkerRequest request,
+        IServiceProvider services
+    )
+    {
+        var transcriptionService = services.GetRequiredService<IVoiceTranscriptionService>();
+        var payload = DeserializePayload<TranscribeVoiceAudioPayload>(request.Payload);
+        var audioBytes = Convert.FromBase64String(payload.Base64AudioContent);
+
+        var text = await transcriptionService.TranscribeAsync(
+            audioBytes,
+            payload.FileName,
+            payload.MimeType,
+            payload.Language,
+            CancellationToken.None
+        );
+
+        return new ExternalWorkerResponse(
+            request.CorrelationId,
+            request.Operation,
+            true,
+            ToElement(new { text = text ?? string.Empty }),
+            null
+        );
+    }
+
+    private async Task<ExternalWorkerResponse> HandleExtractVoiceIntentAsync(
+        ExternalWorkerRequest request,
+        IServiceProvider services
+    )
+    {
+        var intentService = services.GetRequiredService<IVoiceIntentService>();
+        var payload = DeserializePayload<ExtractVoiceIntentPayload>(request.Payload);
+
+        var intentJson = await intentService.ExtractIntentAsync(
+            payload.Transcript,
+            CancellationToken.None
+        );
+
+        if (string.IsNullOrWhiteSpace(intentJson))
+        {
+            return new ExternalWorkerResponse(
+                request.CorrelationId,
+                request.Operation,
+                false,
+                null,
+                "Intent extraction returned empty response."
+            );
+        }
+
+        using var doc = JsonDocument.Parse(intentJson);
+        return new ExternalWorkerResponse(
+            request.CorrelationId,
+            request.Operation,
+            true,
+            doc.RootElement.Clone(),
+            null
         );
     }
 }
