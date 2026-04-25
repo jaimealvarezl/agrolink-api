@@ -196,12 +196,9 @@ public class ProcessVoiceCommandHandler(
 
         if (!response.Success || response.Result is null)
         {
-            logger.LogWarning(
-                "ExtractVoiceIntent returned failure for job {JobId}: {Error}",
-                jobId,
-                response.Error
+            throw new InvalidOperationException(
+                $"ExtractVoiceIntent failed for job {jobId}: {response.Error ?? "no result"}"
             );
-            return new ParsedIntentResponse();
         }
 
         try
