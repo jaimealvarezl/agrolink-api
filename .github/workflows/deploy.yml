@@ -284,16 +284,18 @@ jobs:
       - name: Restore dotnet tools
         run: dotnet tool restore
 
-      - name: Package Lambda function
+      - name: Package Lambda functions
         run: |
-          echo "📦 Packaging Lambda function..."
+          echo "📦 Packaging Lambda functions..."
           dotnet restore
           dotnet lambda package -pl ./src/AgroLink.Api AspNetCoreFunction.zip --function-architecture arm64
-          echo "✅ Lambda package created: AspNetCoreFunction.zip"
-      - name: Upload Lambda package to S3 for Terraform
+          dotnet lambda package -pl ./src/AgroLink.Workers Workers.zip --function-architecture arm64
+          echo "✅ Lambda packages created"
+      - name: Upload Lambda packages to S3 for Terraform
         run: |
           aws s3 cp AspNetCoreFunction.zip s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.API/latest.zip --region ${{ env.AWS_REGION }}
-          echo "✅ Uploaded AspNetCoreFunction.zip to s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.API/latest.zip"
+          aws s3 cp Workers.zip s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.Workers/latest.zip --region ${{ env.AWS_REGION }}
+          echo "✅ Uploaded Lambda packages to S3"
 
 
       - name: Verify Lambda functions exist (Terraform ownership)
@@ -328,7 +330,7 @@ jobs:
           echo "🚀 Updating SQS consumer Lambda code..."
           aws lambda update-function-code \
             --function-name AgroLink-TelegramSqsConsumer \
-            --zip-file fileb://AspNetCoreFunction.zip \
+            --zip-file fileb://Workers.zip \
             --region "${AWS_REGION}" > /tmp/sqs-update-response.json
 
           aws lambda wait function-updated \
@@ -341,7 +343,7 @@ jobs:
           echo "🚀 Updating external API worker Lambda code..."
           aws lambda update-function-code \
             --function-name AgroLink-ExternalApiWorker \
-            --zip-file fileb://AspNetCoreFunction.zip \
+            --zip-file fileb://Workers.zip \
             --region "${AWS_REGION}" > /tmp/external-worker-update-response.json
 
           aws lambda wait function-updated \
@@ -354,7 +356,7 @@ jobs:
           echo "🚀 Updating voice command cleanup Lambda code..."
           aws lambda update-function-code \
             --function-name AgroLink-VoiceCommandCleanup \
-            --zip-file fileb://AspNetCoreFunction.zip \
+            --zip-file fileb://Workers.zip \
             --region "${AWS_REGION}" > /tmp/cleanup-update-response.json
 
           aws lambda wait function-updated \
@@ -362,10 +364,12 @@ jobs:
             --region "${AWS_REGION}"
           echo "✅ Voice command cleanup Lambda code updated successfully!"
 
-      - name: Upload Lambda package
+      - name: Upload Lambda packages
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lambda-package
-          path: AspNetCoreFunction.zip
+          name: lambda-packages
+          path: |
+            AspNetCoreFunction.zip
+            Workers.zip
           retention-days: 7

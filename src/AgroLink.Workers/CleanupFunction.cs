@@ -4,7 +4,7 @@ using AgroLink.Infrastructure;
 using Amazon.Lambda.Core;
 using MediatR;
 
-namespace AgroLink.Api;
+namespace AgroLink.Workers;
 
 public class CleanupFunction
 {
@@ -17,7 +17,7 @@ public class CleanupFunction
 
         if (!builder.Environment.IsEnvironment("Testing"))
         {
-            SecretsManagerHelper.LoadSecretsAsync(builder).GetAwaiter().GetResult();
+            SecretsManagerHelper.LoadSecretsAsync(builder.Configuration).GetAwaiter().GetResult();
         }
 
         builder.Services.AddApplication();

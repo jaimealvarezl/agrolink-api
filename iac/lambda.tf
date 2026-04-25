@@ -37,7 +37,7 @@ resource "aws_lambda_function" "agro_link" {
 
 resource "aws_lambda_function" "telegram_sqs_consumer" {
   function_name = "AgroLink-TelegramSqsConsumer"
-  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Api::AgroLink.Api.SqsFunction::FunctionHandler"
+  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Workers::AgroLink.Workers.SqsFunction::FunctionHandler"
   runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
   role          = aws_iam_role.lambda_function_role.arn
   memory_size   = 512
@@ -74,7 +74,7 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
 
 resource "aws_lambda_function" "external_api_worker" {
   function_name = "AgroLink-ExternalApiWorker"
-  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Api::AgroLink.Api.ExternalApiWorkerFunction::FunctionHandler"
+  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Workers::AgroLink.Workers.ExternalApiWorkerFunction::FunctionHandler"
   runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
   role          = aws_iam_role.lambda_function_role.arn
   memory_size   = 512
@@ -143,7 +143,7 @@ resource "aws_lambda_permission" "agro_link_root_lambda_permission" {
 
 resource "aws_lambda_function" "voice_command_cleanup" {
   function_name = "AgroLink-VoiceCommandCleanup"
-  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Api::AgroLink.Api.CleanupFunction::FunctionHandler"
+  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Workers::AgroLink.Workers.CleanupFunction::FunctionHandler"
   runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
   role          = aws_iam_role.lambda_function_role.arn
   memory_size   = 256

@@ -3,7 +3,6 @@ using AgroLink.Application.Features.ClinicalCases.Commands.ReceiveTelegramUpdate
 using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure;
 using AgroLink.Infrastructure.Services;
-using Amazon.Lambda;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Amazon.Lambda.SQSEvents;
@@ -12,7 +11,7 @@ using MediatR;
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(DefaultLambdaJsonSerializer))]
 
-namespace AgroLink.Api;
+namespace AgroLink.Workers;
 
 public class SqsFunction
 {
@@ -25,7 +24,7 @@ public class SqsFunction
 
         if (!builder.Environment.IsEnvironment("Testing"))
         {
-            SecretsManagerHelper.LoadSecretsAsync(builder).GetAwaiter().GetResult();
+            SecretsManagerHelper.LoadSecretsAsync(builder.Configuration).GetAwaiter().GetResult();
         }
 
         builder.Services.AddApplication();
@@ -34,8 +33,6 @@ public class SqsFunction
         // Replace direct external-API services with Lambda-dispatching adapters.
         // The VPC has no NAT gateway so OpenAI/Telegram are unreachable from within the VPC.
         // All calls are proxied through ExternalApiWorkerFunction via direct Lambda invocation.
-        builder.Services.AddSingleton<IAmazonLambda, AmazonLambdaClient>();
-        builder.Services.AddSingleton<IExternalApiWorkerClient, LambdaExternalApiWorkerClient>();
         builder.Services.AddScoped<ITelegramGateway, SqsTelegramGateway>();
         builder.Services.AddSingleton<
             IClinicalMedicationAdvisorService,

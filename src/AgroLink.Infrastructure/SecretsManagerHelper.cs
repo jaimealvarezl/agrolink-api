@@ -1,31 +1,20 @@
 using System.Text.Json;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
+using Microsoft.Extensions.Configuration;
 
-namespace AgroLink.Api;
+namespace AgroLink.Infrastructure;
 
 public static class SecretsManagerHelper
 {
-    public static async Task LoadSecretsAsync(WebApplicationBuilder builder)
+    public static async Task LoadSecretsAsync(IConfigurationBuilder configBuilder)
     {
         var secretArn = Environment.GetEnvironmentVariable("AgroLink__DbSecretArn");
 
         if (string.IsNullOrEmpty(secretArn))
         {
-            // Not running in AWS or env var not set
             return;
         }
-
-        // Create a temporary logger factory to use during startup
-        // This is "proper" in the sense that it uses the ILogger abstraction
-        // and can be configured to use the same output as the main application.
-        using var loggerFactory = LoggerFactory.Create(loggingBuilder =>
-        {
-            loggingBuilder.AddConfiguration(builder.Configuration.GetSection("Logging"));
-            loggingBuilder.AddConsole();
-            // We could also add Lambda logging here if we detect the environment
-        });
-        var logger = loggerFactory.CreateLogger("SecretsManagerHelper");
 
         try
         {
@@ -52,7 +41,6 @@ public static class SecretsManagerHelper
                 }
                 else
                 {
-                    // Fallback: Build from fields
                     var host = secretJson.RootElement.GetProperty("host").GetString();
                     var port = secretJson.RootElement.GetProperty("port").GetInt32();
                     var database = secretJson.RootElement.GetProperty("database").GetString();
@@ -63,23 +51,19 @@ public static class SecretsManagerHelper
                         $"Host={host};Port={port};Database={database};Username={username};Password={password};Timeout=60;CommandTimeout=60";
                 }
 
-                // Add to configuration
-                builder.Configuration.AddInMemoryCollection(
+                configBuilder.AddInMemoryCollection(
                     new Dictionary<string, string?>
                     {
                         { "ConnectionStrings:DefaultConnection", connectionString },
                     }
                 );
 
-                logger.LogInformation(
-                    "Successfully loaded database connection string from Secrets Manager."
-                );
+                Console.WriteLine("[SecretsManagerHelper] Loaded database connection string from Secrets Manager.");
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error loading secrets from {SecretArn}", secretArn);
-            // Don't crash here, let the app fail later if connection is missing
+            Console.Error.WriteLine($"[SecretsManagerHelper] Error loading secrets from {secretArn}: {ex.Message}");
         }
     }
 }

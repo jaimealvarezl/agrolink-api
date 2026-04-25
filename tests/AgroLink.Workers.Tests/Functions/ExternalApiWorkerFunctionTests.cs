@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Shouldly;
 
-namespace AgroLink.Api.Tests.Functions;
+namespace AgroLink.Workers.Tests.Functions;
 
 [TestFixture]
 public class ExternalApiWorkerFunctionTests

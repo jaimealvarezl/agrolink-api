@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.Lambda" Version="4.0.15.1" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.22.1" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.4.19" />
     <PackageReference Include="AWSSDK.SQS" Version="4.0.2.27" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">

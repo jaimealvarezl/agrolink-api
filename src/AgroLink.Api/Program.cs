@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using AgroLink.Api;
 using AgroLink.Api.Filters;
 using AgroLink.Api.Security;
 using AgroLink.Api.Services;
@@ -18,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Load configuration from Secrets Manager if available
 if (!builder.Environment.IsEnvironment("Testing"))
 {
-    await SecretsManagerHelper.LoadSecretsAsync(builder);
+    await SecretsManagerHelper.LoadSecretsAsync(builder.Configuration);
 }
 
 // Add services to the container.

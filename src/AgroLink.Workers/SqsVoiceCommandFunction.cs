@@ -1,15 +1,12 @@
 using System.Text.Json;
 using AgroLink.Application;
 using AgroLink.Application.Features.VoiceCommands.Commands.ProcessVoiceCommand;
-using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure;
-using AgroLink.Infrastructure.Services;
-using Amazon.Lambda;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
 using MediatR;
 
-namespace AgroLink.Api;
+namespace AgroLink.Workers;
 
 public class SqsVoiceCommandFunction
 {
@@ -27,19 +24,11 @@ public class SqsVoiceCommandFunction
 
         if (!builder.Environment.IsEnvironment("Testing"))
         {
-            SecretsManagerHelper.LoadSecretsAsync(builder).GetAwaiter().GetResult();
+            SecretsManagerHelper.LoadSecretsAsync(builder.Configuration).GetAwaiter().GetResult();
         }
 
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
-
-        // VPC has no NAT gateway; all external API calls go through ExternalApiWorkerFunction.
-        builder.Services.AddSingleton<IAmazonLambda, AmazonLambdaClient>();
-        builder.Services.AddSingleton<IExternalApiWorkerClient, LambdaExternalApiWorkerClient>();
-
-        // Farm roster uses an in-process memory cache (5-min TTL, see FarmRosterService).
-        builder.Services.AddMemoryCache();
-        builder.Services.AddScoped<IFarmRosterService, FarmRosterService>();
 
         var app = builder.Build();
         _serviceProvider = app.Services;

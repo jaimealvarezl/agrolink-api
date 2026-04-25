@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>AgroLink.Workers.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="Amazon.Lambda.SQSEvents" Version="2.2.1" />
+    <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgroLink.Domain\AgroLink.Domain.csproj" />
+    <ProjectReference Include="..\AgroLink.Infrastructure\AgroLink.Infrastructure.csproj" />
+    <ProjectReference Include="..\AgroLink.Application\AgroLink.Application.csproj" />
+  </ItemGroup>
+</Project>

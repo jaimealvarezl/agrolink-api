@@ -5,7 +5,7 @@ using AgroLink.Application.Interfaces;
 using AgroLink.Infrastructure.Services;
 using Amazon.Lambda.Core;
 
-namespace AgroLink.Api;
+namespace AgroLink.Workers;
 
 public class ExternalApiWorkerFunction
 {

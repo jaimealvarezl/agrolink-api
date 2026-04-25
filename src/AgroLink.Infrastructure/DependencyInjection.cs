@@ -6,6 +6,7 @@ using AgroLink.Infrastructure.Data.Interceptors;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Amazon;
+using Amazon.Lambda;
 using Amazon.S3;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -129,6 +130,9 @@ public static class DependencyInjection
         services.AddScoped<IVoiceCommandQueue, SqsVoiceCommandQueue>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IAmazonLambda, AmazonLambdaClient>();
+        services.AddScoped<IExternalApiWorkerClient, LambdaExternalApiWorkerClient>();
+
         services.AddHttpClient<ITelegramGateway, TelegramGateway>();
         services.AddHttpClient<
             IClinicalMedicationAdvisorService,
