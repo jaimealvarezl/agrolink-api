@@ -19,13 +19,13 @@ resource "aws_lambda_function" "agro_link" {
   environment {
     variables = {
       # Secret ARNs - read from Secrets Manager at runtime
-      AgroLink__DbSecretArn             = aws_secretsmanager_secret.agro_link_db_connection.arn
-      AgroLink__JwtSecretArn            = aws_secretsmanager_secret.jwt_secret_key.arn
-      AgroLink__S3BucketName            = aws_s3_bucket.file_storage.bucket
-      Telegram__BotToken                = var.telegram_bot_token
-      Telegram__WebhookSecretToken      = var.telegram_webhook_secret_token
-      Telegram__SqsQueueUrl             = aws_sqs_queue.telegram_updates.url
-      OpenAI__ApiKey                    = var.openai_api_key
+      AgroLink__DbSecretArn        = aws_secretsmanager_secret.agro_link_db_connection.arn
+      AgroLink__JwtSecretArn       = aws_secretsmanager_secret.jwt_secret_key.arn
+      AgroLink__S3BucketName       = aws_s3_bucket.file_storage.bucket
+      Telegram__BotToken           = var.telegram_bot_token
+      Telegram__WebhookSecretToken = var.telegram_webhook_secret_token
+      Telegram__SqsQueueUrl        = aws_sqs_queue.telegram_updates.url
+      OpenAI__ApiKey               = var.openai_api_key
     }
   }
 

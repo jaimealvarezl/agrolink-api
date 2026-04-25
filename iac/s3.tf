@@ -127,6 +127,23 @@ resource "aws_s3_bucket_public_access_block" "file_storage" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "file_storage_lifecycle" {
+  bucket = aws_s3_bucket.file_storage.id
+
+  rule {
+    id     = "expire_voice_command_temp"
+    status = "Enabled"
+
+    filter {
+      prefix = "voice-commands/temp/"
+    }
+
+    expiration {
+      days = 1
+    }
+  }
+}
+
 resource "aws_s3_bucket_cors_configuration" "file_storage_cors" {
   bucket = aws_s3_bucket.file_storage.id
 
