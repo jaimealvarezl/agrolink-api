@@ -34,6 +34,7 @@ resource "aws_lambda_function" "agro_link" {
       Telegram__BotToken                   = var.telegram_bot_token
       Telegram__WebhookSecretToken         = var.telegram_webhook_secret_token
       Telegram__SqsQueueUrl                = aws_sqs_queue.telegram_updates.url
+      VoiceCommands__SqsQueueUrl           = aws_sqs_queue.voice_commands.url
       OpenAI__ApiKey                       = var.openai_api_key
     }
   }
