@@ -7,6 +7,7 @@
       "Action": [
         "ec2:*",
         "rds:*",
+        "rds-data:*",
         "s3:*",
         "lambda:*",
         "sqs:*",
