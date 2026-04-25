@@ -76,6 +76,10 @@ public class SubmitVoiceCommandCommandHandlerTests
         _mocker
             .GetMock<IUnitOfWork>()
             .Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+        _mocker
+            .GetMock<IVoiceCommandQueue>()
+            .Verify(q => q.EnqueueAsync(result, 1, 5, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

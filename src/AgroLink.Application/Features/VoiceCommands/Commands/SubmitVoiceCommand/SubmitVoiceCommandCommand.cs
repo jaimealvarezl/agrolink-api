@@ -18,6 +18,7 @@ public class SubmitVoiceCommandCommandHandler(
     IVoiceCommandJobRepository jobRepository,
     IStorageService storageService,
     IStoragePathProvider pathProvider,
+    IVoiceCommandQueue queue,
     IUnitOfWork unitOfWork,
     ILogger<SubmitVoiceCommandCommandHandler> logger
 ) : IRequestHandler<SubmitVoiceCommandCommand, Guid>
@@ -57,11 +58,9 @@ public class SubmitVoiceCommandCommandHandler(
         await jobRepository.AddAsync(job, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation(
-            "Voice command job {JobId} created with S3 key {S3Key}",
-            jobId,
-            s3Key
-        );
+        await queue.EnqueueAsync(jobId, request.FarmId, request.UserId, cancellationToken);
+
+        logger.LogInformation("Voice command job {JobId} created and enqueued", jobId);
 
         return jobId;
     }

@@ -1,20 +1,13 @@
-using System.Text.Json;
 using AgroLink.Application.Features.VoiceCommands.Commands.SubmitVoiceCommand;
 using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Features.VoiceCommands.Queries.GetVoiceCommandJob;
-using Amazon.SQS;
-using Amazon.SQS.Model;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
-public class VoiceCommandsController(
-    IMediator mediator,
-    IAmazonSQS sqsClient,
-    IConfiguration configuration
-) : BaseController
+public class VoiceCommandsController(IMediator mediator) : BaseController
 {
     private const long MinAudioBytes = 1024;
     private const long MaxAudioBytes = 10 * 1024 * 1024;
@@ -35,11 +28,19 @@ public class VoiceCommandsController(
     [Authorize(Policy = "FarmEditorAccess")]
     public async Task<IActionResult> Submit(
         int farmId,
-        IFormFile audio,
+        IFormFile? audio,
         CancellationToken cancellationToken
     )
     {
-        if (!AllowedAudioTypes.Contains(audio.ContentType.ToLowerInvariant()))
+        if (audio == null)
+        {
+            return BadRequest("Audio file is required.");
+        }
+
+        if (
+            string.IsNullOrEmpty(audio.ContentType)
+            || !AllowedAudioTypes.Contains(audio.ContentType.ToLowerInvariant())
+        )
         {
             return StatusCode(415, "Unsupported audio content type.");
         }
@@ -56,18 +57,12 @@ public class VoiceCommandsController(
 
         var userId = GetCurrentUserId();
 
+        await using var stream = audio.OpenReadStream();
+
         var jobId = await mediator.Send(
-            new SubmitVoiceCommandCommand(
-                farmId,
-                userId,
-                audio.OpenReadStream(),
-                audio.ContentType,
-                audio.Length
-            ),
+            new SubmitVoiceCommandCommand(farmId, userId, stream, audio.ContentType, audio.Length),
             cancellationToken
         );
-
-        await EnqueueJobAsync(jobId, farmId, userId, cancellationToken);
 
         return StatusCode(202, new { jobId });
     }
@@ -84,27 +79,5 @@ public class VoiceCommandsController(
             cancellationToken
         );
         return Ok(result);
-    }
-
-    private async Task EnqueueJobAsync(Guid jobId, int farmId, int userId, CancellationToken ct)
-    {
-        var queueUrl = configuration["VoiceCommands:SqsQueueUrl"];
-        if (string.IsNullOrWhiteSpace(queueUrl))
-        {
-            return;
-        }
-
-        var body = JsonSerializer.Serialize(
-            new
-            {
-                jobId,
-                farmId,
-                userId,
-            }
-        );
-        await sqsClient.SendMessageAsync(
-            new SendMessageRequest { QueueUrl = queueUrl, MessageBody = body },
-            ct
-        );
     }
 }

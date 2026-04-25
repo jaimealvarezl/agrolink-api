@@ -118,6 +118,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IVoiceCommandQueue, SqsVoiceCommandQueue>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddHttpClient<ITelegramGateway, TelegramGateway>();

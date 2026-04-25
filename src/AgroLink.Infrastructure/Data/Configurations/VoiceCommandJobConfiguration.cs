@@ -15,6 +15,7 @@ public class VoiceCommandJobConfiguration : IEntityTypeConfiguration<VoiceComman
         builder.Property(j => j.ErrorMessage).HasMaxLength(500);
 
         builder.HasIndex(j => new { j.UserId, j.CreatedAt });
+        builder.HasIndex(j => j.CreatedAt);
 
         builder
             .HasOne(j => j.Farm)
