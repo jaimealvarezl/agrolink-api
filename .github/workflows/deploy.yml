@@ -300,7 +300,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-ExternalApiWorker; do
+          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-ExternalApiWorker AgroLink-VoiceCommandCleanup; do
             if ! aws lambda get-function --function-name "$fn" --region "${AWS_REGION}" > /dev/null 2>&1; then
               echo "❌ Lambda function '$fn' does not exist."
               echo "Run Terraform apply first so infrastructure creates/manages this function."
@@ -348,6 +348,19 @@ jobs:
             --function-name AgroLink-ExternalApiWorker \
             --region "${AWS_REGION}"
           echo "✅ External API worker Lambda code updated successfully!"
+
+      - name: Update voice command cleanup Lambda code
+        run: |
+          echo "🚀 Updating voice command cleanup Lambda code..."
+          aws lambda update-function-code \
+            --function-name AgroLink-VoiceCommandCleanup \
+            --zip-file fileb://AspNetCoreFunction.zip \
+            --region "${AWS_REGION}" > /tmp/cleanup-update-response.json
+
+          aws lambda wait function-updated \
+            --function-name AgroLink-VoiceCommandCleanup \
+            --region "${AWS_REGION}"
+          echo "✅ Voice command cleanup Lambda code updated successfully!"
 
       - name: Upload Lambda package
         uses: actions/upload-artifact@v4
