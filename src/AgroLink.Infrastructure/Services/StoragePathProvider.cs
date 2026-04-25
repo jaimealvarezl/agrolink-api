@@ -23,4 +23,9 @@ public class StoragePathProvider : IStoragePathProvider
 
         return $"f/{f}/ob/{b}{extension}";
     }
+
+    public string GetVoiceAudioPath(Guid jobId)
+    {
+        return $"voice-commands/temp/{jobId}";
+    }
 }

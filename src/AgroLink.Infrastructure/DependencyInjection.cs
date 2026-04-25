@@ -110,6 +110,7 @@ public static class DependencyInjection
         services.AddScoped<IClinicalRecommendationRepository, ClinicalRecommendationRepository>();
         services.AddScoped<ITelegramInboundEventLogRepository, TelegramInboundEventLogRepository>();
         services.AddScoped<ITelegramOutboundMessageRepository, TelegramOutboundMessageRepository>();
+        services.AddScoped<IVoiceCommandJobRepository, VoiceCommandJobRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
