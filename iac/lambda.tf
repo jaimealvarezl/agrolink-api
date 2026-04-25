@@ -141,6 +141,63 @@ resource "aws_lambda_permission" "agro_link_root_lambda_permission" {
   source_arn    = "${aws_api_gateway_rest_api.agro_link_api.execution_arn}/*/*/"
 }
 
+resource "aws_lambda_function" "voice_command_cleanup" {
+  function_name = "AgroLink-VoiceCommandCleanup"
+  handler       = var.use_placeholder ? var.placeholder_handler : "AgroLink.Api::AgroLink.Api.CleanupFunction::FunctionHandler"
+  runtime       = var.use_placeholder ? var.placeholder_runtime : "dotnet10"
+  role          = aws_iam_role.lambda_function_role.arn
+  memory_size   = 256
+  timeout       = 60
+  architectures = ["arm64"]
+
+  s3_bucket  = aws_s3_bucket.lambda_code_bucket.bucket
+  s3_key     = var.use_placeholder ? var.lambda_placeholder_key : var.lambda_package_key
+  depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
+
+  vpc_config {
+    subnet_ids         = [aws_subnet.private[0].id]
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
+
+  environment {
+    variables = {
+      AgroLink__DbSecretArn  = aws_secretsmanager_secret.agro_link_db_connection.arn
+      AgroLink__JwtSecretArn = aws_secretsmanager_secret.jwt_secret_key.arn
+    }
+  }
+
+  tags = merge(local.common_tags, {
+    AWSServerlessAppNETCore = true
+  })
+}
+
+resource "aws_cloudwatch_log_group" "voice_command_cleanup_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.voice_command_cleanup.function_name}"
+  retention_in_days = 30
+  tags              = local.common_tags
+}
+
+resource "aws_cloudwatch_event_rule" "voice_command_cleanup_schedule" {
+  name                = "agrolink-voice-command-cleanup-daily"
+  description         = "Triggers VoiceCommandJob cleanup Lambda every Sunday at midnight UTC"
+  schedule_expression = "cron(0 0 ? * SUN *)"
+  tags                = local.common_tags
+}
+
+resource "aws_cloudwatch_event_target" "voice_command_cleanup_target" {
+  rule      = aws_cloudwatch_event_rule.voice_command_cleanup_schedule.name
+  target_id = "VoiceCommandCleanupLambda"
+  arn       = aws_lambda_function.voice_command_cleanup.arn
+}
+
+resource "aws_lambda_permission" "allow_eventbridge_invoke_cleanup" {
+  statement_id  = "AllowEventBridgeInvokeCleanup"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.voice_command_cleanup.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.voice_command_cleanup_schedule.arn
+}
+
 # SQS Trigger for the Lambda function
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn = aws_sqs_queue.telegram_updates.arn

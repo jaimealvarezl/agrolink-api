@@ -6,4 +6,5 @@ public interface IVoiceCommandJobRepository
 {
     Task AddAsync(VoiceCommandJob job, CancellationToken ct = default);
     Task<VoiceCommandJob?> GetByIdAsync(Guid jobId, CancellationToken ct = default);
+    Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken ct = default);
 }
