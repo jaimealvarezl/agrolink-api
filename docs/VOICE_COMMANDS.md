@@ -15,7 +15,7 @@ An animal can be referenced by **any** of three identifiers. Preference in pract
 |---|---|---|---|
 | Name | `name` | Natural name, often with article | "la bonita", "el rey del monte" |
 | Visual tag (arete) | `earTag` | Number, usually 4 digits | "el arete 2315", "la dos tres uno cinco" |
-| CUIA | `cuia` | Full number, 10 digits in two groups | "la CUIA cero uno cuatro cinco seis dos dos cuatro" |
+| CUIA | `cuia` | Full number, 10 digits in two groups | "la CUIA cero uno cuatro cinco seis dos dos siete cuatro" |
 
 GPT-4o matches the spoken identifier against all three fields before resolving `animalId`.
 
@@ -68,7 +68,7 @@ Attach a free-text note to an animal.
 "Nota para la bonita: está coja de la pata trasera derecha."
 "Apuntá para el arete 2315: tiene garrapatas en el cuello."
 "Ponle una nota a la llorona: la vi muy quieta hoy, hay que revisarla."
-"Nota para la CUIA cero uno cuatro cinco seis dos dos cuatro: revisar al mediodía."
+"Nota para la CUIA cero uno cuatro cinco seis dos dos siete cuatro: revisar al mediodía."
 ```
 
 **Resolved entities:** `animalId`, `noteText`

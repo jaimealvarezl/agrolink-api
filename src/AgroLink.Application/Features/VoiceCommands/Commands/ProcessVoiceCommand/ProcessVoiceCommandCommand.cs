@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AgroLink.Application.Features.ExternalWorkers.Models;
 using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Interfaces;
@@ -25,6 +26,12 @@ public class ProcessVoiceCommandHandler(
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    private static readonly JsonSerializerOptions EntitiesJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public async Task Handle(
@@ -304,68 +311,25 @@ public class ProcessVoiceCommandHandler(
     private static JsonElement BuildEntitiesElement(ResolvedIntentResponse? resolved)
     {
         if (resolved == null)
-        {
-            return JsonSerializer.SerializeToElement(new { }, JsonOptions);
-        }
+            return JsonSerializer.SerializeToElement(new { }, EntitiesJsonOptions);
 
-        var entities = new Dictionary<string, object?>();
-
-        if (resolved.AnimalId.HasValue)
-        {
-            entities["animalId"] = resolved.AnimalId.Value;
-        }
-
-        if (resolved.LotId.HasValue)
-        {
-            entities["lotId"] = resolved.LotId.Value;
-        }
-
-        if (resolved.TargetPaddockId.HasValue)
-        {
-            entities["targetPaddockId"] = resolved.TargetPaddockId.Value;
-        }
-
-        if (resolved.MotherId.HasValue)
-        {
-            entities["motherId"] = resolved.MotherId.Value;
-        }
-
-        if (resolved.Sex != null)
-        {
-            entities["sex"] = resolved.Sex;
-        }
-
-        if (resolved.NoteText != null)
-        {
-            entities["noteText"] = resolved.NoteText;
-        }
-
-        if (resolved.AnimalName != null)
-        {
-            entities["animalName"] = resolved.AnimalName;
-        }
-
-        if (resolved.EarTag != null)
-        {
-            entities["earTag"] = resolved.EarTag;
-        }
-
-        if (resolved.Color != null)
-        {
-            entities["color"] = resolved.Color;
-        }
-
-        if (resolved.BirthDate != null)
-        {
-            entities["birthDate"] = resolved.BirthDate;
-        }
-
-        if (resolved.OwnerNames is { Length: > 0 })
-        {
-            entities["ownerNames"] = resolved.OwnerNames;
-        }
-
-        return JsonSerializer.SerializeToElement(entities, JsonOptions);
+        return JsonSerializer.SerializeToElement(
+            new
+            {
+                resolved.AnimalId,
+                resolved.LotId,
+                resolved.TargetPaddockId,
+                resolved.MotherId,
+                resolved.Sex,
+                resolved.NoteText,
+                resolved.AnimalName,
+                resolved.EarTag,
+                resolved.Color,
+                resolved.BirthDate,
+                OwnerNames = resolved.OwnerNames is { Length: > 0 } ? resolved.OwnerNames : null,
+            },
+            EntitiesJsonOptions
+        );
     }
 
     private static string? ResolveMimeType(string fileName)
