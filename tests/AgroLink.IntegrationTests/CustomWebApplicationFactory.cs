@@ -78,6 +78,9 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 
             // Replace S3 with a no-op fake so tests don't need real AWS credentials
             services.AddScoped<IStorageService, FakeStorageService>();
+
+            // Replace SQS queue with a no-op fake so tests don't need real AWS credentials
+            services.AddScoped<IVoiceCommandQueue, FakeVoiceCommandQueue>();
         });
     }
 
@@ -130,5 +133,13 @@ internal class FakeStorageService : IStorageService
     )
     {
         return Task.FromResult<byte[]?>(null);
+    }
+}
+
+internal class FakeVoiceCommandQueue : IVoiceCommandQueue
+{
+    public Task EnqueueAsync(Guid jobId, int farmId, int userId, CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
     }
 }
