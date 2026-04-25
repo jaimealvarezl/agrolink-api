@@ -13,7 +13,7 @@ resource "aws_lambda_function" "agro_link" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = "PublishedVersions"
+    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
   }
 
   vpc_config {
@@ -54,7 +54,7 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = "PublishedVersions"
+    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
   }
 
   vpc_config {
@@ -95,7 +95,7 @@ resource "aws_lambda_function" "external_api_worker" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = "PublishedVersions"
+    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
   }
 
   environment {
@@ -213,7 +213,7 @@ resource "aws_lambda_function" "voice_command_cleanup" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = "PublishedVersions"
+    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
   }
 
   vpc_config {
