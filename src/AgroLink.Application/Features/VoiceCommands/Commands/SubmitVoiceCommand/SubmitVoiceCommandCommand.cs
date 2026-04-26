@@ -48,7 +48,11 @@ public class SubmitVoiceCommandCommandHandler(
             request.ContentType,
             request.Size
         );
-        logger.LogInformation("[voice-submit] S3 upload done in {ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, jobId);
+        logger.LogInformation(
+            "[voice-submit] S3 upload done in {ElapsedMs}ms job={JobId}",
+            sw.ElapsedMilliseconds,
+            jobId
+        );
 
         var job = new VoiceCommandJob
         {
@@ -62,12 +66,24 @@ public class SubmitVoiceCommandCommandHandler(
 
         await jobRepository.AddAsync(job, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("[voice-submit] DB saved in {ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, jobId);
+        logger.LogInformation(
+            "[voice-submit] DB saved in {ElapsedMs}ms job={JobId}",
+            sw.ElapsedMilliseconds,
+            jobId
+        );
 
         await queue.EnqueueAsync(jobId, request.FarmId, request.UserId, cancellationToken);
-        logger.LogInformation("[voice-submit] SQS enqueued in {ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, jobId);
+        logger.LogInformation(
+            "[voice-submit] SQS enqueued in {ElapsedMs}ms job={JobId}",
+            sw.ElapsedMilliseconds,
+            jobId
+        );
 
-        logger.LogInformation("[voice-submit] DONE total={ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, jobId);
+        logger.LogInformation(
+            "[voice-submit] DONE total={ElapsedMs}ms job={JobId}",
+            sw.ElapsedMilliseconds,
+            jobId
+        );
 
         return jobId;
     }
