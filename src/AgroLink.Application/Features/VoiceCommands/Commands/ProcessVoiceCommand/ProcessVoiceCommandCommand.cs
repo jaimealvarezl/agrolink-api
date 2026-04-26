@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgroLink.Application.Features.ExternalWorkers.Models;
@@ -39,6 +40,9 @@ public class ProcessVoiceCommandHandler(
         CancellationToken cancellationToken
     )
     {
+        var sw = Stopwatch.StartNew();
+        logger.LogInformation("[voice-process] START job={JobId} farm={FarmId}", request.JobId, request.FarmId);
+
         var job = await jobRepository.GetByIdAsync(request.JobId, cancellationToken);
 
         if (job == null)
@@ -59,6 +63,7 @@ public class ProcessVoiceCommandHandler(
 
         job.Status = "processing";
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("[voice-process] status=processing saved in {ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, request.JobId);
 
         // Step 1: Download audio from S3
         var audioBytes = await storageService.GetFileBytesAsync(job.S3Key, cancellationToken);
@@ -72,6 +77,7 @@ public class ProcessVoiceCommandHandler(
             await FailJobAsync(job, "Failed to download audio from S3.", cancellationToken);
             return;
         }
+        logger.LogInformation("[voice-process] S3 download done ({Bytes}B) in {ElapsedMs}ms job={JobId}", audioBytes.Length, sw.ElapsedMilliseconds, request.JobId);
 
         // Step 2: Transcribe audio via Whisper
         var transcriptResult = await TranscribeAudioAsync(
@@ -80,6 +86,7 @@ public class ProcessVoiceCommandHandler(
             request.JobId,
             cancellationToken
         );
+        logger.LogInformation("[voice-process] transcription done in {ElapsedMs}ms job={JobId} failed={Failed}", sw.ElapsedMilliseconds, request.JobId, transcriptResult.Failed);
         if (transcriptResult.Failed)
         {
             await FailJobAsync(job, transcriptResult.Error!, cancellationToken);
@@ -87,6 +94,7 @@ public class ProcessVoiceCommandHandler(
         }
 
         var transcript = transcriptResult.Value ?? string.Empty;
+        logger.LogInformation("[voice-process] transcript='{Transcript}' job={JobId}", transcript, request.JobId);
 
         // Step 3: Empty transcript → unknown intent, no GPT-4o call
         if (string.IsNullOrWhiteSpace(transcript))
@@ -108,6 +116,7 @@ public class ProcessVoiceCommandHandler(
         try
         {
             parsed = await ExtractIntentAsync(transcript, request.JobId, intentCts.Token);
+            logger.LogInformation("[voice-process] intent extracted in {ElapsedMs}ms job={JobId} intent={Intent} confidence={Confidence}", sw.ElapsedMilliseconds, request.JobId, parsed.Intent, parsed.Confidence);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -134,12 +143,14 @@ public class ProcessVoiceCommandHandler(
         var rosterTask = rosterService.GetRosterAsync(request.FarmId, cancellationToken);
 
         await Task.WhenAll(resolveTask, rosterTask);
+        logger.LogInformation("[voice-process] resolution+roster done in {ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, request.JobId);
 
         var resolved = BuildResolvedIntent(parsed, await resolveTask);
         var roster = await rosterTask;
 
         // Step 6: Server-side entity validation against roster
         var validated = VoiceIntentValidator.Validate(resolved, roster);
+        logger.LogInformation("[voice-process] validation done intent={Intent} confidence={Confidence} job={JobId}", validated.Intent, validated.Confidence, request.JobId);
 
         // Step 7: Persist result
         await CompleteJobAsync(
@@ -151,6 +162,7 @@ public class ProcessVoiceCommandHandler(
             cancellationToken
         );
         await TryDeleteAudioAsync(job.S3Key);
+        logger.LogInformation("[voice-process] DONE total={ElapsedMs}ms job={JobId}", sw.ElapsedMilliseconds, request.JobId);
     }
 
     private async Task<Result<string>> TranscribeAudioAsync(
