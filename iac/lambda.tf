@@ -283,6 +283,7 @@ resource "aws_lambda_function" "voice_command_sqs_consumer" {
   environment {
     variables = {
       ConnectionStrings__DefaultConnection = "Host=${aws_rds_cluster.serverless_db.endpoint};Port=5432;Database=${var.db_name};Username=agrolink_app;SSL Mode=Require"
+      AgroLink__S3BucketName               = aws_s3_bucket.file_storage.bucket
       ExternalWorkers__WorkerFunctionName  = aws_lambda_alias.external_api_worker_live.arn
     }
   }
