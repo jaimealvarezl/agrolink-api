@@ -42,11 +42,8 @@ public class OpenAiVoiceTranscriptionService(
         using var form = new MultipartFormDataContent();
         using var fileContent = new ByteArrayContent(audioContent);
 
-        if (!string.IsNullOrWhiteSpace(mimeType))
-        {
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
-        }
-
+        // Do not set Content-Type on the part — Whisper detects format from the filename extension.
+        // Setting audio/mp4 causes "could not be decoded" even for valid .m4a files.
         form.Add(fileContent, "file", fileName);
         form.Add(new StringContent(_model), "model");
         form.Add(new StringContent("text"), "response_format");
