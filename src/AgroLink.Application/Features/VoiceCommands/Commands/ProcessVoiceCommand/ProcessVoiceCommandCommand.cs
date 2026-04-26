@@ -160,8 +160,9 @@ public class ProcessVoiceCommandHandler(
             return;
         }
 
-        // Step 5: Server-side entity resolution (mentions → IDs) + roster load run concurrently
-        var resolveTask = resolutionService.ResolveAsync(
+        // Step 5: Server-side entity resolution (mentions → IDs) + roster load
+        // Sequential to avoid concurrent DbContext operations on the same scoped instance
+        var resolution = await resolutionService.ResolveAsync(
             request.FarmId,
             parsed.AnimalMention,
             parsed.LotMention,
@@ -169,17 +170,14 @@ public class ProcessVoiceCommandHandler(
             parsed.MotherMention,
             cancellationToken
         );
-        var rosterTask = rosterService.GetRosterAsync(request.FarmId, cancellationToken);
-
-        await Task.WhenAll(resolveTask, rosterTask);
+        var roster = await rosterService.GetRosterAsync(request.FarmId, cancellationToken);
         logger.LogInformation(
             "[voice-process] resolution+roster done in {ElapsedMs}ms job={JobId}",
             sw.ElapsedMilliseconds,
             request.JobId
         );
 
-        var resolved = BuildResolvedIntent(parsed, await resolveTask);
-        var roster = await rosterTask;
+        var resolved = BuildResolvedIntent(parsed, resolution);
 
         // Step 6: Server-side entity validation against roster
         var validated = VoiceIntentValidator.Validate(resolved, roster);

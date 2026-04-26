@@ -22,34 +22,13 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         CancellationToken ct = default
     )
     {
-        var animalTask =
-            animalMention != null
-                ? ResolveAnimalAsync(farmId, animalMention, ct)
-                : Task.FromResult<int?>(null);
+        // Sequential to avoid concurrent DbContext operations on the same scoped instance
+        var animalId = animalMention != null ? await ResolveAnimalAsync(farmId, animalMention, ct) : null;
+        var lotId = lotMention != null ? await ResolveLotAsync(farmId, lotMention, ct) : null;
+        var paddockId = targetPaddockMention != null ? await ResolvePaddockAsync(farmId, targetPaddockMention, ct) : null;
+        var motherId = motherMention != null ? await ResolveAnimalAsync(farmId, motherMention, ct) : null;
 
-        var lotTask =
-            lotMention != null
-                ? ResolveLotAsync(farmId, lotMention, ct)
-                : Task.FromResult<int?>(null);
-
-        var paddockTask =
-            targetPaddockMention != null
-                ? ResolvePaddockAsync(farmId, targetPaddockMention, ct)
-                : Task.FromResult<int?>(null);
-
-        var motherTask =
-            motherMention != null
-                ? ResolveAnimalAsync(farmId, motherMention, ct)
-                : Task.FromResult<int?>(null);
-
-        await Task.WhenAll(animalTask, lotTask, paddockTask, motherTask);
-
-        return new EntityResolutionResult(
-            await animalTask,
-            await lotTask,
-            await paddockTask,
-            await motherTask
-        );
+        return new EntityResolutionResult(animalId, lotId, paddockId, motherId);
     }
 
     private async Task<int?> ResolveAnimalAsync(int farmId, string mention, CancellationToken ct)
