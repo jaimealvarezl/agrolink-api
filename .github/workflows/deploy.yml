@@ -377,7 +377,26 @@ jobs:
             --region "${AWS_REGION}"
           echo "✅ Voice command SQS consumer Lambda code updated successfully!"
 
-      - name: Publish versions and promote live aliases (SnapStart)
+      - name: Disable SnapStart on DB-connected functions
+        run: |
+          set -euo pipefail
+
+          # SnapStart snapshots the process including cached IAM auth tokens.
+          # After restore the token is expired → PAM auth fails on every request.
+          # Disable SnapStart on every function that opens a DB connection.
+          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-VoiceCommandCleanup AgroLink-VoiceCommandSqsConsumer; do
+            echo "Disabling SnapStart on ${fn}..."
+            aws lambda update-function-configuration \
+              --function-name "${fn}" \
+              --snap-start ApplyOn=None \
+              --region "${AWS_REGION}" > /dev/null
+            aws lambda wait function-updated \
+              --function-name "${fn}" \
+              --region "${AWS_REGION}"
+            echo "✅ SnapStart disabled on ${fn}"
+          done
+
+      - name: Publish versions and promote live aliases
         run: |
           set -euo pipefail
 
@@ -390,7 +409,7 @@ jobs:
               --region "${AWS_REGION}" \
               --query 'Version' --output text)
 
-            echo "⏳ Waiting for SnapStart snapshot on ${fn}:${VERSION}..."
+            echo "⏳ Waiting for ${fn}:${VERSION} to become active..."
             aws lambda wait function-active-v2 \
               --function-name "${fn}:${VERSION}" \
               --region "${AWS_REGION}"

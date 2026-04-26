@@ -13,7 +13,7 @@ resource "aws_lambda_function" "agro_link" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+    apply_on = "None"
   }
 
   timeouts {
@@ -60,7 +60,7 @@ resource "aws_lambda_function" "telegram_sqs_consumer" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+    apply_on = "None"
   }
 
   timeouts {
@@ -228,7 +228,7 @@ resource "aws_lambda_function" "voice_command_cleanup" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+    apply_on = "None"
   }
 
   timeouts {
@@ -267,7 +267,7 @@ resource "aws_lambda_function" "voice_command_sqs_consumer" {
   depends_on = [aws_s3_bucket.lambda_code_bucket, aws_s3_object.lambda_placeholder_object]
 
   snap_start {
-    apply_on = var.use_placeholder ? "None" : "PublishedVersions"
+    apply_on = "None"
   }
 
   timeouts {
