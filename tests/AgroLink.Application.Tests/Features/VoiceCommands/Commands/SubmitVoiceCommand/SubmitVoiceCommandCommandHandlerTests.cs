@@ -35,7 +35,7 @@ public class SubmitVoiceCommandCommandHandlerTests
 
         _mocker
             .GetMock<IStoragePathProvider>()
-            .Setup(p => p.GetVoiceAudioPath(It.IsAny<Guid>()))
+            .Setup(p => p.GetVoiceAudioPath(It.IsAny<Guid>(), It.IsAny<string>()))
             .Returns("voice-commands/temp/test-id");
 
         // Act
@@ -96,7 +96,7 @@ public class SubmitVoiceCommandCommandHandlerTests
 
         _mocker
             .GetMock<IStoragePathProvider>()
-            .Setup(p => p.GetVoiceAudioPath(It.IsAny<Guid>()))
+            .Setup(p => p.GetVoiceAudioPath(It.IsAny<Guid>(), It.IsAny<string>()))
             .Returns("voice-commands/temp/test-id");
 
         _mocker

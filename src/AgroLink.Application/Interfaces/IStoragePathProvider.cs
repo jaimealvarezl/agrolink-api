@@ -6,5 +6,5 @@ public interface IStoragePathProvider
 
     string GetOwnerBrandPhotoPath(int farmId, int brandId, string fileName);
 
-    string GetVoiceAudioPath(Guid jobId);
+    string GetVoiceAudioPath(Guid jobId, string contentType);
 }

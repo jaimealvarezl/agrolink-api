@@ -31,7 +31,7 @@ public class SubmitVoiceCommandCommandHandler(
     {
         var sw = Stopwatch.StartNew();
         var jobId = Guid.NewGuid();
-        var s3Key = pathProvider.GetVoiceAudioPath(jobId);
+        var s3Key = pathProvider.GetVoiceAudioPath(jobId, request.ContentType);
 
         logger.LogInformation(
             "[voice-submit] START job={JobId} farm={FarmId} user={UserId} size={SizeBytes}B contentType={ContentType}",
