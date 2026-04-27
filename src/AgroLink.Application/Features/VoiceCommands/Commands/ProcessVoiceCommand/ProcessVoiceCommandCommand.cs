@@ -18,9 +18,6 @@ public class ProcessVoiceCommandHandler(
     IVoiceCommandJobRepository jobRepository,
     IStorageService storageService,
     IEntityResolutionService resolutionService,
-    IAnimalRepository animalRepository,
-    ILotRepository lotRepository,
-    IPaddockRepository paddockRepository,
     IExternalApiWorkerClient workerClient,
     IUnitOfWork unitOfWork,
     ILogger<ProcessVoiceCommandHandler> logger
@@ -171,6 +168,7 @@ public class ProcessVoiceCommandHandler(
             parsed.LotMention,
             parsed.TargetPaddockMention,
             parsed.MotherMention,
+            parsed.OwnerNames,
             cancellationToken
         );
         logger.LogInformation(
@@ -179,11 +177,9 @@ public class ProcessVoiceCommandHandler(
             request.JobId
         );
 
-        var resolved = BuildResolvedIntent(parsed, resolution);
-
-        // Step 6: Build entities; validates IDs via repositories and adjusts confidence
-        var (entities, adjustedConfidence) = await BuildEntitiesAsync(resolved, cancellationToken);
-        var finalIntent = Math.Round(adjustedConfidence, 4) < 0.5 ? "unknown" : resolved.Intent;
+        // Step 6: Build entities; unresolved mentions penalize confidence
+        var (entities, adjustedConfidence) = BuildEntities(parsed, resolution);
+        var finalIntent = Math.Round(adjustedConfidence, 4) < 0.5 ? "unknown" : parsed.Intent;
         var finalConfidence = finalIntent == "unknown" ? 0.0 : adjustedConfidence;
 
         // Step 7: Persist result
@@ -287,32 +283,6 @@ public class ProcessVoiceCommandHandler(
         }
     }
 
-    private static ResolvedIntentResponse BuildResolvedIntent(
-        ParsedIntentResponse parsed,
-        EntityResolutionResult resolution
-    )
-    {
-        return new ResolvedIntentResponse(
-            parsed.Intent,
-            parsed.Confidence,
-            resolution.AnimalId,
-            resolution.LotId,
-            resolution.TargetPaddockId,
-            resolution.MotherId,
-            parsed.Sex,
-            parsed.NoteText,
-            parsed.AnimalName,
-            parsed.EarTag,
-            parsed.Color,
-            parsed.BirthDate,
-            parsed.OwnerNames,
-            parsed.AnimalMention,
-            parsed.LotMention,
-            parsed.TargetPaddockMention,
-            parsed.MotherMention
-        );
-    }
-
     private async Task CompleteJobAsync(
         VoiceCommandJob job,
         string intent,
@@ -363,84 +333,78 @@ public class ProcessVoiceCommandHandler(
         }
     }
 
-    // Sequential queries — shared scoped DbContext does not support concurrent operations.
-    // Also validates resolved IDs: an ID that doesn't exist in the DB is stale and
-    // reduces confidence by 0.2 per missing entity.
-    private async Task<(VoiceCommandEntitiesDto? entities, double confidence)> BuildEntitiesAsync(
-        ResolvedIntentResponse resolved,
-        CancellationToken ct
+    // Builds the entities DTO from already-resolved entities and penalizes confidence
+    // by 0.2 for each mention that the resolution service could not match.
+    private static (VoiceCommandEntitiesDto entities, double confidence) BuildEntities(
+        ParsedIntentResponse parsed,
+        EntityResolutionResult resolution
     )
     {
-        var confidence = resolved.Confidence;
+        var confidence = parsed.Confidence;
 
-        Animal? animal = null;
-        if (resolved.AnimalId.HasValue)
+        if (parsed.AnimalMention != null && resolution.Animal == null)
         {
-            animal = await animalRepository.GetLotWithPaddockAsync(resolved.AnimalId.Value);
-            if (animal == null)
-            {
-                confidence -= 0.2;
-            }
+            confidence -= 0.2;
         }
 
-        Animal? mother = null;
-        if (resolved.MotherId.HasValue)
+        if (parsed.MotherMention != null && resolution.Mother == null)
         {
-            mother = await animalRepository.GetLotWithPaddockAsync(resolved.MotherId.Value);
-            if (mother == null)
-            {
-                confidence -= 0.2;
-            }
+            confidence -= 0.2;
         }
 
-        Lot? lot = null;
-        if (resolved.LotId.HasValue)
+        if (parsed.LotMention != null && resolution.Lot == null)
         {
-            lot = await lotRepository.GetLotWithPaddockAsync(resolved.LotId.Value);
-            if (lot == null)
-            {
-                confidence -= 0.2;
-            }
+            confidence -= 0.2;
         }
 
-        Paddock? paddock = null;
-        if (resolved.TargetPaddockId.HasValue)
+        if (parsed.TargetPaddockMention != null && resolution.TargetPaddock == null)
         {
-            paddock = await paddockRepository.GetByIdAsync(resolved.TargetPaddockId.Value, ct);
-            if (paddock == null)
-            {
-                confidence -= 0.2;
-            }
+            confidence -= 0.2;
         }
+
+        var owners = resolution.Owners is { Count: > 0 }
+            ? resolution.Owners.Select(o => new VoiceCommandOwnerSummary(o.Id, o.Name)).ToArray()
+            : null;
 
         var entities = new VoiceCommandEntitiesDto(
-            animal != null
+            resolution.Animal != null
                 ? new VoiceCommandAnimalSummary(
-                    animal.Id,
-                    animal.Name,
-                    animal.TagVisual,
-                    animal.Cuia,
-                    animal.Lot?.Name
+                    resolution.Animal.Id,
+                    resolution.Animal.Name,
+                    resolution.Animal.TagVisual,
+                    resolution.Animal.Cuia,
+                    resolution.Animal.Lot?.Name
                 )
                 : null,
-            mother != null
+            resolution.Mother != null
                 ? new VoiceCommandAnimalSummary(
-                    mother.Id,
-                    mother.Name,
-                    mother.TagVisual,
-                    mother.Cuia,
-                    mother.Lot?.Name
+                    resolution.Mother.Id,
+                    resolution.Mother.Name,
+                    resolution.Mother.TagVisual,
+                    resolution.Mother.Cuia,
+                    resolution.Mother.Lot?.Name
                 )
                 : null,
-            lot != null ? new VoiceCommandLotSummary(lot.Id, lot.Name, lot.Paddock?.Name) : null,
-            paddock != null ? new VoiceCommandPaddockSummary(paddock.Id, paddock.Name) : null,
-            ParseSex(resolved.Sex),
-            resolved.NoteText,
-            resolved.AnimalName,
-            resolved.EarTag,
-            resolved.Color,
-            ParseDate(resolved.BirthDate),
-            resolved.OwnerNames is { Length: > 0 } ? resolved.OwnerNames : null
+            resolution.Lot != null
+                ? new VoiceCommandLotSummary(
+                    resolution.Lot.Id,
+                    resolution.Lot.Name,
+                    resolution.Lot.Paddock?.Name
+                )
+                : null,
+            resolution.TargetPaddock != null
+                ? new VoiceCommandPaddockSummary(
+                    resolution.TargetPaddock.Id,
+                    resolution.TargetPaddock.Name
+                )
+                : null,
+            ParseSex(parsed.Sex),
+            parsed.NoteText,
+            parsed.AnimalName,
+            parsed.EarTag,
+            parsed.Color,
+            ParseDate(parsed.BirthDate),
+            owners
         );
 
         return (entities, confidence);

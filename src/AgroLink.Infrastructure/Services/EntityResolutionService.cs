@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -19,24 +20,28 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         string? lotMention,
         string? targetPaddockMention,
         string? motherMention,
+        string[]? ownerMentions = null,
         CancellationToken ct = default
     )
     {
         // Sequential to avoid concurrent DbContext operations on the same scoped instance
-        var animalId =
+        var animal =
             animalMention != null ? await ResolveAnimalAsync(farmId, animalMention, ct) : null;
-        var lotId = lotMention != null ? await ResolveLotAsync(farmId, lotMention, ct) : null;
-        var paddockId =
+        var lot = lotMention != null ? await ResolveLotAsync(farmId, lotMention, ct) : null;
+        var paddock =
             targetPaddockMention != null
                 ? await ResolvePaddockAsync(farmId, targetPaddockMention, ct)
                 : null;
-        var motherId =
+        var mother =
             motherMention != null ? await ResolveAnimalAsync(farmId, motherMention, ct) : null;
+        var owners = ownerMentions is { Length: > 0 }
+            ? await ResolveOwnersAsync(farmId, ownerMentions, ct)
+            : null;
 
-        return new EntityResolutionResult(animalId, lotId, paddockId, motherId);
+        return new EntityResolutionResult(animal, lot, paddock, mother, owners);
     }
 
-    private async Task<int?> ResolveAnimalAsync(int farmId, string mention, CancellationToken ct)
+    private async Task<Animal?> ResolveAnimalAsync(int farmId, string mention, CancellationToken ct)
     {
         var norm = Normalize(mention);
         if (string.IsNullOrEmpty(norm))
@@ -46,16 +51,16 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
 
         // Tier 1: exact normalized match on SearchText
         var exact = await context
-            .Animals.Where(a =>
+            .Animals.Include(a => a.Lot)
+            .Where(a =>
                 a.Lot.Paddock.FarmId == farmId
                 && a.LifeStatus == LifeStatus.Active
                 && a.SearchText != null
                 && a.SearchText == norm
             )
-            .Select(a => (int?)a.Id)
             .FirstOrDefaultAsync(ct);
 
-        if (exact.HasValue)
+        if (exact != null)
         {
             return exact;
         }
@@ -64,17 +69,17 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         try
         {
             var ilike = await context
-                .Animals.Where(a =>
+                .Animals.Include(a => a.Lot)
+                .Where(a =>
                     a.Lot.Paddock.FarmId == farmId
                     && a.LifeStatus == LifeStatus.Active
                     && a.SearchText != null
                     && EF.Functions.ILike(a.SearchText, $"%{norm}%")
                 )
                 .OrderByDescending(a => a.UpdatedAt)
-                .Select(a => (int?)a.Id)
                 .FirstOrDefaultAsync(ct);
 
-            if (ilike.HasValue)
+            if (ilike != null)
             {
                 return ilike;
             }
@@ -87,7 +92,7 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         return null;
     }
 
-    private async Task<int?> ResolveLotAsync(int farmId, string mention, CancellationToken ct)
+    private async Task<Lot?> ResolveLotAsync(int farmId, string mention, CancellationToken ct)
     {
         var norm = Normalize(mention);
         if (string.IsNullOrEmpty(norm))
@@ -97,16 +102,16 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
 
         // Tier 1: exact normalized match on SearchText
         var exact = await context
-            .Lots.Where(l =>
+            .Lots.Include(l => l.Paddock)
+            .Where(l =>
                 l.Paddock.FarmId == farmId
                 && l.Status == "ACTIVE"
                 && l.SearchText != null
                 && l.SearchText == norm
             )
-            .Select(l => (int?)l.Id)
             .FirstOrDefaultAsync(ct);
 
-        if (exact.HasValue)
+        if (exact != null)
         {
             return exact;
         }
@@ -115,16 +120,16 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         try
         {
             var ilike = await context
-                .Lots.Where(l =>
+                .Lots.Include(l => l.Paddock)
+                .Where(l =>
                     l.Paddock.FarmId == farmId
                     && l.Status == "ACTIVE"
                     && l.SearchText != null
                     && EF.Functions.ILike(l.SearchText, $"%{norm}%")
                 )
-                .Select(l => (int?)l.Id)
                 .FirstOrDefaultAsync(ct);
 
-            if (ilike.HasValue)
+            if (ilike != null)
             {
                 return ilike;
             }
@@ -134,7 +139,11 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
         return null;
     }
 
-    private async Task<int?> ResolvePaddockAsync(int farmId, string mention, CancellationToken ct)
+    private async Task<Paddock?> ResolvePaddockAsync(
+        int farmId,
+        string mention,
+        CancellationToken ct
+    )
     {
         var norm = Normalize(mention);
         if (string.IsNullOrEmpty(norm))
@@ -142,34 +151,67 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
             return null;
         }
 
-        // Paddocks have no SearchText column — load all for the farm (typically few) and match in memory
-        var paddocks = await context
-            .Paddocks.Where(p => p.FarmId == farmId)
-            .Select(p => new { p.Id, p.Name })
-            .ToListAsync(ct);
+        var paddocks = await context.Paddocks.Where(p => p.FarmId == farmId).ToListAsync(ct);
 
         // Tier 1: exact normalized match
         var exact = paddocks.FirstOrDefault(p => Normalize(p.Name) == norm);
         if (exact != null)
         {
-            return exact.Id;
+            return exact;
         }
 
         // Tier 2: normalized containment
         var contains = paddocks.FirstOrDefault(p => Normalize(p.Name).Contains(norm));
         if (contains != null)
         {
-            return contains.Id;
+            return contains;
         }
 
         // Tier 3: Levenshtein (acceptable here since paddock count per farm is small)
         var threshold = Math.Max(2, norm.Length / 4);
-        var best = paddocks
-            .Select(p => new { p.Id, Dist = Levenshtein(norm, Normalize(p.Name)) })
-            .Where(p => p.Dist <= threshold)
-            .MinBy(p => p.Dist);
+        return paddocks
+            .Select(p => new { p, Dist = Levenshtein(norm, Normalize(p.Name)) })
+            .Where(x => x.Dist <= threshold)
+            .MinBy(x => x.Dist)
+            ?.p;
+    }
 
-        return best?.Id;
+    private async Task<IReadOnlyList<Owner>?> ResolveOwnersAsync(
+        int farmId,
+        string[] mentions,
+        CancellationToken ct
+    )
+    {
+        var owners = await context
+            .Owners.Where(o => o.FarmId == farmId && o.IsActive)
+            .ToListAsync(ct);
+
+        var resolved = new List<Owner>(mentions.Length);
+        foreach (var mention in mentions)
+        {
+            var norm = Normalize(mention);
+            if (string.IsNullOrEmpty(norm))
+            {
+                continue;
+            }
+
+            // Tier 1: exact normalized match
+            var match = owners.FirstOrDefault(o => Normalize(o.Name) == norm);
+
+            // Tier 2: normalized containment
+            match ??= owners.FirstOrDefault(o =>
+            {
+                var ownerNorm = Normalize(o.Name);
+                return ownerNorm.Contains(norm) || norm.Contains(ownerNorm);
+            });
+
+            if (match != null && resolved.All(r => r.Id != match.Id))
+            {
+                resolved.Add(match);
+            }
+        }
+
+        return resolved.Count > 0 ? resolved : null;
     }
 
     // Normalize: lowercase → strip accents → strip articles → collapse whitespace

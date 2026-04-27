@@ -31,7 +31,7 @@ public record ResolvedIntentResponse(
     string? EarTag = null,
     string? Color = null,
     string? BirthDate = null,
-    string[]? OwnerNames = null,
+    int[]? OwnerIds = null,
     string? AnimalMention = null,
     string? LotMention = null,
     string? TargetPaddockMention = null,

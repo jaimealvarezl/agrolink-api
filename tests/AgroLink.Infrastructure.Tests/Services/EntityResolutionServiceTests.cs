@@ -54,7 +54,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, "la bonita", null, null, null);
 
-        result.AnimalId.ShouldBe(animal.Id);
+        result.Animal?.Id.ShouldBe(animal.Id);
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, "2299", null, null, null);
 
-        result.AnimalId.ShouldBe(animal.Id);
+        result.Animal?.Id.ShouldBe(animal.Id);
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, "La Bonita", null, null, null);
 
-        result.AnimalId.ShouldBe(animal.Id);
+        result.Animal?.Id.ShouldBe(animal.Id);
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, "xyz999", null, null, null);
 
-        result.AnimalId.ShouldBeNull();
+        result.Animal.ShouldBeNull();
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id + 99, "rosa", null, null, null);
 
-        result.AnimalId.ShouldBeNull();
+        result.Animal.ShouldBeNull();
     }
 
     [Test]
@@ -110,7 +110,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, "la", null, null, null);
 
-        result.AnimalId.ShouldBeNull();
+        result.Animal.ShouldBeNull();
     }
 
     // ── lot resolution ─────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, null, lot.Name, null, null);
 
-        result.LotId.ShouldBe(lot.Id);
+        result.Lot?.Id.ShouldBe(lot.Id);
     }
 
     [Test]
@@ -136,7 +136,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, null, "el forro", null, null);
 
-        result.LotId.ShouldBe(lot.Id);
+        result.Lot?.Id.ShouldBe(lot.Id);
     }
 
     // ── mother resolution ──────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ public class EntityResolutionServiceTests : TestBase
 
         var result = await _service.ResolveAsync(farm.Id, null, null, null, "la milagro");
 
-        result.MotherId.ShouldBe(animal.Id);
+        result.Mother?.Id.ShouldBe(animal.Id);
     }
 
     // ── all nulls ──────────────────────────────────────────────────────────────
@@ -160,10 +160,10 @@ public class EntityResolutionServiceTests : TestBase
     {
         var result = await _service.ResolveAsync(1, null, null, null, null);
 
-        result.AnimalId.ShouldBeNull();
-        result.LotId.ShouldBeNull();
-        result.TargetPaddockId.ShouldBeNull();
-        result.MotherId.ShouldBeNull();
+        result.Animal.ShouldBeNull();
+        result.Lot.ShouldBeNull();
+        result.TargetPaddock.ShouldBeNull();
+        result.Mother.ShouldBeNull();
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────

@@ -174,7 +174,7 @@ public class VoiceIntentValidatorTests
             EarTag: "017683344",
             Color: "colorada",
             BirthDate: "2020-05-22",
-            OwnerNames: ["Carla", "Jaime"]
+            OwnerIds: [5, 7]
         );
 
         var result = VoiceIntentValidator.Validate(intent, roster);
@@ -186,7 +186,7 @@ public class VoiceIntentValidatorTests
         result.EarTag.ShouldBe("017683344");
         result.Color.ShouldBe("colorada");
         result.BirthDate.ShouldBe("2020-05-22");
-        result.OwnerNames.ShouldBe(["Carla", "Jaime"]);
+        result.OwnerIds.ShouldBe([5, 7]);
     }
 
     [Test]

@@ -13,8 +13,10 @@ public record VoiceCommandEntitiesDto(
     string? EarTag,
     string? Color,
     DateOnly? BirthDate,
-    string[]? OwnerNames
+    VoiceCommandOwnerSummary[]? Owners
 );
+
+public record VoiceCommandOwnerSummary(int Id, string Name);
 
 public record VoiceCommandAnimalSummary(
     int Id,

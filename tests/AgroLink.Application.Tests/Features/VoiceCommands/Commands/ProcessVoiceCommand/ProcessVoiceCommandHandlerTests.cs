@@ -1,7 +1,6 @@
 using System.Text.Json;
 using AgroLink.Application.Features.ExternalWorkers.Models;
 using AgroLink.Application.Features.VoiceCommands.Commands.ProcessVoiceCommand;
-using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
@@ -21,19 +20,13 @@ public class ProcessVoiceCommandHandlerTests
         _handler = _mocker.CreateInstance<ProcessVoiceCommandHandler>();
 
         // Default: resolution returns all nulls
-        SetupResolution(new EntityResolutionResult(null, null, null, null));
+        SetupResolution(new EntityResolutionResult());
     }
 
     private AutoMocker _mocker = null!;
     private ProcessVoiceCommandHandler _handler = null!;
 
     private static readonly byte[] AudioBytes = [1, 2, 3, 4, 5];
-    private static readonly FarmRosterDto EmptyRoster = new([], []);
-
-    private static readonly FarmRosterDto RosterWithAnimalsAndLots = new(
-        [new AnimalRosterEntry(10, "Rosa", "042", null, 1, "Lote Norte")],
-        [new LotRosterEntry(1, "Lote Norte", 100, "Potrero Grande")]
-    );
 
     // ── idempotency ────────────────────────────────────────────────────────────
 
@@ -133,6 +126,7 @@ public class ProcessVoiceCommandHandlerTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string[]?>(),
                         It.IsAny<CancellationToken>()
                     ),
                 Times.Never
@@ -166,6 +160,7 @@ public class ProcessVoiceCommandHandlerTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string[]?>(),
                         It.IsAny<CancellationToken>()
                     ),
                 Times.Never
@@ -236,7 +231,6 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
         SetupIntentExtraction(true, """{ "not_valid_at_all": }""");
 
         await _handler.Handle(new ProcessVoiceCommandCommand(job.Id, 1, 1), CancellationToken.None);
@@ -255,10 +249,12 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupResolution(new EntityResolutionResult(10, 1, null, null));
-        SetupAnimalRepository(10, "Rosa");
-        SetupLotRepository(1, "Lote Norte");
+        SetupResolution(
+            new EntityResolutionResult(
+                new Animal { Id = 10, Name = "Rosa" },
+                new Lot { Id = 1, Name = "Lote Norte" }
+            )
+        );
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.92, "animalMention": "Rosa", "lotMention": "lote norte" }"""
@@ -286,9 +282,7 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "nota para Rosa: cojea de la pata");
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupResolution(new EntityResolutionResult(10, null, null, null));
-        SetupAnimalRepository(10, "Rosa");
+        SetupResolution(new EntityResolutionResult(new Animal { Id = 10, Name = "Rosa" }));
         SetupIntentExtraction(
             true,
             """{ "intent": "create_note", "confidence": 0.88, "animalMention": "Rosa", "noteText": "cojea de la pata" }"""
@@ -319,9 +313,12 @@ public class ProcessVoiceCommandHandlerTests
             true,
             "registrar vaca colorada arete 017683344, la milagro, lote forro, pertenece a Carla y Jaime"
         );
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupResolution(new EntityResolutionResult(null, 1, null, null));
-        SetupLotRepository(1, "Lote Forro");
+        SetupResolution(
+            new EntityResolutionResult(
+                Lot: new Lot { Id = 1, Name = "Lote Forro" },
+                Owners: [new Owner { Id = 5, Name = "Carla" }, new Owner { Id = 7, Name = "Jaime" }]
+            )
+        );
         SetupIntentExtraction(
             true,
             """
@@ -351,12 +348,12 @@ public class ProcessVoiceCommandHandlerTests
         entities.GetProperty("earTag").GetString().ShouldBe("017683344");
         entities.GetProperty("color").GetString().ShouldBe("colorada");
         entities.GetProperty("lot").GetProperty("id").GetInt32().ShouldBe(1);
-        var owners = entities
-            .GetProperty("ownerNames")
+        var ownerNames = entities
+            .GetProperty("owners")
             .EnumerateArray()
-            .Select(e => e.GetString())
+            .Select(e => e.GetProperty("name").GetString())
             .ToList();
-        owners.ShouldBe(["Carla", "Jaime"]);
+        ownerNames.ShouldBe(["Carla", "Jaime"]);
     }
 
     [Test]
@@ -366,9 +363,9 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "la bonita tuvo ternero macho colorado ayer");
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupResolution(new EntityResolutionResult(null, null, null, 10));
-        SetupAnimalRepository(10, "La Bonita");
+        SetupResolution(
+            new EntityResolutionResult(Mother: new Animal { Id = 10, Name = "La Bonita" })
+        );
         SetupIntentExtraction(
             true,
             """
@@ -397,19 +394,17 @@ public class ProcessVoiceCommandHandlerTests
         entities.GetProperty("birthDate").GetString().ShouldBe("2024-05-21");
     }
 
-    // ── entity validation ──────────────────────────────────────────────────────
+    // ── entity resolution penalty ──────────────────────────────────────────────
 
     [Test]
-    public async Task Handle_WhenResolutionReturnsInvalidId_NullsIdAndPenalizesConfidence()
+    public async Task Handle_WhenAnimalUnresolved_NullsAnimalAndPenalizesConfidence()
     {
         var job = BuildJob("pending");
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover el toro al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
-        // Resolution returns ID not in the cached roster (stale cache scenario)
-        SetupResolution(new EntityResolutionResult(999, 1, null, null));
-        SetupLotRepository(1, "Lote Norte");
+        // Animal mention present but not resolved; lot resolved
+        SetupResolution(new EntityResolutionResult(Lot: new Lot { Id = 1, Name = "Lote Norte" }));
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.85, "animalMention": "el toro", "lotMention": "lote norte" }"""
@@ -434,9 +429,8 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover algo a algún lado");
-        SetupRoster(RosterWithAnimalsAndLots);
-        // Both resolved IDs stale: 0.8 - 0.4 = 0.4 < 0.5
-        SetupResolution(new EntityResolutionResult(999, 999, null, null));
+        // Both mentions present but neither resolved: 0.8 - 0.2 - 0.2 = 0.4 < 0.5
+        SetupResolution(new EntityResolutionResult());
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.8, "animalMention": "algo", "lotMention": "algún lado" }"""
@@ -462,8 +456,12 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupResolution(new EntityResolutionResult(10, 1, null, null));
+        SetupResolution(
+            new EntityResolutionResult(
+                new Animal { Id = 10, Name = "Rosa" },
+                new Lot { Id = 1, Name = "Lote Norte" }
+            )
+        );
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.9, "animalMention": "Rosa", "lotMention": "lote norte" }"""
@@ -511,8 +509,12 @@ public class ProcessVoiceCommandHandlerTests
         SetupJob(job);
         SetupS3(AudioBytes);
         SetupTranscription(true, "mover Rosa al lote norte");
-        SetupRoster(RosterWithAnimalsAndLots);
-        SetupResolution(new EntityResolutionResult(10, 1, null, null));
+        SetupResolution(
+            new EntityResolutionResult(
+                new Animal { Id = 10, Name = "Rosa" },
+                new Lot { Id = 1, Name = "Lote Norte" }
+            )
+        );
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.9, "animalMention": "Rosa", "lotMention": "lote norte" }"""
@@ -588,14 +590,6 @@ public class ProcessVoiceCommandHandlerTests
             .ReturnsAsync(transcriptResponse);
     }
 
-    private void SetupRoster(FarmRosterDto roster)
-    {
-        _mocker
-            .GetMock<IFarmRosterService>()
-            .Setup(r => r.GetRosterAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(roster);
-    }
-
     private void SetupResolution(EntityResolutionResult result)
     {
         _mocker
@@ -607,6 +601,7 @@ public class ProcessVoiceCommandHandlerTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
+                    It.IsAny<string[]?>(),
                     It.IsAny<CancellationToken>()
                 )
             )
@@ -679,21 +674,5 @@ public class ProcessVoiceCommandHandlerTests
                     ),
                 Times.Never
             );
-    }
-
-    private void SetupAnimalRepository(int id, string name)
-    {
-        _mocker
-            .GetMock<IAnimalRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(id))
-            .ReturnsAsync(new Animal { Id = id, Name = name });
-    }
-
-    private void SetupLotRepository(int id, string name)
-    {
-        _mocker
-            .GetMock<ILotRepository>()
-            .Setup(r => r.GetLotWithPaddockAsync(id))
-            .ReturnsAsync(new Lot { Id = id, Name = name });
     }
 }
