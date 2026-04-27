@@ -23,10 +23,15 @@ public class EntityResolutionService(AgroLinkDbContext context) : IEntityResolut
     )
     {
         // Sequential to avoid concurrent DbContext operations on the same scoped instance
-        var animalId = animalMention != null ? await ResolveAnimalAsync(farmId, animalMention, ct) : null;
+        var animalId =
+            animalMention != null ? await ResolveAnimalAsync(farmId, animalMention, ct) : null;
         var lotId = lotMention != null ? await ResolveLotAsync(farmId, lotMention, ct) : null;
-        var paddockId = targetPaddockMention != null ? await ResolvePaddockAsync(farmId, targetPaddockMention, ct) : null;
-        var motherId = motherMention != null ? await ResolveAnimalAsync(farmId, motherMention, ct) : null;
+        var paddockId =
+            targetPaddockMention != null
+                ? await ResolvePaddockAsync(farmId, targetPaddockMention, ct)
+                : null;
+        var motherId =
+            motherMention != null ? await ResolveAnimalAsync(farmId, motherMention, ct) : null;
 
         return new EntityResolutionResult(animalId, lotId, paddockId, motherId);
     }
