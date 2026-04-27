@@ -1,3 +1,5 @@
+using AgroLink.Domain.Enums;
+
 namespace AgroLink.Application.Features.VoiceCommands.DTOs;
 
 public record VoiceCommandEntitiesDto(
@@ -5,12 +7,12 @@ public record VoiceCommandEntitiesDto(
     VoiceCommandAnimalSummary? Mother,
     VoiceCommandLotSummary? Lot,
     VoiceCommandPaddockSummary? TargetPaddock,
-    string? Sex,
+    Sex? Sex,
     string? NoteText,
     string? AnimalName,
     string? EarTag,
     string? Color,
-    string? BirthDate,
+    DateTime? BirthDate,
     string[]? OwnerNames
 );
 

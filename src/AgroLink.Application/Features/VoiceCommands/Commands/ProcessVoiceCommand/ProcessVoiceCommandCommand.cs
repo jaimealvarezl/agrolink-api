@@ -5,6 +5,7 @@ using AgroLink.Application.Features.ExternalWorkers.Models;
 using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -406,14 +407,34 @@ public class ProcessVoiceCommandHandler(
                 : null,
             lot != null ? new VoiceCommandLotSummary(lot.Id, lot.Name, lot.Paddock?.Name) : null,
             paddock != null ? new VoiceCommandPaddockSummary(paddock.Id, paddock.Name) : null,
-            resolved.Sex,
+            ParseSex(resolved.Sex),
             resolved.NoteText,
             resolved.AnimalName,
             resolved.EarTag,
             resolved.Color,
-            resolved.BirthDate,
+            ParseDate(resolved.BirthDate),
             resolved.OwnerNames is { Length: > 0 } ? resolved.OwnerNames : null
         );
+    }
+
+    private static Sex? ParseSex(string? raw)
+    {
+        return raw?.ToLowerInvariant().Trim() switch
+        {
+            "male" or "macho" or "m" => Sex.Male,
+            "female" or "hembra" or "f" => Sex.Female,
+            _ => null,
+        };
+    }
+
+    private static DateTime? ParseDate(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        return DateTime.TryParse(raw, out var date) ? date.ToUniversalTime() : null;
     }
 
     private static string? ResolveMimeType(string fileName)
