@@ -16,8 +16,10 @@ public record ProcessVoiceCommandCommand(Guid JobId, int FarmId, int UserId) : I
 public class ProcessVoiceCommandHandler(
     IVoiceCommandJobRepository jobRepository,
     IStorageService storageService,
-    IFarmRosterService rosterService,
     IEntityResolutionService resolutionService,
+    IAnimalRepository animalRepository,
+    ILotRepository lotRepository,
+    IPaddockRepository paddockRepository,
     IExternalApiWorkerClient workerClient,
     IUnitOfWork unitOfWork,
     ILogger<ProcessVoiceCommandHandler> logger
@@ -161,8 +163,7 @@ public class ProcessVoiceCommandHandler(
             return;
         }
 
-        // Step 5: Server-side entity resolution (mentions → IDs) + roster load
-        // Sequential to avoid concurrent DbContext operations on the same scoped instance
+        // Step 5: Server-side entity resolution (mentions → IDs)
         var resolution = await resolutionService.ResolveAsync(
             request.FarmId,
             parsed.AnimalMention,
@@ -171,31 +172,21 @@ public class ProcessVoiceCommandHandler(
             parsed.MotherMention,
             cancellationToken
         );
-        var roster = await rosterService.GetRosterAsync(request.FarmId, cancellationToken);
         logger.LogInformation(
-            "[voice-process] resolution+roster done in {ElapsedMs}ms job={JobId}",
+            "[voice-process] resolution done in {ElapsedMs}ms job={JobId}",
             sw.ElapsedMilliseconds,
             request.JobId
         );
 
         var resolved = BuildResolvedIntent(parsed, resolution);
 
-        // Step 6: Server-side entity validation against roster
-        var validated = VoiceIntentValidator.Validate(resolved, roster);
-        logger.LogInformation(
-            "[voice-process] validation done intent={Intent} confidence={Confidence} job={JobId}",
-            validated.Intent,
-            validated.Confidence,
-            request.JobId
-        );
-
-        // Step 7: Persist result
+        // Step 6: Persist result
         await CompleteJobAsync(
             job,
-            validated.Intent,
-            validated.Confidence,
+            resolved.Intent,
+            resolved.Confidence,
             transcript,
-            validated,
+            resolved,
             cancellationToken
         );
         await TryDeleteAudioAsync(job.S3Key);
@@ -308,7 +299,11 @@ public class ProcessVoiceCommandHandler(
             parsed.EarTag,
             parsed.Color,
             parsed.BirthDate,
-            parsed.OwnerNames
+            parsed.OwnerNames,
+            parsed.AnimalMention,
+            parsed.LotMention,
+            parsed.TargetPaddockMention,
+            parsed.MotherMention
         );
     }
 
@@ -321,11 +316,11 @@ public class ProcessVoiceCommandHandler(
         CancellationToken ct
     )
     {
-        var entities = BuildEntitiesElement(resolved);
+        var entities = await BuildEntitiesAsync(resolved, ct);
         var result = new VoiceCommandResultDto(intent, confidence, entities, transcript);
 
         job.Status = "completed";
-        job.ResultJson = JsonSerializer.Serialize(result, JsonOptions);
+        job.ResultJson = JsonSerializer.Serialize(result, EntitiesJsonOptions);
         job.CompletedAt = DateTime.UtcNow;
 
         jobRepository.Update(job);
@@ -363,29 +358,61 @@ public class ProcessVoiceCommandHandler(
         }
     }
 
-    private static JsonElement BuildEntitiesElement(ResolvedIntentResponse? resolved)
+    // Sequential queries — shared scoped DbContext does not support concurrent operations
+    private async Task<VoiceCommandEntitiesDto?> BuildEntitiesAsync(
+        ResolvedIntentResponse? resolved,
+        CancellationToken ct
+    )
     {
         if (resolved == null)
         {
-            return JsonSerializer.SerializeToElement(new { }, EntitiesJsonOptions);
+            return null;
         }
 
-        return JsonSerializer.SerializeToElement(
-            new
-            {
-                resolved.AnimalId,
-                resolved.LotId,
-                resolved.TargetPaddockId,
-                resolved.MotherId,
-                resolved.Sex,
-                resolved.NoteText,
-                resolved.AnimalName,
-                resolved.EarTag,
-                resolved.Color,
-                resolved.BirthDate,
-                OwnerNames = resolved.OwnerNames is { Length: > 0 } ? resolved.OwnerNames : null,
-            },
-            EntitiesJsonOptions
+        var animal = resolved.AnimalId.HasValue
+            ? await animalRepository.GetLotWithPaddockAsync(resolved.AnimalId.Value)
+            : null;
+
+        var mother = resolved.MotherId.HasValue
+            ? await animalRepository.GetLotWithPaddockAsync(resolved.MotherId.Value)
+            : null;
+
+        var lot = resolved.LotId.HasValue
+            ? await lotRepository.GetLotWithPaddockAsync(resolved.LotId.Value)
+            : null;
+
+        var paddock = resolved.TargetPaddockId.HasValue
+            ? await paddockRepository.GetByIdAsync(resolved.TargetPaddockId.Value, ct)
+            : null;
+
+        return new VoiceCommandEntitiesDto(
+            animal != null
+                ? new VoiceCommandAnimalSummary(
+                    animal.Id,
+                    animal.Name,
+                    animal.TagVisual,
+                    animal.Cuia,
+                    animal.Lot?.Name
+                )
+                : null,
+            mother != null
+                ? new VoiceCommandAnimalSummary(
+                    mother.Id,
+                    mother.Name,
+                    mother.TagVisual,
+                    mother.Cuia,
+                    mother.Lot?.Name
+                )
+                : null,
+            lot != null ? new VoiceCommandLotSummary(lot.Id, lot.Name, lot.Paddock?.Name) : null,
+            paddock != null ? new VoiceCommandPaddockSummary(paddock.Id, paddock.Name) : null,
+            resolved.Sex,
+            resolved.NoteText,
+            resolved.AnimalName,
+            resolved.EarTag,
+            resolved.Color,
+            resolved.BirthDate,
+            resolved.OwnerNames is { Length: > 0 } ? resolved.OwnerNames : null
         );
     }
 

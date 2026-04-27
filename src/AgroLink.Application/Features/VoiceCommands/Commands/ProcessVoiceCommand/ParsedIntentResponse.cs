@@ -17,7 +17,7 @@ public record ParsedIntentResponse(
     string[]? OwnerNames = null
 );
 
-// Shape after server-side entity resolution: IDs instead of mentions
+// Shape after server-side entity resolution: IDs + original mentions for display names
 public record ResolvedIntentResponse(
     string Intent = "unknown",
     double Confidence = 0.0,
@@ -31,5 +31,9 @@ public record ResolvedIntentResponse(
     string? EarTag = null,
     string? Color = null,
     string? BirthDate = null,
-    string[]? OwnerNames = null
+    string[]? OwnerNames = null,
+    string? AnimalMention = null,
+    string? LotMention = null,
+    string? TargetPaddockMention = null,
+    string? MotherMention = null
 );

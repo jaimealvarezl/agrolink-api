@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AgroLink.Application.Features.VoiceCommands.DTOs;
@@ -13,6 +12,6 @@ public record VoiceCommandJobStatusDto(
 public record VoiceCommandResultDto(
     string Intent,
     double Confidence,
-    JsonElement Entities,
+    VoiceCommandEntitiesDto? Entities,
     string RawTranscription
 );
