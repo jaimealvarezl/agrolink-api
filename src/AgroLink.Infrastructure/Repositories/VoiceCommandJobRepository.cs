@@ -19,6 +19,11 @@ public class VoiceCommandJobRepository(AgroLinkDbContext context) : IVoiceComman
             .FirstOrDefaultAsync(j => j.Id == jobId, ct);
     }
 
+    public void Update(VoiceCommandJob job)
+    {
+        context.VoiceCommandJobs.Update(job);
+    }
+
     public async Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken ct = default)
     {
         return await context

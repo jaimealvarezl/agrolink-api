@@ -66,6 +66,7 @@ public class ProcessVoiceCommandHandler(
         }
 
         job.Status = "processing";
+        jobRepository.Update(job);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         logger.LogInformation(
             "[voice-process] status=processing saved in {ElapsedMs}ms job={JobId}",
@@ -327,6 +328,7 @@ public class ProcessVoiceCommandHandler(
         job.ResultJson = JsonSerializer.Serialize(result, JsonOptions);
         job.CompletedAt = DateTime.UtcNow;
 
+        jobRepository.Update(job);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation(
@@ -343,6 +345,7 @@ public class ProcessVoiceCommandHandler(
         job.ErrorMessage = error.Length > 500 ? error[..500] : error;
         job.CompletedAt = DateTime.UtcNow;
 
+        jobRepository.Update(job);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogWarning("Voice command job {JobId} failed: {Error}", job.Id, error);
