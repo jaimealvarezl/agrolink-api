@@ -181,13 +181,18 @@ public class ProcessVoiceCommandHandler(
 
         var resolved = BuildResolvedIntent(parsed, resolution);
 
-        // Step 6: Persist result
+        // Step 6: Build entities; validates IDs via repositories and adjusts confidence
+        var (entities, adjustedConfidence) = await BuildEntitiesAsync(resolved, cancellationToken);
+        var finalIntent = Math.Round(adjustedConfidence, 4) < 0.5 ? "unknown" : resolved.Intent;
+        var finalConfidence = finalIntent == "unknown" ? 0.0 : adjustedConfidence;
+
+        // Step 7: Persist result
         await CompleteJobAsync(
             job,
-            resolved.Intent,
-            resolved.Confidence,
+            finalIntent,
+            finalConfidence,
             transcript,
-            resolved,
+            entities,
             cancellationToken
         );
         await TryDeleteAudioAsync(job.S3Key);
@@ -313,11 +318,10 @@ public class ProcessVoiceCommandHandler(
         string intent,
         double confidence,
         string transcript,
-        ResolvedIntentResponse? resolved,
+        VoiceCommandEntitiesDto? entities,
         CancellationToken ct
     )
     {
-        var entities = await BuildEntitiesAsync(resolved, ct);
         var result = new VoiceCommandResultDto(intent, confidence, entities, transcript);
 
         job.Status = "completed";
@@ -359,34 +363,57 @@ public class ProcessVoiceCommandHandler(
         }
     }
 
-    // Sequential queries — shared scoped DbContext does not support concurrent operations
-    private async Task<VoiceCommandEntitiesDto?> BuildEntitiesAsync(
-        ResolvedIntentResponse? resolved,
+    // Sequential queries — shared scoped DbContext does not support concurrent operations.
+    // Also validates resolved IDs: an ID that doesn't exist in the DB is stale and
+    // reduces confidence by 0.2 per missing entity.
+    private async Task<(VoiceCommandEntitiesDto? entities, double confidence)> BuildEntitiesAsync(
+        ResolvedIntentResponse resolved,
         CancellationToken ct
     )
     {
-        if (resolved == null)
+        var confidence = resolved.Confidence;
+
+        Animal? animal = null;
+        if (resolved.AnimalId.HasValue)
         {
-            return null;
+            animal = await animalRepository.GetLotWithPaddockAsync(resolved.AnimalId.Value);
+            if (animal == null)
+            {
+                confidence -= 0.2;
+            }
         }
 
-        var animal = resolved.AnimalId.HasValue
-            ? await animalRepository.GetLotWithPaddockAsync(resolved.AnimalId.Value)
-            : null;
+        Animal? mother = null;
+        if (resolved.MotherId.HasValue)
+        {
+            mother = await animalRepository.GetLotWithPaddockAsync(resolved.MotherId.Value);
+            if (mother == null)
+            {
+                confidence -= 0.2;
+            }
+        }
 
-        var mother = resolved.MotherId.HasValue
-            ? await animalRepository.GetLotWithPaddockAsync(resolved.MotherId.Value)
-            : null;
+        Lot? lot = null;
+        if (resolved.LotId.HasValue)
+        {
+            lot = await lotRepository.GetLotWithPaddockAsync(resolved.LotId.Value);
+            if (lot == null)
+            {
+                confidence -= 0.2;
+            }
+        }
 
-        var lot = resolved.LotId.HasValue
-            ? await lotRepository.GetLotWithPaddockAsync(resolved.LotId.Value)
-            : null;
+        Paddock? paddock = null;
+        if (resolved.TargetPaddockId.HasValue)
+        {
+            paddock = await paddockRepository.GetByIdAsync(resolved.TargetPaddockId.Value, ct);
+            if (paddock == null)
+            {
+                confidence -= 0.2;
+            }
+        }
 
-        var paddock = resolved.TargetPaddockId.HasValue
-            ? await paddockRepository.GetByIdAsync(resolved.TargetPaddockId.Value, ct)
-            : null;
-
-        return new VoiceCommandEntitiesDto(
+        var entities = new VoiceCommandEntitiesDto(
             animal != null
                 ? new VoiceCommandAnimalSummary(
                     animal.Id,
@@ -415,6 +442,8 @@ public class ProcessVoiceCommandHandler(
             ParseDate(resolved.BirthDate),
             resolved.OwnerNames is { Length: > 0 } ? resolved.OwnerNames : null
         );
+
+        return (entities, confidence);
     }
 
     private static Sex? ParseSex(string? raw)
@@ -427,14 +456,14 @@ public class ProcessVoiceCommandHandler(
         };
     }
 
-    private static DateTime? ParseDate(string? raw)
+    private static DateOnly? ParseDate(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
             return null;
         }
 
-        return DateTime.TryParse(raw, out var date) ? date.ToUniversalTime() : null;
+        return DateOnly.TryParse(raw, out var date) ? date : null;
     }
 
     private static string? ResolveMimeType(string fileName)

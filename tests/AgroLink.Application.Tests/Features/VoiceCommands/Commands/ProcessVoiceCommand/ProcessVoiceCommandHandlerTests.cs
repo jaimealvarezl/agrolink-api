@@ -257,6 +257,8 @@ public class ProcessVoiceCommandHandlerTests
         SetupTranscription(true, "mover Rosa al lote norte");
         SetupRoster(RosterWithAnimalsAndLots);
         SetupResolution(new EntityResolutionResult(10, 1, null, null));
+        SetupAnimalRepository(10, "Rosa");
+        SetupLotRepository(1, "Lote Norte");
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.92, "animalMention": "Rosa", "lotMention": "lote norte" }"""
@@ -286,6 +288,7 @@ public class ProcessVoiceCommandHandlerTests
         SetupTranscription(true, "nota para Rosa: cojea de la pata");
         SetupRoster(RosterWithAnimalsAndLots);
         SetupResolution(new EntityResolutionResult(10, null, null, null));
+        SetupAnimalRepository(10, "Rosa");
         SetupIntentExtraction(
             true,
             """{ "intent": "create_note", "confidence": 0.88, "animalMention": "Rosa", "noteText": "cojea de la pata" }"""
@@ -300,7 +303,7 @@ public class ProcessVoiceCommandHandlerTests
         );
         result.GetProperty("intent").GetString().ShouldBe("create_note");
         var entities = result.GetProperty("entities");
-        entities.GetProperty("animalId").GetInt32().ShouldBe(10);
+        entities.GetProperty("animal").GetProperty("id").GetInt32().ShouldBe(10);
         entities.GetProperty("noteText").GetString().ShouldBe("cojea de la pata");
     }
 
@@ -318,6 +321,7 @@ public class ProcessVoiceCommandHandlerTests
         );
         SetupRoster(RosterWithAnimalsAndLots);
         SetupResolution(new EntityResolutionResult(null, 1, null, null));
+        SetupLotRepository(1, "Lote Forro");
         SetupIntentExtraction(
             true,
             """
@@ -346,7 +350,7 @@ public class ProcessVoiceCommandHandlerTests
         entities.GetProperty("animalName").GetString().ShouldBe("la milagro");
         entities.GetProperty("earTag").GetString().ShouldBe("017683344");
         entities.GetProperty("color").GetString().ShouldBe("colorada");
-        entities.GetProperty("lotId").GetInt32().ShouldBe(1);
+        entities.GetProperty("lot").GetProperty("id").GetInt32().ShouldBe(1);
         var owners = entities
             .GetProperty("ownerNames")
             .EnumerateArray()
@@ -364,6 +368,7 @@ public class ProcessVoiceCommandHandlerTests
         SetupTranscription(true, "la bonita tuvo ternero macho colorado ayer");
         SetupRoster(RosterWithAnimalsAndLots);
         SetupResolution(new EntityResolutionResult(null, null, null, 10));
+        SetupAnimalRepository(10, "La Bonita");
         SetupIntentExtraction(
             true,
             """
@@ -387,7 +392,7 @@ public class ProcessVoiceCommandHandlerTests
         );
         result.GetProperty("intent").GetString().ShouldBe("register_newborn");
         var entities = result.GetProperty("entities");
-        entities.GetProperty("motherId").GetInt32().ShouldBe(10);
+        entities.GetProperty("mother").GetProperty("id").GetInt32().ShouldBe(10);
         entities.GetProperty("color").GetString().ShouldBe("colorado");
         entities.GetProperty("birthDate").GetString().ShouldBe("2024-05-21");
     }
@@ -404,6 +409,7 @@ public class ProcessVoiceCommandHandlerTests
         SetupRoster(RosterWithAnimalsAndLots);
         // Resolution returns ID not in the cached roster (stale cache scenario)
         SetupResolution(new EntityResolutionResult(999, 1, null, null));
+        SetupLotRepository(1, "Lote Norte");
         SetupIntentExtraction(
             true,
             """{ "intent": "move_animal", "confidence": 0.85, "animalMention": "el toro", "lotMention": "lote norte" }"""
@@ -418,7 +424,7 @@ public class ProcessVoiceCommandHandlerTests
         );
         result.GetProperty("intent").GetString().ShouldBe("move_animal");
         result.GetProperty("confidence").GetDouble().ShouldBe(0.65, 0.001);
-        result.GetProperty("entities").TryGetProperty("animalId", out _).ShouldBeFalse();
+        result.GetProperty("entities").TryGetProperty("animal", out _).ShouldBeFalse();
     }
 
     [Test]
@@ -673,5 +679,21 @@ public class ProcessVoiceCommandHandlerTests
                     ),
                 Times.Never
             );
+    }
+
+    private void SetupAnimalRepository(int id, string name)
+    {
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(id))
+            .ReturnsAsync(new Animal { Id = id, Name = name });
+    }
+
+    private void SetupLotRepository(int id, string name)
+    {
+        _mocker
+            .GetMock<ILotRepository>()
+            .Setup(r => r.GetLotWithPaddockAsync(id))
+            .ReturnsAsync(new Lot { Id = id, Name = name });
     }
 }

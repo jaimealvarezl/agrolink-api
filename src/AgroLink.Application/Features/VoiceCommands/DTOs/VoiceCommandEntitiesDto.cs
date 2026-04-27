@@ -12,7 +12,7 @@ public record VoiceCommandEntitiesDto(
     string? AnimalName,
     string? EarTag,
     string? Color,
-    DateTime? BirthDate,
+    DateOnly? BirthDate,
     string[]? OwnerNames
 );
 
