@@ -1,5 +1,14 @@
 terraform {
   required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.30.0"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = ">= 2.7.0"
+    }
+
     google = {
       source  = "hashicorp/google"
       version = ">= 6.0.0"
@@ -15,6 +24,17 @@ terraform {
     prefix = "terraform/state"
   }
 }
+
+provider "aws" {
+  region = var.region
+
+  default_tags {
+    tags = {
+      Owner = "Ops"
+    }
+  }
+}
+
 
 provider "google" {
   project = var.project_id
