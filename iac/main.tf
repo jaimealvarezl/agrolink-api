@@ -4,11 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 6.30.0"
     }
-    archive = {
-      source  = "hashicorp/archive"
-      version = ">= 2.7.0"
-    }
-
     google = {
       source  = "hashicorp/google"
       version = ">= 6.0.0"
@@ -26,7 +21,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 
   default_tags {
     tags = {
@@ -34,7 +29,6 @@ provider "aws" {
     }
   }
 }
-
 
 provider "google" {
   project = var.project_id
@@ -70,11 +64,13 @@ output "db_instance_connection_name" {
 output "files_bucket_name" {
   description = "GCS bucket for file storage"
   value       = google_storage_bucket.files.name
+  sensitive   = true
 }
 
 output "spa_bucket_name" {
   description = "GCS bucket for SPA hosting"
   value       = google_storage_bucket.spa.name
+  sensitive   = true
 }
 
 output "api_service_account_email" {

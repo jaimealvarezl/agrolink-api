@@ -1,3 +1,9 @@
+variable "aws_region" {
+  description = "AWS region for remaining AWS resources"
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "project_id" {
   description = "GCP project ID (same project as Firebase)"
   type        = string
