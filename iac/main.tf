@@ -35,6 +35,23 @@ provider "google" {
   region  = var.region
 }
 
+# ── Required APIs ────────────────────────────────────────────────────────────
+
+resource "google_project_service" "apis" {
+  for_each = toset([
+    "run.googleapis.com",
+    "sqladmin.googleapis.com",
+    "secretmanager.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "iam.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "servicenetworking.googleapis.com",
+  ])
+
+  service            = each.key
+  disable_on_destroy = false
+}
+
 locals {
   common_labels = {
     service     = "agrolink"

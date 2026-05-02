@@ -2,8 +2,9 @@
 # Secrets are created here; values are managed outside Terraform or via CI/CD.
 
 resource "google_secret_manager_secret" "telegram_bot_token" {
-  secret_id = "agrolink-telegram-bot-token"
-  labels    = local.common_labels
+  secret_id  = "agrolink-telegram-bot-token"
+  labels     = local.common_labels
+  depends_on = [google_project_service.apis]
   replication {
     auto {}
   }
