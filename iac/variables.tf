@@ -39,12 +39,6 @@ variable "api_image" {
   default     = "us-central1-docker.pkg.dev/REPLACE_ME/agrolink/api:latest"
 }
 
-variable "scheduler_secret" {
-  description = "Shared secret sent by Cloud Scheduler in X-Scheduler-Secret header"
-  type        = string
-  sensitive   = true
-}
-
 variable "telegram_bot_token" {
   description = "Telegram bot token"
   type        = string

@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using AgroLink.Application.Features.ExternalWorkers.Models;
-using AgroLink.Application.Features.VoiceCommands.Commands.ProcessVoiceCommand;
 using AgroLink.Application.Features.VoiceCommands.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Enums;
@@ -20,8 +18,6 @@ public record ProcessVoiceCommandInlineCommand(
 ) : IRequest<VoiceCommandResultDto>;
 
 public class ProcessVoiceCommandInlineHandler(
-    IStorageService storageService,
-    IStoragePathProvider pathProvider,
     IEntityResolutionService resolutionService,
     IExternalApiWorkerClient workerClient,
     ILogger<ProcessVoiceCommandInlineHandler> logger
@@ -33,12 +29,6 @@ public class ProcessVoiceCommandInlineHandler(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    private static readonly JsonSerializerOptions EntitiesJsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
-
     public async Task<VoiceCommandResultDto> Handle(
         ProcessVoiceCommandInlineCommand request,
         CancellationToken cancellationToken
@@ -46,7 +36,6 @@ public class ProcessVoiceCommandInlineHandler(
     {
         var sw = Stopwatch.StartNew();
         var jobId = Guid.NewGuid();
-        var storageKey = pathProvider.GetVoiceAudioPath(jobId, request.ContentType);
 
         logger.LogInformation(
             "[voice] START farm={FarmId} user={UserId} size={Size}B",
@@ -55,27 +44,13 @@ public class ProcessVoiceCommandInlineHandler(
             request.Size
         );
 
-        // Upload audio so transcription can reference it by key
-        await storageService.UploadFileAsync(
-            storageKey,
-            request.AudioStream,
-            request.ContentType,
-            request.Size
-        );
-        logger.LogInformation("[voice] upload done in {Ms}ms", sw.ElapsedMilliseconds);
+        using var ms = new MemoryStream((int)request.Size);
+        await request.AudioStream.CopyToAsync(ms, cancellationToken);
+        var audioBytes = ms.ToArray();
 
-        // Download bytes for transcription
-        var audioBytes = await storageService.GetFileBytesAsync(storageKey, cancellationToken);
-        if (audioBytes == null || audioBytes.Length == 0)
-        {
-            await TryDeleteAudioAsync(storageKey);
-            throw new InvalidOperationException(
-                "Failed to retrieve uploaded audio for transcription."
-            );
-        }
+        var fileName = $"{jobId}{ExtensionForContentType(request.ContentType)}";
 
-        // Transcribe via Whisper
-        var transcript = await TranscribeAsync(audioBytes, storageKey, jobId, cancellationToken);
+        var transcript = await TranscribeAsync(audioBytes, fileName, jobId, cancellationToken);
         logger.LogInformation(
             "[voice] transcript='{Transcript}' in {Ms}ms",
             transcript,
@@ -84,12 +59,10 @@ public class ProcessVoiceCommandInlineHandler(
 
         if (string.IsNullOrWhiteSpace(transcript))
         {
-            await TryDeleteAudioAsync(storageKey);
             logger.LogInformation("[voice] empty transcript → unknown intent");
             return new VoiceCommandResultDto("unknown", 0.0, null, string.Empty);
         }
 
-        // Extract intent via GPT-4o (5-second timeout)
         using var intentCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         intentCts.CancelAfter(TimeSpan.FromSeconds(5));
 
@@ -106,11 +79,9 @@ public class ProcessVoiceCommandInlineHandler(
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            await TryDeleteAudioAsync(storageKey);
             throw new TimeoutException("Intent extraction timed out.");
         }
 
-        // Entity resolution
         var resolution = await resolutionService.ResolveAsync(
             request.FarmId,
             parsed.AnimalMention,
@@ -126,7 +97,6 @@ public class ProcessVoiceCommandInlineHandler(
         var finalIntent = Math.Round(adjustedConfidence, 4) < 0.5 ? "unknown" : parsed.Intent;
         var finalConfidence = finalIntent == "unknown" ? 0.0 : adjustedConfidence;
 
-        await TryDeleteAudioAsync(storageKey);
         logger.LogInformation("[voice] DONE total={Ms}ms", sw.ElapsedMilliseconds);
 
         return new VoiceCommandResultDto(finalIntent, finalConfidence, entities, transcript);
@@ -134,12 +104,11 @@ public class ProcessVoiceCommandInlineHandler(
 
     private async Task<string> TranscribeAsync(
         byte[] audioBytes,
-        string storageKey,
+        string fileName,
         Guid jobId,
         CancellationToken ct
     )
     {
-        var fileName = Path.GetFileName(storageKey);
         var mimeType = ResolveMimeType(fileName);
         var payload = new TranscribeVoiceAudioPayload(
             Convert.ToBase64String(audioBytes),
@@ -195,18 +164,6 @@ public class ProcessVoiceCommandInlineHandler(
         {
             logger.LogWarning(ex, "Malformed intent JSON from GPT-4o, defaulting to unknown.");
             return new ParsedIntentResponse();
-        }
-    }
-
-    private async Task TryDeleteAudioAsync(string storageKey)
-    {
-        try
-        {
-            await storageService.DeleteFileAsync(storageKey);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to delete audio at key {Key}.", storageKey);
         }
     }
 
@@ -309,6 +266,19 @@ public class ProcessVoiceCommandInlineHandler(
             ".webm" => "audio/webm",
             ".ogg" => "audio/ogg",
             _ => null,
+        };
+    }
+
+    private static string ExtensionForContentType(string contentType)
+    {
+        return contentType.ToLowerInvariant() switch
+        {
+            "audio/mpeg" => ".mp3",
+            "audio/mp4" or "audio/m4a" or "audio/x-m4a" => ".m4a",
+            "audio/wav" or "audio/wave" => ".wav",
+            "audio/webm" => ".webm",
+            "audio/ogg" => ".ogg",
+            _ => ".bin",
         };
     }
 }

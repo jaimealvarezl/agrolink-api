@@ -39,16 +39,3 @@ resource "google_secret_manager_secret_version" "openai_api_key" {
   secret      = google_secret_manager_secret.openai_api_key.id
   secret_data = var.openai_api_key
 }
-
-resource "google_secret_manager_secret" "scheduler_secret" {
-  secret_id = "agrolink-scheduler-secret"
-  labels    = local.common_labels
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "scheduler_secret" {
-  secret      = google_secret_manager_secret.scheduler_secret.id
-  secret_data = var.scheduler_secret
-}

@@ -106,7 +106,7 @@ public static class DependencyInjection
         services.AddScoped<IClinicalRecommendationRepository, ClinicalRecommendationRepository>();
         services.AddScoped<ITelegramInboundEventLogRepository, TelegramInboundEventLogRepository>();
         services.AddScoped<ITelegramOutboundMessageRepository, TelegramOutboundMessageRepository>();
-         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Firebase Admin SDK — initialized once per process using Application Default Credentials.
         // Locally: set GOOGLE_APPLICATION_CREDENTIALS to a service account JSON path.

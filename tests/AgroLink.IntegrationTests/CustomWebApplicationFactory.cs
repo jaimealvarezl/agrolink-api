@@ -90,7 +90,6 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
             db.Database.Migrate();
 
             services.AddScoped<IStorageService, FakeStorageService>();
-            services.AddScoped<IVoiceCommandQueue, FakeVoiceCommandQueue>();
         });
     }
 
@@ -143,13 +142,5 @@ internal class FakeStorageService : IStorageService
     )
     {
         return Task.FromResult<byte[]?>(null);
-    }
-}
-
-internal class FakeVoiceCommandQueue : IVoiceCommandQueue
-{
-    public Task EnqueueAsync(Guid jobId, int farmId, int userId, CancellationToken ct = default)
-    {
-        return Task.CompletedTask;
     }
 }

@@ -88,16 +88,6 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
-      env {
-        name = "Internal__SchedulerSecret"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.scheduler_secret.secret_id
-            version = "latest"
-          }
-        }
-      }
-
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
@@ -116,29 +106,4 @@ resource "google_cloud_run_v2_service" "api" {
     google_project_iam_member.api_cloudsql,
     google_project_iam_member.api_secret_accessor,
   ]
-}
-
-# ── Cloud Scheduler → API cleanup endpoint ────────────────────────────────────
-
-resource "google_service_account" "scheduler" {
-  account_id   = "agrolink-scheduler"
-  display_name = "AgroLink Cloud Scheduler"
-}
-
-resource "google_cloud_scheduler_job" "cleanup" {
-  name             = "agrolink-voice-command-cleanup"
-  description      = "Delete stale voice command jobs daily"
-  schedule         = "0 3 * * *"
-  time_zone        = "America/Argentina/Buenos_Aires"
-  attempt_deadline = "320s"
-
-  http_target {
-    http_method = "POST"
-    uri         = "${google_cloud_run_v2_service.api.uri}/api/internal/cleanup"
-
-    headers = {
-      "X-Scheduler-Secret" = var.scheduler_secret
-      "Content-Type"       = "application/json"
-    }
-  }
 }
