@@ -8,20 +8,19 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=agrolinkdb;Username=agrolinkadmin;Password=agrolinkpassword
-      - AWS__ServiceUrl=http://minio:9000
-      - AWS__AccessKey=minio
-      - AWS__SecretKey=minio12345
-      - AWS__S3BucketName=agrolink-storage-bucket
-      - AWS__ForcePathStyle=true
+      - Firebase__ProjectId=${FIREBASE_PROJECT_ID:-your-firebase-project-id}
+      - GCS__BucketName=agrolink-files
+      - STORAGE_EMULATOR_HOST=http://gcs-emulator:4443
       - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
       - Telegram__WebhookSecretToken=${TELEGRAM_WEBHOOK_SECRET:-}
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
+      - Internal__SchedulerSecret=${SCHEDULER_SECRET:-local-secret}
     ports:
       - "5001:8080"
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      gcs-emulator:
         condition: service_started
 
   postgres:
@@ -53,33 +52,28 @@ services:
       postgres:
         condition: service_healthy
 
-  minio:
-    image: minio/minio:latest
-    container_name: agrolink-minio
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio12345
-    command: server /data --console-address ":9001"
+  gcs-emulator:
+    image: fsouza/fake-gcs-server:latest
+    container_name: agrolink-gcs
+    command: -scheme http -port 4443 -backend memory -public-host gcs-emulator:4443
     ports:
-      - "9000:9000"   # S3 API-compatible endpoint
-      - "9001:9001"   # MinIO Console
+      - "4443:4443"
     volumes:
-      - minio_data:/data
+      - gcs_data:/data
 
-  minio-setup:
-    image: minio/mc:latest
-    container_name: agrolink-minio-setup
+  gcs-setup:
+    image: curlimages/curl:latest
+    container_name: agrolink-gcs-setup
     depends_on:
-      - minio
+      - gcs-emulator
     entrypoint: ["/bin/sh", "-c"]
     command: |
-      mc alias set local http://minio:9000 minio minio12345 && \
-      mc mb -p local/agrolink-spa-bucket || true && \
-      mc mb -p local/agrolink-storage-bucket || true && \
-      mc anonymous set public local/agrolink-spa-bucket || true && \
-      echo "MinIO buckets created"
-
+      sleep 2 && \
+      curl -X POST "http://gcs-emulator:4443/storage/v1/b" \
+        -H "Content-Type: application/json" \
+        -d '{"name":"agrolink-files"}' && \
+      echo "GCS bucket created"
 
 volumes:
   pg_data:
-  minio_data:
+  gcs_data:

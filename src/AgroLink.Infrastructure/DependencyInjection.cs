@@ -5,14 +5,12 @@ using AgroLink.Infrastructure.Data;
 using AgroLink.Infrastructure.Data.Interceptors;
 using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
-using Amazon;
-using Amazon.Lambda;
-using Amazon.RDS.Util;
-using Amazon.S3;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 
 namespace AgroLink.Infrastructure;
 
@@ -40,83 +38,21 @@ public static class DependencyInjection
                 "ConnectionStrings:DefaultConnection is required."
             );
 
-        var isLambda = !string.IsNullOrEmpty(
-            Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME")
+        services.AddDbContext<AgroLinkDbContext>(
+            (sp, options) =>
+                options
+                    .UseNpgsql(
+                        connectionString,
+                        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+                    )
+                    .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
         );
 
-        if (isLambda)
-        {
-            // In Lambda, use IAM auth tokens instead of a static password so that
-            // SnapStart cold-start restores are never blocked by rotated credentials.
-            var dataSource = new NpgsqlDataSourceBuilder(connectionString)
-                .UsePeriodicPasswordProvider(
-                    async (settings, _) =>
-                        await RDSAuthTokenGenerator.GenerateAuthTokenAsync(
-                            RegionEndpoint.GetBySystemName(
-                                Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1"
-                            ),
-                            settings.Host!,
-                            settings.Port,
-                            "agrolink_app"
-                        ),
-                    TimeSpan.FromMinutes(10),
-                    TimeSpan.FromSeconds(30)
-                )
-                .Build();
-
-            services.AddDbContext<AgroLinkDbContext>(
-                (sp, options) =>
-                    options
-                        .UseNpgsql(
-                            dataSource,
-                            o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-                        )
-                        .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
-            );
-        }
-        else
-        {
-            services.AddDbContext<AgroLinkDbContext>(
-                (sp, options) =>
-                    options
-                        .UseNpgsql(
-                            connectionString,
-                            o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-                        )
-                        .AddInterceptors(sp.GetRequiredService<SearchTextInterceptor>())
-            );
-        }
-
-        // AWS S3 / MinIO Configuration
-        services.AddSingleton<IAmazonS3>(sp =>
-        {
-            var config = sp.GetRequiredService<IConfiguration>();
-            var awsSection = config.GetSection("AWS");
-            var serviceUrl = awsSection["ServiceUrl"];
-            var region = awsSection["Region"];
-            var accessKey = awsSection["AccessKey"];
-            var secretKey = awsSection["SecretKey"];
-            bool.TryParse(awsSection["ForcePathStyle"], out var forcePathStyle);
-
-            var s3Config = new AmazonS3Config();
-            if (!string.IsNullOrEmpty(serviceUrl))
-            {
-                s3Config.ServiceURL = serviceUrl;
-                s3Config.ForcePathStyle = forcePathStyle;
-            }
-
-            if (!string.IsNullOrEmpty(region))
-            {
-                s3Config.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
-            }
-
-            if (!string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey))
-            {
-                return new AmazonS3Client(accessKey, secretKey, s3Config);
-            }
-
-            return new AmazonS3Client(s3Config);
-        });
+        // Google Cloud Storage
+        services.AddSingleton<StorageClient>(_ => StorageClient.Create());
+        services.AddSingleton<UrlSigner>(_ =>
+            UrlSigner.FromCredential(GoogleCredential.GetApplicationDefault())
+        );
 
         // Generic Repositories
         services.AddScoped<IRepository<Farm>, Repository<Farm>>();
@@ -174,18 +110,40 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+        // Firebase Admin SDK — initialized once per process using Application Default Credentials.
+        // Locally: set GOOGLE_APPLICATION_CREDENTIALS to a service account JSON path.
+        // On Cloud Run: uses the service account attached to the instance.
+        if (FirebaseApp.DefaultInstance == null)
+        {
+            try
+            {
+                FirebaseApp.Create(
+                    new AppOptions
+                    {
+                        Credential = GoogleCredential.GetApplicationDefault(),
+                        ProjectId = configuration["Firebase:ProjectId"],
+                    }
+                );
+            }
+            catch (Exception)
+            {
+                // No credentials available (local dev without service account).
+                // JWT validation via JwtBearer+JWKS still works; Admin SDK features
+                // (revocation checks, custom tokens) require credentials at runtime.
+            }
+        }
+
         // Infrastructure Services
         services.AddMemoryCache();
         services.AddScoped<IFarmRosterService, FarmRosterService>();
         services.AddScoped<IEntityResolutionService, EntityResolutionService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IStorageService, S3StorageService>();
-        services.AddScoped<IVoiceCommandQueue, SqsVoiceCommandQueue>();
+        services.AddScoped<IStorageService, GcsStorageService>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
-        services.AddSingleton<IAmazonLambda, AmazonLambdaClient>();
-        services.AddScoped<IExternalApiWorkerClient, LambdaExternalApiWorkerClient>();
+
+        // External worker operations are dispatched directly to the registered services.
+        // Cloud Run has unrestricted internet access so no Lambda/HTTP proxy is needed.
+        services.AddScoped<IExternalApiWorkerClient, DirectExternalApiWorkerClient>();
 
         return services;
     }

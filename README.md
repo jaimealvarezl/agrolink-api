@@ -1,494 +1,294 @@
-# AgroLink API - Cattle Control and Traceability System
+# AgroLink API — Cattle Control and Traceability System
 
-A comprehensive mobile-first MVP for managing and tracking bovine cattle at farms in Nicaragua. Built with ASP.NET Core 8, PostgreSQL, and AWS S3 for photo storage.
+A mobile-first backend for managing and tracking bovine cattle at farms in Nicaragua. Built with ASP.NET Core 10, PostgreSQL, Firebase Authentication, and Google Cloud.
 
-## 🌾 Overview
+## Overview
 
-AgroLink is designed to help farmers in Boaco, Nicaragua manage their cattle operations with offline-first capabilities. The system supports:
+AgroLink helps farmers in Boaco, Nicaragua manage their cattle operations with offline-first capabilities:
 
-- **Animal Management**: Register, track, and manage individual animals with detailed information
-- **Hierarchical Organization**: Farm → Paddock → Lot → Animals structure
-- **Movement Tracking**: Record and track animal and lot movements
-- **Health Monitoring**: Daily checklists for animal presence and condition
-- **Photo Management**: Upload and sync photos with AWS S3
-- **Genealogy Tracking**: Maternal and paternal lineage tracking
-- **Offline Support**: Work offline and sync when connectivity is available
-- **Multi-ownership**: Support for shared ownership with percentage splits
+- **Animal Management** — Register, track, and manage individual animals
+- **Hierarchical Organization** — Farm → Paddock → Lot → Animals
+- **Movement Tracking** — Record animal and lot movements
+- **Health Monitoring** — Daily checklists for animal presence and condition
+- **Photo Management** — Upload and manage photos via Google Cloud Storage
+- **Genealogy Tracking** — Maternal lineage tracking
+- **Multi-ownership** — Shared ownership with percentage splits
+- **Clinical Cases** — AI-assisted medication advice via OpenAI
+- **Voice Commands** — Natural language voice input processed via Whisper + GPT-4o
+- **Telegram Integration** — Bot-based farm notifications
 
-## 🏗️ Architecture
+## Technology Stack
 
-### Project Structure
+| Layer | Technology |
+|---|---|
+| Runtime | .NET 10 / ASP.NET Core |
+| Architecture | Clean Architecture + CQRS (MediatR) |
+| Database | PostgreSQL 16 (Cloud SQL) via EF Core |
+| Authentication | Firebase Authentication (JWT JWKS validation) |
+| File Storage | Google Cloud Storage |
+| AI | OpenAI (Whisper transcription, GPT-4o intent/advice, TTS) |
+| Messaging | Telegram Bot API |
+| Hosting | Google Cloud Run |
+| IaC | Terraform (GCP) |
+| Formatting | CSharpier |
+| Static Analysis | JetBrains ReSharper |
+
+## Project Structure
+
 ```
-AgroLink.API/              # Presentation Layer (ASP.NET Core Web API)
-├── Controllers/           # API Controllers, orchestrates commands and queries
-├── DTOs/                  # API-specific Data Transfer Objects
-├── Program.cs             # Application startup and Dependency Injection configuration
-└── appsettings.json      # Configuration files
+src/
+├── AgroLink.Api/               # Presentation — thin controllers, middleware, DI wiring
+│   ├── Controllers/
+│   ├── DTOs/
+│   ├── Filters/
+│   ├── Middleware/
+│   ├── Security/
+│   └── Services/
+├── AgroLink.Application/       # Use cases — CQRS commands/queries via MediatR
+│   ├── Common/                 # Exceptions, shared services, utilities
+│   ├── Features/               # One folder per domain area
+│   │   ├── Animals/            # Commands + Queries (Create, Update, Move, Retire, Photos…)
+│   │   ├── Auth/               # UpdateProfile, GetUserProfile
+│   │   ├── Checklists/
+│   │   ├── ClinicalCases/
+│   │   ├── ExternalWorkers/    # Worker operation models
+│   │   ├── Farms/
+│   │   ├── Lots/
+│   │   ├── Movements/
+│   │   ├── Owners/
+│   │   ├── Paddocks/
+│   │   └── VoiceCommands/      # ProcessVoiceCommandInline (synchronous)
+│   ├── Interfaces/
+│   └── Mappings/
+├── AgroLink.Domain/            # Core entities, interfaces, enums (no external dependencies)
+│   ├── Constants/
+│   ├── Entities/
+│   ├── Enums/
+│   ├── Interfaces/
+│   └── Models/
+└── AgroLink.Infrastructure/    # EF Core, GCS, OpenAI/Telegram services, repositories
+    ├── Data/
+    │   ├── Configurations/     # EF entity configurations
+    │   └── Interceptors/
+    ├── Migrations/
+    ├── Repositories/
+    └── Services/               # GcsStorageService, DirectExternalApiWorkerClient, …
 
-AgroLink.Application/      # Application Layer (CQRS and Application-specific Logic)
-├── DTOs/                  # Application-specific Data Transfer Objects (for commands, queries, responses)
-├── Features/              # Commands, Queries, and their Handlers (organized by feature)
-│   ├── Auth/              #   ├── Commands/Login, Register, etc.
-│   └── Animals/           #   └── Queries/GetById, GetAll, etc.
-├── Interfaces/            # Defines interfaces for specific repositories and external services (implemented in Infrastructure)
-└── Services/              # Application services (e.g., TokenExtractionService - not part of CQRS handlers)
+tests/
+├── AgroLink.Api.Tests/
+├── AgroLink.Application.Tests/
+├── AgroLink.Domain.Tests/
+├── AgroLink.Infrastructure.Tests/
+├── AgroLink.IntegrationTests/  # Real Postgres via Testcontainers
+└── AgroLink.Workers.Tests/     # Tests for DirectExternalApiWorkerClient dispatch logic
 
-AgroLink.Domain/           # Domain Layer (Core Business Logic)
-├── Entities/              # Domain entities
-├── Interfaces/            # Defines generic repository interfaces and core domain service interfaces
-└── Exceptions/            # Custom domain exceptions (if any)
-
-AgroLink.Infrastructure/   # Infrastructure Layer (Implementations of Interfaces, Data Access, External Services)
-├── Data/                  # Entity Framework DbContext and migrations
-├── Repositories/          # Implementations of repository interfaces defined in Domain and Application
-├── Services/              # Implementations of external service interfaces defined in Application (e.g., JWT token, AWS S3)
-└── Migrations/            # Database migrations
-
-AgroLink.Tests/            # Unit Tests
-└── [Test files]           # NUnit test classes for Application and Domain logic
-
-AgroLink.IntegrationTests/ # Integration Tests
-└── [Test files]           # Integration test classes for API and Infrastructure components
+iac/                            # Terraform — Cloud Run, Cloud SQL, GCS, IAM, Scheduler
 ```
 
-### Technology Stack
-- **Backend**: ASP.NET Core 8
-- **Database**: PostgreSQL with Entity Framework Core
-- **Authentication**: JWT Bearer tokens
-- **Photo Storage**: AWS S3
-- **Password Hashing**: BCrypt
-- **API Documentation**: Swagger/OpenAPI
-- **Code Formatting**: CSharpier (local .NET tool)
+## Authentication
 
-## 📊 Database Schema
+AgroLink uses **Firebase Authentication**. Clients sign in with Firebase (email/password, Google, etc.) and send the resulting ID token as a Bearer token:
 
-### Core Entities
+```
+Authorization: Bearer <firebase-id-token>
+```
 
-#### Farm
-- `Id` (Primary Key)
-- `Name` (Required, Max 200 chars)
-- `Location` (Optional, Max 500 chars)
-- `CreatedAt`, `UpdatedAt`
+`FirebaseUserMiddleware` validates the token against Google's public JWKS and auto-provisions an internal `User` record on first login. No separate registration endpoint exists — account creation is handled by Firebase.
 
-#### Paddock
-- `Id` (Primary Key)
-- `Name` (Required, Max 200 chars)
-- `FarmId` (Foreign Key to Farm)
-- `CreatedAt`, `UpdatedAt`
-
-#### Lot
-- `Id` (Primary Key)
-- `Name` (Required, Max 200 chars)
-- `PaddockId` (Foreign Key to Paddock)
-- `Status` (ACTIVE, INACTIVE, MAINTENANCE)
-- `CreatedAt`, `UpdatedAt`
-
-#### Animal
-- `Id` (Primary Key)
-- `Tag` (Required, Unique, Max 50 chars)
-- `Name` (Optional, Max 200 chars)
-- `Color`, `Breed` (Optional, Max 100 chars each)
-- `Sex` (MALE, FEMALE)
-- `Status` (ACTIVE, SOLD, DEAD, MISSING)
-- `BirthDate` (Optional)
-- `LotId` (Foreign Key to Lot)
-- `MotherId`, `FatherId` (Optional, Self-referencing)
-- `CreatedAt`, `UpdatedAt`
-
-#### Owner & AnimalOwner
-- `Owner`: Basic owner information
-- `AnimalOwner`: Junction table for shared ownership with percentage
-
-#### Movement
-- `Id` (Primary Key)
-- `EntityType` (LOT, ANIMAL)
-- `EntityId` (ID of the moved entity)
-- `FromId`, `ToId` (Previous and new locations)
-- `At` (Movement timestamp)
-- `Reason` (Optional movement reason)
-- `UserId` (Who performed the movement)
-
-#### Checklist & ChecklistItem
-- `Checklist`: Daily health/presence checks
-- `ChecklistItem`: Individual animal status in checklist
-- `Present` (Boolean), `Condition` (OK, OBS, URG)
-
-#### Photo
-- `Id` (Primary Key)
-- `EntityType` (ANIMAL, CHECKLIST)
-- `EntityId` (ID of associated entity)
-- `UriLocal` (Local file path)
-- `UriRemote` (AWS S3 URL)
-- `Uploaded` (Sync status)
-
-## 🚀 Getting Started
+## Getting Started (Local Development)
 
 ### Prerequisites
-- .NET 8 SDK (see `global.json` for version requirements)
-- PostgreSQL 12+ (or use Docker)
-- AWS Account (for S3 photo storage)
-- Git
 
-### Installation
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Docker](https://www.docker.com/) (for docker-compose)
+- A Firebase project with Authentication enabled
+- A Google service account JSON (for GCS and Firebase Admin SDK)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd agrolink-api
-   ```
-
-2. **Restore .NET tools**
-   ```bash
-   dotnet tool restore
-   ```
-
-3. **Configure Database**
-   ```bash
-   # Update connection string in appsettings.json
-   "ConnectionStrings": {
-     "DefaultConnection": "Host=localhost;Database=agrolink;Username=postgres;Password=yourpassword"
-   }
-   ```
-
-4. **Configure AWS S3**
-   ```bash
-   # Set AWS credentials (via AWS CLI, environment variables, or IAM roles)
-   aws configure
-
-   # Update S3 bucket name in appsettings.json
-   "AWS": {
-     "S3BucketName": "your-agrolink-photos-bucket"
-   }
-   ```
-
-5. **Install Dependencies**
-   ```bash
-   dotnet restore
-   ```
-
-6. **Run Database Migrations**
-   ```bash
-   dotnet ef database update --project AgroLink.Infrastructure --startup-project AgroLink.API
-   ```
-
-7. **Run the Application**
-   ```bash
-   dotnet run --project AgroLink.API
-   ```
-
-8. **Access Swagger Documentation**
-   Navigate to `https://localhost:5001/swagger` or `http://localhost:5000/swagger` (check `launchSettings.json` for configured ports)
-
-### Database Setup
-
-The application uses Entity Framework Core migrations for database schema management.
+### 1. Clone and restore tools
 
 ```bash
-# Apply existing migrations
-dotnet ef database update --project AgroLink.Infrastructure --startup-project AgroLink.API
-
-# Create new migration (if you modify entities)
-dotnet ef migrations add YourMigrationName --project AgroLink.Infrastructure --startup-project AgroLink.API
-
-# Generate SQL script (optional, for review or manual execution)
-dotnet ef migrations script --project AgroLink.Infrastructure --startup-project AgroLink.API --output migration.sql
+git clone <repository-url>
+cd agrolink-api
+dotnet tool restore
 ```
 
-## 📱 API Endpoints
+### 2. Start local infrastructure
 
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/profile` - Get current user profile
-- `POST /api/auth/validate` - Validate JWT token
+```bash
+cd iac
+docker-compose up -d
+```
 
-### Farms
-- `GET /api/farms` - Get all farms
-- `GET /api/farms/{id}` - Get farm by ID
-- `POST /api/farms` - Create new farm
-- `PUT /api/farms/{id}` - Update farm
-- `DELETE /api/farms/{id}` - Delete farm
+This starts PostgreSQL (port 5432), pgAdmin (port 5050), and `fake-gcs-server` (port 4443).
 
-### Paddocks
-- `GET /api/paddocks` - Get all paddocks
-- `GET /api/paddocks/farm/{farmId}` - Get paddocks by farm
-- `GET /api/paddocks/{id}` - Get paddock by ID
-- `POST /api/paddocks` - Create new paddock
-- `PUT /api/paddocks/{id}` - Update paddock
-- `DELETE /api/paddocks/{id}` - Delete paddock
+### 3. Configure environment
 
-### Lots
-- `GET /api/lots` - Get all lots
-- `GET /api/lots/paddock/{paddockId}` - Get lots by paddock
-- `GET /api/lots/{id}` - Get lot by ID
-- `POST /api/lots` - Create new lot
-- `PUT /api/lots/{id}` - Update lot
-- `DELETE /api/lots/{id}` - Delete lot
-- `POST /api/lots/{id}/move` - Move lot to different paddock
+Copy `src/AgroLink.Api/appsettings.Development.json` or use user secrets:
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Database=agrolinkdb;Username=agrolinkadmin;Password=agrolinkpassword" --project src/AgroLink.Api
+dotnet user-secrets set "Firebase:ProjectId" "your-firebase-project-id" --project src/AgroLink.Api
+dotnet user-secrets set "GCS:BucketName" "agrolink-files" --project src/AgroLink.Api
+dotnet user-secrets set "OpenAI:ApiKey" "sk-..." --project src/AgroLink.Api
+dotnet user-secrets set "Telegram:BotToken" "..." --project src/AgroLink.Api
+dotnet user-secrets set "Telegram:WebhookSecretToken" "..." --project src/AgroLink.Api
+
+# Point GCS client at the local emulator
+export STORAGE_EMULATOR_HOST=http://localhost:4443
+```
+
+For Firebase Admin SDK (optional — only needed for token revocation checks):
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+### 4. Apply migrations
+
+```bash
+make migrate
+# or:
+ASPNETCORE_ENVIRONMENT=Development dotnet ef database update \
+  --project src/AgroLink.Infrastructure \
+  --startup-project src/AgroLink.Api
+```
+
+### 5. Run the API
+
+```bash
+dotnet run --project src/AgroLink.Api
+# Swagger: http://localhost:5001/swagger
+```
+
+## Key Makefile Commands
+
+| Command | Description |
+|---|---|
+| `make build` | Build the solution |
+| `make test` | Run all tests |
+| `make migrate` | Apply EF Core migrations locally |
+| `make format` | Format with CSharpier |
+| `make check` | Check CSharpier formatting |
+| `make inspect` | ReSharper static analysis |
+| `make cleanup` | ReSharper automated cleanup |
+
+## API Endpoints
+
+### Auth
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/auth/profile` | Get current user profile |
+| PUT | `/api/auth/profile` | Update profile |
+
+### Farms & Structure
+| Method | Path |
+|---|---|
+| GET/POST | `/api/farms` |
+| GET/PUT/DELETE | `/api/farms/{id}` |
+| GET/POST | `/api/farms/{farmId}/paddocks` |
+| GET/POST | `/api/farms/{farmId}/lots` |
+| GET/POST | `/api/farms/{farmId}/animals` |
 
 ### Animals
-- `GET /api/animals` - Get all animals
-- `GET /api/animals/lot/{lotId}` - Get animals by lot
-- `GET /api/animals/{id}` - Get animal by ID
-- `GET /api/animals/{id}/genealogy` - Get animal genealogy tree
-- `POST /api/animals` - Create new animal
-- `PUT /api/animals/{id}` - Update animal
-- `DELETE /api/animals/{id}` - Delete animal
-- `POST /api/animals/{id}/move` - Move animal to different lot
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/animals/{id}` | Get animal detail |
+| PUT | `/api/animals/{id}` | Update animal |
+| POST | `/api/animals/{id}/move` | Move to different lot |
+| POST | `/api/animals/{id}/retire` | Mark as retired |
+| GET/POST | `/api/animals/{id}/photos` | Manage photos |
 
-### Checklists
-- `GET /api/checklists` - Get all checklists
-- `GET /api/checklists/scope/{scopeType}/{scopeId}` - Get checklists by scope
-- `GET /api/checklists/{id}` - Get checklist by ID
-- `POST /api/checklists` - Create new checklist
-- `PUT /api/checklists/{id}` - Update checklist
-- `DELETE /api/checklists/{id}` - Delete checklist
+### Voice Commands
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/farms/{farmId}/voice/commands` | Upload audio, returns result synchronously |
 
-### Movements
-- `GET /api/movements/entity/{entityType}/{entityId}` - Get movements by entity
-- `GET /api/movements/animal/{animalId}/history` - Get animal movement history
-- `POST /api/movements` - Create new movement record
+Audio is transcribed via Whisper, intent extracted via GPT-4o, and farm entities resolved — all within the request. Response includes `intent`, `confidence`, `rawTranscription`, and `entities`.
 
-### Photos
-- `GET /api/photos/entity/{entityType}/{entityId}` - Get photos by entity
-- `POST /api/photos/upload` - Upload new photo
-- `DELETE /api/photos/{id}` - Delete photo
-- `POST /api/photos/sync` - Sync pending photos to S3
+### Clinical Cases
+| Method | Path |
+|---|---|
+| GET/POST | `/api/farms/{farmId}/clinical-cases` |
+| GET/PUT | `/api/farms/{farmId}/clinical-cases/{id}` |
+| POST | `/api/farms/{farmId}/clinical-cases/{id}/events` |
 
-## 🔐 Authentication
+### Telegram Webhook
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/integrations/telegram/webhook` | Receives Telegram updates |
 
-The API uses JWT Bearer token authentication. Include the token in the Authorization header:
+Validated against `X-Telegram-Bot-Api-Secret-Token` header.
 
-```
-Authorization: Bearer <your-jwt-token>
-```
-
-### User Roles
-- `ADMIN`: Full system access
-- `USER`: Standard user access
-- `WORKER`: Limited access for field workers
-
-## 📸 Photo Management
-
-Photos are stored locally first and then synced to AWS S3 when connectivity is available:
-
-1. **Upload**: Photos are stored locally with `Uploaded = false`
-2. **Sync**: Background process uploads to S3 and updates `Uploaded = true`
-3. **Offline**: Photos remain local until connectivity is restored
-
-## 🔄 Offline Support
-
-The system is designed for offline-first operation:
-
-- All data operations work without internet connectivity
-- Photos are stored locally and synced when online
-- Movement and checklist data is queued for sync
-- JWT tokens are cached for offline authentication
-
-## 🚀 Deployment
-
-### Docker
-
-Build and run with Docker:
-
-```bash
-# Build the image
-docker build -t agrolink-api .
-
-# Run the container
-docker run -p 8080:80 agrolink-api
-```
-
-Example Dockerfile:
-```dockerfile
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-COPY ["AgroLink.API/AgroLink.API.csproj", "AgroLink.API/"]
-COPY ["AgroLink.Core/AgroLink.Core.csproj", "AgroLink.Core/"]
-COPY ["AgroLink.Infrastructure/AgroLink.Infrastructure.csproj", "AgroLink.Infrastructure/"]
-RUN dotnet restore "AgroLink.API/AgroLink.API.csproj"
-COPY . .
-WORKDIR "/src/AgroLink.API"
-RUN dotnet build "AgroLink.API.csproj" -c Release -o /app/build
-
-FROM build AS publish
-RUN dotnet publish "AgroLink.API.csproj" -c Release -o /app/publish
-
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "AgroLink.API.dll"]
-```
-
-### AWS Lambda (Future)
-The API can be adapted for AWS Lambda serverless deployment:
-1. Package the application
-2. Deploy to AWS Lambda
-3. Configure API Gateway
-4. Set up RDS PostgreSQL instance
-5. Configure S3 bucket for photos
-
-## 🔧 Development
-
-### Code Formatting
-
-This project uses **CSharpier** for consistent code formatting. CSharpier is installed as a local .NET tool and integrated into the GitHub Actions CI pipeline.
-
-#### Format all files
-```bash
-dotnet tool run csharpier format .
-```
-
-#### Check formatting
-```bash
-dotnet tool run csharpier check .
-```
-
-#### IDE Integration
-- **Visual Studio**: Install the CSharpier extension
-- **VS Code**: Install the CSharpier extension
-- **JetBrains Rider**: Install the CSharpier plugin
-
-### Code Quality & Static Analysis
-
-This project uses **JetBrains ReSharper Global Tools** for advanced static analysis and automated code cleanup.
-
-#### Run Inspections (Static Analysis)
-This will generate a report of code smells, potential bugs, and architectural issues.
-```bash
-dotnet jb inspectcode agrolink-api.sln --output=resharper-report.xml --severity=SUGGESTION
-```
-
-#### Run Code Cleanup (Auto-format & Refactor)
-This will apply automated fixes and refactorings based on the project's style rules.
-```bash
-dotnet jb cleanupcode agrolink-api.sln
-```
-
-#### Using the Makefile
-If you have `make` installed, you can use these shortcuts:
-- `make inspect`: Run ReSharper inspections.
-- `make cleanup`: Run ReSharper code cleanup.
-- `make format`: Run CSharpier formatter.
-- `make check`: Check formatting without applying changes.
-
-### CI/CD Pipeline
-
-The GitHub Actions workflow (`.github/workflows/ci.yml`) includes:
-- **Format Check**: Validates code formatting with CSharpier
-- **Build**: Compiles the solution in Release mode
-- **Test**: Runs unit tests with coverage reporting
-- **Secret Detection**: Scans for exposed secrets using TruffleHog
-- **Dependency Scanning**: Checks for vulnerable NuGet packages
-
-The pipeline runs automatically on:
-- Pushes to `main` and `develop` branches
-- Pull requests targeting `main` and `develop` branches
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Run all unit tests
-dotnet test
-
-# Run tests with coverage
-dotnet test --collect:"XPlat Code Coverage"
-
-# Run tests in Release mode
-dotnet test --configuration Release
-```
-
-### API Testing with Swagger
-
-1. Start the application: `dotnet run --project AgroLink.API`
-2. Navigate to `/swagger`
-3. Use the "Authorize" button to set JWT token
-4. Test endpoints with sample data
-
-### Sample Data
-
-Create a test farm with the following structure:
-```
-Farm: "Finca San José"
-├── Paddock: "Potrero Norte"
-│   ├── Lot: "Lote A" (10 animals)
-│   └── Lot: "Lote B" (8 animals)
-└── Paddock: "Potrero Sur"
-    ├── Lot: "Lote C" (12 animals)
-    └── Lot: "Lote D" (6 animals)
-```
-
-## 📋 Key Features
-
-### ✅ Implemented
-- Complete domain model with all entities
-- RESTful API with full CRUD operations
-- JWT authentication and authorization
-- Photo upload with AWS S3 integration
-- Movement tracking for animals and lots
-- Daily checklist system
-- Genealogy tracking
-- Multi-ownership support
-- Offline-first architecture
-
-### 🔄 Future Enhancements
-- Mobile app integration
-- Real-time notifications
-- Advanced reporting and analytics
-- Integration with external systems
-- Bulk operations
-- Data export/import
-- Advanced search and filtering
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Format code with CSharpier (`dotnet tool run csharpier format .`)
-5. Run tests (`dotnet test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Code Standards
-- Follow Clean Architecture principles
-- Write unit tests for new features
-- Ensure all tests pass before submitting PR
-- Code must pass formatting checks (CSharpier)
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Internal (Cloud Scheduler)
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/internal/cleanup` | Delete stale records (requires `X-Scheduler-Secret` header) |
 
 ## Database Migrations
 
-To apply the database migrations locally, ensure your infrastructure is running and execute:
-
 ```bash
-ASPNETCORE_ENVIRONMENT=Development dotnet ef database update --project src/AgroLink.Infrastructure --startup-project src/AgroLink.Api
+# Create a new migration
+dotnet ef migrations add MigrationName \
+  --project src/AgroLink.Infrastructure \
+  --startup-project src/AgroLink.Api
+
+# Apply locally
+dotnet ef database update \
+  --project src/AgroLink.Infrastructure \
+  --startup-project src/AgroLink.Api
+
+# Generate SQL script
+dotnet ef migrations script \
+  --project src/AgroLink.Infrastructure \
+  --startup-project src/AgroLink.Api \
+  --output migration.sql
 ```
 
-## Documentation
+In CI/CD, migrations run as a Cloud Run Job before each deployment.
 
-- [Clean Architecture Guidelines](docs/clean-architecture.md) - Architecture documentation
-- [Testing Guidelines](docs/testing.md) - Testing best practices
-- [API Documentation](https://localhost:5001/swagger) - Interactive API documentation (when running)
+## Testing
 
-## 🆘 Support
+```bash
+dotnet test                              # all tests
+dotnet test --configuration Release      # release mode
+dotnet test --collect:"XPlat Code Coverage"
+```
 
-For support and questions:
-- Create an issue in the repository
-- Check existing documentation
-- Review the Swagger API documentation
+Integration tests use **Testcontainers** to spin up a real PostgreSQL instance and override Firebase auth with a local HMAC key. No external services are required.
 
----
+## Deployment
 
-**AgroLink API** - Empowering Nicaraguan farmers with modern cattle management technology. 🌾🐄
+Deployments are automated via GitHub Actions (`.github/workflows/deploy.yml`) on push to `main`:
+
+1. Run all tests
+2. Build Docker image and push to Artifact Registry
+3. Build EF Core migration bundle and execute as a Cloud Run Job
+4. Deploy new revision to Cloud Run with zero-downtime traffic shifting
+
+Infrastructure is managed with Terraform (`iac/`). Required GitHub secrets:
+
+| Secret | Description |
+|---|---|
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Federation provider |
+| `GCP_SERVICE_ACCOUNT` | CI/CD service account email |
+| `GCP_PROJECT_ID` | GCP project ID |
+| `CLOUD_SQL_CONNECTION_NAME` | Cloud SQL instance connection name |
+| `DB_CONNECTION_STRING` | PostgreSQL connection string for migrations |
+
+## Local Docker Build
+
+```bash
+docker build -t agrolink-api .
+docker run -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="..." \
+  -e Firebase__ProjectId="your-project" \
+  agrolink-api
+```
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make changes following Clean Architecture conventions
+3. Run `make format` and `make check`
+4. Ensure `dotnet test` passes
+5. Open a pull request — the CI pipeline runs automatically

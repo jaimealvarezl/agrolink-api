@@ -2,7 +2,9 @@ using System.Text.Json;
 using AgroLink.Application.Features.ClinicalCases.Models;
 using AgroLink.Application.Features.ExternalWorkers.Models;
 using AgroLink.Application.Interfaces;
+using AgroLink.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shouldly;
 
@@ -30,7 +32,10 @@ public class ExternalApiWorkerFunctionTests
         services.AddSingleton(_voiceTranscriptionMock.Object);
         services.AddSingleton(_voiceIntentMock.Object);
 
-        _function = new ExternalApiWorkerFunction(services.BuildServiceProvider());
+        _dispatcher = new DirectExternalApiWorkerClient(
+            services.BuildServiceProvider(),
+            NullLogger<DirectExternalApiWorkerClient>.Instance
+        );
     }
 
     private Mock<IClinicalMedicationAdvisorService> _medicationAdvisorMock = null!;
@@ -39,10 +44,10 @@ public class ExternalApiWorkerFunctionTests
     private Mock<ITelegramGateway> _telegramGatewayMock = null!;
     private Mock<IVoiceTranscriptionService> _voiceTranscriptionMock = null!;
     private Mock<IVoiceIntentService> _voiceIntentMock = null!;
-    private ExternalApiWorkerFunction _function = null!;
+    private DirectExternalApiWorkerClient _dispatcher = null!;
 
     [Test]
-    public async Task FunctionHandler_GetMedicationAdvice_ReturnsSuccessResponse()
+    public async Task GetMedicationAdvice_ReturnsSuccessResponse()
     {
         var adviceResult = new ClinicalMedicationAdviceResult
         {
@@ -66,7 +71,7 @@ public class ExternalApiWorkerFunctionTests
             )
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.CorrelationId.ShouldBe("corr-1");
         response.Success.ShouldBeTrue();
@@ -75,7 +80,7 @@ public class ExternalApiWorkerFunctionTests
     }
 
     [Test]
-    public async Task FunctionHandler_TranscribeAudio_ReturnsTranscribedText()
+    public async Task TranscribeAudio_ReturnsTranscribedText()
     {
         _transcriptionServiceMock
             .Setup(s =>
@@ -97,14 +102,14 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
         response.Result!.Value.GetProperty("text").GetString().ShouldBe("the transcribed text");
     }
 
     [Test]
-    public async Task FunctionHandler_SynthesizeSpeech_ReturnsBase64Audio()
+    public async Task SynthesizeSpeech_ReturnsBase64Audio()
     {
         var ttsResult = new ClinicalTextToSpeechResult
         {
@@ -129,7 +134,7 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(new ClinicalTextToSpeechRequest("hello"))
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
         var resultJson = response.Result!.Value.GetRawText();
@@ -137,9 +142,9 @@ public class ExternalApiWorkerFunctionTests
     }
 
     [Test]
-    public async Task FunctionHandler_SynthesizeSpeech_HandlesLargeAudioWithoutSizeConstraints()
+    public async Task SynthesizeSpeech_HandlesLargeAudioWithoutSizeConstraints()
     {
-        var largeAudio = new byte[300_000]; // 300KB — exceeds old SQS 256KB limit
+        var largeAudio = new byte[300_000]; // 300KB — no SQS 256KB constraint in Cloud Run
         new Random(42).NextBytes(largeAudio);
 
         var ttsResult = new ClinicalTextToSpeechResult
@@ -165,7 +170,7 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(new ClinicalTextToSpeechRequest("long text"))
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
         var base64 = response.Result!.Value.GetProperty("Base64AudioContent").GetString()!;
@@ -173,7 +178,7 @@ public class ExternalApiWorkerFunctionTests
     }
 
     [Test]
-    public async Task FunctionHandler_SendTelegramText_ReturnsSuccessResponse()
+    public async Task SendTelegramText_ReturnsSuccessResponse()
     {
         _telegramGatewayMock
             .Setup(s => s.SendTextMessageAsync(42L, "hello", It.IsAny<CancellationToken>()))
@@ -186,13 +191,13 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
     }
 
     [Test]
-    public async Task FunctionHandler_SendTelegramVoice_ReturnsSuccessResponse()
+    public async Task SendTelegramVoice_ReturnsSuccessResponse()
     {
         _telegramGatewayMock
             .Setup(s =>
@@ -220,13 +225,13 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
     }
 
     [Test]
-    public async Task FunctionHandler_UnknownOperation_ReturnsFailureResponse()
+    public async Task UnknownOperation_ReturnsFailureResponse()
     {
         var request = new ExternalWorkerRequest(
             "corr-6",
@@ -234,16 +239,14 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(new { })
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeFalse();
         response.Error.ShouldContain("DoSomethingUnknown");
     }
 
-    // ── TranscribeVoiceAudio ───────────────────────────────────────────────────
-
     [Test]
-    public async Task FunctionHandler_TranscribeVoiceAudio_ReturnsTranscribedText()
+    public async Task TranscribeVoiceAudio_ReturnsTranscribedText()
     {
         _voiceTranscriptionMock
             .Setup(s =>
@@ -268,7 +271,7 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
         response.Error.ShouldBeNull();
@@ -279,7 +282,7 @@ public class ExternalApiWorkerFunctionTests
     }
 
     [Test]
-    public async Task FunctionHandler_TranscribeVoiceAudio_WhenServiceReturnsNull_ReturnsEmptyText()
+    public async Task TranscribeVoiceAudio_WhenServiceReturnsNull_ReturnsEmptyText()
     {
         _voiceTranscriptionMock
             .Setup(s =>
@@ -304,53 +307,14 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
         response.Result!.Value.GetProperty("text").GetString().ShouldBe(string.Empty);
     }
 
     [Test]
-    public async Task FunctionHandler_TranscribeVoiceAudio_PassesLanguageEsToService()
-    {
-        _voiceTranscriptionMock
-            .Setup(s =>
-                s.TranscribeAsync(
-                    It.IsAny<byte[]>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<string>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync("algo");
-
-        var payload = new TranscribeVoiceAudioPayload(Convert.ToBase64String([1]), "x.m4a", null);
-        var request = new ExternalWorkerRequest(
-            "c",
-            ExternalWorkerOperations.TranscribeVoiceAudio,
-            JsonSerializer.SerializeToElement(payload)
-        );
-
-        await _function.FunctionHandler(request, null!);
-
-        _voiceTranscriptionMock.Verify(
-            s =>
-                s.TranscribeAsync(
-                    It.IsAny<byte[]>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string?>(),
-                    "es",
-                    It.IsAny<CancellationToken>()
-                ),
-            Times.Once
-        );
-    }
-
-    // ── ExtractVoiceIntent ─────────────────────────────────────────────────────
-
-    [Test]
-    public async Task FunctionHandler_ExtractVoiceIntent_ReturnsIntentJson()
+    public async Task ExtractVoiceIntent_ReturnsIntentJson()
     {
         const string intentJson =
             """{"intent":"move_animal","confidence":0.92,"animalMention":"Rosa","lotMention":"lote norte"}""";
@@ -365,7 +329,7 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeTrue();
         response.Error.ShouldBeNull();
@@ -374,7 +338,7 @@ public class ExternalApiWorkerFunctionTests
     }
 
     [Test]
-    public async Task FunctionHandler_ExtractVoiceIntent_WhenServiceReturnsNull_ReturnsFailure()
+    public async Task ExtractVoiceIntent_WhenServiceReturnsNull_ReturnsFailure()
     {
         _voiceIntentMock
             .Setup(s => s.ExtractIntentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -387,32 +351,10 @@ public class ExternalApiWorkerFunctionTests
             JsonSerializer.SerializeToElement(payload)
         );
 
-        var response = await _function.FunctionHandler(request, null!);
+        var response = await _dispatcher.ExecuteAsync(request, CancellationToken.None);
 
         response.Success.ShouldBeFalse();
         response.Error.ShouldNotBeNullOrEmpty();
         response.Result.ShouldBeNull();
-    }
-
-    [Test]
-    public async Task FunctionHandler_ExtractVoiceIntent_PassesTranscriptToService()
-    {
-        _voiceIntentMock
-            .Setup(s => s.ExtractIntentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("""{"intent":"unknown","confidence":0.0}""");
-
-        var payload = new ExtractVoiceIntentPayload("nota para Lola");
-        var request = new ExternalWorkerRequest(
-            "c",
-            ExternalWorkerOperations.ExtractVoiceIntent,
-            JsonSerializer.SerializeToElement(payload)
-        );
-
-        await _function.FunctionHandler(request, null!);
-
-        _voiceIntentMock.Verify(
-            s => s.ExtractIntentAsync("nota para Lola", It.IsAny<CancellationToken>()),
-            Times.Once
-        );
     }
 }

@@ -12,6 +12,13 @@ public class AuthRepository(AgroLinkDbContext context) : IAuthRepository
         return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    public async Task<User?> GetUserByFirebaseUidAsync(string firebaseUid)
+    {
+        return await context
+            .Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
+    }
+
     public async Task UpdateUserAsync(User user)
     {
         context.Users.Update(user);

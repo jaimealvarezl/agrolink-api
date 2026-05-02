@@ -2,120 +2,101 @@ using System.Text.Json;
 using AgroLink.Application.Features.ClinicalCases.Models;
 using AgroLink.Application.Features.ExternalWorkers.Models;
 using AgroLink.Application.Interfaces;
-using AgroLink.Infrastructure.Services;
-using Amazon.Lambda.Core;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace AgroLink.Workers;
+namespace AgroLink.Infrastructure.Services;
 
-public class ExternalApiWorkerFunction
+/// <summary>
+///     Dispatches external worker operations directly to the registered services in-process.
+///     Replaces the Lambda proxy pattern: Cloud Run has unrestricted internet access so no proxy is needed.
+/// </summary>
+public class DirectExternalApiWorkerClient(
+    IServiceProvider serviceProvider,
+    ILogger<DirectExternalApiWorkerClient> logger
+) : IExternalApiWorkerClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
     };
 
-    private readonly ILogger<ExternalApiWorkerFunction> _logger;
-    private readonly IServiceProvider _serviceProvider;
-
-    public ExternalApiWorkerFunction()
-    {
-        var builder = WebApplication.CreateBuilder();
-
-        builder.Services.AddHttpClient<ITelegramGateway, TelegramGateway>().RemoveAllLoggers();
-        builder.Services.AddHttpClient<
-            IClinicalMedicationAdvisorService,
-            OpenAiClinicalMedicationAdvisorService
-        >();
-        builder.Services.AddHttpClient<
-            IClinicalAudioTranscriptionService,
-            OpenAiClinicalAudioTranscriptionService
-        >();
-        builder.Services.AddHttpClient<
-            IClinicalTextToSpeechService,
-            OpenAiClinicalTextToSpeechService
-        >();
-        builder.Services.AddHttpClient<
-            IVoiceTranscriptionService,
-            OpenAiVoiceTranscriptionService
-        >();
-        builder.Services.AddHttpClient<IVoiceIntentService, OpenAiVoiceIntentService>();
-
-        var app = builder.Build();
-        _serviceProvider = app.Services;
-        _logger = _serviceProvider.GetRequiredService<ILogger<ExternalApiWorkerFunction>>();
-    }
-
-    internal ExternalApiWorkerFunction(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-        _logger = serviceProvider.GetRequiredService<ILogger<ExternalApiWorkerFunction>>();
-    }
-
-    public async Task<ExternalWorkerResponse> FunctionHandler(
+    public async Task<ExternalWorkerResponse> ExecuteAsync(
         ExternalWorkerRequest request,
-        ILambdaContext context
+        CancellationToken ct
     )
     {
-        _logger.LogInformation(
-            "Processing external worker request. CorrelationId: {CorrelationId}, Operation: {Operation}",
-            request.CorrelationId,
-            request.Operation
+        logger.LogDebug(
+            "Executing worker operation {Operation} with correlation {CorrelationId}",
+            request.Operation,
+            request.CorrelationId
         );
 
         try
         {
-            return await ExecuteOperationAsync(request);
+            return await DispatchAsync(request, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            logger.LogError(
                 ex,
-                "External worker failed. CorrelationId: {CorrelationId}, Operation: {Operation}",
-                request.CorrelationId,
-                request.Operation
+                "Worker operation {Operation} failed. CorrelationId: {CorrelationId}",
+                request.Operation,
+                request.CorrelationId
             );
             throw;
         }
     }
 
-    private async Task<ExternalWorkerResponse> ExecuteOperationAsync(ExternalWorkerRequest request)
+    private async Task<ExternalWorkerResponse> DispatchAsync(
+        ExternalWorkerRequest request,
+        CancellationToken ct
+    )
     {
-        using var scope = _serviceProvider.CreateScope();
+        using var scope = serviceProvider.CreateScope();
         var services = scope.ServiceProvider;
 
         return request.Operation switch
         {
             ExternalWorkerOperations.GetMedicationAdvice => await HandleGetMedicationAdviceAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.TranscribeAudio => await HandleTranscribeAudioAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.SynthesizeSpeech => await HandleSynthesizeSpeechAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.SendTelegramText => await HandleSendTelegramTextAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.SendTelegramVoice => await HandleSendTelegramVoiceAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.DownloadTelegramFile => await HandleDownloadTelegramFileAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.TranscribeVoiceAudio => await HandleTranscribeVoiceAudioAsync(
                 request,
-                services
+                services,
+                ct
             ),
             ExternalWorkerOperations.ExtractVoiceIntent => await HandleExtractVoiceIntentAsync(
                 request,
-                services
+                services,
+                ct
             ),
             _ => new ExternalWorkerResponse(
                 request.CorrelationId,
@@ -127,7 +108,7 @@ public class ExternalApiWorkerFunction
         };
     }
 
-    private static T DeserializePayload<T>(JsonElement payload)
+    private static T Deserialize<T>(JsonElement payload)
     {
         return payload.Deserialize<T>(JsonOptions)
             ?? throw new InvalidOperationException("Invalid operation payload.");
@@ -138,14 +119,15 @@ public class ExternalApiWorkerFunction
         return JsonSerializer.SerializeToElement(value, JsonOptions);
     }
 
-    private async Task<ExternalWorkerResponse> HandleGetMedicationAdviceAsync(
+    private static async Task<ExternalWorkerResponse> HandleGetMedicationAdviceAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var medicationService = services.GetRequiredService<IClinicalMedicationAdvisorService>();
-        var payload = DeserializePayload<ClinicalMedicationAdviceRequest>(request.Payload);
-        var result = await medicationService.GetAdviceAsync(payload, CancellationToken.None);
+        var svc = services.GetRequiredService<IClinicalMedicationAdvisorService>();
+        var payload = Deserialize<ClinicalMedicationAdviceRequest>(request.Payload);
+        var result = await svc.GetAdviceAsync(payload, ct);
         return new ExternalWorkerResponse(
             request.CorrelationId,
             request.Operation,
@@ -155,18 +137,18 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleTranscribeAudioAsync(
+    private static async Task<ExternalWorkerResponse> HandleTranscribeAudioAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var transcriptionService =
-            services.GetRequiredService<IClinicalAudioTranscriptionService>();
-        var payload = DeserializePayload<TranscribeAudioPayload>(request.Payload);
+        var svc = services.GetRequiredService<IClinicalAudioTranscriptionService>();
+        var payload = Deserialize<TranscribeAudioPayload>(request.Payload);
         var audioBytes = Convert.FromBase64String(payload.Base64AudioContent);
-        var text = await transcriptionService.TranscribeAsync(
+        var text = await svc.TranscribeAsync(
             new ClinicalAudioTranscriptionRequest(audioBytes, payload.FileName, payload.MimeType),
-            CancellationToken.None
+            ct
         );
         return new ExternalWorkerResponse(
             request.CorrelationId,
@@ -177,14 +159,15 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleSynthesizeSpeechAsync(
+    private static async Task<ExternalWorkerResponse> HandleSynthesizeSpeechAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var textToSpeechService = services.GetRequiredService<IClinicalTextToSpeechService>();
-        var payload = DeserializePayload<ClinicalTextToSpeechRequest>(request.Payload);
-        var result = await textToSpeechService.SynthesizeAsync(payload, CancellationToken.None);
+        var svc = services.GetRequiredService<IClinicalTextToSpeechService>();
+        var payload = Deserialize<ClinicalTextToSpeechRequest>(request.Payload);
+        var result = await svc.SynthesizeAsync(payload, ct);
         return new ExternalWorkerResponse(
             request.CorrelationId,
             request.Operation,
@@ -203,18 +186,15 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleSendTelegramTextAsync(
+    private static async Task<ExternalWorkerResponse> HandleSendTelegramTextAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var telegramGateway = services.GetRequiredService<ITelegramGateway>();
-        var payload = DeserializePayload<SendTelegramTextPayload>(request.Payload);
-        var result = await telegramGateway.SendTextMessageAsync(
-            payload.ChatId,
-            payload.Text,
-            CancellationToken.None
-        );
+        var svc = services.GetRequiredService<ITelegramGateway>();
+        var payload = Deserialize<SendTelegramTextPayload>(request.Payload);
+        var result = await svc.SendTextMessageAsync(payload.ChatId, payload.Text, ct);
         return new ExternalWorkerResponse(
             request.CorrelationId,
             request.Operation,
@@ -224,21 +204,22 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleSendTelegramVoiceAsync(
+    private static async Task<ExternalWorkerResponse> HandleSendTelegramVoiceAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var telegramGateway = services.GetRequiredService<ITelegramGateway>();
-        var payload = DeserializePayload<SendTelegramVoicePayload>(request.Payload);
+        var svc = services.GetRequiredService<ITelegramGateway>();
+        var payload = Deserialize<SendTelegramVoicePayload>(request.Payload);
         var audioBytes = Convert.FromBase64String(payload.Base64AudioContent);
-        var result = await telegramGateway.SendVoiceMessageAsync(
+        var result = await svc.SendVoiceMessageAsync(
             payload.ChatId,
             audioBytes,
             payload.FileName,
             payload.MimeType,
             payload.Caption,
-            CancellationToken.None
+            ct
         );
         return new ExternalWorkerResponse(
             request.CorrelationId,
@@ -249,17 +230,15 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleDownloadTelegramFileAsync(
+    private static async Task<ExternalWorkerResponse> HandleDownloadTelegramFileAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var telegramGateway = services.GetRequiredService<ITelegramGateway>();
-        var payload = DeserializePayload<DownloadTelegramFilePayload>(request.Payload);
-        var result = await telegramGateway.DownloadFileAsync(
-            payload.FileId,
-            CancellationToken.None
-        );
+        var svc = services.GetRequiredService<ITelegramGateway>();
+        var payload = Deserialize<DownloadTelegramFilePayload>(request.Payload);
+        var result = await svc.DownloadFileAsync(payload.FileId, ct);
         return new ExternalWorkerResponse(
             request.CorrelationId,
             request.Operation,
@@ -278,23 +257,22 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleTranscribeVoiceAudioAsync(
+    private static async Task<ExternalWorkerResponse> HandleTranscribeVoiceAudioAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var transcriptionService = services.GetRequiredService<IVoiceTranscriptionService>();
-        var payload = DeserializePayload<TranscribeVoiceAudioPayload>(request.Payload);
+        var svc = services.GetRequiredService<IVoiceTranscriptionService>();
+        var payload = Deserialize<TranscribeVoiceAudioPayload>(request.Payload);
         var audioBytes = Convert.FromBase64String(payload.Base64AudioContent);
-
-        var text = await transcriptionService.TranscribeAsync(
+        var text = await svc.TranscribeAsync(
             audioBytes,
             payload.FileName,
             payload.MimeType,
             payload.Language,
-            CancellationToken.None
+            ct
         );
-
         return new ExternalWorkerResponse(
             request.CorrelationId,
             request.Operation,
@@ -304,18 +282,15 @@ public class ExternalApiWorkerFunction
         );
     }
 
-    private async Task<ExternalWorkerResponse> HandleExtractVoiceIntentAsync(
+    private static async Task<ExternalWorkerResponse> HandleExtractVoiceIntentAsync(
         ExternalWorkerRequest request,
-        IServiceProvider services
+        IServiceProvider services,
+        CancellationToken ct
     )
     {
-        var intentService = services.GetRequiredService<IVoiceIntentService>();
-        var payload = DeserializePayload<ExtractVoiceIntentPayload>(request.Payload);
-
-        var intentJson = await intentService.ExtractIntentAsync(
-            payload.Transcript,
-            CancellationToken.None
-        );
+        var svc = services.GetRequiredService<IVoiceIntentService>();
+        var payload = Deserialize<ExtractVoiceIntentPayload>(request.Payload);
+        var intentJson = await svc.ExtractIntentAsync(payload.Transcript, ct);
 
         if (string.IsNullOrWhiteSpace(intentJson))
         {

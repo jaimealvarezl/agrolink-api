@@ -14,9 +14,11 @@ public class User
     [MaxLength(100)]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
+    [MaxLength(128)]
+    public string? FirebaseUid { get; set; }
+
     [MaxLength(100)]
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; }
 
     [Required]
     [MaxLength(50)]

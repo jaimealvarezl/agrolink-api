@@ -1,4 +1,3 @@
-using AgroLink.Application.Common.Services;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -9,6 +8,7 @@ using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace AgroLink.Infrastructure.Tests;
 
@@ -27,10 +27,8 @@ public abstract class TestBase
     {
         var services = new ServiceCollection();
 
-        // Add DbContext
         services.AddSingleton(context);
 
-        // Add repositories
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IFarmRepository, FarmRepository>();
         services.AddScoped<IPaddockRepository, PaddockRepository>();
@@ -40,19 +38,11 @@ public abstract class TestBase
         services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();
         services.AddScoped<IChecklistRepository, ChecklistRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
-
-        // Add new CQRS-related repositories and services
-        services.AddScoped<IMovementRepository, MovementRepository>(); // Explicitly use Application interface
+        services.AddScoped<IMovementRepository, MovementRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IStorageService>(_ => new Mock<IStorageService>().Object);
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
-        services.AddScoped<IPasswordHasher, PasswordHasher>(); // Registered new IPasswordHasher
 
-        // Add ChecklistService (as it still exists)
-        services.AddScoped<ITokenExtractionService, TokenExtractionService>();
-
-        // Add MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AnimalDto).Assembly));
 
         return services.BuildServiceProvider();
@@ -69,7 +59,6 @@ public abstract class TestBase
             Location = "Test Location",
             CreatedAt = DateTime.UtcNow,
         };
-
         context.Farms.Add(farm);
         await context.SaveChangesAsync();
         return farm;
@@ -87,7 +76,6 @@ public abstract class TestBase
             FarmId = farmId,
             CreatedAt = DateTime.UtcNow,
         };
-
         context.Paddocks.Add(paddock);
         await context.SaveChangesAsync();
         return paddock;
@@ -106,7 +94,6 @@ public abstract class TestBase
             Status = "Active",
             CreatedAt = DateTime.UtcNow,
         };
-
         context.Lots.Add(lot);
         await context.SaveChangesAsync();
         return lot;
@@ -130,7 +117,6 @@ public abstract class TestBase
             LotId = lotId,
             CreatedAt = DateTime.UtcNow,
         };
-
         context.Animals.Add(animal);
         await context.SaveChangesAsync();
         return animal;
@@ -149,7 +135,6 @@ public abstract class TestBase
             UserId = userId,
             CreatedAt = DateTime.UtcNow,
         };
-
         context.Owners.Add(owner);
         await context.SaveChangesAsync();
         return owner;
@@ -164,12 +149,11 @@ public abstract class TestBase
         {
             Name = "Test User",
             Email = email,
-            PasswordHash = "hashed_password",
+            FirebaseUid = $"test-uid-{Guid.NewGuid()}",
             Role = "Admin",
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
         };
-
         context.Users.Add(user);
         await context.SaveChangesAsync();
         return user;

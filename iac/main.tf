@@ -1,104 +1,67 @@
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 6.30.0"
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 6.0.0"
     }
-    archive = {
-      source  = "hashicorp/archive"
-      version = ">= 2.7.0"
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.6.0"
     }
+  }
+
+  backend "gcs" {
+    bucket = "agrolink-terraform-state"
+    prefix = "terraform/state"
   }
 }
 
-provider "aws" {
-  region = var.region
-
-  default_tags {
-    tags = {
-      Owner = "Ops"
-    }
-  }
+provider "google" {
+  project = var.project_id
+  region  = var.region
 }
 
 locals {
-  common_tags = {
-    Service     = "AgroLink"
-    Environment = "Production"
+  common_labels = {
+    service     = "agrolink"
+    environment = "production"
+    managed-by  = "terraform"
   }
 }
 
-output "rds_endpoint" {
-  description = "The RDS Cluster Endpoint"
-  value       = aws_rds_cluster.serverless_db.endpoint
+# ── Outputs ──────────────────────────────────────────────────────────────────
+
+output "api_url" {
+  description = "Cloud Run API service URL"
+  value       = google_cloud_run_v2_service.api.uri
 }
 
-output "spa_distribution_domain_name" {
-  description = "CloudFront domain name for the SPA"
-  value       = aws_cloudfront_distribution.s3_distribution.domain_name
+output "artifact_registry_repository" {
+  description = "Artifact Registry repository for Docker images"
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
 }
 
-output "lambda_deployer_access_key_id" {
-  value = aws_iam_access_key.lambda_code_deployer_access_key.id
+output "db_instance_connection_name" {
+  description = "Cloud SQL connection name for Cloud Run"
+  value       = google_sql_database_instance.postgres.connection_name
 }
 
-output "lambda_deployer_secret_access_key" {
-  value     = aws_iam_access_key.lambda_code_deployer_access_key.secret
-  sensitive = true
+output "files_bucket_name" {
+  description = "GCS bucket for file storage"
+  value       = google_storage_bucket.files.name
 }
 
-output "spa_deployer_access_key_id" {
-  value       = aws_iam_access_key.spa_deployer_access_key.id
-  description = "Access Key ID for the SPA Deployer"
+output "spa_bucket_name" {
+  description = "GCS bucket for SPA hosting"
+  value       = google_storage_bucket.spa.name
 }
 
-output "spa_deployer_secret_access_key" {
-  value       = aws_iam_access_key.spa_deployer_access_key.secret
-  description = "Secret Access Key for the SPA Deployer"
-  sensitive   = true
+output "api_service_account_email" {
+  description = "Service account email for the API"
+  value       = google_service_account.api.email
 }
 
-output "api_gateway_url" {
-  description = "API Gateway base URL"
-  value       = aws_api_gateway_stage.prod.invoke_url
-}
-
-output "migration_endpoint_url" {
-  description = "Migration endpoint URL (add /api/migration/run to your app)"
-  value       = "${aws_api_gateway_stage.prod.invoke_url}/api/migration/run"
-}
-
-output "migration_lambda_function_name" {
-  description = "Migration Lambda function name"
-  value       = aws_lambda_function.migration.function_name
-}
-
-output "migration_lambda_function_arn" {
-  description = "Migration Lambda function ARN"
-  value       = aws_lambda_function.migration.arn
-}
-
-output "migration_lambda_vpc_config" {
-  description = "Migration Lambda VPC configuration (should show subnet_ids and security_group_ids)"
-  value       = aws_lambda_function.migration.vpc_config
-}
-
-output "telegram_sqs_consumer_function_name" {
-  description = "Telegram SQS consumer Lambda function name"
-  value       = aws_lambda_function.telegram_sqs_consumer.function_name
-}
-
-output "telegram_sqs_consumer_function_arn" {
-  description = "Telegram SQS consumer Lambda function ARN"
-  value       = aws_lambda_function.telegram_sqs_consumer.arn
-}
-
-output "external_api_worker_function_name" {
-  description = "External API worker Lambda function name"
-  value       = aws_lambda_function.external_api_worker.function_name
-}
-
-output "external_api_worker_function_arn" {
-  description = "External API worker Lambda function ARN"
-  value       = aws_lambda_function.external_api_worker.arn
+output "cicd_service_account_email" {
+  description = "Service account email for CI/CD"
+  value       = google_service_account.cicd.email
 }

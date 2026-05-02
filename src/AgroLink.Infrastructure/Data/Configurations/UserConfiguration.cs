@@ -11,9 +11,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Email).IsRequired().HasMaxLength(100);
-        builder.Property(e => e.PasswordHash).IsRequired().HasMaxLength(100);
+        builder.Property(e => e.FirebaseUid).HasMaxLength(128);
+        builder.Property(e => e.PasswordHash).HasMaxLength(100);
         builder.Property(e => e.Role).IsRequired().HasMaxLength(50);
 
         builder.HasIndex(e => e.Email).IsUnique();
+        builder.HasIndex(e => e.FirebaseUid).IsUnique();
     }
 }
