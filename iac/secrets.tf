@@ -4,7 +4,9 @@
 resource "google_secret_manager_secret" "telegram_bot_token" {
   secret_id = "agrolink-telegram-bot-token"
   labels    = local.common_labels
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "telegram_bot_token" {
@@ -15,7 +17,9 @@ resource "google_secret_manager_secret_version" "telegram_bot_token" {
 resource "google_secret_manager_secret" "telegram_webhook_secret" {
   secret_id = "agrolink-telegram-webhook-secret"
   labels    = local.common_labels
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "telegram_webhook_secret" {
@@ -26,7 +30,9 @@ resource "google_secret_manager_secret_version" "telegram_webhook_secret" {
 resource "google_secret_manager_secret" "openai_api_key" {
   secret_id = "agrolink-openai-api-key"
   labels    = local.common_labels
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "openai_api_key" {
@@ -37,7 +43,9 @@ resource "google_secret_manager_secret_version" "openai_api_key" {
 resource "google_secret_manager_secret" "scheduler_secret" {
   secret_id = "agrolink-scheduler-secret"
   labels    = local.common_labels
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "scheduler_secret" {
