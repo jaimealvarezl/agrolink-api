@@ -102,7 +102,8 @@ public class VoiceCommandsIntegrationTests : IntegrationTestBase
     [Test]
     public async Task GetStatus_WhenJobNotFound_Returns404()
     {
-        Authenticate(1, "user@test.com", "USER", "Test User");
+        var user = await CreateUserAsync("notfound@test.com");
+        Authenticate(user);
         var response = await Client.GetAsync($"/api/voice/commands/{Guid.NewGuid()}");
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }

@@ -1,7 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
-using AgroLink.Application.Interfaces;
+using System.Security.Claims;
+using System.Text;
 using AgroLink.Domain.Entities;
 using AgroLink.Infrastructure.Data;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Respawn;
 
@@ -17,14 +20,12 @@ public abstract class IntegrationTestBase
         await Factory.InitializeAsync();
         _connectionString = Factory.GetConnectionString();
 
-        // Trigger host build and migrations by accessing Services
         using (var scope = Factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AgroLinkDbContext>();
-            // This ensures migrations are run because ConfigureWebHost calls Migrate()
+            // Ensures migrations ran via ConfigureWebHost
         }
 
-        // Initialize Respawner
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
         _respawner = await Respawner.CreateAsync(
@@ -44,7 +45,6 @@ public abstract class IntegrationTestBase
         Scope = Factory.Services.CreateScope();
         DbContext = Scope.ServiceProvider.GetRequiredService<AgroLinkDbContext>();
 
-        // Reset database state before each test
         await ResetDatabaseAsync();
     }
 
@@ -76,24 +76,45 @@ public abstract class IntegrationTestBase
         await _respawner.ResetAsync(connection);
     }
 
+    /// <summary>
+    ///     Sets the Authorization header with a test token whose sub/email/name claims
+    ///     match the given User. FirebaseUserMiddleware will look up the user by FirebaseUid.
+    ///     The user must already be persisted in DbContext before calling this.
+    /// </summary>
     protected void Authenticate(User user)
     {
-        var jwtService = Scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
-        var token = jwtService.GenerateToken(user);
+        if (user.FirebaseUid == null)
+        {
+            user.FirebaseUid = $"test-uid-{user.Id}";
+            DbContext.Users.Update(user);
+            DbContext.SaveChanges();
+        }
+
+        var token = CreateTestToken(user.FirebaseUid, user.Email, user.Name);
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    protected void Authenticate(int userId, string email, string role, string name)
+    private static string CreateTestToken(string firebaseUid, string email, string name)
     {
-        var user = new User
-        {
-            Id = userId,
-            Email = email,
-            Role = role,
-            Name = name,
-        };
-        Authenticate(user);
-    }
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(CustomWebApplicationFactory<Program>.TestJwtKey)
+        );
 
-    /* Remove GenerateJwtToken and original Authenticate */
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity([
+                new Claim("sub", firebaseUid),
+                new Claim("email", email),
+                new Claim("name", name),
+            ]),
+            Expires = DateTime.UtcNow.AddHours(1),
+            SigningCredentials = new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha256Signature
+            ),
+        };
+
+        var handler = new JwtSecurityTokenHandler();
+        return handler.WriteToken(handler.CreateToken(descriptor));
+    }
 }

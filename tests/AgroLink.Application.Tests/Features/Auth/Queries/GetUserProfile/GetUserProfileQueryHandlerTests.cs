@@ -1,4 +1,3 @@
-using AgroLink.Application.Features.Auth.DTOs;
 using AgroLink.Application.Features.Auth.Queries.GetUserProfile;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -22,64 +21,39 @@ public class GetUserProfileQueryHandlerTests
     private GetUserProfileQueryHandler _handler = null!;
 
     [Test]
-    public async Task Handle_ValidTokenAndUser_ReturnsUserDto()
+    public async Task Handle_AuthenticatedUser_ReturnsUserDto()
     {
-        // Arrange
-        var token = "valid_jwt_token";
-        var query = new GetUserProfileQuery(token);
-        var userDtoFromToken = new UserDto
-        {
-            Id = 1,
-            Email = "test@example.com",
-            Name = "Test User",
-            Role = "User",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-        };
         var userEntity = new User
         {
             Id = 1,
             Name = "Test User",
             Email = "test@example.com",
+            Role = "USER",
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             LastLoginAt = DateTime.UtcNow,
         };
 
-        _mocker
-            .GetMock<IJwtTokenService>()
-            .Setup(s => s.GetUserFromToken(token))
-            .Returns(userDtoFromToken);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.UserId).Returns(1);
         _mocker
             .GetMock<IAuthRepository>()
-            .Setup(r => r.GetUserByIdAsync(userDtoFromToken.Id))
+            .Setup(r => r.GetUserByIdAsync(1))
             .ReturnsAsync(userEntity);
 
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(new GetUserProfileQuery(), CancellationToken.None);
 
-        // Assert
         result.ShouldNotBeNull();
-        result.Id.ShouldBe(userEntity.Id);
-        result.Email.ShouldBe(userEntity.Email);
+        result.Id.ShouldBe(1);
+        result.Email.ShouldBe("test@example.com");
     }
 
     [Test]
-    public async Task Handle_InvalidToken_ReturnsNull()
+    public async Task Handle_NoAuthenticatedUser_ReturnsNull()
     {
-        // Arrange
-        var token = "invalid_jwt_token";
-        var query = new GetUserProfileQuery(token);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.UserId).Returns((int?)null);
 
-        _mocker
-            .GetMock<IJwtTokenService>()
-            .Setup(s => s.GetUserFromToken(token))
-            .Returns((UserDto?)null);
+        var result = await _handler.Handle(new GetUserProfileQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
         result.ShouldBeNull();
         _mocker
             .GetMock<IAuthRepository>()
@@ -87,67 +61,32 @@ public class GetUserProfileQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_ValidTokenUserNotFoundInRepo_ReturnsNull()
+    public async Task Handle_UserNotFoundInRepository_ReturnsNull()
     {
-        // Arrange
-        var token = "valid_jwt_token";
-        var query = new GetUserProfileQuery(token);
-        var userDtoFromToken = new UserDto
-        {
-            Id = 1,
-            Email = "test@example.com",
-            Name = "Test User",
-            Role = "User",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-        };
-
-        _mocker
-            .GetMock<IJwtTokenService>()
-            .Setup(s => s.GetUserFromToken(token))
-            .Returns(userDtoFromToken);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.UserId).Returns(1);
         _mocker
             .GetMock<IAuthRepository>()
-            .Setup(r => r.GetUserByIdAsync(userDtoFromToken.Id))
+            .Setup(r => r.GetUserByIdAsync(1))
             .ReturnsAsync((User?)null);
 
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(new GetUserProfileQuery(), CancellationToken.None);
 
-        // Assert
         result.ShouldBeNull();
     }
 
     [Test]
-    public async Task Handle_ValidTokenInactiveUser_ReturnsNull()
+    public async Task Handle_InactiveUser_ReturnsNull()
     {
-        // Arrange
-        var token = "valid_jwt_token";
-        var query = new GetUserProfileQuery(token);
-        var userDtoFromToken = new UserDto
-        {
-            Id = 1,
-            Email = "test@example.com",
-            Name = "Test User",
-            Role = "User",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-        };
         var inactiveUser = new User { Id = 1, IsActive = false };
 
-        _mocker
-            .GetMock<IJwtTokenService>()
-            .Setup(s => s.GetUserFromToken(token))
-            .Returns(userDtoFromToken);
+        _mocker.GetMock<ICurrentUserService>().Setup(s => s.UserId).Returns(1);
         _mocker
             .GetMock<IAuthRepository>()
-            .Setup(r => r.GetUserByIdAsync(userDtoFromToken.Id))
+            .Setup(r => r.GetUserByIdAsync(1))
             .ReturnsAsync(inactiveUser);
 
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(new GetUserProfileQuery(), CancellationToken.None);
 
-        // Assert
         result.ShouldBeNull();
     }
 }

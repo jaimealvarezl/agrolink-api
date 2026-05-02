@@ -1,6 +1,6 @@
-using System.Text;
 using System.Text.Json.Serialization;
 using AgroLink.Api.Filters;
+using AgroLink.Api.Middleware;
 using AgroLink.Api.Security;
 using AgroLink.Api.Services;
 using AgroLink.Application;
@@ -44,26 +44,22 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IAuthorizationHandler, FarmRoleHandler>();
 
-// JWT Authentication
-var jwtKey =
-    builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("JWT Key is missing in configuration.");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AgroLink";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AgroLink";
+// Firebase Authentication — validates Firebase ID tokens using Google's public JWKS
+var firebaseProjectId =
+    builder.Configuration["Firebase:ProjectId"]
+    ?? throw new InvalidOperationException("Firebase:ProjectId is required in configuration.");
 
 builder
     .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Authority = $"https://securetoken.google.com/{firebaseProjectId}";
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = true,
-            ValidIssuer = jwtIssuer,
+            ValidIssuer = $"https://securetoken.google.com/{firebaseProjectId}",
             ValidateAudience = true,
-            ValidAudience = jwtAudience,
-            ClockSkew = TimeSpan.Zero,
+            ValidAudience = firebaseProjectId,
         };
     });
 
@@ -114,6 +110,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
+app.UseMiddleware<FirebaseUserMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

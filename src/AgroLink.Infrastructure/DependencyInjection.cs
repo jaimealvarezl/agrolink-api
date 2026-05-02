@@ -9,6 +9,8 @@ using Amazon;
 using Amazon.Lambda;
 using Amazon.RDS.Util;
 using Amazon.S3;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -174,16 +176,38 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+        // Firebase Admin SDK — initialized once per process using Application Default Credentials.
+        // Locally: set GOOGLE_APPLICATION_CREDENTIALS to a service account JSON path.
+        // On AWS Lambda: attach a service account JSON via GOOGLE_APPLICATION_CREDENTIALS
+        // or configure workload identity federation between AWS IAM and Google Cloud.
+        if (FirebaseApp.DefaultInstance == null)
+        {
+            try
+            {
+                FirebaseApp.Create(
+                    new AppOptions
+                    {
+                        Credential = GoogleCredential.GetApplicationDefault(),
+                        ProjectId = configuration["Firebase:ProjectId"],
+                    }
+                );
+            }
+            catch (Exception)
+            {
+                // No credentials available (local dev without service account).
+                // JWT validation via JwtBearer+JWKS still works; Admin SDK features
+                // (revocation checks, custom tokens) require credentials at runtime.
+            }
+        }
+
         // Infrastructure Services
         services.AddMemoryCache();
         services.AddScoped<IFarmRosterService, FarmRosterService>();
         services.AddScoped<IEntityResolutionService, EntityResolutionService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IStorageService, S3StorageService>();
         services.AddScoped<IVoiceCommandQueue, SqsVoiceCommandQueue>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IAmazonLambda, AmazonLambdaClient>();
         services.AddScoped<IExternalApiWorkerClient, LambdaExternalApiWorkerClient>();
 
