@@ -45,7 +45,7 @@ resource "google_sql_database_instance" "postgres" {
 
   deletion_protection = true
 
-  labels = local.common_labels
+  user_labels = local.common_labels
 }
 
 resource "google_sql_database" "agrolink" {

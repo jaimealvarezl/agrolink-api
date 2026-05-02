@@ -59,6 +59,7 @@ output "api_url" {
 output "artifact_registry_repository" {
   description = "Artifact Registry repository for Docker images"
   value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
+  sensitive   = true
 }
 
 output "db_instance_connection_name" {
