@@ -41,11 +41,11 @@ resource "google_sql_database_instance" "postgres" {
       name  = "max_connections"
       value = "100"
     }
+
+    user_labels = local.common_labels
   }
 
   deletion_protection = true
-
-  user_labels = local.common_labels
 }
 
 resource "google_sql_database" "agrolink" {
