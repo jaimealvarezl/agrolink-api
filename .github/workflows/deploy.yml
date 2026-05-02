@@ -4,13 +4,12 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  AWS_REGION: 'us-east-1'
-  MIGRATION_S3_BUCKET: 'agrolink-lambda-code-bucket'
-  MIGRATION_S3_PREFIX: 'migrations'
+  GCP_REGION: 'us-central1'
+  IMAGE_NAME: 'agrolink-api'
 
 jobs:
   test:
@@ -21,40 +20,30 @@ jobs:
       pull-requests: write
       contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+          restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - run: dotnet restore
+      - run: dotnet build --no-restore --configuration Release
 
-      - name: Build solution
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run all tests
+      - name: Run tests
         run: |
-          echo "🧪 Running all tests..."
           dotnet test \
             --configuration Release \
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage"
-          echo "✅ All tests passed!"
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
@@ -63,379 +52,119 @@ jobs:
             **/TestResults/**/coverage.cobertura.xml
           retention-days: 7
 
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+      - uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
           files: '**/*test-results.trx'
           check_name: 'Test Results'
           comment_mode: always
-          report_individual_runs: true
 
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v4
         if: always()
         with:
           files: '**/coverage.cobertura.xml'
           fail_ci_if_error: false
 
-  migrate:
-    name: Database Migrations
+  deploy:
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
     needs: test
     environment:
       name: production
     permissions:
       contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      id-token: write  # for Workload Identity Federation
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+          restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Install system dependencies
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Set image tag
         run: |
-          sudo apt-get update && sudo apt-get install -y -qq zip jq
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          REPO="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/agrolink/${{ env.IMAGE_NAME }}"
+          echo "IMAGE_TAG=${REPO}:${SHORT_SHA}" >> $GITHUB_ENV
+          echo "IMAGE_LATEST=${REPO}:latest" >> $GITHUB_ENV
 
-      - name: Restore dotnet tools
-        run: dotnet tool restore
-
-      - name: Generate migration bundle
+      - name: Build and push Docker image
         run: |
-          echo "🗄️ Generating migration bundle..."
+          docker build -t "$IMAGE_TAG" -t "$IMAGE_LATEST" .
+          docker push "$IMAGE_TAG"
+          docker push "$IMAGE_LATEST"
+
+      - name: Run database migrations
+        run: |
+          echo "Running EF Core migrations..."
+          dotnet tool restore
           dotnet restore -r linux-x64
-          dotnet build src/AgroLink.Api/AgroLink.Api.csproj --configuration Release --no-restore -r linux-x64
 
           cd src/AgroLink.Infrastructure
           dotnet ef migrations bundle \
             --startup-project ../AgroLink.Api/AgroLink.Api.csproj \
             --configuration Release \
-            --output ../../migrations-bundle \
+            --output /tmp/migrations-bundle \
             --self-contained \
-            --runtime linux-x64 \
-            --verbose
+            --runtime linux-x64
 
-          echo "✅ Migration bundle created successfully"
+          echo "Uploading migration bundle..."
+          BUNDLE_KEY="migrations/migrations-${GITHUB_SHA:0:7}.tar.gz"
+          tar -czf /tmp/bundle.tar.gz -C /tmp migrations-bundle
+          gcloud storage cp /tmp/bundle.tar.gz \
+            "gs://${{ secrets.GCP_PROJECT_ID }}-agrolink-migrations/${BUNDLE_KEY}"
 
-      - name: Upload migration bundle to S3
+          echo "Running migrations via Cloud Run Job..."
+          gcloud run jobs create "agrolink-migrate-${GITHUB_SHA:0:7}" \
+            --image "$IMAGE_TAG" \
+            --region "${{ env.GCP_REGION }}" \
+            --service-account "${{ secrets.GCP_SERVICE_ACCOUNT }}" \
+            --set-cloudsql-instances "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}" \
+            --set-env-vars "ConnectionStrings__DefaultConnection=${{ secrets.DB_CONNECTION_STRING }}" \
+            --command "/app/migrations-bundle" \
+            --max-retries 1 \
+            --task-timeout 300s \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            || true
+
+          gcloud run jobs execute "agrolink-migrate-${GITHUB_SHA:0:7}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --wait
+
+      - name: Deploy to Cloud Run
         run: |
-          MIGRATION_ARTIFACT_NAME="migrations-${GITHUB_SHA:0:7}.zip"
-          S3_KEY="${MIGRATION_S3_PREFIX}/migrations-${GITHUB_SHA:0:7}.zip"
+          gcloud run deploy agrolink-api \
+            --image "$IMAGE_TAG" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --platform managed \
+            --no-traffic \
+            --tag "sha-${GITHUB_SHA:0:7}"
 
-          zip -r "$MIGRATION_ARTIFACT_NAME" ./migrations-bundle
-          aws s3 cp "$MIGRATION_ARTIFACT_NAME" "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}"
-          echo "S3_KEY=${S3_KEY}" >> $GITHUB_ENV
+          echo "Shifting traffic to new revision..."
+          gcloud run services update-traffic agrolink-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --to-latest
 
-          if ! aws s3 ls "s3://${MIGRATION_S3_BUCKET}/${S3_KEY}" --region "${AWS_REGION}" > /dev/null; then
-            echo "❌ Failed to verify migration artifact upload"
-            exit 1
-          fi
-
-          echo "✅ Migration bundle uploaded to S3"
-
-      - name: Verify Lambda VPC configuration
-        run: |
-          echo "🔍 Verifying Lambda VPC configuration..."
-          VPC_CONFIG=$(aws lambda get-function-configuration \
-            --function-name AgroLink-Migration-Function \
-            --region "${AWS_REGION}" \
-            --query 'VpcConfig' \
-            --output json)
-
-          SUBNET_COUNT=$(echo "$VPC_CONFIG" | jq '.SubnetIds | length')
-          SG_COUNT=$(echo "$VPC_CONFIG" | jq '.SecurityGroupIds | length')
-
-          if [ "$SUBNET_COUNT" -eq 0 ] || [ "$SG_COUNT" -eq 0 ]; then
-            echo "❌ ERROR: Lambda is not in VPC!"
-            echo "   Subnet IDs: $SUBNET_COUNT"
-            echo "   Security Group IDs: $SG_COUNT"
-            echo "   This will cause connection timeouts to RDS."
-            exit 1
-          else
-            echo "✅ Lambda is in VPC"
-            echo "   Subnets: $SUBNET_COUNT"
-            echo "   Security Groups: $SG_COUNT"
-          fi
-
-      - name: Wait for Database Availability
-        run: |
-          echo "⏳ Waiting for database cluster 'agrolink-pg-cluster' to be available..."
-          aws rds wait db-cluster-available \
-            --db-cluster-identifier agrolink-pg-cluster \
-            --region "${AWS_REGION}"
-          echo "✅ Database is available!"
-
-      - name: Invoke migration Lambda
-        run: |
-          echo "🚀 Invoking migration Lambda function..."
-
-          INVOCATION_PAYLOAD=$(jq -n \
-            --arg bucket "${MIGRATION_S3_BUCKET}" \
-            --arg key "${S3_KEY}" \
-            '{s3_bucket: $bucket, s3_key: $key}')
-
-          aws lambda invoke \
-            --function-name AgroLink-Migration-Function \
-            --payload "$INVOCATION_PAYLOAD" \
-            --region "${AWS_REGION}" \
-            --cli-binary-format raw-in-base64-out \
-            --cli-read-timeout 900 \
-            /tmp/lambda-response.json
-
-          LAMBDA_RESPONSE=$(cat /tmp/lambda-response.json)
-          LAMBDA_PAYLOAD=$(echo "$LAMBDA_RESPONSE" | jq -r '.Payload // empty')
-
-          if [ -z "$LAMBDA_PAYLOAD" ]; then
-            if echo "$LAMBDA_RESPONSE" | jq -e '.statusCode' > /dev/null 2>&1; then
-              ACTUAL_RESPONSE="$LAMBDA_RESPONSE"
-            else
-              echo "❌ Failed to parse Lambda response"
-              exit 1
-            fi
-          else
-            ACTUAL_RESPONSE=$(echo "$LAMBDA_PAYLOAD" | jq '.')
-          fi
-
-          STATUS_CODE=$(echo "$ACTUAL_RESPONSE" | jq -r '.statusCode // 500')
-          RESPONSE_BODY=$(echo "$ACTUAL_RESPONSE" | jq -r '.body // "{}"')
-
-          if [ "$STATUS_CODE" = "200" ]; then
-            echo "✅ Database migrations completed successfully!"
-            echo "$RESPONSE_BODY" | jq -r '.message // "Migrations applied"'
-          else
-            echo "❌ Database migrations failed"
-            ERROR_MSG=$(echo "$RESPONSE_BODY" | jq -r '.error // "Unknown error"')
-            EXIT_CODE=$(echo "$RESPONSE_BODY" | jq -r '.exit_code // "unknown"')
-            echo "Error: $ERROR_MSG"
-            echo "Exit code: $EXIT_CODE"
-            echo ""
-            echo "=== Migration stdout (last 100 lines) ==="
-            echo "$RESPONSE_BODY" | jq -r '.stdout // empty' | tail -100
-            echo ""
-            echo "=== Migration stderr ==="
-            echo "$RESPONSE_BODY" | jq -r '.stderr // empty'
-            echo ""
-            echo "💡 Check CloudWatch Logs: /aws/lambda/AgroLink-Migration-Function"
-            exit 1
-          fi
-
-      - name: Upload migration artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: migration-bundle
-          path: migrations-*.zip
-          retention-days: 7
-
-  deploy:
-    name: Deploy to AWS Lambda
-    runs-on: ubuntu-latest
-    needs: migrate
-    environment:
-      name: production
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y zip
-
-      - name: Restore dotnet tools
-        run: dotnet tool restore
-
-      - name: Package Lambda functions
-        run: |
-          echo "📦 Packaging Lambda functions..."
-          dotnet restore
-          dotnet lambda package -pl ./src/AgroLink.Api AspNetCoreFunction.zip --function-architecture arm64
-          dotnet lambda package -pl ./src/AgroLink.Workers Workers.zip --function-architecture arm64
-          echo "✅ Lambda packages created"
-      - name: Upload Lambda packages to S3 for Terraform
-        run: |
-          aws s3 cp AspNetCoreFunction.zip s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.API/latest.zip --region ${{ env.AWS_REGION }}
-          aws s3 cp Workers.zip s3://${{ env.MIGRATION_S3_BUCKET }}/AgroLink.Workers/latest.zip --region ${{ env.AWS_REGION }}
-          echo "✅ Uploaded Lambda packages to S3"
-
-
-      - name: Verify Lambda functions exist (Terraform ownership)
-        run: |
-          set -euo pipefail
-
-          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-ExternalApiWorker AgroLink-VoiceCommandCleanup AgroLink-VoiceCommandSqsConsumer; do
-            if ! aws lambda get-function --function-name "$fn" --region "${AWS_REGION}" > /dev/null 2>&1; then
-              echo "❌ Lambda function '$fn' does not exist."
-              echo "Run Terraform apply first so infrastructure creates/manages this function."
-              exit 1
-            fi
-          done
-
-          echo "✅ Lambda functions exist."
-
-      - name: Update API Lambda code
-        run: |
-          echo "🚀 Updating API Lambda code..."
-          aws lambda update-function-code \
-            --function-name AgroLinkAPI-AspNetCoreFunction \
-            --zip-file fileb://AspNetCoreFunction.zip \
-            --region "${AWS_REGION}" > /tmp/api-update-response.json
-
-          aws lambda wait function-updated \
-            --function-name AgroLinkAPI-AspNetCoreFunction \
-            --region "${AWS_REGION}"
-          echo "✅ API Lambda code updated successfully!"
-
-      - name: Update SQS consumer Lambda code
-        run: |
-          echo "🚀 Updating SQS consumer Lambda code..."
-          aws lambda update-function-code \
-            --function-name AgroLink-TelegramSqsConsumer \
-            --zip-file fileb://Workers.zip \
-            --region "${AWS_REGION}" > /tmp/sqs-update-response.json
-
-          aws lambda wait function-updated \
-            --function-name AgroLink-TelegramSqsConsumer \
-            --region "${AWS_REGION}"
-          echo "✅ SQS consumer Lambda code updated successfully!"
-
-      - name: Update external API worker Lambda code
-        run: |
-          echo "🚀 Updating external API worker Lambda code..."
-          aws lambda update-function-code \
-            --function-name AgroLink-ExternalApiWorker \
-            --zip-file fileb://Workers.zip \
-            --region "${AWS_REGION}" > /tmp/external-worker-update-response.json
-
-          aws lambda wait function-updated \
-            --function-name AgroLink-ExternalApiWorker \
-            --region "${AWS_REGION}"
-          echo "✅ External API worker Lambda code updated successfully!"
-
-      - name: Update voice command cleanup Lambda code
-        run: |
-          echo "🚀 Updating voice command cleanup Lambda code..."
-          aws lambda update-function-code \
-            --function-name AgroLink-VoiceCommandCleanup \
-            --zip-file fileb://Workers.zip \
-            --region "${AWS_REGION}" > /tmp/cleanup-update-response.json
-
-          aws lambda wait function-updated \
-            --function-name AgroLink-VoiceCommandCleanup \
-            --region "${AWS_REGION}"
-          echo "✅ Voice command cleanup Lambda code updated successfully!"
-
-      - name: Update voice command SQS consumer Lambda code
-        run: |
-          echo "🚀 Updating voice command SQS consumer Lambda code..."
-          aws lambda update-function-code \
-            --function-name AgroLink-VoiceCommandSqsConsumer \
-            --zip-file fileb://Workers.zip \
-            --region "${AWS_REGION}" > /tmp/voice-sqs-update-response.json
-
-          aws lambda wait function-updated \
-            --function-name AgroLink-VoiceCommandSqsConsumer \
-            --region "${AWS_REGION}"
-          echo "✅ Voice command SQS consumer Lambda code updated successfully!"
-
-      - name: Disable SnapStart on DB-connected functions
-        run: |
-          set -euo pipefail
-
-          # SnapStart snapshots the process including cached IAM auth tokens.
-          # After restore the token is expired → PAM auth fails on every request.
-          # Disable SnapStart on every function that opens a DB connection.
-          for fn in AgroLinkAPI-AspNetCoreFunction AgroLink-TelegramSqsConsumer AgroLink-VoiceCommandCleanup AgroLink-VoiceCommandSqsConsumer; do
-            echo "Disabling SnapStart on ${fn}..."
-            aws lambda update-function-configuration \
-              --function-name "${fn}" \
-              --snap-start ApplyOn=None \
-              --region "${AWS_REGION}" > /dev/null
-            aws lambda wait function-updated \
-              --function-name "${fn}" \
-              --region "${AWS_REGION}"
-            echo "✅ SnapStart disabled on ${fn}"
-          done
-
-      - name: Publish versions and promote live aliases
-        run: |
-          set -euo pipefail
-
-          publish_and_promote() {
-            local fn="$1"
-            echo "📸 Publishing new version for ${fn}..."
-
-            VERSION=$(aws lambda publish-version \
-              --function-name "${fn}" \
-              --region "${AWS_REGION}" \
-              --query 'Version' --output text)
-
-            echo "⏳ Waiting for ${fn}:${VERSION} to become active..."
-            aws lambda wait function-active-v2 \
-              --function-name "${fn}:${VERSION}" \
-              --region "${AWS_REGION}"
-
-            echo "🔀 Promoting live alias to version ${VERSION}..."
-            aws lambda update-alias \
-              --function-name "${fn}" \
-              --name live \
-              --function-version "${VERSION}" \
-              --region "${AWS_REGION}" > /dev/null
-
-            echo "✅ ${fn}:live → v${VERSION}"
-          }
-
-          publish_and_promote AgroLinkAPI-AspNetCoreFunction
-          publish_and_promote AgroLink-TelegramSqsConsumer
-          publish_and_promote AgroLink-ExternalApiWorker
-          publish_and_promote AgroLink-VoiceCommandCleanup
-          publish_and_promote AgroLink-VoiceCommandSqsConsumer
-
-      - name: Upload Lambda packages
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: lambda-packages
-          path: |
-            AspNetCoreFunction.zip
-            Workers.zip
-          retention-days: 7
+          echo "Deploy complete: $IMAGE_TAG"

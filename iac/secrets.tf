@@ -1,52 +1,46 @@
-resource "random_password" "random_jwt_secret_key" {
-  length           = 32
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+# ── Application Secrets ───────────────────────────────────────────────────────
+# Secrets are created here; values are managed outside Terraform or via CI/CD.
+
+resource "google_secret_manager_secret" "telegram_bot_token" {
+  secret_id = "agrolink-telegram-bot-token"
+  labels    = local.common_labels
+  replication { auto {} }
 }
 
-
-resource "random_password" "agro_link_db_password" {
-  length           = 20
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?" # exclude / @ " and space
+resource "google_secret_manager_secret_version" "telegram_bot_token" {
+  secret      = google_secret_manager_secret.telegram_bot_token.id
+  secret_data = var.telegram_bot_token
 }
 
-resource "aws_secretsmanager_secret" "agro_link_db_password" {
-  name = "agrolink/db-password"
-
-  tags = {
-    Scope = "AgroLink"
-  }
+resource "google_secret_manager_secret" "telegram_webhook_secret" {
+  secret_id = "agrolink-telegram-webhook-secret"
+  labels    = local.common_labels
+  replication { auto {} }
 }
 
-resource "aws_secretsmanager_secret_version" "agro_link_db_password_secret" {
-  secret_id     = aws_secretsmanager_secret.agro_link_db_password.id
-  secret_string = random_password.agro_link_db_password.result
+resource "google_secret_manager_secret_version" "telegram_webhook_secret" {
+  secret      = google_secret_manager_secret.telegram_webhook_secret.id
+  secret_data = var.telegram_webhook_secret_token
 }
 
-resource "aws_kms_key" "rds_encryption_key_id" {
-  deletion_window_in_days = 30
+resource "google_secret_manager_secret" "openai_api_key" {
+  secret_id = "agrolink-openai-api-key"
+  labels    = local.common_labels
+  replication { auto {} }
 }
 
-# Secret that aggregates DB connection details for application use
-resource "aws_secretsmanager_secret" "agro_link_db_connection" {
-  name = "agrolink/db-connection"
-
-  tags = {
-    Scope = "AgroLink"
-  }
+resource "google_secret_manager_secret_version" "openai_api_key" {
+  secret      = google_secret_manager_secret.openai_api_key.id
+  secret_data = var.openai_api_key
 }
 
-resource "aws_secretsmanager_secret_version" "agro_link_db_connection_value" {
-  secret_id = aws_secretsmanager_secret.agro_link_db_connection.id
-  secret_string = jsonencode({
-    # Individual fields for programmatic access
-    host     = aws_rds_cluster.serverless_db.endpoint
-    port     = 5432
-    database = var.db_name
-    username = var.db_master_username
-    password = random_password.agro_link_db_password.result
-    # Ready-to-use PostgreSQL connection string for Entity Framework Core / Npgsql
-    connectionString = "Host=${aws_rds_cluster.serverless_db.endpoint};Port=5432;Username=${var.db_master_username};Password=${random_password.agro_link_db_password.result};Database=${var.db_name}"
-  })
+resource "google_secret_manager_secret" "scheduler_secret" {
+  secret_id = "agrolink-scheduler-secret"
+  labels    = local.common_labels
+  replication { auto {} }
+}
+
+resource "google_secret_manager_secret_version" "scheduler_secret" {
+  secret      = google_secret_manager_secret.scheduler_secret.id
+  secret_data = var.scheduler_secret
 }

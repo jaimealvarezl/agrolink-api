@@ -1,6 +1,5 @@
-using AgroLink.Application.Features.VoiceCommands.Commands.SubmitVoiceCommand;
+using AgroLink.Application.Features.VoiceCommands.Commands.ProcessVoiceCommandInline;
 using AgroLink.Application.Features.VoiceCommands.DTOs;
-using AgroLink.Application.Features.VoiceCommands.Queries.GetVoiceCommandJob;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +25,7 @@ public class VoiceCommandsController(IMediator mediator) : BaseController
 
     [HttpPost("api/farms/{farmId}/voice/commands")]
     [Authorize(Policy = "FarmEditorAccess")]
-    public async Task<IActionResult> Submit(
+    public async Task<ActionResult<VoiceCommandResultDto>> Submit(
         int farmId,
         IFormFile? audio,
         CancellationToken cancellationToken
@@ -59,25 +58,17 @@ public class VoiceCommandsController(IMediator mediator) : BaseController
 
         await using var stream = audio.OpenReadStream();
 
-        var jobId = await mediator.Send(
-            new SubmitVoiceCommandCommand(farmId, userId, stream, audio.ContentType, audio.Length),
-            cancellationToken
-        );
-
-        return StatusCode(202, new { jobId });
-    }
-
-    [HttpGet("api/voice/commands/{jobId:guid}")]
-    public async Task<ActionResult<VoiceCommandJobStatusDto>> GetStatus(
-        Guid jobId,
-        CancellationToken cancellationToken
-    )
-    {
-        var userId = GetCurrentUserId();
         var result = await mediator.Send(
-            new GetVoiceCommandJobQuery(jobId, userId),
+            new ProcessVoiceCommandInlineCommand(
+                farmId,
+                userId,
+                stream,
+                audio.ContentType,
+                audio.Length
+            ),
             cancellationToken
         );
+
         return Ok(result);
     }
 }

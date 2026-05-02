@@ -8,6 +8,7 @@ using AgroLink.Infrastructure.Repositories;
 using AgroLink.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace AgroLink.Infrastructure.Tests;
 
@@ -39,7 +40,7 @@ public abstract class TestBase
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IMovementRepository, MovementRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IStorageService>(_ => new Mock<IStorageService>().Object);
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AnimalDto).Assembly));

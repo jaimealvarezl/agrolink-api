@@ -1,331 +1,77 @@
-resource "aws_iam_policy" "spa_bucket_deploy_policy" {
-  name        = "SPA_Bucket_Deploy_Policy"
-  description = "Policy granting permissions to upload React SPA code to spa_bucket"
+# ── Service Accounts ─────────────────────────────────────────────────────────
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid    = "S3Access",
-        Effect = "Allow",
-        Action = [
-          "s3:ListBucket",
-          "s3:PutObject",
-          "s3:PutObjectAcl",
-          "s3:GetObject",
-          "s3:DeleteObject",
-        ],
-        Resource = [
-          aws_s3_bucket.spa_bucket.arn,
-          "${aws_s3_bucket.spa_bucket.arn}/*"
-        ]
-      }
-    ]
-  })
+resource "google_service_account" "api" {
+  account_id   = "agrolink-api"
+  display_name = "AgroLink API"
+  description  = "Used by the Cloud Run API service"
 }
 
-resource "aws_iam_user" "spa_deployer" {
-  name = "SPA_Deployer"
-
-  tags = {
-    Name        = "SPA Deployer User"
-    Environment = "Production"
-  }
+resource "google_service_account" "cicd" {
+  account_id   = "agrolink-cicd"
+  display_name = "AgroLink CI/CD"
+  description  = "Used by GitHub Actions to deploy images and update Cloud Run"
 }
 
-resource "aws_iam_user_policy_attachment" "spa_policy_attach" {
-  user       = aws_iam_user.spa_deployer.name
-  policy_arn = aws_iam_policy.spa_bucket_deploy_policy.arn
+# ── API service account permissions ──────────────────────────────────────────
+
+# Read/write GCS files bucket
+resource "google_storage_bucket_iam_member" "api_files_rw" {
+  bucket = google_storage_bucket.files.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.api.email}"
 }
 
-resource "aws_iam_access_key" "spa_deployer_access_key" {
-  user = aws_iam_user.spa_deployer.name
+# Access Cloud SQL via Cloud SQL connector
+resource "google_project_iam_member" "api_cloudsql" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.api.email}"
 }
 
-
-
-resource "aws_iam_policy" "lambda_code_deploy_policy" {
-  name        = "Lambda_Code_Deploy_Policy"
-  description = "Policy granting permissions to upload Lambda code to lambda_code_bucket and manage Lambda functions"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid    = "S3Access",
-        Effect = "Allow",
-        Action = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation",
-          "s3:ListBucketMultipartUploads",
-          "s3:ListBucketVersions",
-          "s3:PutObject",
-          "s3:PutObjectAcl",
-          "s3:GetObject",
-          "s3:GetObjectVersion",
-          "s3:DeleteObject",
-          "s3:AbortMultipartUpload"
-        ],
-        Resource = [
-          aws_s3_bucket.lambda_code_bucket.arn,
-          "${aws_s3_bucket.lambda_code_bucket.arn}/*",
-          # Allow access to migrations bucket (if different from lambda bucket)
-          "arn:aws:s3:::agrolink-migrations",
-          "arn:aws:s3:::agrolink-migrations/*"
-        ]
-      },
-      {
-        Sid    = "LambdaReadAndCreate",
-        Effect = "Allow",
-        Action = [
-          "lambda:GetFunction",
-          "lambda:GetFunctionConfiguration",
-          "lambda:ListFunctions",
-          "lambda:CreateFunction",
-          "lambda:ListVersionsByFunction"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "LambdaAccess",
-        Effect = "Allow",
-        Action = [
-          "lambda:UpdateFunctionCode",
-          "lambda:UpdateFunctionConfiguration",
-          "lambda:PublishVersion",
-          "lambda:CreateAlias",
-          "lambda:UpdateAlias",
-          "lambda:ListAliases",
-          "lambda:GetAlias",
-          "lambda:GetFunction",
-          "lambda:GetFunctionConfiguration"
-        ],
-        Resource = [
-          aws_lambda_function.agro_link.arn,
-          "${aws_lambda_function.agro_link.arn}:*",
-          aws_lambda_function.telegram_sqs_consumer.arn,
-          "${aws_lambda_function.telegram_sqs_consumer.arn}:*",
-          aws_lambda_function.external_api_worker.arn,
-          "${aws_lambda_function.external_api_worker.arn}:*",
-          aws_lambda_function.voice_command_cleanup.arn,
-          "${aws_lambda_function.voice_command_cleanup.arn}:*",
-          aws_lambda_function.voice_command_sqs_consumer.arn,
-          "${aws_lambda_function.voice_command_sqs_consumer.arn}:*"
-        ]
-      },
-      {
-        Sid    = "PassExecutionRole",
-        Effect = "Allow",
-        Action = [
-          "iam:PassRole"
-        ],
-        Resource = aws_iam_role.lambda_function_role.arn
-      },
-      {
-        Sid    = "CloudWatchLogs",
-        Effect = "Allow",
-        Action = [
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams",
-          "logs:GetLogEvents"
-        ],
-        Resource = [
-          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.agro_link.function_name}:*",
-          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.telegram_sqs_consumer.function_name}:*",
-          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.external_api_worker.function_name}:*",
-          "arn:aws:logs:${var.region}:*:log-group:/aws/lambda/${aws_lambda_function.voice_command_sqs_consumer.function_name}:*"
-        ]
-      },
-      {
-        Sid    = "EC2ReadAccess",
-        Effect = "Allow",
-        Action = [
-          "ec2:DescribeSecurityGroups",
-          "ec2:DescribeSubnets",
-          "ec2:DescribeVpcs"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "RDSReadAccess",
-        Effect = "Allow",
-        Action = [
-          "rds:DescribeDBClusters",
-          "rds:DescribeDBInstances",
-          "rds:DescribeDBClusterEndpoints",
-          "rds:ListTagsForResource"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "SecretsManagerRead",
-        Effect = "Allow",
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
-        ],
-        Resource = [
-          aws_secretsmanager_secret.agro_link_db_connection.arn,
-          aws_secretsmanager_secret.agro_link_db_password.arn
-        ]
-      },
-      {
-        Sid    = "STSGetCallerIdentity",
-        Effect = "Allow",
-        Action = [
-          "sts:GetCallerIdentity"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "MigrationLambdaInvoke",
-        Effect = "Allow",
-        Action = [
-          "lambda:InvokeFunction"
-        ],
-        Resource = aws_lambda_function.migration.arn
-      }
-    ]
-  })
+# Read secrets from Secret Manager
+resource "google_project_iam_member" "api_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.api.email}"
 }
 
-resource "aws_iam_user" "lambda_code_deployer" {
-  name = "Lambda_Code_Deployer"
+# ── CI/CD service account permissions ────────────────────────────────────────
 
-  tags = {
-    Name        = "Lambda Code Deployer User"
-    Environment = "Production"
-  }
+# Push Docker images to Artifact Registry
+resource "google_project_iam_member" "cicd_artifact_registry" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${google_service_account.cicd.email}"
 }
 
-resource "aws_iam_user_policy_attachment" "lambda_code_policy_attach" {
-  user       = aws_iam_user.lambda_code_deployer.name
-  policy_arn = aws_iam_policy.lambda_code_deploy_policy.arn
+# Deploy new revisions to Cloud Run
+resource "google_project_iam_member" "cicd_run_developer" {
+  project = var.project_id
+  role    = "roles/run.developer"
+  member  = "serviceAccount:${google_service_account.cicd.email}"
 }
 
-resource "aws_iam_access_key" "lambda_code_deployer_access_key" {
-  user = aws_iam_user.lambda_code_deployer.name
+# Allow CI/CD to act as the API service account (for Cloud Run --service-account)
+resource "google_service_account_iam_member" "cicd_act_as_api" {
+  service_account_id = google_service_account.api.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.cicd.email}"
 }
 
-resource "aws_iam_role" "lambda_function_role" {
-  name = "AgroLinkAPI-AspNetCoreFunctionRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = "sts:AssumeRole",
-        Effect = "Allow",
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      },
-    ]
-  })
-
-  tags = merge(local.common_tags, {
-    AWSServerlessAppNETCore = "true",
-    "lambda:createdBy"      = "SAM"
-  })
-
-  tags_all = {
-    AWSServerlessAppNETCore = "true",
-    "lambda:createdBy"      = "SAM"
-  }
+# Upload migration bundles to GCS
+resource "google_storage_bucket_iam_member" "cicd_migrations_rw" {
+  bucket = google_storage_bucket.migrations.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.cicd.email}"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
-  role       = aws_iam_role.lambda_function_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
+# ── Allow unauthenticated requests to the API ─────────────────────────────────
+# Public API — authentication is handled at the application layer (Firebase JWTs).
 
-resource "aws_iam_role_policy_attachment" "AWSLambda_FullAccess" {
-  role       = aws_iam_role.lambda_function_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
-  role       = aws_iam_role.lambda_function_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
-
-# Allow Lambda to access the file storage bucket
-resource "aws_iam_role_policy" "lambda_s3_storage_access" {
-  name = "AgroLinkLambdaS3StorageAccess"
-  role = aws_iam_role.lambda_function_role.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ],
-        Resource = [
-          aws_s3_bucket.file_storage.arn,
-          "${aws_s3_bucket.file_storage.arn}/*"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "lambda_kms_decrypt" {
-  name = "AgroLinkLambdaKmsDecrypt"
-  role = aws_iam_role.lambda_function_role.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = ["kms:Decrypt"],
-        Resource = aws_kms_key.rds_encryption_key_id.arn
-      }
-    ]
-  })
-}
-
-# Allow Lambda to authenticate to Aurora using IAM instead of a static password
-resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
-  name = "AgroLinkLambdaRdsIamAuth"
-  role = aws_iam_role.lambda_function_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = "rds-db:connect"
-      Resource = "arn:aws:rds-db:${var.region}:${data.aws_caller_identity.current.account_id}:dbuser:${aws_rds_cluster.serverless_db.cluster_resource_id}/agrolink_app"
-    }]
-  })
-}
-
-# Allow Lambda to send and receive messages from SQS
-resource "aws_iam_role_policy" "lambda_sqs_access" {
-  name = "AgroLinkLambdaSQSAccess"
-  role = aws_iam_role.lambda_function_role.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "sqs:SendMessage",
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:ChangeMessageVisibility",
-          "sqs:GetQueueAttributes"
-        ],
-        Resource = [
-          aws_sqs_queue.telegram_updates.arn,
-          aws_sqs_queue.telegram_updates_dlq.arn,
-          aws_sqs_queue.voice_commands.arn,
-          aws_sqs_queue.voice_commands_dlq.arn
-        ]
-      }
-    ]
-  })
+resource "google_cloud_run_v2_service_iam_member" "api_public" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.api.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
