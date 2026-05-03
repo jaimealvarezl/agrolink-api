@@ -139,7 +139,7 @@ jobs:
           gcloud run jobs create "agrolink-migrate-${GITHUB_SHA:0:7}" \
             --image "$IMAGE_TAG" \
             --region "${{ env.GCP_REGION }}" \
-            --service-account "${{ vars.GCP_SERVICE_ACCOUNT }}" \
+            --service-account "agrolink-api@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
             --set-cloudsql-instances "$CLOUD_SQL_INSTANCE" \
             --set-secrets "ConnectionStrings__DefaultConnection=agrolink-db-password:latest" \
             --command "/app/migrations-bundle" \
