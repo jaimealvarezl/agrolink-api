@@ -78,16 +78,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
-          restore-keys: ${{ runner.os }}-nuget-
-
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -115,24 +105,6 @@ jobs:
 
       - name: Run database migrations
         run: |
-          echo "Running EF Core migrations..."
-          dotnet tool restore
-          dotnet restore -r linux-x64
-
-          cd src/AgroLink.Infrastructure
-          dotnet ef migrations bundle \
-            --startup-project ../AgroLink.Api/AgroLink.Api.csproj \
-            --configuration Release \
-            --output /tmp/migrations-bundle \
-            --self-contained \
-            --runtime linux-x64
-
-          echo "Uploading migration bundle..."
-          BUNDLE_KEY="migrations/migrations-${GITHUB_SHA:0:7}.tar.gz"
-          tar -czf /tmp/bundle.tar.gz -C /tmp migrations-bundle
-          gcloud storage cp /tmp/bundle.tar.gz \
-            "gs://${{ vars.GCP_PROJECT_ID }}-agrolink-migrations/${BUNDLE_KEY}"
-
           CLOUD_SQL_INSTANCE="${{ vars.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:agrolink-pg"
 
           echo "Running migrations via Cloud Run Job..."
@@ -145,8 +117,7 @@ jobs:
             --command "/app/migrations-bundle" \
             --max-retries 1 \
             --task-timeout 300s \
-            --project "${{ vars.GCP_PROJECT_ID }}" \
-            || true
+            --project "${{ vars.GCP_PROJECT_ID }}"
 
           gcloud run jobs execute "agrolink-migrate-${GITHUB_SHA:0:7}" \
             --region "${{ env.GCP_REGION }}" \

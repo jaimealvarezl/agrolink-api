@@ -28,10 +28,22 @@ COPY . .
 WORKDIR /app/src/AgroLink.Api
 RUN dotnet publish -c Release -o /app/publish
 
+# Build EF Core migrations bundle
+WORKDIR /app
+RUN dotnet tool install --global dotnet-ef --version 10.0.7 && \
+    /root/.dotnet/tools/dotnet-ef migrations bundle \
+      --project src/AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
+      --startup-project src/AgroLink.Api/AgroLink.Api.csproj \
+      --configuration Release \
+      --output /app/migrations-bundle \
+      --self-contained \
+      --runtime linux-x64
+
 # Use the runtime image for the final container
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY --from=build /app/migrations-bundle ./migrations-bundle
 
 # Expose ports
 EXPOSE 8080
