@@ -1,6 +1,7 @@
 # ── Firebase ─────────────────────────────────────────────────────────────────
 
 resource "google_firebase_project" "default" {
+  provider   = google-beta
   project    = var.project_id
   depends_on = [google_project_service.apis]
 }
@@ -8,6 +9,7 @@ resource "google_firebase_project" "default" {
 # ── Mobile apps ──────────────────────────────────────────────────────────────
 
 resource "google_firebase_apple_app" "ios" {
+  provider     = google-beta
   project      = var.project_id
   display_name = "AgroLink iOS"
   bundle_id    = "com.jaimealv994.agrolink"
@@ -15,10 +17,12 @@ resource "google_firebase_apple_app" "ios" {
 }
 
 data "google_firebase_apple_app_config" "ios" {
-  app_id = google_firebase_apple_app.ios.app_id
+  provider = google-beta
+  app_id   = google_firebase_apple_app.ios.app_id
 }
 
 resource "google_firebase_android_app" "android" {
+  provider     = google-beta
   project      = var.project_id
   display_name = "AgroLink Android"
   package_name = "com.jaimealv994.agrolink"
@@ -26,7 +30,8 @@ resource "google_firebase_android_app" "android" {
 }
 
 data "google_firebase_android_app_config" "android" {
-  app_id = google_firebase_android_app.android.app_id
+  provider = google-beta
+  app_id   = google_firebase_android_app.android.app_id
 }
 
 # ── Auth providers ────────────────────────────────────────────────────────────
