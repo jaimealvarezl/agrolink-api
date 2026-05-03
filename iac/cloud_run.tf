@@ -1,7 +1,8 @@
 resource "google_cloud_run_v2_service" "api" {
-  name     = "agrolink-api"
-  location = var.region
-  labels   = local.common_labels
+  name                = "agrolink-api"
+  location            = var.region
+  labels              = local.common_labels
+  deletion_protection = false
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
