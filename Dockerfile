@@ -28,9 +28,10 @@ COPY . .
 WORKDIR /app/src/AgroLink.Api
 RUN dotnet publish -c Release -o /app/publish
 
-# Build EF Core migrations bundle
+# Build EF Core migrations bundle (requires a linux-x64 restore for the assets file)
 WORKDIR /app
-RUN dotnet tool install --global dotnet-ef --version 10.0.7 && \
+RUN dotnet restore src/AgroLink.Infrastructure/AgroLink.Infrastructure.csproj --runtime linux-x64 && \
+    dotnet tool install --global dotnet-ef --version 10.0.7 && \
     /root/.dotnet/tools/dotnet-ef migrations bundle \
       --project src/AgroLink.Infrastructure/AgroLink.Infrastructure.csproj \
       --startup-project src/AgroLink.Api/AgroLink.Api.csproj \
