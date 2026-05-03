@@ -85,3 +85,9 @@ output "cicd_service_account_email" {
   description = "Service account email for CI/CD"
   value       = google_service_account.cicd.email
 }
+
+output "workload_identity_provider" {
+  description = "GCP_WORKLOAD_IDENTITY_PROVIDER value for GitHub Actions secret"
+  value       = google_iam_workload_identity_pool_provider.github.name
+  sensitive   = true
+}

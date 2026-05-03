@@ -57,6 +57,12 @@ variable "openai_api_key" {
   sensitive   = true
 }
 
+variable "github_repo" {
+  description = "GitHub repository in owner/name format"
+  type        = string
+  default     = "jaimealvarezl/agrolink-api"
+}
+
 variable "firebase_project_id" {
   description = "Firebase project ID (usually same as GCP project_id)"
   type        = string

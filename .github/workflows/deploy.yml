@@ -133,13 +133,15 @@ jobs:
           gcloud storage cp /tmp/bundle.tar.gz \
             "gs://${{ secrets.GCP_PROJECT_ID }}-agrolink-migrations/${BUNDLE_KEY}"
 
+          CLOUD_SQL_INSTANCE="${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:agrolink-pg"
+
           echo "Running migrations via Cloud Run Job..."
           gcloud run jobs create "agrolink-migrate-${GITHUB_SHA:0:7}" \
             --image "$IMAGE_TAG" \
             --region "${{ env.GCP_REGION }}" \
             --service-account "${{ secrets.GCP_SERVICE_ACCOUNT }}" \
-            --set-cloudsql-instances "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}" \
-            --set-env-vars "ConnectionStrings__DefaultConnection=${{ secrets.DB_CONNECTION_STRING }}" \
+            --set-cloudsql-instances "$CLOUD_SQL_INSTANCE" \
+            --set-secrets "ConnectionStrings__DefaultConnection=agrolink-db-password:latest" \
             --command "/app/migrations-bundle" \
             --max-retries 1 \
             --task-timeout 300s \
