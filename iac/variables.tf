@@ -1,9 +1,3 @@
-variable "aws_region" {
-  description = "AWS region for remaining AWS resources"
-  type        = string
-  default     = "us-east-1"
-}
-
 variable "project_id" {
   description = "GCP project ID (same project as Firebase)"
   type        = string
@@ -66,10 +60,4 @@ variable "openai_api_key" {
 variable "firebase_project_id" {
   description = "Firebase project ID (usually same as GCP project_id)"
   type        = string
-}
-
-variable "enable_lambda_vpc" {
-  description = "Unused — declared to suppress TFC org-level variable warning"
-  type        = bool
-  default     = false
 }

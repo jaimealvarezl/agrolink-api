@@ -14,7 +14,6 @@ services:
       - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
       - Telegram__WebhookSecretToken=${TELEGRAM_WEBHOOK_SECRET:-}
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
-      - Internal__SchedulerSecret=${SCHEDULER_SECRET:-local-secret}
     ports:
       - "5001:8080"
     depends_on:

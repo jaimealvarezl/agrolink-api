@@ -44,7 +44,9 @@ public class FirebaseUserMiddleware(RequestDelegate next)
         string firebaseUid
     )
     {
-        var email = context.User.FindFirst("email")?.Value;
+        var email =
+            context.User.FindFirst(ClaimTypes.Email)?.Value
+            ?? context.User.FindFirst("email")?.Value;
         if (string.IsNullOrEmpty(email))
         {
             return null;
@@ -58,7 +60,10 @@ public class FirebaseUserMiddleware(RequestDelegate next)
             return existingByEmail;
         }
 
-        var name = context.User.FindFirst("name")?.Value ?? email;
+        var name =
+            context.User.FindFirst(ClaimTypes.Name)?.Value
+            ?? context.User.FindFirst("name")?.Value
+            ?? email;
         var newUser = new User
         {
             FirebaseUid = firebaseUid,

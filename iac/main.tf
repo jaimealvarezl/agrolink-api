@@ -1,9 +1,5 @@
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 6.30.0"
-    }
     google = {
       source  = "hashicorp/google"
       version = ">= 6.15.0"
@@ -17,16 +13,6 @@ terraform {
   backend "gcs" {
     bucket = "agrolink-terraform-state"
     prefix = "terraform/state"
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = {
-      Owner = "Ops"
-    }
   }
 }
 
