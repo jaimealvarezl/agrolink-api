@@ -32,6 +32,8 @@ resource "google_project_service" "apis" {
     "iam.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "servicenetworking.googleapis.com",
+    "firebase.googleapis.com",
+    "identitytoolkit.googleapis.com",
   ])
 
   service            = each.key
