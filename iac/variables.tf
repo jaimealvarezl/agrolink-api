@@ -67,3 +67,9 @@ variable "firebase_project_id" {
   description = "Firebase project ID (usually same as GCP project_id)"
   type        = string
 }
+
+variable "enable_lambda_vpc" {
+  description = "Unused — declared to suppress TFC org-level variable warning"
+  type        = bool
+  default     = false
+}
