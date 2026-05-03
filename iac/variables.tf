@@ -36,7 +36,7 @@ variable "db_user" {
 variable "api_image" {
   description = "Full Docker image URI for the API (e.g. region-docker.pkg.dev/project/repo/api:sha)"
   type        = string
-  default     = "us-central1-docker.pkg.dev/REPLACE_ME/agrolink/api:latest"
+  default     = "us-docker.pkg.dev/cloudrun/container/hello:latest"
 }
 
 variable "telegram_bot_token" {
