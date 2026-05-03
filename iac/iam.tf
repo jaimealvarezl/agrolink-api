@@ -1,10 +1,5 @@
 # ── Workload Identity Federation (GitHub Actions) ────────────────────────────
 
-import {
-  to = google_iam_workload_identity_pool.github
-  id = "projects/agrolink-api-prod/locations/global/workloadIdentityPools/github-pool"
-}
-
 resource "google_iam_workload_identity_pool" "github" {
   workload_identity_pool_id = "github-pool"
   display_name              = "GitHub Actions Pool"
