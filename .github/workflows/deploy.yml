@@ -92,7 +92,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
@@ -103,7 +103,7 @@ jobs:
       - name: Set image tag
         run: |
           SHORT_SHA="${GITHUB_SHA:0:7}"
-          REPO="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/agrolink/${{ env.IMAGE_NAME }}"
+          REPO="${{ env.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/agrolink/${{ env.IMAGE_NAME }}"
           echo "IMAGE_TAG=${REPO}:${SHORT_SHA}" >> $GITHUB_ENV
           echo "IMAGE_LATEST=${REPO}:latest" >> $GITHUB_ENV
 
@@ -131,26 +131,26 @@ jobs:
           BUNDLE_KEY="migrations/migrations-${GITHUB_SHA:0:7}.tar.gz"
           tar -czf /tmp/bundle.tar.gz -C /tmp migrations-bundle
           gcloud storage cp /tmp/bundle.tar.gz \
-            "gs://${{ secrets.GCP_PROJECT_ID }}-agrolink-migrations/${BUNDLE_KEY}"
+            "gs://${{ vars.GCP_PROJECT_ID }}-agrolink-migrations/${BUNDLE_KEY}"
 
-          CLOUD_SQL_INSTANCE="${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:agrolink-pg"
+          CLOUD_SQL_INSTANCE="${{ vars.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:agrolink-pg"
 
           echo "Running migrations via Cloud Run Job..."
           gcloud run jobs create "agrolink-migrate-${GITHUB_SHA:0:7}" \
             --image "$IMAGE_TAG" \
             --region "${{ env.GCP_REGION }}" \
-            --service-account "${{ secrets.GCP_SERVICE_ACCOUNT }}" \
+            --service-account "${{ vars.GCP_SERVICE_ACCOUNT }}" \
             --set-cloudsql-instances "$CLOUD_SQL_INSTANCE" \
             --set-secrets "ConnectionStrings__DefaultConnection=agrolink-db-password:latest" \
             --command "/app/migrations-bundle" \
             --max-retries 1 \
             --task-timeout 300s \
-            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
             || true
 
           gcloud run jobs execute "agrolink-migrate-${GITHUB_SHA:0:7}" \
             --region "${{ env.GCP_REGION }}" \
-            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
             --wait
 
       - name: Deploy to Cloud Run
@@ -158,7 +158,7 @@ jobs:
           gcloud run deploy agrolink-api \
             --image "$IMAGE_TAG" \
             --region "${{ env.GCP_REGION }}" \
-            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
             --platform managed \
             --no-traffic \
             --tag "sha-${GITHUB_SHA:0:7}"
@@ -166,7 +166,7 @@ jobs:
           echo "Shifting traffic to new revision..."
           gcloud run services update-traffic agrolink-api \
             --region "${{ env.GCP_REGION }}" \
-            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
             --to-latest
 
           echo "Deploy complete: $IMAGE_TAG"
