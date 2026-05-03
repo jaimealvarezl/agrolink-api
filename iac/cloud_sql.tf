@@ -26,12 +26,7 @@ resource "google_sql_database_instance" "postgres" {
     }
 
     ip_configuration {
-      ipv4_enabled = false
-      # Cloud Run connects via the Cloud SQL connector — no public IP needed.
-      psc_config {
-        psc_enabled               = false
-        allowed_consumer_projects = []
-      }
+      ipv4_enabled = true
     }
 
     insights_config {
