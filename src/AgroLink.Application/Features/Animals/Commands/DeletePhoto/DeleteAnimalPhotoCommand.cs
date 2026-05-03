@@ -73,7 +73,7 @@ public class DeleteAnimalPhotoCommandHandler(
             }
         }
 
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

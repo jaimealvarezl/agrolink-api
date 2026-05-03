@@ -85,7 +85,7 @@ public class UpdatePaddockCommandHandler(
         paddock.UpdatedAt = DateTime.UtcNow;
 
         paddockRepository.Update(paddock);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
 

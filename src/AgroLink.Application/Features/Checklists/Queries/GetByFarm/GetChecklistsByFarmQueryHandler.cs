@@ -36,30 +36,39 @@ public class GetChecklistsByFarmQueryHandler(
         var userIds = checklistList.Select(c => c.UserId).Distinct().ToList();
         var lotIds = checklistList.Select(c => c.LotId).Distinct().ToList();
 
-        var users = (await userRepository.FindAsync(u => userIds.Contains(u.Id))).ToDictionary(u =>
-            u.Id
-        );
-        var lots = (await lotRepository.FindAsync(l => lotIds.Contains(l.Id))).ToDictionary(l =>
-            l.Id
-        );
+        var users = (
+            await userRepository.FindAsync(u => userIds.Contains(u.Id), cancellationToken)
+        ).ToDictionary(u => u.Id);
+        var lots = (
+            await lotRepository.FindAsync(l => lotIds.Contains(l.Id), cancellationToken)
+        ).ToDictionary(l => l.Id);
         var allItems = (
-            await checklistItemRepository.FindAsync(ci => checklistIds.Contains(ci.ChecklistId))
+            await checklistItemRepository.FindAsync(
+                ci => checklistIds.Contains(ci.ChecklistId),
+                cancellationToken
+            )
         ).ToList();
 
         var animalIds = allItems.Select(i => i.AnimalId).Distinct().ToList();
         var animals =
             animalIds.Count > 0
-                ? (await animalRepository.FindAsync(a => animalIds.Contains(a.Id))).ToDictionary(
-                    a => a.Id
-                )
+                ? (
+                    await animalRepository.FindAsync(
+                        a => animalIds.Contains(a.Id),
+                        cancellationToken
+                    )
+                ).ToDictionary(a => a.Id)
                 : new Dictionary<int, Animal>();
 
         var animalLotIds = animals.Values.Select(a => a.LotId).Distinct().ToList();
         var animalLots =
             animalLotIds.Count > 0
-                ? (await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id))).ToDictionary(
-                    l => l.Id
-                )
+                ? (
+                    await lotRepository.FindAsync(
+                        l => animalLotIds.Contains(l.Id),
+                        cancellationToken
+                    )
+                ).ToDictionary(l => l.Id)
                 : new Dictionary<int, Lot>();
 
         var itemsByChecklist = allItems

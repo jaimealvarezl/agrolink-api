@@ -60,10 +60,11 @@ public class RetireAnimalCommandHandler(
             CreatedAt = now,
         };
 
-        await animalRetirementRepository.AddAsync(retirement);
-        await unitOfWork.SaveChangesAsync();
+        await animalRetirementRepository.AddAsync(retirement, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        retirement.User = await userRepository.GetByIdAsync(request.UserId) ?? retirement.User;
+        retirement.User =
+            await userRepository.GetByIdAsync(request.UserId, cancellationToken) ?? retirement.User;
 
         return AnimalRetirementDto.From(retirement);
     }

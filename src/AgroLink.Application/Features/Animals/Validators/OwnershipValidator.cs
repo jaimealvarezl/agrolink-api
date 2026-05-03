@@ -5,7 +5,11 @@ namespace AgroLink.Application.Features.Animals.Validators;
 
 public class OwnershipValidator(IOwnerRepository ownerRepository) : IOwnershipValidator
 {
-    public async Task ValidateAsync(List<AnimalOwnerCreateDto> owners, int targetFarmId)
+    public async Task ValidateAsync(
+        List<AnimalOwnerCreateDto> owners,
+        int targetFarmId,
+        CancellationToken cancellationToken = default
+    )
     {
         var total = owners.Sum(o => o.SharePercent);
         if (total != 100)
@@ -16,7 +20,10 @@ public class OwnershipValidator(IOwnerRepository ownerRepository) : IOwnershipVa
         }
 
         var ownerIds = owners.Select(o => o.OwnerId).Distinct().ToList();
-        var existingOwners = await ownerRepository.FindAsync(o => ownerIds.Contains(o.Id));
+        var existingOwners = await ownerRepository.FindAsync(
+            o => ownerIds.Contains(o.Id),
+            cancellationToken
+        );
         var ownersDict = existingOwners.ToDictionary(o => o.Id);
 
         foreach (var ownerDto in owners)

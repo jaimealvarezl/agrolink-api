@@ -50,7 +50,10 @@ public class CreateAnimalNoteCommandHandlerTests
         result.UserName.ShouldBe("Dr. Smith");
         _mocker
             .GetMock<IAnimalNoteRepository>()
-            .Verify(r => r.AddAsync(It.IsAny<AnimalNote>()), Times.Once);
+            .Verify(
+                r => r.AddAsync(It.IsAny<AnimalNote>(), It.IsAny<CancellationToken>()),
+                Times.Once
+            );
         _mocker.GetMock<IUnitOfWork>().Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 

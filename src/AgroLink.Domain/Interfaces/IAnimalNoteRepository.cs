@@ -6,6 +6,6 @@ public interface IAnimalNoteRepository
 {
     Task<IEnumerable<AnimalNote>> GetByAnimalIdAsync(int animalId);
     Task<AnimalNote?> GetByIdAsync(int id);
-    Task AddAsync(AnimalNote note);
+    Task AddAsync(AnimalNote note, CancellationToken cancellationToken);
     void Remove(AnimalNote note);
 }

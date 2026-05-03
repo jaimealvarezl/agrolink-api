@@ -58,8 +58,9 @@ public class UpdateAnimalCommandHandler(
 
             if (newLot.Paddock.FarmId != farmId)
             {
-                var isMemberNewFarm = await farmMemberRepository.ExistsAsync(fm =>
-                    fm.FarmId == newLot.Paddock.FarmId && fm.UserId == request.UserId
+                var isMemberNewFarm = await farmMemberRepository.ExistsAsync(
+                    fm => fm.FarmId == newLot.Paddock.FarmId && fm.UserId == request.UserId,
+                    cancellationToken
                 );
                 if (!isMemberNewFarm)
                 {
@@ -190,7 +191,7 @@ public class UpdateAnimalCommandHandler(
                 throw new ArgumentException("At least one owner is required for an animal.");
             }
 
-            await ownershipValidator.ValidateAsync(dto.Owners, farmId);
+            await ownershipValidator.ValidateAsync(dto.Owners, farmId, cancellationToken);
 
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id);
 
@@ -202,11 +203,11 @@ public class UpdateAnimalCommandHandler(
                     OwnerId = ownerDto.OwnerId,
                     SharePercent = ownerDto.SharePercent,
                 };
-                await animalOwnerRepository.AddAsync(animalOwner);
+                await animalOwnerRepository.AddAsync(animalOwner, cancellationToken);
             }
         }
 
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var lot = await lotRepository.GetByIdAsync(animal.LotId);
         var mother = animal.MotherId.HasValue

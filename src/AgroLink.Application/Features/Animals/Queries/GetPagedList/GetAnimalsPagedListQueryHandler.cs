@@ -21,8 +21,9 @@ public class GetAnimalsPagedListQueryHandler(
     )
     {
         var userId = currentUserService.GetRequiredUserId();
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.UserId == userId && fm.FarmId == request.FarmId
+        var isMember = await farmMemberRepository.ExistsAsync(
+            fm => fm.UserId == userId && fm.FarmId == request.FarmId,
+            cancellationToken
         );
 
         if (!isMember)

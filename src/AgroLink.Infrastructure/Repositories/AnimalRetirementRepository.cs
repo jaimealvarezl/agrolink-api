@@ -15,8 +15,8 @@ public class AnimalRetirementRepository(AgroLinkDbContext context) : IAnimalReti
             .FirstOrDefaultAsync(r => r.AnimalId == animalId);
     }
 
-    public async Task AddAsync(AnimalRetirement retirement)
+    public async Task AddAsync(AnimalRetirement retirement, CancellationToken cancellationToken)
     {
-        await context.AnimalRetirements.AddAsync(retirement);
+        await context.AnimalRetirements.AddAsync(retirement, cancellationToken);
     }
 }

@@ -29,7 +29,7 @@ public class UpdateProfileCommandHandler(
         user.UpdatedAt = DateTime.UtcNow;
         userRepository.Update(user);
 
-        var owners = await ownerRepository.FindAsync(o => o.UserId == userId);
+        var owners = await ownerRepository.FindAsync(o => o.UserId == userId, cancellationToken);
         foreach (var owner in owners)
         {
             owner.Name = request.Request.Name;
@@ -37,7 +37,7 @@ public class UpdateProfileCommandHandler(
             ownerRepository.Update(owner);
         }
 
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new UserDto
         {

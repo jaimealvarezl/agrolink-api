@@ -17,11 +17,17 @@ public class GetAllFarmsQueryHandler(
     )
     {
         // Get all memberships
-        var memberships = await farmMemberRepository.FindAsync(m => m.UserId == request.UserId);
+        var memberships = await farmMemberRepository.FindAsync(
+            m => m.UserId == request.UserId,
+            cancellationToken
+        );
         var memberFarmIds = memberships.Select(m => m.FarmId).ToList();
 
         // Get all farms the user has access to
-        var farms = await farmRepository.FindAsync(f => memberFarmIds.Contains(f.Id));
+        var farms = await farmRepository.FindAsync(
+            f => memberFarmIds.Contains(f.Id),
+            cancellationToken
+        );
 
         return farms.Select(f =>
         {

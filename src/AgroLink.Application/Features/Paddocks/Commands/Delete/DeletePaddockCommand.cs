@@ -30,6 +30,6 @@ public class DeletePaddockCommandHandler(
         }
 
         paddockRepository.Remove(paddock);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

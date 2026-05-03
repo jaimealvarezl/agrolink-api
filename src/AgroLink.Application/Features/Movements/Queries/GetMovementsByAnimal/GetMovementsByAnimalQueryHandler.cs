@@ -50,14 +50,14 @@ public class GetMovementsByAnimalQueryHandler(
             .ToList();
 
         // Fetch Users
-        var users = await userRepository.FindAsync(u => userIds.Contains(u.Id));
+        var users = await userRepository.FindAsync(u => userIds.Contains(u.Id), cancellationToken);
         var usersDict = users.ToDictionary(u => u.Id, u => u.Name);
 
         // Fetch Lots
         var lotsDict = new Dictionary<int, string>();
         if (lotIds.Any())
         {
-            var lots = await lotRepository.FindAsync(l => lotIds.Contains(l.Id));
+            var lots = await lotRepository.FindAsync(l => lotIds.Contains(l.Id), cancellationToken);
             lotsDict = lots.ToDictionary(l => l.Id, l => l.Name);
         }
 

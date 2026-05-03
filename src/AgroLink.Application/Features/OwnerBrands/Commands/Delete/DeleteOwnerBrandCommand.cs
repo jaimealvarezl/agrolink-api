@@ -18,8 +18,9 @@ public class DeleteOwnerBrandCommandHandler(
 {
     public async Task Handle(DeleteOwnerBrandCommand request, CancellationToken cancellationToken)
     {
-        var ownerExists = await ownerRepository.ExistsAsync(o =>
-            o.Id == request.OwnerId && o.FarmId == request.FarmId
+        var ownerExists = await ownerRepository.ExistsAsync(
+            o => o.Id == request.OwnerId && o.FarmId == request.FarmId,
+            cancellationToken
         );
         if (!ownerExists)
         {
@@ -28,8 +29,9 @@ public class DeleteOwnerBrandCommandHandler(
             );
         }
 
-        var brand = await ownerBrandRepository.FirstOrDefaultAsync(b =>
-            b.Id == request.BrandId && b.OwnerId == request.OwnerId
+        var brand = await ownerBrandRepository.FirstOrDefaultAsync(
+            b => b.Id == request.BrandId && b.OwnerId == request.OwnerId,
+            cancellationToken
         );
         if (brand == null)
         {
@@ -44,7 +46,7 @@ public class DeleteOwnerBrandCommandHandler(
         brand.UpdatedAt = DateTime.UtcNow;
 
         ownerBrandRepository.Update(brand);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         if (photoStorageKey != null)
         {

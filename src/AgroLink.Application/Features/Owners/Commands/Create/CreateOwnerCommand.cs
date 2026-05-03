@@ -25,7 +25,10 @@ public class CreateOwnerCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var farmExists = await farmRepository.ExistsAsync(f => f.Id == request.FarmId);
+        var farmExists = await farmRepository.ExistsAsync(
+            f => f.Id == request.FarmId,
+            cancellationToken
+        );
         if (!farmExists)
         {
             throw new NotFoundException($"Farm with ID {request.FarmId} not found.");
@@ -47,7 +50,7 @@ public class CreateOwnerCommandHandler(
                 existingOwner.UpdatedAt = DateTime.UtcNow;
 
                 ownerRepository.Update(existingOwner);
-                await unitOfWork.SaveChangesAsync();
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 return MapToDto(existingOwner);
             }
@@ -67,8 +70,8 @@ public class CreateOwnerCommandHandler(
             IsActive = true,
         };
 
-        await ownerRepository.AddAsync(owner);
-        await unitOfWork.SaveChangesAsync();
+        await ownerRepository.AddAsync(owner, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return MapToDto(owner);
     }

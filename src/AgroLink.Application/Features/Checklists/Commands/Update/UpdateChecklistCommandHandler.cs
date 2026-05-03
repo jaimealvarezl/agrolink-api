@@ -62,7 +62,9 @@ public class UpdateChecklistCommandHandler(
 
         // Validate all animal IDs exist
         var animalIds = dto.Items.Select(i => i.AnimalId).Distinct().ToList();
-        var animals = (await animalRepository.FindAsync(a => animalIds.Contains(a.Id))).ToList();
+        var animals = (
+            await animalRepository.FindAsync(a => animalIds.Contains(a.Id), cancellationToken)
+        ).ToList();
         if (animals.Count != animalIds.Count)
         {
             var foundIds = animals.Select(a => a.Id).ToHashSet();
@@ -77,7 +79,7 @@ public class UpdateChecklistCommandHandler(
         // Batch-fetch animal lots for DTO mapping
         var animalLotIds = animals.Select(a => a.LotId).Distinct().ToList();
         var animalLots = (
-            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id))
+            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id), cancellationToken)
         ).ToDictionary(l => l.Id);
 
         // Update checklist
@@ -89,8 +91,9 @@ public class UpdateChecklistCommandHandler(
         checklistRepository.Update(checklist);
 
         // Replace items
-        var existingItems = await checklistItemRepository.FindAsync(ci =>
-            ci.ChecklistId == request.Id
+        var existingItems = await checklistItemRepository.FindAsync(
+            ci => ci.ChecklistId == request.Id,
+            cancellationToken
         );
         checklistItemRepository.RemoveRange(existingItems);
 
@@ -105,9 +108,9 @@ public class UpdateChecklistCommandHandler(
             })
             .ToList();
 
-        await checklistItemRepository.AddRangeAsync(newItems);
+        await checklistItemRepository.AddRangeAsync(newItems, cancellationToken);
 
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Map to DTO
         var user = await userRepository.GetByIdAsync(checklist.UserId);

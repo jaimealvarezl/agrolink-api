@@ -33,8 +33,8 @@ public class CreateAnimalNoteCommandHandler(
             CreatedAt = DateTime.UtcNow,
         };
 
-        await animalNoteRepository.AddAsync(note);
-        await unitOfWork.SaveChangesAsync();
+        await animalNoteRepository.AddAsync(note, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var user = await userRepository.GetByIdAsync(request.UserId);
 

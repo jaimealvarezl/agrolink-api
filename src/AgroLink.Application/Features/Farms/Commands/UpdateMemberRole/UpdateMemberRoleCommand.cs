@@ -35,7 +35,7 @@ public class UpdateMemberRoleCommandHandler(
 
         member.Role = request.NewRole;
         farmMemberRepository.Update(member);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new FarmMemberDto
         {

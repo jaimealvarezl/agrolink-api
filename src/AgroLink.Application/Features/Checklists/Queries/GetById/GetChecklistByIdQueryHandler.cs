@@ -36,27 +36,33 @@ public class GetChecklistByIdQueryHandler(
             }
         }
 
-        return await MapToDtoAsync(checklist);
+        return await MapToDtoAsync(checklist, cancellationToken);
     }
 
-    private async Task<ChecklistDto> MapToDtoAsync(Checklist checklist)
+    private async Task<ChecklistDto> MapToDtoAsync(
+        Checklist checklist,
+        CancellationToken cancellationToken
+    )
     {
         var user = await userRepository.GetByIdAsync(checklist.UserId);
         var lot = await lotRepository.GetByIdAsync(checklist.LotId);
         var items = (
-            await checklistItemRepository.FindAsync(ci => ci.ChecklistId == checklist.Id)
+            await checklistItemRepository.FindAsync(
+                ci => ci.ChecklistId == checklist.Id,
+                cancellationToken
+            )
         ).ToList();
 
         // Batch-fetch animals
         var animalIds = items.Select(i => i.AnimalId).Distinct().ToList();
         var animals = (
-            await animalRepository.FindAsync(a => animalIds.Contains(a.Id))
+            await animalRepository.FindAsync(a => animalIds.Contains(a.Id), cancellationToken)
         ).ToDictionary(a => a.Id);
 
         // Batch-fetch animal lots
         var animalLotIds = animals.Values.Select(a => a.LotId).Distinct().ToList();
         var animalLots = (
-            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id))
+            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id), cancellationToken)
         ).ToDictionary(l => l.Id);
 
         var itemDtos = items

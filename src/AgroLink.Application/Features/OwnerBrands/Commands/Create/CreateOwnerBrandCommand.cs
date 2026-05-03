@@ -22,8 +22,9 @@ public class CreateOwnerBrandCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var ownerExists = await ownerRepository.ExistsAsync(o =>
-            o.Id == request.OwnerId && o.FarmId == request.FarmId
+        var ownerExists = await ownerRepository.ExistsAsync(
+            o => o.Id == request.OwnerId && o.FarmId == request.FarmId,
+            cancellationToken
         );
         if (!ownerExists)
         {
@@ -40,8 +41,8 @@ public class CreateOwnerBrandCommandHandler(
             CreatedAt = DateTime.UtcNow,
         };
 
-        await ownerBrandRepository.AddAsync(brand);
-        await unitOfWork.SaveChangesAsync();
+        await ownerBrandRepository.AddAsync(brand, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return brand.ToDto(storageService);
     }

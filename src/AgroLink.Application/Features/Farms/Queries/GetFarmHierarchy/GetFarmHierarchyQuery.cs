@@ -17,8 +17,9 @@ public class GetFarmHierarchyQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var hasAccess = await farmMemberRepository.ExistsAsync(fm =>
-            fm.FarmId == request.Id && fm.UserId == request.UserId
+        var hasAccess = await farmMemberRepository.ExistsAsync(
+            fm => fm.FarmId == request.Id && fm.UserId == request.UserId,
+            cancellationToken
         );
 
         if (!hasAccess)
@@ -27,8 +28,9 @@ public class GetFarmHierarchyQueryHandler(
             var farmRecord = await farmRepository.GetByIdAsync(request.Id);
             if (farmRecord != null)
             {
-                hasAccess = await ownerRepository.ExistsAsync(o =>
-                    o.Id == farmRecord.OwnerId && o.UserId == request.UserId
+                hasAccess = await ownerRepository.ExistsAsync(
+                    o => o.Id == farmRecord.OwnerId && o.UserId == request.UserId,
+                    cancellationToken
                 );
             }
         }

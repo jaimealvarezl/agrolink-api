@@ -49,7 +49,9 @@ public class CreateChecklistCommandHandler(
         }
 
         var animalIds = validItems.Select(i => i.AnimalId).Distinct().ToList();
-        var animals = (await animalRepository.FindAsync(a => animalIds.Contains(a.Id))).ToList();
+        var animals = (
+            await animalRepository.FindAsync(a => animalIds.Contains(a.Id), cancellationToken)
+        ).ToList();
         if (animals.Count != animalIds.Count)
         {
             var foundIds = animals.Select(a => a.Id).ToHashSet();
@@ -64,7 +66,7 @@ public class CreateChecklistCommandHandler(
         // Batch-fetch animal lots for DTO mapping
         var animalLotIds = animals.Select(a => a.LotId).Distinct().ToList();
         var animalLots = (
-            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id))
+            await lotRepository.FindAsync(l => animalLotIds.Contains(l.Id), cancellationToken)
         ).ToDictionary(l => l.Id);
 
         // Create checklist with items using EF Core relationship fix-up
@@ -89,8 +91,8 @@ public class CreateChecklistCommandHandler(
             );
         }
 
-        await checklistRepository.AddAsync(checklist);
-        await unitOfWork.SaveChangesAsync();
+        await checklistRepository.AddAsync(checklist, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Map to DTO using pre-fetched data
         var user = await userRepository.GetByIdAsync(checklist.UserId);

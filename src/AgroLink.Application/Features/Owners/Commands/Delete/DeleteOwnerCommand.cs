@@ -25,8 +25,9 @@ public class DeleteOwnerCommandHandler(
             throw new ArgumentException("Cannot delete the main owner of the farm.");
         }
 
-        var owner = await ownerRepository.FirstOrDefaultAsync(o =>
-            o.Id == request.OwnerId && o.FarmId == request.FarmId
+        var owner = await ownerRepository.FirstOrDefaultAsync(
+            o => o.Id == request.OwnerId && o.FarmId == request.FarmId,
+            cancellationToken
         );
 
         if (owner == null)
@@ -38,6 +39,6 @@ public class DeleteOwnerCommandHandler(
         owner.UpdatedAt = DateTime.UtcNow;
 
         ownerRepository.Update(owner);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

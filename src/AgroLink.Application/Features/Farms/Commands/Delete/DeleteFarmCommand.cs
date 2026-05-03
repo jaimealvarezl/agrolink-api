@@ -22,6 +22,6 @@ public class DeleteFarmCommandHandler(IFarmRepository farmRepository, IUnitOfWor
         farm.UpdatedAt = DateTime.UtcNow;
 
         farmRepository.Update(farm);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

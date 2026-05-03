@@ -55,9 +55,9 @@ public class UpdateLotCommandHandler(
         lot.UpdatedAt = DateTime.UtcNow;
 
         lotRepository.Update(lot);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
+        var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId, cancellationToken);
 
         return new LotDto
         {

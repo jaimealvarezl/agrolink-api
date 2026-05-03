@@ -40,8 +40,9 @@ public class UploadOwnerBrandPhotoCommandHandler(
             cancellationToken
         );
 
-        var ownerExists = await ownerRepository.ExistsAsync(o =>
-            o.Id == request.OwnerId && o.FarmId == request.FarmId
+        var ownerExists = await ownerRepository.ExistsAsync(
+            o => o.Id == request.OwnerId && o.FarmId == request.FarmId,
+            cancellationToken
         );
         if (!ownerExists)
         {
@@ -50,8 +51,9 @@ public class UploadOwnerBrandPhotoCommandHandler(
             );
         }
 
-        var brand = await ownerBrandRepository.FirstOrDefaultAsync(b =>
-            b.Id == request.BrandId && b.OwnerId == request.OwnerId
+        var brand = await ownerBrandRepository.FirstOrDefaultAsync(
+            b => b.Id == request.BrandId && b.OwnerId == request.OwnerId,
+            cancellationToken
         );
         if (brand == null)
         {
@@ -81,7 +83,7 @@ public class UploadOwnerBrandPhotoCommandHandler(
             brand.UpdatedAt = DateTime.UtcNow;
 
             ownerBrandRepository.Update(brand);
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (oldStorageKey != null)
             {

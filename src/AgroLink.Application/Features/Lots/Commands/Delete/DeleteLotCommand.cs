@@ -36,6 +36,6 @@ public class DeleteLotCommandHandler(
         }
 
         lotRepository.Remove(lot);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

@@ -36,6 +36,6 @@ public class DeleteAnimalCommandHandler(
         animal.UpdatedAt = DateTime.UtcNow;
 
         animalRepository.Update(animal);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

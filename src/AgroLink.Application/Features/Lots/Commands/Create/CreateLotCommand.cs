@@ -30,8 +30,8 @@ public class CreateLotCommandHandler(
             Status = dto.Status ?? "ACTIVE",
         };
 
-        await lotRepository.AddAsync(lot);
-        await unitOfWork.SaveChangesAsync();
+        await lotRepository.AddAsync(lot, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new LotDto
         {

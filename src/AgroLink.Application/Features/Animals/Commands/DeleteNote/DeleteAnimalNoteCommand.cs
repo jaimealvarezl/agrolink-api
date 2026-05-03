@@ -25,6 +25,6 @@ public class DeleteAnimalNoteCommandHandler(
         }
 
         animalNoteRepository.Remove(note);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

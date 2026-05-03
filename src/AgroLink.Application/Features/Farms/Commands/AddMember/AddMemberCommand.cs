@@ -41,8 +41,8 @@ public class AddMemberCommandHandler(
             JoinedAt = DateTime.UtcNow,
         };
 
-        await farmMemberRepository.AddAsync(member);
-        await unitOfWork.SaveChangesAsync();
+        await farmMemberRepository.AddAsync(member, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new FarmMemberDto
         {

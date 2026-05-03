@@ -41,8 +41,9 @@ public class CreatePaddockCommandHandler(
             throw new ArgumentException($"Farm with ID {request.FarmId} not found.");
         }
 
-        var member = await farmMemberRepository.FirstOrDefaultAsync(m =>
-            m.FarmId == request.FarmId && m.UserId == userId
+        var member = await farmMemberRepository.FirstOrDefaultAsync(
+            m => m.FarmId == request.FarmId && m.UserId == userId,
+            cancellationToken
         );
 
         if (member == null)
@@ -80,8 +81,8 @@ public class CreatePaddockCommandHandler(
             AreaType = request.AreaType,
         };
 
-        await paddockRepository.AddAsync(paddock);
-        await unitOfWork.SaveChangesAsync();
+        await paddockRepository.AddAsync(paddock, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new PaddockDto
         {

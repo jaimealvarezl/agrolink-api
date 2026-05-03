@@ -43,7 +43,10 @@ public class CreateMovementCommandHandler(
         var userName = user?.Name ?? string.Empty;
 
         // Fetch all requested animals in a single query
-        var animals = await animalRepository.FindAsync(a => animalIds.Contains(a.Id));
+        var animals = await animalRepository.FindAsync(
+            a => animalIds.Contains(a.Id),
+            cancellationToken
+        );
         var animalsList = animals.ToList();
 
         if (animalsList.Count != animalIds.Distinct().Count())
@@ -99,7 +102,7 @@ public class CreateMovementCommandHandler(
                 movementDataList.Add((movement, animal.TagVisual, fromLotName));
             }
 
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
             await unitOfWork.CommitTransactionAsync();
         }
         catch

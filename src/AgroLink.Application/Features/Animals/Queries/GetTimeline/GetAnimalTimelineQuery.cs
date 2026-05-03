@@ -62,15 +62,17 @@ public class GetAnimalTimelineQueryHandler(
                 .Distinct()
                 .ToList();
 
-            var users = (await userRepository.FindAsync(u => userIds.Contains(u.Id))).ToDictionary(
-                u => u.Id,
-                u => u.Name
-            );
+            var users = (
+                await userRepository.FindAsync(u => userIds.Contains(u.Id), cancellationToken)
+            ).ToDictionary(u => u.Id, u => u.Name);
 
             var lots = new Dictionary<int, string>();
             if (lotIds.Count > 0)
             {
-                var lotsResult = await lotRepository.FindAsync(l => lotIds.Contains(l.Id));
+                var lotsResult = await lotRepository.FindAsync(
+                    l => lotIds.Contains(l.Id),
+                    cancellationToken
+                );
                 lots = lotsResult.ToDictionary(l => l.Id, l => l.Name);
             }
 

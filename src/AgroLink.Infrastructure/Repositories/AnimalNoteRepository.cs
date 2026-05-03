@@ -22,9 +22,9 @@ public class AnimalNoteRepository(AgroLinkDbContext context) : IAnimalNoteReposi
         return await context.AnimalNotes.FindAsync(id);
     }
 
-    public async Task AddAsync(AnimalNote note)
+    public async Task AddAsync(AnimalNote note, CancellationToken cancellationToken)
     {
-        await context.AnimalNotes.AddAsync(note);
+        await context.AnimalNotes.AddAsync(note, cancellationToken);
     }
 
     public void Remove(AnimalNote note)

@@ -66,8 +66,9 @@ public class MoveAnimalCommandHandler(
             );
         }
 
-        var isMemberOfTargetFarm = await farmMemberRepository.ExistsAsync(fm =>
-            fm.FarmId == targetLot.Paddock.FarmId && fm.UserId == request.UserId
+        var isMemberOfTargetFarm = await farmMemberRepository.ExistsAsync(
+            fm => fm.FarmId == targetLot.Paddock.FarmId && fm.UserId == request.UserId,
+            cancellationToken
         );
 
         if (!isMemberOfTargetFarm)
@@ -93,7 +94,7 @@ public class MoveAnimalCommandHandler(
         };
         await movementRepository.AddMovementAsync(movement);
 
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Refresh data for response
         var lot = await lotRepository.GetByIdAsync(animal.LotId);

@@ -19,8 +19,9 @@ public class GetOwnerBrandsQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var ownerExists = await ownerRepository.ExistsAsync(o =>
-            o.Id == request.OwnerId && o.FarmId == request.FarmId
+        var ownerExists = await ownerRepository.ExistsAsync(
+            o => o.Id == request.OwnerId && o.FarmId == request.FarmId,
+            cancellationToken
         );
         if (!ownerExists)
         {
@@ -29,7 +30,10 @@ public class GetOwnerBrandsQueryHandler(
             );
         }
 
-        var brands = await ownerBrandRepository.FindAsync(b => b.OwnerId == request.OwnerId);
+        var brands = await ownerBrandRepository.FindAsync(
+            b => b.OwnerId == request.OwnerId,
+            cancellationToken
+        );
 
         return brands.Select(b => b.ToDto(storageService));
     }

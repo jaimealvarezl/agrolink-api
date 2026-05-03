@@ -89,8 +89,8 @@ public class UploadAnimalPhotoCommandHandler(
             UploadedAt = DateTime.UtcNow,
         };
 
-        await animalPhotoRepository.AddAsync(animalPhoto);
-        await unitOfWork.SaveChangesAsync();
+        await animalPhotoRepository.AddAsync(animalPhoto, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         logger.LogInformation(
             "Database record created with temporary state. PhotoId: {PhotoId}",
             animalPhoto.Id
@@ -117,7 +117,7 @@ public class UploadAnimalPhotoCommandHandler(
 
             animalPhoto.UriRemote = storageService.GetFileUrl(key);
             animalPhoto.StorageKey = key;
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation(
                 "Photo upload and database update completed successfully. URL: {Url}",
@@ -139,7 +139,7 @@ public class UploadAnimalPhotoCommandHandler(
                 animalPhoto.Id
             );
             animalPhotoRepository.Remove(animalPhoto);
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             throw new InvalidOperationException(
                 $"Failed to upload photo to storage: {ex.Message}",

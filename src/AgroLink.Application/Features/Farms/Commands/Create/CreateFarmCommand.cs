@@ -37,10 +37,10 @@ public class CreateFarmCommandHandler(
             // 1. Create the Owner first (with FarmId = null)
             var owner = new Owner { Name = user.Name, UserId = userId };
 
-            await ownerRepository.AddAsync(owner);
+            await ownerRepository.AddAsync(owner, cancellationToken);
 
             // Save to get the owner.Id
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             // 2. Create the Farm (linked to the newly created Owner)
             var farm = new Farm
@@ -51,10 +51,10 @@ public class CreateFarmCommandHandler(
                 OwnerId = owner.Id, // Link via FK instead of navigation property initially
             };
 
-            await farmRepository.AddAsync(farm);
+            await farmRepository.AddAsync(farm, cancellationToken);
 
             // Save to get the farm.Id
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             // 3. Link the Owner back to the Farm
             owner.FarmId = farm.Id;
@@ -67,10 +67,10 @@ public class CreateFarmCommandHandler(
                 Role = FarmMemberRoles.Owner,
             };
 
-            await farmMemberRepository.AddAsync(member);
+            await farmMemberRepository.AddAsync(member, cancellationToken);
 
             // Final save persists the owner.FarmId link and the member
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             await unitOfWork.CommitTransactionAsync();
 

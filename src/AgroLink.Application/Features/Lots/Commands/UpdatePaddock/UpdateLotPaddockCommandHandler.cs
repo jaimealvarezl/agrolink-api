@@ -44,7 +44,7 @@ public class UpdateLotPaddockCommandHandler(
         lot.UpdatedAt = DateTime.UtcNow;
 
         lotRepository.Update(lot);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new LotDto
         {

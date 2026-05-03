@@ -32,7 +32,7 @@ public class SetAnimalProfilePhotoCommandHandler(
         }
 
         await animalPhotoRepository.SetProfilePhotoAsync(request.AnimalId, request.PhotoId);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

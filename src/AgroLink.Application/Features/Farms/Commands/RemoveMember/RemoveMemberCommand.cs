@@ -21,8 +21,9 @@ public class RemoveMemberCommandHandler(
         // Security Check: Prevent removing the last Owner of the farm
         if (member.Role == FarmMemberRoles.Owner)
         {
-            var ownersCount = await farmMemberRepository.CountAsync(fm =>
-                fm.FarmId == request.FarmId && fm.Role == FarmMemberRoles.Owner
+            var ownersCount = await farmMemberRepository.CountAsync(
+                fm => fm.FarmId == request.FarmId && fm.Role == FarmMemberRoles.Owner,
+                cancellationToken
             );
 
             if (ownersCount <= 1)
@@ -34,6 +35,6 @@ public class RemoveMemberCommandHandler(
         }
 
         farmMemberRepository.Remove(member);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

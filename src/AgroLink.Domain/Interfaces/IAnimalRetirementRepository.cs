@@ -5,5 +5,5 @@ namespace AgroLink.Domain.Interfaces;
 public interface IAnimalRetirementRepository
 {
     Task<AnimalRetirement?> GetByAnimalIdAsync(int animalId);
-    Task AddAsync(AnimalRetirement retirement);
+    Task AddAsync(AnimalRetirement retirement, CancellationToken cancellationToken);
 }

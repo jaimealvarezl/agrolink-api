@@ -49,8 +49,9 @@ public class CreateAnimalCommandHandler(
         }
 
         var userId = currentUserService.GetRequiredUserId();
-        var isMember = await farmMemberRepository.ExistsAsync(fm =>
-            fm.FarmId == farmId && fm.UserId == userId
+        var isMember = await farmMemberRepository.ExistsAsync(
+            fm => fm.FarmId == farmId && fm.UserId == userId,
+            cancellationToken
         );
         if (!isMember)
         {
@@ -119,7 +120,7 @@ public class CreateAnimalCommandHandler(
             dto.Owners.Add(new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 });
         }
 
-        await ownershipValidator.ValidateAsync(dto.Owners, farmId);
+        await ownershipValidator.ValidateAsync(dto.Owners, farmId, cancellationToken);
 
         var animal = new Animal
         {
@@ -146,8 +147,8 @@ public class CreateAnimalCommandHandler(
             );
         }
 
-        await animalRepository.AddAsync(animal);
-        await unitOfWork.SaveChangesAsync();
+        await animalRepository.AddAsync(animal, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var ownerDtos = new List<AnimalOwnerDto>();
 
