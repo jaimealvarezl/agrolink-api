@@ -21,6 +21,13 @@ resource "google_storage_bucket" "files" {
     enabled = false
   }
 
+  cors {
+    origin          = ["https://${var.domain_name}"]
+    method          = ["GET", "HEAD"]
+    response_header = ["Content-Type"]
+    max_age_seconds = 3600
+  }
+
   lifecycle_rule {
     condition {
       age = 365

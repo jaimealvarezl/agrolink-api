@@ -98,6 +98,13 @@ resource "google_storage_bucket_iam_member" "cicd_migrations_rw" {
   member = "serviceAccount:${google_service_account.cicd.email}"
 }
 
+# Allow the API service account to sign blobs (required for GCS signed URLs on Cloud Run)
+resource "google_service_account_iam_member" "api_sign_blobs" {
+  service_account_id = google_service_account.api.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.api.email}"
+}
+
 # ── Allow unauthenticated requests to the API ─────────────────────────────────
 # Public API — authentication is handled at the application layer (Firebase JWTs).
 
