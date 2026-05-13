@@ -114,36 +114,35 @@ public class UpdateAnimalCommandHandler(
         animal.HealthStatus = dto.HealthStatus ?? animal.HealthStatus;
         animal.ReproductiveStatus = dto.ReproductiveStatus ?? animal.ReproductiveStatus;
 
-        // When sex actually changed, auto-reset statuses that weren't provided and are incompatible with the new sex
+        // When sex actually changed, reset any statuses that are now incompatible with the new sex
         if (dto.Sex.HasValue && dto.Sex.Value != oldSex)
         {
             if (animal.Sex == Sex.Male)
             {
-                if (dto.ReproductiveStatus == null)
+                if (animal.ReproductiveStatus != ReproductiveStatus.NotApplicable)
                 {
                     animal.ReproductiveStatus = ReproductiveStatus.NotApplicable;
                 }
 
                 if (
-                    dto.ProductionStatus == null
-                    && animal.ProductionStatus
-                        is ProductionStatus.Heifer
-                            or ProductionStatus.Milking
-                            or ProductionStatus.Dry
+                    animal.ProductionStatus
+                    is ProductionStatus.Heifer
+                        or ProductionStatus.Milking
+                        or ProductionStatus.Dry
                 )
                 {
                     animal.ProductionStatus = ProductionStatus.Calf;
                 }
             }
-            else if (animal.Sex == Sex.Female)
-            {
-                if (
-                    dto.ProductionStatus == null
-                    && animal.ProductionStatus is ProductionStatus.Bull or ProductionStatus.Steer
-                )
+            else if (
+                animal is
                 {
-                    animal.ProductionStatus = ProductionStatus.Calf;
+                    Sex: Sex.Female,
+                    ProductionStatus: ProductionStatus.Bull or ProductionStatus.Steer
                 }
+            )
+            {
+                animal.ProductionStatus = ProductionStatus.Calf;
             }
         }
 
