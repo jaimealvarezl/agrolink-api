@@ -106,12 +106,46 @@ public class UpdateAnimalCommandHandler(
         animal.TagVisual = dto.TagVisual ?? animal.TagVisual;
         animal.Color = dto.Color ?? animal.Color;
         animal.Breed = dto.Breed ?? animal.Breed;
+        var oldSex = animal.Sex;
         animal.Sex = dto.Sex ?? animal.Sex;
 
         animal.LifeStatus = dto.LifeStatus ?? animal.LifeStatus;
         animal.ProductionStatus = dto.ProductionStatus ?? animal.ProductionStatus;
         animal.HealthStatus = dto.HealthStatus ?? animal.HealthStatus;
         animal.ReproductiveStatus = dto.ReproductiveStatus ?? animal.ReproductiveStatus;
+
+        // When sex actually changed, auto-reset statuses that weren't provided and are incompatible with the new sex
+        if (dto.Sex.HasValue && dto.Sex.Value != oldSex)
+        {
+            if (animal.Sex == Sex.Male)
+            {
+                if (dto.ReproductiveStatus == null)
+                {
+                    animal.ReproductiveStatus = ReproductiveStatus.NotApplicable;
+                }
+
+                if (
+                    dto.ProductionStatus == null
+                    && animal.ProductionStatus
+                        is ProductionStatus.Heifer
+                            or ProductionStatus.Milking
+                            or ProductionStatus.Dry
+                )
+                {
+                    animal.ProductionStatus = ProductionStatus.Calf;
+                }
+            }
+            else if (animal.Sex == Sex.Female)
+            {
+                if (
+                    dto.ProductionStatus == null
+                    && animal.ProductionStatus is ProductionStatus.Bull or ProductionStatus.Steer
+                )
+                {
+                    animal.ProductionStatus = ProductionStatus.Calf;
+                }
+            }
+        }
 
         var activeStatuses = new[] { LifeStatus.Active, LifeStatus.Missing };
         var nameChanged = dto.Name != null && dto.Name != oldName;
