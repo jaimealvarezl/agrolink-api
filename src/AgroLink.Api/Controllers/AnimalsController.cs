@@ -362,7 +362,7 @@ public class AnimalsController(IMediator mediator) : BaseController
             new CreateBcsReadingCommand(farmId, id, GetCurrentUserId(), dto),
             cancellationToken
         );
-        return CreatedAtAction(null, result);
+        return StatusCode(201, result);
     }
 
     [HttpPost("{id}/analyze-health")]

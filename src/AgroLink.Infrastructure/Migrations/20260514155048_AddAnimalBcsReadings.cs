@@ -22,7 +22,7 @@ namespace AgroLink.Infrastructure.Migrations
                     Score = table.Column<double>(type: "double precision", nullable: false),
                     Source = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     ConfirmedByUserId = table.Column<int>(type: "integer", nullable: false),
-                    RawAiResponse = table.Column<string>(type: "text", nullable: true),
+                    RawAiResponse = table.Column<string>(type: "jsonb", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

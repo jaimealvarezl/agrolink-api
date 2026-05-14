@@ -69,7 +69,8 @@ public class CreateBcsReadingCommandHandler(
             var alertNote = new AnimalNote
             {
                 AnimalId = request.AnimalId,
-                Content = $"Alerta IA: {dto.AlertDescription}",
+                Content =
+                    $"{(dto.Source == BcsReadingSource.AI ? "Alerta IA" : "Alerta")}: {dto.AlertDescription}",
                 UserId = request.UserId,
                 CreatedAt = DateTime.UtcNow,
             };

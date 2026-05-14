@@ -133,7 +133,7 @@ namespace AgroLink.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("RawAiResponse")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<double>("Score")
                         .HasColumnType("double precision");
