@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using AgroLink.Application.Features.Animals.Models;
 using AgroLink.Application.Interfaces;
@@ -16,6 +17,11 @@ public class OpenAiAnimalHealthAnalysisService(
     ILogger<OpenAiAnimalHealthAnalysisService> logger
 ) : IAnimalHealthAnalysisService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
     private readonly string _apiKey = configuration["OpenAI:ApiKey"] ?? string.Empty;
 
     private readonly string _chatBaseUrl =
@@ -94,7 +100,8 @@ public class OpenAiAnimalHealthAnalysisService(
                 },
                 max_tokens = 500,
                 response_format = new { type = "json_object" },
-            }
+            },
+            JsonOptions
         );
 
         using var request = new HttpRequestMessage(HttpMethod.Post, _chatBaseUrl)
