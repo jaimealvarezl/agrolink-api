@@ -15,7 +15,7 @@ public class DeletePaddockCommandHandler(
 {
     public async Task Handle(DeletePaddockCommand request, CancellationToken cancellationToken)
     {
-        var paddock = await paddockRepository.GetByIdAsync(request.Id);
+        var paddock = await paddockRepository.GetByIdAsync(request.Id, cancellationToken);
         if (paddock == null)
         {
             throw new ArgumentException("Paddock not found");

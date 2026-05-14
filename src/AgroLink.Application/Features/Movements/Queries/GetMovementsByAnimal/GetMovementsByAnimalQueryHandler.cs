@@ -19,7 +19,10 @@ public class GetMovementsByAnimalQueryHandler(
     )
     {
         // 1. Fetch Animal with its Lot/Paddock to check FarmId (IDOR Protection)
-        var animal = await animalRepository.GetLotWithPaddockAsync(request.AnimalId);
+        var animal = await animalRepository.GetLotWithPaddockAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         if (animal == null)
         {
             throw new NotFoundException("Animal", request.AnimalId);
@@ -32,7 +35,10 @@ public class GetMovementsByAnimalQueryHandler(
         }
 
         // 2. Fetch Movements
-        var movements = await movementRepository.GetMovementsByAnimalAsync(request.AnimalId);
+        var movements = await movementRepository.GetMovementsByAnimalAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         var movementList = movements.ToList();
 
         if (movementList.Count == 0)

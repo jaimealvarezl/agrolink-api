@@ -30,8 +30,11 @@ public class RetireAnimalCommandHandler(
     )
     {
         var animal =
-            await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId)
-            ?? throw new NotFoundException("Animal", request.AnimalId);
+            await animalRepository.GetByIdInFarmAsync(
+                request.AnimalId,
+                request.FarmId,
+                cancellationToken
+            ) ?? throw new NotFoundException("Animal", request.AnimalId);
 
         if (animal.LifeStatus != LifeStatus.Active)
         {

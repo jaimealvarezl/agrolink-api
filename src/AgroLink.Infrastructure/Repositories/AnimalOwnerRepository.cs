@@ -9,17 +9,23 @@ public class AnimalOwnerRepository(AgroLinkDbContext context)
     : Repository<AnimalOwner>(context),
         IAnimalOwnerRepository
 {
-    public async Task<IEnumerable<AnimalOwner>> GetByAnimalIdAsync(int animalId)
+    public async Task<IEnumerable<AnimalOwner>> GetByAnimalIdAsync(
+        int animalId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .AsNoTracking()
             .Where(ao => ao.AnimalId == animalId)
             .Include(ao => ao.Owner)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task RemoveByAnimalIdAsync(int animalId)
+    public async Task RemoveByAnimalIdAsync(
+        int animalId,
+        CancellationToken cancellationToken = default
+    )
     {
-        await _dbSet.Where(ao => ao.AnimalId == animalId).ExecuteDeleteAsync();
+        await _dbSet.Where(ao => ao.AnimalId == animalId).ExecuteDeleteAsync(cancellationToken);
     }
 }

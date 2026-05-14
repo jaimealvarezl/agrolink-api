@@ -21,7 +21,11 @@ public class GetAnimalByIdQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdAsync(request.Id, request.UserId);
+        var animal = await animalRepository.GetByIdAsync(
+            request.Id,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             return null;
@@ -37,18 +41,18 @@ public class GetAnimalByIdQueryHandler(
         }
 
         var mother = animal.MotherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.MotherId.Value, cancellationToken)
             : null;
         var father = animal.FatherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.FatherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.FatherId.Value, cancellationToken)
             : null;
 
-        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
+        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id, cancellationToken);
         var ownerDtos = new List<AnimalOwnerDto>();
 
         foreach (var owner in owners)
         {
-            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
+            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId, cancellationToken);
             if (ownerEntity != null)
             {
                 ownerDtos.Add(
@@ -62,7 +66,7 @@ public class GetAnimalByIdQueryHandler(
             }
         }
 
-        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id);
+        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id, cancellationToken);
         var photoDtos = photos
             .Select(p => new AnimalPhotoDto
             {

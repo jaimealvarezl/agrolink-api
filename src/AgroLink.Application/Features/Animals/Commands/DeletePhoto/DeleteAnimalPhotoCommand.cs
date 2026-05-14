@@ -20,7 +20,11 @@ public class DeleteAnimalPhotoCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId, request.UserId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(
+            request.AnimalId,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             throw new ArgumentException(
@@ -28,7 +32,7 @@ public class DeleteAnimalPhotoCommandHandler(
             );
         }
 
-        var photo = await animalPhotoRepository.GetByIdAsync(request.PhotoId);
+        var photo = await animalPhotoRepository.GetByIdAsync(request.PhotoId, cancellationToken);
         if (photo == null || photo.AnimalId != request.AnimalId)
         {
             throw new ArgumentException("Photo not found or does not belong to the animal.");
@@ -39,7 +43,7 @@ public class DeleteAnimalPhotoCommandHandler(
         {
             try
             {
-                await storageService.DeleteFileAsync(photo.StorageKey);
+                await storageService.DeleteFileAsync(photo.StorageKey, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -59,7 +63,10 @@ public class DeleteAnimalPhotoCommandHandler(
         // we might want to set the first remaining one as profile.
         if (photo.IsProfile)
         {
-            var remainingPhotos = await animalPhotoRepository.GetByAnimalIdAsync(request.AnimalId);
+            var remainingPhotos = await animalPhotoRepository.GetByAnimalIdAsync(
+                request.AnimalId,
+                cancellationToken
+            );
             var firstRemaining = remainingPhotos
                 .OrderByDescending(p => p.UploadedAt)
                 .FirstOrDefault(p => p.Id != request.PhotoId);
@@ -68,7 +75,8 @@ public class DeleteAnimalPhotoCommandHandler(
             {
                 await animalPhotoRepository.SetProfilePhotoAsync(
                     request.AnimalId,
-                    firstRemaining.Id
+                    firstRemaining.Id,
+                    cancellationToken
                 );
             }
         }

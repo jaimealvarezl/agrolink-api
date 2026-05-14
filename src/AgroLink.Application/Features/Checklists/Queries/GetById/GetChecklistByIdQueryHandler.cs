@@ -20,7 +20,7 @@ public class GetChecklistByIdQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var checklist = await checklistRepository.GetByIdAsync(request.Id);
+        var checklist = await checklistRepository.GetByIdAsync(request.Id, cancellationToken);
         if (checklist == null)
         {
             return null;
@@ -29,7 +29,10 @@ public class GetChecklistByIdQueryHandler(
         // Security check: ensure checklist belongs to the current farm context
         if (currentUserService.CurrentFarmId.HasValue)
         {
-            var lot = await lotRepository.GetLotWithPaddockAsync(checklist.LotId);
+            var lot = await lotRepository.GetLotWithPaddockAsync(
+                checklist.LotId,
+                cancellationToken
+            );
             if (lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value)
             {
                 return null;
@@ -44,8 +47,8 @@ public class GetChecklistByIdQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var user = await userRepository.GetByIdAsync(checklist.UserId);
-        var lot = await lotRepository.GetByIdAsync(checklist.LotId);
+        var user = await userRepository.GetByIdAsync(checklist.UserId, cancellationToken);
+        var lot = await lotRepository.GetByIdAsync(checklist.LotId, cancellationToken);
         var items = (
             await checklistItemRepository.FindAsync(
                 ci => ci.ChecklistId == checklist.Id,

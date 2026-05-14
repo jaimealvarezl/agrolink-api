@@ -26,7 +26,11 @@ public class GetTheftAlertPdfQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId, request.UserId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(
+            request.AnimalId,
+            request.UserId,
+            cancellationToken
+        );
 
         if (animal == null)
         {

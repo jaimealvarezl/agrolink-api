@@ -23,7 +23,7 @@ public class UpdateChecklistCommandHandler(
     )
     {
         var checklist =
-            await checklistRepository.GetByIdAsync(request.Id)
+            await checklistRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Checklist with ID {request.Id} was not found.");
 
         var farmId =
@@ -34,7 +34,7 @@ public class UpdateChecklistCommandHandler(
 
         // Validate existing checklist belongs to farm
         var existingLot =
-            await lotRepository.GetLotWithPaddockAsync(checklist.LotId)
+            await lotRepository.GetLotWithPaddockAsync(checklist.LotId, cancellationToken)
             ?? throw new NotFoundException($"Lot with ID {checklist.LotId} was not found.");
         if (existingLot.Paddock?.FarmId != farmId)
         {
@@ -45,7 +45,7 @@ public class UpdateChecklistCommandHandler(
 
         // Validate new lot belongs to farm
         var newLot =
-            await lotRepository.GetLotWithPaddockAsync(dto.LotId)
+            await lotRepository.GetLotWithPaddockAsync(dto.LotId, cancellationToken)
             ?? throw new NotFoundException($"Lot with ID {dto.LotId} was not found.");
         if (newLot.Paddock?.FarmId != farmId)
         {
@@ -113,7 +113,7 @@ public class UpdateChecklistCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Map to DTO
-        var user = await userRepository.GetByIdAsync(checklist.UserId);
+        var user = await userRepository.GetByIdAsync(checklist.UserId, cancellationToken);
 
         var itemDtos = newItems
             .Select(item =>

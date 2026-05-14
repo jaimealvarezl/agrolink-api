@@ -17,7 +17,11 @@ public class SetAnimalProfilePhotoCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId, request.UserId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(
+            request.AnimalId,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             throw new ArgumentException(
@@ -25,13 +29,17 @@ public class SetAnimalProfilePhotoCommandHandler(
             );
         }
 
-        var photo = await animalPhotoRepository.GetByIdAsync(request.PhotoId);
+        var photo = await animalPhotoRepository.GetByIdAsync(request.PhotoId, cancellationToken);
         if (photo == null || photo.AnimalId != request.AnimalId)
         {
             throw new ArgumentException("Photo not found or does not belong to the animal.");
         }
 
-        await animalPhotoRepository.SetProfilePhotoAsync(request.AnimalId, request.PhotoId);
+        await animalPhotoRepository.SetProfilePhotoAsync(
+            request.AnimalId,
+            request.PhotoId,
+            cancellationToken
+        );
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;

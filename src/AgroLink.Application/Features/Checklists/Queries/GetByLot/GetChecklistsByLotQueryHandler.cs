@@ -23,14 +23,16 @@ public class GetChecklistsByLotQueryHandler(
         // Security check: ensure lot belongs to the current farm context
         if (currentUserService.CurrentFarmId.HasValue)
         {
-            var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId);
+            var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId, cancellationToken);
             if (lot?.Paddock?.FarmId != currentUserService.CurrentFarmId.Value)
             {
                 return [];
             }
         }
 
-        var checklists = (await checklistRepository.GetByLotIdAsync(request.LotId)).ToList();
+        var checklists = (
+            await checklistRepository.GetByLotIdAsync(request.LotId, cancellationToken)
+        ).ToList();
         if (checklists.Count == 0)
         {
             return [];

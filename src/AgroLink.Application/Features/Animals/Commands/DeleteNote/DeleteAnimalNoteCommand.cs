@@ -13,7 +13,7 @@ public class DeleteAnimalNoteCommandHandler(
 {
     public async Task Handle(DeleteAnimalNoteCommand request, CancellationToken cancellationToken)
     {
-        var note = await animalNoteRepository.GetByIdAsync(request.NoteId);
+        var note = await animalNoteRepository.GetByIdAsync(request.NoteId, cancellationToken);
         if (note == null || note.AnimalId != request.AnimalId)
         {
             throw new NotFoundException($"Note with ID {request.NoteId} was not found.");

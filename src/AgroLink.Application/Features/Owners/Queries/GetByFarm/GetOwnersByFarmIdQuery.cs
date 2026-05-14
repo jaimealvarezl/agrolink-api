@@ -14,7 +14,7 @@ public class GetOwnersByFarmIdQueryHandler(IOwnerRepository ownerRepository)
         CancellationToken cancellationToken
     )
     {
-        var owners = await ownerRepository.GetOwnersByFarmAsync(request.FarmId);
+        var owners = await ownerRepository.GetOwnersByFarmAsync(request.FarmId, cancellationToken);
 
         return owners.Select(o => new OwnerDto
         {

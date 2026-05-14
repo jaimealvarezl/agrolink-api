@@ -18,10 +18,16 @@ public class GetAnimalNotesQueryHandler(
     )
     {
         _ =
-            await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId)
-            ?? throw new NotFoundException("Animal", request.AnimalId);
+            await animalRepository.GetByIdInFarmAsync(
+                request.AnimalId,
+                request.FarmId,
+                cancellationToken
+            ) ?? throw new NotFoundException("Animal", request.AnimalId);
 
-        var notes = await animalNoteRepository.GetByAnimalIdAsync(request.AnimalId);
+        var notes = await animalNoteRepository.GetByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
 
         return notes.Select(n => new AnimalNoteDto
         {

@@ -33,7 +33,10 @@ public class GetAnimalBrandSuggestionsQueryHandler(
             );
         }
 
-        var animalOwners = await animalOwnerRepository.GetByAnimalIdAsync(request.AnimalId);
+        var animalOwners = await animalOwnerRepository.GetByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         var ownerIds = animalOwners.Select(ao => ao.OwnerId).ToHashSet();
 
         if (ownerIds.Count == 0)

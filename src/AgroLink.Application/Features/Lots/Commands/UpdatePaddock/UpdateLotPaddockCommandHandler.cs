@@ -16,7 +16,7 @@ public class UpdateLotPaddockCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId);
+        var lot = await lotRepository.GetLotWithPaddockAsync(request.LotId, cancellationToken);
         if (lot == null)
         {
             throw new NotFoundException("Lot", request.LotId);
@@ -27,7 +27,10 @@ public class UpdateLotPaddockCommandHandler(
             throw new ForbiddenAccessException("Lot does not belong to the provided farm");
         }
 
-        var newPaddock = await paddockRepository.GetByIdAsync(request.NewPaddockId);
+        var newPaddock = await paddockRepository.GetByIdAsync(
+            request.NewPaddockId,
+            cancellationToken
+        );
         if (newPaddock == null)
         {
             throw new NotFoundException("Paddock", request.NewPaddockId);

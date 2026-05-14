@@ -16,7 +16,7 @@ public class DeleteLotCommandHandler(
 {
     public async Task Handle(DeleteLotCommand request, CancellationToken cancellationToken)
     {
-        var lot = await lotRepository.GetByIdAsync(request.Id);
+        var lot = await lotRepository.GetByIdAsync(request.Id, cancellationToken);
         if (lot == null)
         {
             throw new ArgumentException("Lot not found");
@@ -25,7 +25,10 @@ public class DeleteLotCommandHandler(
         // Security check: ensure lot belongs to the current farm context
         if (currentUserService.CurrentFarmId.HasValue)
         {
-            var paddockContext = await paddockRepository.GetByIdAsync(lot.PaddockId);
+            var paddockContext = await paddockRepository.GetByIdAsync(
+                lot.PaddockId,
+                cancellationToken
+            );
             if (
                 paddockContext != null
                 && paddockContext.FarmId != currentUserService.CurrentFarmId.Value

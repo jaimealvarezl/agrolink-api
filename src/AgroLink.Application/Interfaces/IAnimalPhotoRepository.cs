@@ -5,7 +5,16 @@ namespace AgroLink.Application.Interfaces;
 
 public interface IAnimalPhotoRepository : IRepository<AnimalPhoto>
 {
-    Task<IEnumerable<AnimalPhoto>> GetByAnimalIdAsync(int animalId);
-    Task SetProfilePhotoAsync(int animalId, int photoId);
-    Task<bool> HasPhotosAsync(int animalId);
+    Task<IEnumerable<AnimalPhoto>> GetByAnimalIdAsync(
+        int animalId,
+        CancellationToken cancellationToken = default
+    );
+
+    Task SetProfilePhotoAsync(
+        int animalId,
+        int photoId,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<bool> HasPhotosAsync(int animalId, CancellationToken cancellationToken = default);
 }

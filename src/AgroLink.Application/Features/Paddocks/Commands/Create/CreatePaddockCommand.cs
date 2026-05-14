@@ -35,7 +35,7 @@ public class CreatePaddockCommandHandler(
     {
         var userId = request.UserId;
 
-        var farm = await farmRepository.GetByIdAsync(request.FarmId);
+        var farm = await farmRepository.GetByIdAsync(request.FarmId, cancellationToken);
         if (farm == null)
         {
             throw new ArgumentException($"Farm with ID {request.FarmId} not found.");

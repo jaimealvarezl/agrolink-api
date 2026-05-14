@@ -16,8 +16,8 @@ public class GetPaddocksByFarmQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var paddocks = await paddockRepository.GetByFarmIdAsync(request.FarmId);
-        var farm = await farmRepository.GetByIdAsync(request.FarmId);
+        var paddocks = await paddockRepository.GetByFarmIdAsync(request.FarmId, cancellationToken);
+        var farm = await farmRepository.GetByIdAsync(request.FarmId, cancellationToken);
 
         return paddocks.Select(p => new PaddockDto
         {

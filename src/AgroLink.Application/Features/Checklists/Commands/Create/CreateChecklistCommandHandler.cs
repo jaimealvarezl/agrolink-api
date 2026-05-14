@@ -32,7 +32,7 @@ public class CreateChecklistCommandHandler(
 
         // Validate lot belongs to farm
         var lot =
-            await lotRepository.GetLotWithPaddockAsync(dto.LotId)
+            await lotRepository.GetLotWithPaddockAsync(dto.LotId, cancellationToken)
             ?? throw new NotFoundException($"Lot with ID {dto.LotId} was not found.");
         if (lot.Paddock?.FarmId != farmId)
         {
@@ -95,7 +95,7 @@ public class CreateChecklistCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Map to DTO using pre-fetched data
-        var user = await userRepository.GetByIdAsync(checklist.UserId);
+        var user = await userRepository.GetByIdAsync(checklist.UserId, cancellationToken);
 
         var itemDtos = checklist
             .ChecklistItems.Select(item =>

@@ -24,7 +24,7 @@ public class CreateFarmCommandHandler(
     {
         var userId = request.UserId;
 
-        var user = await userRepository.GetByIdAsync(userId);
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
         if (user == null)
         {
             throw new UnauthorizedAccessException($"User with ID {userId} from token not found.");
@@ -32,7 +32,7 @@ public class CreateFarmCommandHandler(
 
         try
         {
-            await unitOfWork.BeginTransactionAsync();
+            await unitOfWork.BeginTransactionAsync(cancellationToken);
 
             // 1. Create the Owner first (with FarmId = null)
             var owner = new Owner { Name = user.Name, UserId = userId };
@@ -72,7 +72,7 @@ public class CreateFarmCommandHandler(
             // Final save persists the owner.FarmId link and the member
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            await unitOfWork.CommitTransactionAsync();
+            await unitOfWork.CommitTransactionAsync(cancellationToken);
 
             return new FarmDto
             {
@@ -87,7 +87,7 @@ public class CreateFarmCommandHandler(
         }
         catch
         {
-            await unitOfWork.RollbackTransactionAsync();
+            await unitOfWork.RollbackTransactionAsync(cancellationToken);
             throw;
         }
     }

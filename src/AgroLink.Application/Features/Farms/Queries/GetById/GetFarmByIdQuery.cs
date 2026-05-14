@@ -17,7 +17,7 @@ public class GetFarmByIdQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var farm = await farmRepository.GetByIdAsync(request.Id);
+        var farm = await farmRepository.GetByIdAsync(request.Id, cancellationToken);
         if (farm == null)
         {
             return null;

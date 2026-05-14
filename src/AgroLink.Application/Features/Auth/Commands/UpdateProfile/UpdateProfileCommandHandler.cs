@@ -18,7 +18,7 @@ public class UpdateProfileCommandHandler(
     )
     {
         var userId = currentUserService.GetRequiredUserId();
-        var user = await userRepository.GetByIdAsync(userId);
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
 
         if (user == null)
         {

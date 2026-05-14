@@ -14,7 +14,7 @@ public class DeleteOwnerCommandHandler(
 {
     public async Task Handle(DeleteOwnerCommand request, CancellationToken cancellationToken)
     {
-        var farm = await farmRepository.GetByIdAsync(request.FarmId);
+        var farm = await farmRepository.GetByIdAsync(request.FarmId, cancellationToken);
         if (farm == null)
         {
             throw new NotFoundException($"Farm with ID {request.FarmId} not found.");

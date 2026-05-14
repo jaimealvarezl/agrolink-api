@@ -110,13 +110,14 @@ internal class FakeStorageService : IStorageService
         string key,
         Stream fileStream,
         string contentType,
-        long contentLength
+        long contentLength,
+        CancellationToken cancellationToken = default
     )
     {
         return Task.CompletedTask;
     }
 
-    public Task DeleteFileAsync(string key)
+    public Task DeleteFileAsync(string key, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
     }

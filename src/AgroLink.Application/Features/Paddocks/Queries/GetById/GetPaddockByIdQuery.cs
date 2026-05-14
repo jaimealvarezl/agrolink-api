@@ -18,7 +18,7 @@ public class GetPaddockByIdQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var paddock = await paddockRepository.GetByIdAsync(request.Id);
+        var paddock = await paddockRepository.GetByIdAsync(request.Id, cancellationToken);
         if (paddock == null)
         {
             return null;
@@ -33,7 +33,7 @@ public class GetPaddockByIdQueryHandler(
             return null;
         }
 
-        var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
+        var farm = await farmRepository.GetByIdAsync(paddock.FarmId, cancellationToken);
 
         return new PaddockDto
         {

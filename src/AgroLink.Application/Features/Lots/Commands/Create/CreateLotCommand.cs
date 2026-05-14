@@ -17,7 +17,7 @@ public class CreateLotCommandHandler(
     {
         var dto = request.Dto;
 
-        var paddock = await paddockRepository.GetByIdAsync(dto.PaddockId);
+        var paddock = await paddockRepository.GetByIdAsync(dto.PaddockId, cancellationToken);
         if (paddock == null)
         {
             throw new ArgumentException($"Paddock with ID {dto.PaddockId} not found.");

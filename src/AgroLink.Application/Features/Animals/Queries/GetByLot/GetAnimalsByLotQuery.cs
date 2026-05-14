@@ -26,10 +26,13 @@ public class GetAnimalsByLotQueryHandler(
         // Security check: ensure lot belongs to the current farm context
         if (currentUserService.CurrentFarmId.HasValue)
         {
-            var lot = await lotRepository.GetByIdAsync(request.LotId);
+            var lot = await lotRepository.GetByIdAsync(request.LotId, cancellationToken);
             if (lot != null)
             {
-                var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
+                var paddock = await paddockRepository.GetByIdAsync(
+                    lot.PaddockId,
+                    cancellationToken
+                );
                 if (paddock != null && paddock.FarmId != currentUserService.CurrentFarmId.Value)
                 {
                     return Enumerable.Empty<AnimalDto>();
@@ -37,24 +40,34 @@ public class GetAnimalsByLotQueryHandler(
             }
         }
 
-        var animals = await animalRepository.GetByLotIdAsync(request.LotId, request.UserId);
+        var animals = await animalRepository.GetByLotIdAsync(
+            request.LotId,
+            request.UserId,
+            cancellationToken
+        );
         var result = new List<AnimalDto>();
 
         foreach (var animal in animals)
         {
             var mother = animal.MotherId.HasValue
-                ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
+                ? await animalRepository.GetByIdAsync(animal.MotherId.Value, cancellationToken)
                 : null;
             var father = animal.FatherId.HasValue
-                ? await animalRepository.GetByIdAsync(animal.FatherId.Value)
+                ? await animalRepository.GetByIdAsync(animal.FatherId.Value, cancellationToken)
                 : null;
 
-            var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
+            var owners = await animalOwnerRepository.GetByAnimalIdAsync(
+                animal.Id,
+                cancellationToken
+            );
             var ownerDtos = new List<AnimalOwnerDto>();
 
             foreach (var owner in owners)
             {
-                var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
+                var ownerEntity = await ownerRepository.GetByIdAsync(
+                    owner.OwnerId,
+                    cancellationToken
+                );
                 if (ownerEntity != null)
                 {
                     ownerDtos.Add(
@@ -68,7 +81,10 @@ public class GetAnimalsByLotQueryHandler(
                 }
             }
 
-            var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id);
+            var photos = await animalPhotoRepository.GetByAnimalIdAsync(
+                animal.Id,
+                cancellationToken
+            );
             var photoDtos = photos
                 .Select(p => new AnimalPhotoDto
                 {
