@@ -71,7 +71,9 @@ public class AnalyzeAnimalHealthQueryHandlerTests
         };
     }
 
-    private static AnimalHealthAnalysisResult RejectedResult(string? reason = "Not a bovine animal.") =>
+    private static AnimalHealthAnalysisResult RejectedResult(
+        string? reason = "Not a bovine animal."
+    ) =>
         new()
         {
             PhotoRejected = true,

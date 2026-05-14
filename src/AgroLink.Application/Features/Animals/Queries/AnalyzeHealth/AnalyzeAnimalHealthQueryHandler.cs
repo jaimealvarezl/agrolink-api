@@ -28,9 +28,7 @@ public class AnalyzeAnimalHealthQueryHandler(
             throw new NotFoundException("Animal", request.AnimalId);
         }
 
-        var primaryPhoto = animal
-            .Photos?.OrderByDescending(p => p.UploadedAt)
-            .FirstOrDefault();
+        var primaryPhoto = animal.Photos?.OrderByDescending(p => p.UploadedAt).FirstOrDefault();
 
         if (primaryPhoto == null)
         {
