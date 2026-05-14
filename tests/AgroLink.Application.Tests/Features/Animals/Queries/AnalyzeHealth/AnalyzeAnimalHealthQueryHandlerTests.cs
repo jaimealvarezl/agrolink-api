@@ -71,15 +71,13 @@ public class AnalyzeAnimalHealthQueryHandlerTests
         };
     }
 
-    private static AnimalHealthAnalysisResult RejectedResult()
-    {
-        return new AnimalHealthAnalysisResult
+    private static AnimalHealthAnalysisResult RejectedResult(string? reason = "Not a bovine animal.") =>
+        new()
         {
             PhotoRejected = true,
-            RejectionReason = "Imagen borrosa",
+            RejectionReason = reason,
             RawAiResponse = "{}",
         };
-    }
 
     [Test]
     public async Task Handle_ValidAnimalWithPhoto_ReturnsMappedDto()
@@ -189,7 +187,7 @@ public class AnalyzeAnimalHealthQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_PhotoRejectedByAi_ThrowsArgumentExceptionWithSpecificMessage()
+    public async Task Handle_PhotoRejectedWithReason_SurfacesAiRejectionReason()
     {
         var animal = BuildAnimal();
         _mocker
@@ -204,7 +202,7 @@ public class AnalyzeAnimalHealthQueryHandlerTests
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(RejectedResult());
+            .ReturnsAsync(RejectedResult("Not a bovine animal."));
 
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(
@@ -213,13 +211,48 @@ public class AnalyzeAnimalHealthQueryHandlerTests
             )
         );
 
-        ex.Message.ShouldBe("La imagen no es lo suficientemente clara para realizar un análisis.");
+        ex.Message.ShouldBe("Not a bovine animal.");
     }
 
     [Test]
-    public async Task Handle_SelectsPrimaryPhotoFirst()
+    public async Task Handle_PhotoRejectedWithNoReason_UsesFallbackMessage()
+    {
+        var animal = BuildAnimal();
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetAnimalDetailsAsync(AnimalId, UserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalHealthAnalysisService>()
+            .Setup(s =>
+                s.AnalyzeAsync(
+                    It.IsAny<AnimalHealthAnalysisRequest>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(RejectedResult(null));
+
+        var ex = await Should.ThrowAsync<ArgumentException>(() =>
+            _handler.Handle(
+                new AnalyzeAnimalHealthQuery(AnimalId, FarmId, UserId),
+                CancellationToken.None
+            )
+        );
+
+        ex.Message.ShouldBe("The image is not clear enough to perform an analysis.");
+    }
+
+    [Test]
+    public async Task Handle_SelectsMostRecentlyUploadedPhoto()
     {
         var animal = BuildAnimal(false);
+        var olderProfilePhoto = new AnimalPhoto
+        {
+            StorageKey = "profile.jpg",
+            ContentType = "image/jpeg",
+            IsProfile = true,
+            UploadedAt = DateTime.UtcNow.AddDays(-1),
+        };
         var newerNonProfile = new AnimalPhoto
         {
             StorageKey = "newer-non-profile.jpg",
@@ -227,14 +260,7 @@ public class AnalyzeAnimalHealthQueryHandlerTests
             IsProfile = false,
             UploadedAt = DateTime.UtcNow,
         };
-        var profilePhoto = new AnimalPhoto
-        {
-            StorageKey = "profile.jpg",
-            ContentType = "image/jpeg",
-            IsProfile = true,
-            UploadedAt = DateTime.UtcNow.AddDays(-1),
-        };
-        animal.Photos = [newerNonProfile, profilePhoto];
+        animal.Photos = [olderProfilePhoto, newerNonProfile];
 
         AnimalHealthAnalysisRequest? capturedRequest = null;
         _mocker
@@ -258,7 +284,7 @@ public class AnalyzeAnimalHealthQueryHandlerTests
         );
 
         capturedRequest.ShouldNotBeNull();
-        capturedRequest!.PhotoStorageKey.ShouldBe("profile.jpg");
+        capturedRequest!.PhotoStorageKey.ShouldBe("newer-non-profile.jpg");
     }
 
     [Test]

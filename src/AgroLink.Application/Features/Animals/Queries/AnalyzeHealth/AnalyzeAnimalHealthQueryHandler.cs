@@ -29,13 +29,12 @@ public class AnalyzeAnimalHealthQueryHandler(
         }
 
         var primaryPhoto = animal
-            .Photos.OrderByDescending(p => p.IsProfile)
-            .ThenByDescending(p => p.UploadedAt)
+            .Photos?.OrderByDescending(p => p.UploadedAt)
             .FirstOrDefault();
 
         if (primaryPhoto == null)
         {
-            throw new ArgumentException("El animal no tiene fotos para analizar.");
+            throw new ArgumentException("The animal has no photos to analyze.");
         }
 
         var analysisRequest = new AnimalHealthAnalysisRequest
@@ -55,7 +54,9 @@ public class AnalyzeAnimalHealthQueryHandler(
         if (result.PhotoRejected)
         {
             throw new ArgumentException(
-                "La imagen no es lo suficientemente clara para realizar un análisis."
+                string.IsNullOrWhiteSpace(result.RejectionReason)
+                    ? "The image is not clear enough to perform an analysis."
+                    : result.RejectionReason
             );
         }
 
