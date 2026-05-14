@@ -26,9 +26,9 @@ public class CreateBcsReadingCommandHandler(
     {
         var dto = request.Dto;
 
-        if (dto.Score < 1.0 || dto.Score > 5.0)
+        if (dto.Score < 1.0 || dto.Score > 9.0)
         {
-            throw new ArgumentException("Score must be between 1.0 and 5.0.");
+            throw new ArgumentException("Score must be between 1.0 and 9.0.");
         }
 
         _ =

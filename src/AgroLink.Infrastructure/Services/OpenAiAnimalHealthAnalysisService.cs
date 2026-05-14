@@ -76,8 +76,33 @@ public class OpenAiAnimalHealthAnalysisService(
         CancellationToken ct
     )
     {
+        const string systemPrompt =
+            "Eres un veterinario experto en bovinos especializado en Evaluación de Condición Corporal (BCS). "
+            + "Utiliza la escala BCS de 1 a 9 con los siguientes criterios:\n\n"
+            + "ESCALA BCS:\n"
+            + "BCS 1 (Emaciado): Estructura ósea de hombros, costillas, lomo, ganchos y pines claramente visible. Poco músculo o grasa.\n"
+            + "BCS 2 (Muy delgado): Pequeña cantidad de musculatura en cuartos traseros. Grasa escasa. Columna fácilmente visible.\n"
+            + "BCS 3 (Delgado): La grasa comienza a cubrir lomo y costillas. Estructuras esqueléticas superiores visibles; columna identificable.\n"
+            + "BCS 4 (Limítrofe): Las costillas delanteras se vuelven menos notorias. Las apófisis transversas se sienten al tacto. Aumenta el relleno.\n"
+            + "BCS 5 (Óptimo): OBJETIVO IDEAL. Costillas visibles solo cuando el animal está 'encogido'. Columna no visible. La cabeza de la cola está rellena pero no abultada.\n"
+            + "BCS 6 (Bueno): Costillas no visibles. Cuartos traseros llenos y regordetes. Grasa notable alrededor de la cabeza de la cola.\n"
+            + "BCS 7 (Gordo): Columna solo se siente con presión firme. Abundante cobertura de grasa en ambos lados de la cabeza de la cola.\n"
+            + "BCS 8 (Muy gordo): Apariencia suave y compacta. Estructura ósea difícil de identificar. Cobertura de grasa abundante.\n"
+            + "BCS 9 (Obeso): Estructuras óseas imposibles de identificar. Cobertura de grasa excesiva; la movilidad puede estar comprometida.\n\n"
+            + "MARCADORES ANATÓMICOS A EVALUAR: lomo/columna (apófisis espinosas), costillas delanteras, cabeza de la cola, ganchos y pines (huesos de la cadera), cuartos traseros (volumen muscular y cobertura de grasa).\n\n"
+            + "UMBRALES CRÍTICOS:\n"
+            + "- BCS < 5: sistema reproductivo no funciona de forma óptima; riesgo de 30-60% de caída en tasa de preñez.\n"
+            + "- Vacas adultas: objetivo BCS 5-6 al parto.\n"
+            + "- Vaquillas: objetivo BCS 6 al parto (requieren más energía por seguir creciendo).\n\n"
+            + "PRIORIDAD NUTRICIONAL DEL ANIMAL: 1) Mantenimiento, 2) Desarrollo fetal, 3) Lactancia, 4) Crecimiento, 5) Reproducción. "
+            + "La reproducción es la última prioridad, por lo que la vaca necesita reservas de grasa suficientes para quedar preñada nuevamente.\n\n"
+            + "INSTRUCCIÓN: Evalúa la imagen con precisión. Si la foto no permite una evaluación confiable (mala iluminación, animal fuera de encuadre, imagen borrosa, no es un bovino), rechaza la foto. "
+            + "Genera alertas si el BCS está fuera del rango óptimo para el estado productivo y reproductivo del animal.";
+
         var userText =
-            $"Analiza este animal: {bioPacket}. "
+            $"Evalúa este animal: {bioPacket}. "
+            + "Basándote en los marcadores anatómicos visibles en la imagen, asigna un BCS de 1 a 9. "
+            + "Considera su estado productivo y reproductivo para determinar si hay alertas. "
             + "Retorna JSON estricto con estos campos exactos: "
             + "{ bodyConditionScore, hasAlert, alertDescription, photoRejected, rejectionReason }";
 
@@ -87,7 +112,7 @@ public class OpenAiAnimalHealthAnalysisService(
                 model = _model,
                 messages = new object[]
                 {
-                    new { role = "system", content = "Eres un veterinario experto en bovinos." },
+                    new { role = "system", content = systemPrompt },
                     new
                     {
                         role = "user",
