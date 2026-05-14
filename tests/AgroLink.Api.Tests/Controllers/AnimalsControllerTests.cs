@@ -4,6 +4,7 @@ using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.Commands.Delete;
 using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Features.Animals.Queries.AnalyzeHealth;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetById;
 using AgroLink.Application.Features.Animals.Queries.GetByLot;
@@ -219,5 +220,37 @@ public class AnimalsControllerTests
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var returnedGenealogy = okResult.Value.ShouldBeOfType<AnimalGenealogyDto>();
         returnedGenealogy.Id.ShouldBe(animalId);
+    }
+
+    [Test]
+    public async Task AnalyzeHealth_ReturnsOkWithDto()
+    {
+        const int farmId = 1;
+        const int animalId = 5;
+        var dto = new AnimalHealthAnalysisDto
+        {
+            EstimatedBcs = 3.5,
+            HasAlerts = true,
+            AlertDescription = "Garrapatas en lomo.",
+        };
+
+        _mediatorMock
+            .Setup(x =>
+                x.Send(
+                    It.Is<AnalyzeAnimalHealthQuery>(q =>
+                        q.AnimalId == animalId && q.FarmId == farmId && q.UserId == 1
+                    ),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(dto);
+
+        var result = await _controller.AnalyzeHealth(farmId, animalId, CancellationToken.None);
+
+        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
+        var returned = okResult.Value.ShouldBeOfType<AnimalHealthAnalysisDto>();
+        returned.EstimatedBcs.ShouldBe(3.5);
+        returned.HasAlerts.ShouldBeTrue();
+        returned.AlertDescription.ShouldBe("Garrapatas en lomo.");
     }
 }

@@ -10,6 +10,7 @@ using AgroLink.Application.Features.Animals.Commands.SetProfilePhoto;
 using AgroLink.Application.Features.Animals.Commands.Update;
 using AgroLink.Application.Features.Animals.Commands.UploadPhoto;
 using AgroLink.Application.Features.Animals.DTOs;
+using AgroLink.Application.Features.Animals.Queries.AnalyzeHealth;
 using AgroLink.Application.Features.Animals.Queries.GetAll;
 using AgroLink.Application.Features.Animals.Queries.GetBreeds;
 using AgroLink.Application.Features.Animals.Queries.GetById;
@@ -345,6 +346,21 @@ public class AnimalsController(IMediator mediator) : BaseController
         }
 
         return File(pdf, "application/pdf", $"alerta-robo-{id}.pdf");
+    }
+
+    [HttpPost("{id}/analyze-health")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<AnimalHealthAnalysisDto>> AnalyzeHealth(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await mediator.Send(
+            new AnalyzeAnimalHealthQuery(id, farmId, GetCurrentUserId()),
+            cancellationToken
+        );
+        return Ok(result);
     }
 
     [HttpGet("{id}/timeline")]
