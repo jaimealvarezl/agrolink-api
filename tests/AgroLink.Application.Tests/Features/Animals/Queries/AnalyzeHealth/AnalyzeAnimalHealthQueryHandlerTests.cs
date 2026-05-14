@@ -19,6 +19,13 @@ public class AnalyzeAnimalHealthQueryHandlerTests
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<AnalyzeAnimalHealthQueryHandler>();
+
+        _mocker
+            .GetMock<IAnimalBcsReadingRepository>()
+            .Setup(r =>
+                r.GetMostRecentByAnimalIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync((AnimalBcsReading?)null);
     }
 
     private AutoMocker _mocker = null!;
@@ -333,6 +340,99 @@ public class AnalyzeAnimalHealthQueryHandlerTests
         );
 
         capturedRequest!.PhotoStorageKey.ShouldBe("newer.jpg");
+    }
+
+    [Test]
+    public async Task Handle_RecentBcsReading_ThrowsTooManyRequestsException()
+    {
+        var animal = BuildAnimal();
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetAnimalDetailsAsync(AnimalId, UserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalBcsReadingRepository>()
+            .Setup(r => r.GetMostRecentByAnimalIdAsync(AnimalId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new AnimalBcsReading
+                {
+                    AnimalId = AnimalId,
+                    CreatedAt = DateTime.UtcNow.AddDays(-3),
+                }
+            );
+
+        var ex = await Should.ThrowAsync<TooManyRequestsException>(() =>
+            _handler.Handle(
+                new AnalyzeAnimalHealthQuery(AnimalId, FarmId, UserId),
+                CancellationToken.None
+            )
+        );
+
+        ex.Message.ShouldBe(
+            "Este animal ya fue analizado recientemente. Intenta de nuevo en 7 días."
+        );
+    }
+
+    [Test]
+    public async Task Handle_BcsReadingOlderThan7Days_AllowsAnalysis()
+    {
+        var animal = BuildAnimal();
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetAnimalDetailsAsync(AnimalId, UserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalBcsReadingRepository>()
+            .Setup(r => r.GetMostRecentByAnimalIdAsync(AnimalId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new AnimalBcsReading
+                {
+                    AnimalId = AnimalId,
+                    CreatedAt = DateTime.UtcNow.AddDays(-8),
+                }
+            );
+        _mocker
+            .GetMock<IAnimalHealthAnalysisService>()
+            .Setup(s =>
+                s.AnalyzeAsync(
+                    It.IsAny<AnimalHealthAnalysisRequest>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(SuccessResult());
+
+        var result = await _handler.Handle(
+            new AnalyzeAnimalHealthQuery(AnimalId, FarmId, UserId),
+            CancellationToken.None
+        );
+
+        result.ShouldNotBeNull();
+    }
+
+    [Test]
+    public async Task Handle_NoBcsReadings_AllowsAnalysis()
+    {
+        var animal = BuildAnimal();
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetAnimalDetailsAsync(AnimalId, UserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IAnimalHealthAnalysisService>()
+            .Setup(s =>
+                s.AnalyzeAsync(
+                    It.IsAny<AnimalHealthAnalysisRequest>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(SuccessResult());
+
+        var result = await _handler.Handle(
+            new AnalyzeAnimalHealthQuery(AnimalId, FarmId, UserId),
+            CancellationToken.None
+        );
+
+        result.ShouldNotBeNull();
     }
 
     [Test]

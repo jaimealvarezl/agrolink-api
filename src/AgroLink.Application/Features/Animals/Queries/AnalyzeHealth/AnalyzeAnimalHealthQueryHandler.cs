@@ -9,9 +9,12 @@ namespace AgroLink.Application.Features.Animals.Queries.AnalyzeHealth;
 
 public class AnalyzeAnimalHealthQueryHandler(
     IAnimalRepository animalRepository,
+    IAnimalBcsReadingRepository bcsReadingRepository,
     IAnimalHealthAnalysisService healthAnalysisService
 ) : IRequestHandler<AnalyzeAnimalHealthQuery, AnimalHealthAnalysisDto>
 {
+    private static readonly TimeSpan CooldownPeriod = TimeSpan.FromDays(7);
+
     public async Task<AnimalHealthAnalysisDto> Handle(
         AnalyzeAnimalHealthQuery request,
         CancellationToken cancellationToken
@@ -26,6 +29,21 @@ public class AnalyzeAnimalHealthQueryHandler(
         if (animal == null || animal.Lot?.Paddock?.FarmId != request.FarmId)
         {
             throw new NotFoundException("Animal", request.AnimalId);
+        }
+
+        var mostRecentReading = await bcsReadingRepository.GetMostRecentByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
+
+        if (
+            mostRecentReading != null
+            && mostRecentReading.CreatedAt > DateTime.UtcNow - CooldownPeriod
+        )
+        {
+            throw new TooManyRequestsException(
+                "Este animal ya fue analizado recientemente. Intenta de nuevo en 7 días."
+            );
         }
 
         var primaryPhoto = animal.Photos?.OrderByDescending(p => p.UploadedAt).FirstOrDefault();

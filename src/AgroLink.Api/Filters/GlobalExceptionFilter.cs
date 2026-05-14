@@ -18,6 +18,7 @@ public class GlobalExceptionFilter(ILogger<GlobalExceptionFilter> logger) : IExc
             ForbiddenAccessException => (HttpStatusCode.Forbidden, ex.Message),
             NotFoundException => (HttpStatusCode.NotFound, ex.Message),
             ConflictException => (HttpStatusCode.Conflict, ex.Message),
+            TooManyRequestsException => (HttpStatusCode.TooManyRequests, ex.Message),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred"),
         };
 
