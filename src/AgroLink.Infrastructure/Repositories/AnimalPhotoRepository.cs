@@ -9,25 +9,41 @@ public class AnimalPhotoRepository(AgroLinkDbContext context)
     : Repository<AnimalPhoto>(context),
         IAnimalPhotoRepository
 {
-    public async Task<IEnumerable<AnimalPhoto>> GetByAnimalIdAsync(int animalId)
+    public async Task<IEnumerable<AnimalPhoto>> GetByAnimalIdAsync(
+        int animalId,
+        CancellationToken cancellationToken = default
+    )
     {
-        return await _dbSet.AsNoTracking().Where(p => p.AnimalId == animalId).ToListAsync();
+        return await _dbSet
+            .AsNoTracking()
+            .Where(p => p.AnimalId == animalId)
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task SetProfilePhotoAsync(int animalId, int photoId)
+    public async Task SetProfilePhotoAsync(
+        int animalId,
+        int photoId,
+        CancellationToken cancellationToken = default
+    )
     {
         // Bulk update to unset existing profile photos
         await _dbSet
             .Where(p => p.AnimalId == animalId && p.IsProfile)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsProfile, false));
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsProfile, false), cancellationToken);
 
         // Set new profile photo
-        var newProfile = await _dbSet.FindAsync(photoId);
-        newProfile?.IsProfile = true;
+        var newProfile = await _dbSet.FindAsync(new object?[] { photoId }, cancellationToken);
+        if (newProfile != null)
+        {
+            newProfile.IsProfile = true;
+        }
     }
 
-    public async Task<bool> HasPhotosAsync(int animalId)
+    public async Task<bool> HasPhotosAsync(
+        int animalId,
+        CancellationToken cancellationToken = default
+    )
     {
-        return await _dbSet.AnyAsync(p => p.AnimalId == animalId);
+        return await _dbSet.AnyAsync(p => p.AnimalId == animalId, cancellationToken);
     }
 }

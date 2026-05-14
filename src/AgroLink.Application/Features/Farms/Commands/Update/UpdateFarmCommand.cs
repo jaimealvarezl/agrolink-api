@@ -19,7 +19,7 @@ public class UpdateFarmCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var farm = await farmRepository.GetByIdAsync(request.Id);
+        var farm = await farmRepository.GetByIdAsync(request.Id, cancellationToken);
         if (farm == null)
         {
             throw new ArgumentException("Farm not found");

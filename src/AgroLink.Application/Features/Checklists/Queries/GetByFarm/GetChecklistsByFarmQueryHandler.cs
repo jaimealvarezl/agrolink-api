@@ -22,7 +22,8 @@ public class GetChecklistsByFarmQueryHandler(
         var (checklists, totalCount) = await checklistRepository.GetPagedByFarmAsync(
             request.FarmId,
             request.Page,
-            request.PageSize
+            request.PageSize,
+            cancellationToken
         );
 
         var checklistList = checklists.ToList();

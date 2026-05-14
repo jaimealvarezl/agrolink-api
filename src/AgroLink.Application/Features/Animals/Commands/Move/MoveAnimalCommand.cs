@@ -33,7 +33,11 @@ public class MoveAnimalCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdAsync(request.AnimalId, request.UserId);
+        var animal = await animalRepository.GetByIdAsync(
+            request.AnimalId,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             throw new ArgumentException("Animal not found or access denied.");
@@ -49,7 +53,10 @@ public class MoveAnimalCommandHandler(
         }
 
         // Verify target lot and permissions
-        var targetLot = await lotRepository.GetLotWithPaddockAsync(request.ToLotId);
+        var targetLot = await lotRepository.GetLotWithPaddockAsync(
+            request.ToLotId,
+            cancellationToken
+        );
         if (targetLot == null)
         {
             throw new ArgumentException("Target lot not found.");
@@ -92,25 +99,25 @@ public class MoveAnimalCommandHandler(
             Reason = request.Reason,
             UserId = request.UserId,
         };
-        await movementRepository.AddMovementAsync(movement);
+        await movementRepository.AddMovementAsync(movement, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Refresh data for response
-        var lot = await lotRepository.GetByIdAsync(animal.LotId);
+        var lot = await lotRepository.GetByIdAsync(animal.LotId, cancellationToken);
         var mother = animal.MotherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.MotherId.Value, cancellationToken)
             : null;
         var father = animal.FatherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.FatherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.FatherId.Value, cancellationToken)
             : null;
 
-        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
+        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id, cancellationToken);
         var ownerDtos = new List<AnimalOwnerDto>();
 
         foreach (var owner in owners)
         {
-            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
+            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId, cancellationToken);
             if (ownerEntity != null)
             {
                 ownerDtos.Add(
@@ -124,7 +131,7 @@ public class MoveAnimalCommandHandler(
             }
         }
 
-        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id);
+        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id, cancellationToken);
         var photoDtos = photos
             .Select(p => new AnimalPhotoDto
             {

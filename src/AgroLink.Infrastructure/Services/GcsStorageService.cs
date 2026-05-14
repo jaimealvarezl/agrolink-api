@@ -19,7 +19,8 @@ public class GcsStorageService(
         string key,
         Stream fileStream,
         string contentType,
-        long contentLength
+        long contentLength,
+        CancellationToken cancellationToken = default
     )
     {
         var stopwatch = Stopwatch.StartNew();
@@ -38,7 +39,13 @@ public class GcsStorageService(
                 fileStream.Position = 0;
             }
 
-            await storageClient.UploadObjectAsync(_bucketName, key, contentType, fileStream);
+            await storageClient.UploadObjectAsync(
+                _bucketName,
+                key,
+                contentType,
+                fileStream,
+                cancellationToken: cancellationToken
+            );
 
             stopwatch.Stop();
             logger.LogInformation(
@@ -60,11 +67,15 @@ public class GcsStorageService(
         }
     }
 
-    public async Task DeleteFileAsync(string key)
+    public async Task DeleteFileAsync(string key, CancellationToken cancellationToken = default)
     {
         try
         {
-            await storageClient.DeleteObjectAsync(_bucketName, key);
+            await storageClient.DeleteObjectAsync(
+                _bucketName,
+                key,
+                cancellationToken: cancellationToken
+            );
         }
         catch (Exception ex)
         {

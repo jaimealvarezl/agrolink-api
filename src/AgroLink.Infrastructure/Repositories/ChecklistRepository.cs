@@ -9,16 +9,22 @@ public class ChecklistRepository(AgroLinkDbContext context)
     : Repository<Checklist>(context),
         IChecklistRepository
 {
-    public async Task<IEnumerable<Checklist>> GetByLotIdAsync(int lotId)
+    public async Task<IEnumerable<Checklist>> GetByLotIdAsync(
+        int lotId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .AsNoTracking()
             .Where(c => c.LotId == lotId)
             .OrderByDescending(c => c.Date)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ChecklistItem>> GetItemsByAnimalIdAsync(int animalId)
+    public async Task<IEnumerable<ChecklistItem>> GetItemsByAnimalIdAsync(
+        int animalId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _context
             .ChecklistItems.AsNoTracking()
@@ -26,27 +32,31 @@ public class ChecklistRepository(AgroLinkDbContext context)
                 .ThenInclude(c => c.Lot)
             .Where(ci => ci.AnimalId == animalId)
             .OrderByDescending(ci => ci.Checklist.Date)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<(IEnumerable<Checklist> Items, int TotalCount)> GetPagedByFarmAsync(
         int farmId,
         int page,
-        int pageSize
+        int pageSize,
+        CancellationToken cancellationToken = default
     )
     {
         var lotIds = await _context
             .Lots.Where(l => l.Paddock.FarmId == farmId)
             .Select(l => l.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var query = _dbSet
             .AsNoTracking()
             .Where(c => lotIds.Contains(c.LotId))
             .OrderByDescending(c => c.Date);
 
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
 
         return (items, totalCount);
     }

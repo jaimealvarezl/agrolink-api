@@ -22,8 +22,11 @@ public class CreateAnimalNoteCommandHandler(
     )
     {
         _ =
-            await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId)
-            ?? throw new NotFoundException("Animal", request.AnimalId);
+            await animalRepository.GetByIdInFarmAsync(
+                request.AnimalId,
+                request.FarmId,
+                cancellationToken
+            ) ?? throw new NotFoundException("Animal", request.AnimalId);
 
         var note = new AnimalNote
         {
@@ -36,7 +39,7 @@ public class CreateAnimalNoteCommandHandler(
         await animalNoteRepository.AddAsync(note, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var user = await userRepository.GetByIdAsync(request.UserId);
+        var user = await userRepository.GetByIdAsync(request.UserId, cancellationToken);
 
         return new AnimalNoteDto
         {

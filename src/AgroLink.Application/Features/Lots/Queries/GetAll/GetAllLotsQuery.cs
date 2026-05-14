@@ -16,12 +16,12 @@ public class GetAllLotsQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var lots = await lotRepository.GetAllAsync();
+        var lots = await lotRepository.GetAllAsync(cancellationToken);
         var result = new List<LotDto>();
 
         foreach (var lot in lots)
         {
-            var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
+            var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId, cancellationToken);
             result.Add(
                 new LotDto
                 {

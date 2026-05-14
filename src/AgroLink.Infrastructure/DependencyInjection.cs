@@ -158,6 +158,7 @@ public static class DependencyInjection
             OpenAiClinicalAudioTranscriptionService
         >();
         services.AddHttpClient<IClinicalTextToSpeechService, OpenAiClinicalTextToSpeechService>();
+        services.AddHttpClient<IAnimalHealthAnalysisService, OpenAiAnimalHealthAnalysisService>();
 
         return services;
     }

@@ -8,20 +8,28 @@ namespace AgroLink.Infrastructure.Repositories;
 
 public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(context), IFarmRepository
 {
-    public async Task<IEnumerable<Farm>> GetFarmsWithPaddocksAsync()
+    public async Task<IEnumerable<Farm>> GetFarmsWithPaddocksAsync(
+        CancellationToken cancellationToken = default
+    )
     {
-        return await _dbSet.AsNoTracking().Include(f => f.Paddocks).ToListAsync();
+        return await _dbSet.AsNoTracking().Include(f => f.Paddocks).ToListAsync(cancellationToken);
     }
 
-    public async Task<Farm?> GetFarmWithPaddocksAsync(int id)
+    public async Task<Farm?> GetFarmWithPaddocksAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .AsNoTracking()
             .Include(f => f.Paddocks)
-            .FirstOrDefaultAsync(f => f.Id == id);
+            .FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
     }
 
-    public async Task<FarmHierarchy?> GetFarmHierarchyAsync(int id)
+    public async Task<FarmHierarchy?> GetFarmHierarchyAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .Where(f => f.Id == id)
@@ -45,7 +53,7 @@ public class FarmRepository(AgroLinkDbContext context) : Repository<Farm>(contex
                     })
                     .ToList(),
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Farm?> FindByReferenceAsync(string reference, CancellationToken ct = default)

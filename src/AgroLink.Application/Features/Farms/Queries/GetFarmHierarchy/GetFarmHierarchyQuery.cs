@@ -25,7 +25,7 @@ public class GetFarmHierarchyQueryHandler(
         if (!hasAccess)
         {
             // Fallback check: is user the owner of this farm?
-            var farmRecord = await farmRepository.GetByIdAsync(request.Id);
+            var farmRecord = await farmRepository.GetByIdAsync(request.Id, cancellationToken);
             if (farmRecord != null)
             {
                 hasAccess = await ownerRepository.ExistsAsync(
@@ -40,7 +40,7 @@ public class GetFarmHierarchyQueryHandler(
             return null;
         }
 
-        var farm = await farmRepository.GetFarmHierarchyAsync(request.Id);
+        var farm = await farmRepository.GetFarmHierarchyAsync(request.Id, cancellationToken);
         if (farm == null)
         {
             return null;

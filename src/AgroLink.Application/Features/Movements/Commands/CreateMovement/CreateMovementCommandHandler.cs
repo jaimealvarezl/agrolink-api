@@ -32,14 +32,17 @@ public class CreateMovementCommandHandler(
         }
 
         // Pre-fetch the destination lot
-        var toLot = await lotRepository.GetLotWithPaddockAsync(request.MovementDto.ToLotId);
+        var toLot = await lotRepository.GetLotWithPaddockAsync(
+            request.MovementDto.ToLotId,
+            cancellationToken
+        );
         if (toLot == null || toLot.Paddock.FarmId != farmId)
         {
             throw new ArgumentException("Invalid destination lot or access denied.");
         }
 
         // Pre-fetch the user
-        var user = await userRepository.GetByIdAsync(request.UserId);
+        var user = await userRepository.GetByIdAsync(request.UserId, cancellationToken);
         var userName = user?.Name ?? string.Empty;
 
         // Fetch all requested animals in a single query
@@ -56,7 +59,10 @@ public class CreateMovementCommandHandler(
 
         // Extract unique source lot IDs and fetch them to validate access
         var uniqueLotIds = animalsList.Select(a => a.LotId).Distinct().ToList();
-        var sourceLots = await lotRepository.GetLotsWithPaddockAsync(uniqueLotIds);
+        var sourceLots = await lotRepository.GetLotsWithPaddockAsync(
+            uniqueLotIds,
+            cancellationToken
+        );
 
         var sourceLotsDict = sourceLots.ToDictionary(l => l.Id);
         if (
@@ -70,7 +76,7 @@ public class CreateMovementCommandHandler(
         var movementDataList =
             new List<(Movement Movement, string? AnimalName, string? FromLotName)>();
 
-        await unitOfWork.BeginTransactionAsync();
+        await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
@@ -95,7 +101,7 @@ public class CreateMovementCommandHandler(
                     UserId = request.UserId,
                 };
 
-                await movementRepository.AddMovementAsync(movement);
+                await movementRepository.AddMovementAsync(movement, cancellationToken);
 
                 // Store entity objects/strings in memory for creating the DTO later
                 // without re-querying the database
@@ -103,11 +109,11 @@ public class CreateMovementCommandHandler(
             }
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
-            await unitOfWork.CommitTransactionAsync();
+            await unitOfWork.CommitTransactionAsync(cancellationToken);
         }
         catch
         {
-            await unitOfWork.RollbackTransactionAsync();
+            await unitOfWork.RollbackTransactionAsync(cancellationToken);
             throw;
         }
 

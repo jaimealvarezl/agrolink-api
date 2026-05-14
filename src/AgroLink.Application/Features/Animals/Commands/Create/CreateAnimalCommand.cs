@@ -29,7 +29,7 @@ public class CreateAnimalCommandHandler(
     {
         var dto = request.Dto;
 
-        var lot = await lotRepository.GetLotWithPaddockAsync(dto.LotId);
+        var lot = await lotRepository.GetLotWithPaddockAsync(dto.LotId, cancellationToken);
         if (lot == null)
         {
             throw new ArgumentException($"Lot with ID {dto.LotId} not found.");
@@ -72,7 +72,11 @@ public class CreateAnimalCommandHandler(
         Animal? mother = null;
         if (dto.MotherId.HasValue)
         {
-            mother = await animalRepository.GetByIdAsync(dto.MotherId.Value, userId);
+            mother = await animalRepository.GetByIdAsync(
+                dto.MotherId.Value,
+                userId,
+                cancellationToken
+            );
             if (mother == null)
             {
                 throw new ArgumentException(
@@ -84,7 +88,11 @@ public class CreateAnimalCommandHandler(
         Animal? father = null;
         if (dto.FatherId.HasValue)
         {
-            father = await animalRepository.GetByIdAsync(dto.FatherId.Value, userId);
+            father = await animalRepository.GetByIdAsync(
+                dto.FatherId.Value,
+                userId,
+                cancellationToken
+            );
             if (father == null)
             {
                 throw new ArgumentException(
@@ -97,14 +105,22 @@ public class CreateAnimalCommandHandler(
 
         if (!string.IsNullOrEmpty(dto.Cuia))
         {
-            var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(dto.Cuia, farmId);
+            var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(
+                dto.Cuia,
+                farmId,
+                cancellationToken: cancellationToken
+            );
             if (!isUnique)
             {
                 throw new ArgumentException($"CUIA '{dto.Cuia}' already exists in this Farm.");
             }
         }
 
-        var isNameUnique = await animalRepository.IsNameUniqueInFarmAsync(dto.Name, farmId);
+        var isNameUnique = await animalRepository.IsNameUniqueInFarmAsync(
+            dto.Name,
+            farmId,
+            cancellationToken: cancellationToken
+        );
         if (!isNameUnique)
         {
             throw new ArgumentException(
@@ -115,7 +131,7 @@ public class CreateAnimalCommandHandler(
         if (dto.Owners.Count == 0)
         {
             var farm =
-                await farmRepository.GetByIdAsync(farmId)
+                await farmRepository.GetByIdAsync(farmId, cancellationToken)
                 ?? throw new ArgumentException($"Farm with ID {farmId} not found.");
             dto.Owners.Add(new AnimalOwnerCreateDto { OwnerId = farm.OwnerId, SharePercent = 100 });
         }
@@ -154,7 +170,7 @@ public class CreateAnimalCommandHandler(
 
         foreach (var owner in animal.AnimalOwners)
         {
-            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
+            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId, cancellationToken);
             if (ownerEntity != null)
             {
                 ownerDtos.Add(

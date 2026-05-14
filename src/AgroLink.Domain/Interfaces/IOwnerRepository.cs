@@ -4,5 +4,8 @@ namespace AgroLink.Domain.Interfaces;
 
 public interface IOwnerRepository : IRepository<Owner>
 {
-    Task<IEnumerable<Owner>> GetOwnersByFarmAsync(int farmId);
+    Task<IEnumerable<Owner>> GetOwnersByFarmAsync(
+        int farmId,
+        CancellationToken cancellationToken = default
+    );
 }

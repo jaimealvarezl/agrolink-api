@@ -16,7 +16,11 @@ public class DeleteAnimalCommandHandler(
 {
     public async Task Handle(DeleteAnimalCommand request, CancellationToken cancellationToken)
     {
-        var animal = await animalRepository.GetByIdAsync(request.Id, request.UserId);
+        var animal = await animalRepository.GetByIdAsync(
+            request.Id,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             throw new ArgumentException("Animal not found or access denied.");

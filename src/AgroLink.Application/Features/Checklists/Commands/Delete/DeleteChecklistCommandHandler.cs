@@ -18,7 +18,7 @@ public class DeleteChecklistCommandHandler(
     )
     {
         var checklist =
-            await checklistRepository.GetByIdAsync(request.Id)
+            await checklistRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Checklist with ID {request.Id} was not found.");
 
         var farmId =
@@ -28,7 +28,7 @@ public class DeleteChecklistCommandHandler(
             );
 
         var lot =
-            await lotRepository.GetLotWithPaddockAsync(checklist.LotId)
+            await lotRepository.GetLotWithPaddockAsync(checklist.LotId, cancellationToken)
             ?? throw new NotFoundException($"Lot with ID {checklist.LotId} was not found.");
         if (lot.Paddock?.FarmId != farmId)
         {

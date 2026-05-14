@@ -27,7 +27,7 @@ public class GetAllChecklistsQueryHandler(
             return [];
         }
 
-        var allChecklists = (await checklistRepository.GetAllAsync()).ToList();
+        var allChecklists = (await checklistRepository.GetAllAsync(cancellationToken)).ToList();
         if (allChecklists.Count == 0)
         {
             return [];

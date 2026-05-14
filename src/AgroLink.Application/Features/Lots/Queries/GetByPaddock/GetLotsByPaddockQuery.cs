@@ -18,7 +18,7 @@ public class GetLotsByPaddockQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var paddock = await paddockRepository.GetByIdAsync(request.PaddockId);
+        var paddock = await paddockRepository.GetByIdAsync(request.PaddockId, cancellationToken);
 
         // Security check: ensure paddock belongs to the current farm context
         if (
@@ -30,7 +30,7 @@ public class GetLotsByPaddockQueryHandler(
             return [];
         }
 
-        var lots = await lotRepository.GetByPaddockIdAsync(request.PaddockId);
+        var lots = await lotRepository.GetByPaddockIdAsync(request.PaddockId, cancellationToken);
 
         return lots.Select(l => new LotDto
         {

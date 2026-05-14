@@ -27,7 +27,7 @@ public class UpdatePaddockCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var paddock = await paddockRepository.GetByIdAsync(request.Id);
+        var paddock = await paddockRepository.GetByIdAsync(request.Id, cancellationToken);
         if (paddock == null)
         {
             throw new ArgumentException("Paddock not found");
@@ -87,7 +87,7 @@ public class UpdatePaddockCommandHandler(
         paddockRepository.Update(paddock);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
+        var farm = await farmRepository.GetByIdAsync(paddock.FarmId, cancellationToken);
 
         return new PaddockDto
         {

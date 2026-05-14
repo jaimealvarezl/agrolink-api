@@ -34,8 +34,9 @@ public class CreateOwnerCommandHandler(
             throw new NotFoundException($"Farm with ID {request.FarmId} not found.");
         }
 
-        var existingOwner = await ownerRepository.FirstOrDefaultIgnoreFiltersAsync(o =>
-            o.FarmId == request.FarmId && o.Name == request.Name
+        var existingOwner = await ownerRepository.FirstOrDefaultIgnoreFiltersAsync(
+            o => o.FarmId == request.FarmId && o.Name == request.Name,
+            cancellationToken
         );
 
         if (existingOwner != null)

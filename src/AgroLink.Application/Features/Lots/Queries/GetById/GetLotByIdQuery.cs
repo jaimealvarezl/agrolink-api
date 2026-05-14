@@ -15,13 +15,13 @@ public class GetLotByIdQueryHandler(
 {
     public async Task<LotDto?> Handle(GetLotByIdQuery request, CancellationToken cancellationToken)
     {
-        var lot = await lotRepository.GetByIdAsync(request.Id);
+        var lot = await lotRepository.GetByIdAsync(request.Id, cancellationToken);
         if (lot == null)
         {
             return null;
         }
 
-        var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId);
+        var paddock = await paddockRepository.GetByIdAsync(lot.PaddockId, cancellationToken);
 
         // Security check: ensure lot belongs to the current farm context
         if (

@@ -18,7 +18,11 @@ public class GetAnimalGenealogyQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.Id, request.UserId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(
+            request.Id,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             return null;

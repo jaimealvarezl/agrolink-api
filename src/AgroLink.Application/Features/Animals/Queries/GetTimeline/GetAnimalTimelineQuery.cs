@@ -27,10 +27,16 @@ public class GetAnimalTimelineQueryHandler(
     )
     {
         var animal =
-            await animalRepository.GetByIdInFarmAsync(request.AnimalId, request.FarmId)
-            ?? throw new NotFoundException("Animal", request.AnimalId);
+            await animalRepository.GetByIdInFarmAsync(
+                request.AnimalId,
+                request.FarmId,
+                cancellationToken
+            ) ?? throw new NotFoundException("Animal", request.AnimalId);
 
-        var notes = await animalNoteRepository.GetByAnimalIdAsync(request.AnimalId);
+        var notes = await animalNoteRepository.GetByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         var timelineItems = notes
             .Select(note => new AnimalTimelineItemDto
             {
@@ -49,7 +55,7 @@ public class GetAnimalTimelineQueryHandler(
             .ToList();
 
         var movements = (
-            await movementRepository.GetMovementsByAnimalAsync(request.AnimalId)
+            await movementRepository.GetMovementsByAnimalAsync(request.AnimalId, cancellationToken)
         ).ToList();
 
         if (movements.Count > 0)
@@ -105,7 +111,7 @@ public class GetAnimalTimelineQueryHandler(
         }
 
         var checklistItems = (
-            await checklistRepository.GetItemsByAnimalIdAsync(request.AnimalId)
+            await checklistRepository.GetItemsByAnimalIdAsync(request.AnimalId, cancellationToken)
         ).ToList();
 
         timelineItems.AddRange(
@@ -127,7 +133,10 @@ public class GetAnimalTimelineQueryHandler(
             })
         );
 
-        var retirement = await animalRetirementRepository.GetByAnimalIdAsync(request.AnimalId);
+        var retirement = await animalRetirementRepository.GetByAnimalIdAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         if (retirement != null)
         {
             timelineItems.Add(

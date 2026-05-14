@@ -16,12 +16,12 @@ public class GetAllPaddocksQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        var paddocks = await paddockRepository.GetAllAsync();
+        var paddocks = await paddockRepository.GetAllAsync(cancellationToken);
         var result = new List<PaddockDto>();
 
         foreach (var paddock in paddocks)
         {
-            var farm = await farmRepository.GetByIdAsync(paddock.FarmId);
+            var farm = await farmRepository.GetByIdAsync(paddock.FarmId, cancellationToken);
             result.Add(
                 new PaddockDto
                 {

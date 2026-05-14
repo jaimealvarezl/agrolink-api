@@ -75,7 +75,8 @@ public class UploadOwnerBrandPhotoCommandHandler(
                 newKey,
                 seekableStream,
                 request.ContentType,
-                request.Size
+                request.Size,
+                cancellationToken
             );
 
             brand.PhotoUrl = storageService.GetFileUrl(newKey);
@@ -89,7 +90,7 @@ public class UploadOwnerBrandPhotoCommandHandler(
             {
                 try
                 {
-                    await storageService.DeleteFileAsync(oldStorageKey);
+                    await storageService.DeleteFileAsync(oldStorageKey, cancellationToken);
                 }
                 catch (Exception ex)
                 {

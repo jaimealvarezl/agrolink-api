@@ -14,7 +14,10 @@ public class GetMembersQueryHandler(IFarmMemberRepository farmMemberRepository)
         CancellationToken cancellationToken
     )
     {
-        var members = await farmMemberRepository.GetByFarmIdWithUserAsync(request.FarmId);
+        var members = await farmMemberRepository.GetByFarmIdWithUserAsync(
+            request.FarmId,
+            cancellationToken
+        );
 
         return members.Select(m => new FarmMemberDto
         {

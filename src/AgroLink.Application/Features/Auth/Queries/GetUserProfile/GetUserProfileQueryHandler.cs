@@ -20,7 +20,7 @@ public class GetUserProfileQueryHandler(
             return null;
         }
 
-        var user = await authRepository.GetUserByIdAsync(userId.Value);
+        var user = await authRepository.GetUserByIdAsync(userId.Value, cancellationToken);
         if (user is not { IsActive: true })
         {
             return null;

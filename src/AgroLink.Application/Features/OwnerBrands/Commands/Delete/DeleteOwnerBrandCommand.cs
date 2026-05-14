@@ -52,7 +52,7 @@ public class DeleteOwnerBrandCommandHandler(
         {
             try
             {
-                await storageService.DeleteFileAsync(photoStorageKey);
+                await storageService.DeleteFileAsync(photoStorageKey, cancellationToken);
             }
             catch (Exception ex)
             {

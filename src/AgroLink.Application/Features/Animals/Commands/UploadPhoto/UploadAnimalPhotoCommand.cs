@@ -52,7 +52,11 @@ public class UploadAnimalPhotoCommandHandler(
             cancellationToken
         );
 
-        var animal = await animalRepository.GetAnimalDetailsAsync(request.AnimalId, request.UserId);
+        var animal = await animalRepository.GetAnimalDetailsAsync(
+            request.AnimalId,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             logger.LogWarning("Animal {AnimalId} not found or access denied", request.AnimalId);
@@ -74,7 +78,10 @@ public class UploadAnimalPhotoCommandHandler(
         var farmId = animal.Lot.Paddock.FarmId;
 
         // Check if it's the first photo
-        var isFirstPhoto = !await animalPhotoRepository.HasPhotosAsync(request.AnimalId);
+        var isFirstPhoto = !await animalPhotoRepository.HasPhotosAsync(
+            request.AnimalId,
+            cancellationToken
+        );
         logger.LogInformation("Is first photo: {IsFirstPhoto}", isFirstPhoto);
 
         var animalPhoto = new AnimalPhoto
@@ -112,7 +119,8 @@ public class UploadAnimalPhotoCommandHandler(
                 key,
                 seekableStream,
                 request.ContentType,
-                request.Size
+                request.Size,
+                cancellationToken
             );
 
             animalPhoto.UriRemote = storageService.GetFileUrl(key);

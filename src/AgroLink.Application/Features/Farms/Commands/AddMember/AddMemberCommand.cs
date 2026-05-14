@@ -18,7 +18,7 @@ public class AddMemberCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var user = await userRepository.GetByEmailAsync(request.Email);
+        var user = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user == null)
         {
             throw new ArgumentException("User not found. They must register in AgroLink first.");
@@ -26,7 +26,8 @@ public class AddMemberCommandHandler(
 
         var existingMember = await farmMemberRepository.GetByFarmAndUserAsync(
             request.FarmId,
-            user.Id
+            user.Id,
+            cancellationToken: cancellationToken
         );
         if (existingMember != null)
         {

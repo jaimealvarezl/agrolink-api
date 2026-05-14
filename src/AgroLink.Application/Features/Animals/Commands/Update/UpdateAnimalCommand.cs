@@ -30,7 +30,11 @@ public class UpdateAnimalCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var animal = await animalRepository.GetByIdAsync(request.Id, request.UserId);
+        var animal = await animalRepository.GetByIdAsync(
+            request.Id,
+            request.UserId,
+            cancellationToken
+        );
         if (animal == null)
         {
             throw new ArgumentException("Animal not found or access denied.");
@@ -50,7 +54,10 @@ public class UpdateAnimalCommandHandler(
 
         if (dto.LotId.HasValue && dto.LotId.Value != animal.LotId)
         {
-            var newLot = await lotRepository.GetLotWithPaddockAsync(dto.LotId.Value);
+            var newLot = await lotRepository.GetLotWithPaddockAsync(
+                dto.LotId.Value,
+                cancellationToken
+            );
             if (newLot == null)
             {
                 throw new ArgumentException($"Lot with ID {dto.LotId.Value} not found.");
@@ -80,7 +87,8 @@ public class UpdateAnimalCommandHandler(
             var isUnique = await animalRepository.IsCuiaUniqueInFarmAsync(
                 dto.Cuia,
                 farmId,
-                animal.Id
+                animal.Id,
+                cancellationToken
             );
             if (!isUnique)
             {
@@ -156,7 +164,8 @@ public class UpdateAnimalCommandHandler(
             var isUnique = await animalRepository.IsNameUniqueInFarmAsync(
                 animal.Name,
                 farmId,
-                animal.Id
+                animal.Id,
+                cancellationToken
             );
             if (!isUnique)
             {
@@ -183,7 +192,8 @@ public class UpdateAnimalCommandHandler(
         {
             var motherEntity = await animalRepository.GetByIdAsync(
                 dto.MotherId.Value,
-                request.UserId
+                request.UserId,
+                cancellationToken
             );
             if (motherEntity == null)
             {
@@ -200,7 +210,8 @@ public class UpdateAnimalCommandHandler(
         {
             var fatherEntity = await animalRepository.GetByIdAsync(
                 dto.FatherId.Value,
-                request.UserId
+                request.UserId,
+                cancellationToken
             );
             if (fatherEntity == null)
             {
@@ -226,7 +237,7 @@ public class UpdateAnimalCommandHandler(
 
             await ownershipValidator.ValidateAsync(dto.Owners, farmId, cancellationToken);
 
-            await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id);
+            await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id, cancellationToken);
 
             foreach (var ownerDto in dto.Owners)
             {
@@ -242,20 +253,20 @@ public class UpdateAnimalCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var lot = await lotRepository.GetByIdAsync(animal.LotId);
+        var lot = await lotRepository.GetByIdAsync(animal.LotId, cancellationToken);
         var mother = animal.MotherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.MotherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.MotherId.Value, cancellationToken)
             : null;
         var father = animal.FatherId.HasValue
-            ? await animalRepository.GetByIdAsync(animal.FatherId.Value)
+            ? await animalRepository.GetByIdAsync(animal.FatherId.Value, cancellationToken)
             : null;
 
-        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id);
+        var owners = await animalOwnerRepository.GetByAnimalIdAsync(animal.Id, cancellationToken);
         var ownerDtos = new List<AnimalOwnerDto>();
 
         foreach (var owner in owners)
         {
-            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId);
+            var ownerEntity = await ownerRepository.GetByIdAsync(owner.OwnerId, cancellationToken);
             if (ownerEntity != null)
             {
                 ownerDtos.Add(
@@ -269,7 +280,7 @@ public class UpdateAnimalCommandHandler(
             }
         }
 
-        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id);
+        var photos = await animalPhotoRepository.GetByAnimalIdAsync(animal.Id, cancellationToken);
         var photoDtos = photos
             .Select(p => new AnimalPhotoDto
             {

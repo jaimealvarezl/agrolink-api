@@ -11,7 +11,11 @@ public class AnimalRepository(AgroLinkDbContext context)
     : Repository<Animal>(context),
         IAnimalRepository
 {
-    public async Task<IEnumerable<Animal>> GetByLotIdAsync(int lotId, int userId)
+    public async Task<IEnumerable<Animal>> GetByLotIdAsync(
+        int lotId,
+        int userId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .Include(a => a.Lot)
@@ -27,10 +31,14 @@ public class AnimalRepository(AgroLinkDbContext context)
                     )
                 )
             )
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<Animal?> GetByIdAsync(int id, int userId)
+    public async Task<Animal?> GetByIdAsync(
+        int id,
+        int userId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .Include(a => a.Lot)
@@ -46,7 +54,7 @@ public class AnimalRepository(AgroLinkDbContext context)
                     )
                 )
             )
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Animal?> GetByEarTagInFarmAsync(
@@ -112,22 +120,29 @@ public class AnimalRepository(AgroLinkDbContext context)
         );
     }
 
-    public async Task<IEnumerable<Animal>> GetChildrenAsync(int parentId)
+    public async Task<IEnumerable<Animal>> GetChildrenAsync(
+        int parentId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .Where(a => a.MotherId == parentId || a.FatherId == parentId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<Animal?> GetByCuiaAsync(string cuia)
+    public async Task<Animal?> GetByCuiaAsync(
+        string cuia,
+        CancellationToken cancellationToken = default
+    )
     {
-        return await _dbSet.FirstOrDefaultAsync(a => a.Cuia == cuia);
+        return await _dbSet.FirstOrDefaultAsync(a => a.Cuia == cuia, cancellationToken);
     }
 
     public async Task<bool> IsCuiaUniqueInFarmAsync(
         string cuia,
         int farmId,
-        int? excludeAnimalId = null
+        int? excludeAnimalId = null,
+        CancellationToken cancellationToken = default
     )
     {
         var query = _dbSet
@@ -143,13 +158,14 @@ public class AnimalRepository(AgroLinkDbContext context)
             query = query.Where(a => a.Id != excludeAnimalId.Value);
         }
 
-        return !await query.AnyAsync();
+        return !await query.AnyAsync(cancellationToken);
     }
 
     public async Task<bool> IsNameUniqueInFarmAsync(
         string name,
         int farmId,
-        int? excludeAnimalId = null
+        int? excludeAnimalId = null,
+        CancellationToken cancellationToken = default
     )
     {
         var query = _dbSet.Where(a =>
@@ -163,7 +179,7 @@ public class AnimalRepository(AgroLinkDbContext context)
             query = query.Where(a => a.Id != excludeAnimalId.Value);
         }
 
-        return !await query.AnyAsync();
+        return !await query.AnyAsync(cancellationToken);
     }
 
     public async Task<(IEnumerable<Animal> Items, int TotalCount)> GetPagedListAsync(
@@ -176,7 +192,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         bool isPregnant = false,
         bool isMissing = false,
         Sex? sex = null,
-        bool includeRetired = false
+        bool includeRetired = false,
+        CancellationToken cancellationToken = default
     )
     {
         var query = _dbSet
@@ -226,14 +243,14 @@ public class AnimalRepository(AgroLinkDbContext context)
             query = query.Where(a => a.LifeStatus == LifeStatus.Missing);
         }
 
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
             .OrderBy(a => a.Name)
             .ThenBy(a => a.TagVisual)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return (items, totalCount);
     }
@@ -254,7 +271,11 @@ public class AnimalRepository(AgroLinkDbContext context)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Animal?> GetAnimalDetailsAsync(int id, int userId)
+    public async Task<Animal?> GetAnimalDetailsAsync(
+        int id,
+        int userId,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .Include(a => a.Lot)
@@ -274,15 +295,18 @@ public class AnimalRepository(AgroLinkDbContext context)
                     f.Id == a.Lot.Paddock.FarmId && f.Owner != null && f.Owner.UserId == userId
                 )
             )
-            .FirstOrDefaultAsync(a => a.Id == id);
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
-    public async Task<Animal?> GetLotWithPaddockAsync(int id)
+    public async Task<Animal?> GetLotWithPaddockAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    )
     {
         return await _dbSet
             .Include(a => a.Lot)
                 .ThenInclude(l => l.Paddock)
-            .FirstOrDefaultAsync(a => a.Id == id);
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
     public async Task<Animal?> GetByIdInFarmAsync(

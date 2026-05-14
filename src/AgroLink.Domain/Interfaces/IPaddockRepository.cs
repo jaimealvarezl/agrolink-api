@@ -4,5 +4,8 @@ namespace AgroLink.Domain.Interfaces;
 
 public interface IPaddockRepository : IRepository<Paddock>
 {
-    Task<IEnumerable<Paddock>> GetByFarmIdAsync(int farmId);
+    Task<IEnumerable<Paddock>> GetByFarmIdAsync(
+        int farmId,
+        CancellationToken cancellationToken = default
+    );
 }

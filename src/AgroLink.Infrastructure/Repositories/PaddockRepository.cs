@@ -9,8 +9,14 @@ public class PaddockRepository(AgroLinkDbContext context)
     : Repository<Paddock>(context),
         IPaddockRepository
 {
-    public async Task<IEnumerable<Paddock>> GetByFarmIdAsync(int farmId)
+    public async Task<IEnumerable<Paddock>> GetByFarmIdAsync(
+        int farmId,
+        CancellationToken cancellationToken = default
+    )
     {
-        return await _dbSet.AsNoTracking().Where(p => p.FarmId == farmId).ToListAsync();
+        return await _dbSet
+            .AsNoTracking()
+            .Where(p => p.FarmId == farmId)
+            .ToListAsync(cancellationToken);
     }
 }

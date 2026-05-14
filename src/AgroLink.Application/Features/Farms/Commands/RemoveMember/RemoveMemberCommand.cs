@@ -15,8 +15,11 @@ public class RemoveMemberCommandHandler(
     public async Task Handle(RemoveMemberCommand request, CancellationToken cancellationToken)
     {
         var member =
-            await farmMemberRepository.GetByFarmAndUserAsync(request.FarmId, request.UserId)
-            ?? throw new NotFoundException("FarmMember", $"{request.FarmId}-{request.UserId}");
+            await farmMemberRepository.GetByFarmAndUserAsync(
+                request.FarmId,
+                request.UserId,
+                cancellationToken: cancellationToken
+            ) ?? throw new NotFoundException("FarmMember", $"{request.FarmId}-{request.UserId}");
 
         // Security Check: Prevent removing the last Owner of the farm
         if (member.Role == FarmMemberRoles.Owner)
