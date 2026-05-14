@@ -73,13 +73,15 @@ public class AnalyzeAnimalHealthQueryHandlerTests
 
     private static AnimalHealthAnalysisResult RejectedResult(
         string? reason = "Not a bovine animal."
-    ) =>
-        new()
+    )
+    {
+        return new AnimalHealthAnalysisResult
         {
             PhotoRejected = true,
             RejectionReason = reason,
             RawAiResponse = "{}",
         };
+    }
 
     [Test]
     public async Task Handle_ValidAnimalWithPhoto_ReturnsMappedDto()
@@ -204,7 +206,7 @@ public class AnalyzeAnimalHealthQueryHandlerTests
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(RejectedResult("Not a bovine animal."));
+            .ReturnsAsync(RejectedResult());
 
         var ex = await Should.ThrowAsync<ArgumentException>(() =>
             _handler.Handle(

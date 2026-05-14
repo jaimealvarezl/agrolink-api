@@ -1,5 +1,6 @@
 using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.Commands.Create;
+using AgroLink.Application.Features.Animals.Commands.CreateBcsReading;
 using AgroLink.Application.Features.Animals.Commands.CreateNote;
 using AgroLink.Application.Features.Animals.Commands.Delete;
 using AgroLink.Application.Features.Animals.Commands.DeleteNote;
@@ -346,6 +347,22 @@ public class AnimalsController(IMediator mediator) : BaseController
         }
 
         return File(pdf, "application/pdf", $"alerta-robo-{id}.pdf");
+    }
+
+    [HttpPost("{id}/bcs-readings")]
+    [Authorize(Policy = "FarmEditorAccess")]
+    public async Task<ActionResult<AnimalBcsReadingDto>> CreateBcsReading(
+        int farmId,
+        int id,
+        [FromBody] CreateBcsReadingDto dto,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await mediator.Send(
+            new CreateBcsReadingCommand(farmId, id, GetCurrentUserId(), dto),
+            cancellationToken
+        );
+        return CreatedAtAction(null, result);
     }
 
     [HttpPost("{id}/analyze-health")]
