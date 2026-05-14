@@ -106,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<IClinicalRecommendationRepository, ClinicalRecommendationRepository>();
         services.AddScoped<ITelegramInboundEventLogRepository, TelegramInboundEventLogRepository>();
         services.AddScoped<ITelegramOutboundMessageRepository, TelegramOutboundMessageRepository>();
+        services.AddScoped<IAnimalBcsReadingRepository, AnimalBcsReadingRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Firebase Admin SDK — initialized once per process using Application Default Credentials.
