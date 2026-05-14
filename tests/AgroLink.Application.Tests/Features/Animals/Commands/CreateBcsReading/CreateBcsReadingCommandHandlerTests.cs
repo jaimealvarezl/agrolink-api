@@ -203,6 +203,40 @@ public class CreateBcsReadingCommandHandlerTests
     }
 
     [Test]
+    public async Task Handle_ManualSource_BcsNoteUsesLecturaManual()
+    {
+        var animal = new Animal { Id = 1 };
+        var user = new User { Id = 5, Name = "Juan López" };
+
+        _mocker
+            .GetMock<IAnimalRepository>()
+            .Setup(r => r.GetByIdInFarmAsync(1, 10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(animal);
+        _mocker
+            .GetMock<IUserRepository>()
+            .Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        _mocker
+            .GetMock<IUnitOfWork>()
+            .Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        AnimalNote? capturedNote = null;
+        _mocker
+            .GetMock<IAnimalNoteRepository>()
+            .Setup(r => r.AddAsync(It.IsAny<AnimalNote>(), It.IsAny<CancellationToken>()))
+            .Callback<AnimalNote, CancellationToken>((note, _) => capturedNote = note);
+
+        await _handler.Handle(
+            BuildCommand(score: 4.0, source: BcsReadingSource.Manual),
+            CancellationToken.None
+        );
+
+        capturedNote.ShouldNotBeNull();
+        capturedNote!.Content.ShouldBe("CC 4.0 — Lectura manual confirmado por Juan López");
+    }
+
+    [Test]
     public async Task Handle_ScoreBelowMin_ThrowsArgumentException()
     {
         await Should.ThrowAsync<ArgumentException>(() =>

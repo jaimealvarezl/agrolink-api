@@ -2,6 +2,7 @@ using System.Globalization;
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Domain.Entities;
+using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
@@ -53,10 +54,11 @@ public class CreateBcsReadingCommandHandler(
         var userName = user?.Name ?? string.Empty;
         var scoreText = dto.Score.ToString("0.0#", CultureInfo.InvariantCulture);
 
+        var sourceText = dto.Source == BcsReadingSource.AI ? "Análisis IA" : "Lectura manual";
         var bcsNote = new AnimalNote
         {
             AnimalId = request.AnimalId,
-            Content = $"CC {scoreText} — Análisis IA confirmado por {userName}",
+            Content = $"CC {scoreText} — {sourceText} confirmado por {userName}",
             UserId = request.UserId,
             CreatedAt = DateTime.UtcNow,
         };
