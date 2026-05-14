@@ -145,16 +145,24 @@ public class OpenAiAnimalHealthAnalysisService(
 
             return new AnimalHealthAnalysisResult
             {
-                BodyConditionScore = ai.TryGetProperty("bodyConditionScore", out var bcs)
-                    ? bcs.GetDouble()
-                    : 0,
-                HasAlert = ai.TryGetProperty("hasAlert", out var ha) && ha.GetBoolean(),
+                BodyConditionScore =
+                    ai.TryGetProperty("bodyConditionScore", out var bcs)
+                    && bcs.ValueKind == JsonValueKind.Number
+                        ? bcs.GetDouble()
+                        : 0,
+                HasAlert =
+                    ai.TryGetProperty("hasAlert", out var ha)
+                    && ha.ValueKind is JsonValueKind.True or JsonValueKind.False
+                    && ha.GetBoolean(),
                 AlertDescription =
                     ai.TryGetProperty("alertDescription", out var ad)
                     && ad.ValueKind == JsonValueKind.String
                         ? ad.GetString()
                         : null,
-                PhotoRejected = ai.TryGetProperty("photoRejected", out var pr) && pr.GetBoolean(),
+                PhotoRejected =
+                    ai.TryGetProperty("photoRejected", out var pr)
+                    && pr.ValueKind is JsonValueKind.True or JsonValueKind.False
+                    && pr.GetBoolean(),
                 RejectionReason =
                     ai.TryGetProperty("rejectionReason", out var rr)
                     && rr.ValueKind == JsonValueKind.String
@@ -185,6 +193,11 @@ public class OpenAiAnimalHealthAnalysisService(
     {
         var now = DateTime.UtcNow;
         var months = (now.Year - birthDate.Year) * 12 + now.Month - birthDate.Month;
+        if (now.Day < birthDate.Day)
+        {
+            months--;
+        }
+
         if (months <= 0)
         {
             return "recién nacido";
