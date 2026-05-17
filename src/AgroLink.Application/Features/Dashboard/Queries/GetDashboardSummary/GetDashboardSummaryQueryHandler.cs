@@ -76,9 +76,8 @@ public class GetDashboardSummaryQueryHandler(
         var overdueLots = lots.Select(l =>
                 (
                     Lot: l,
-                    LastDate: latestDateByLot.ContainsKey(l.Id)
-                        ? (DateTime?)latestDateByLot[l.Id]
-                        : null
+                    LastDate: latestDateByLot.TryGetValue(l.Id, out var value)
+                        ? (DateTime?)value : null
                 )
             )
             .Where(x => !x.LastDate.HasValue || x.LastDate < cutoff)
