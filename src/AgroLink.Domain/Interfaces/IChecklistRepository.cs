@@ -20,4 +20,9 @@ public interface IChecklistRepository : IRepository<Checklist>
         int animalId,
         CancellationToken cancellationToken = default
     );
+
+    Task<IEnumerable<Checklist>> GetLatestPerLotAsync(
+        IEnumerable<int> lotIds,
+        CancellationToken cancellationToken = default
+    );
 }
