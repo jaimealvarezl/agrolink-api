@@ -1,3 +1,4 @@
+using AgroLink.Application.Features.ActivityFeed.DTOs;
 using AgroLink.Application.Features.ActivityFeed.Queries.GetFarmActivityFeed;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -34,13 +35,18 @@ public class GetFarmActivityFeedQueryHandlerTests
         return new Lot { Name = name };
     }
 
+    private void SetupEmpty(int farmId = 1, int limit = 5)
+    {
+        Repo.Setup(r => r.GetFarmMovementsAsync(farmId, limit, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNotesAsync(farmId, limit, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(farmId, limit, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(farmId, limit, default)).ReturnsAsync([]);
+    }
+
     [Test]
     public async Task Handle_WhenNoEvents_ReturnsEmptyList()
     {
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        SetupEmpty();
 
         var result = await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default);
 
@@ -62,10 +68,10 @@ public class GetFarmActivityFeedQueryHandlerTests
             })
             .ToList();
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync(movements);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 3, default)).ReturnsAsync(movements);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 3, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 3, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 3, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 3), default)).ToList();
 
@@ -76,7 +82,7 @@ public class GetFarmActivityFeedQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_MovementWithToLot_DescriptionContainsLotName()
+    public async Task Handle_MovementWithToLot_ExposesToLotName()
     {
         var animal = MakeAnimal(42);
         var lot = MakeLot("Potrero Norte");
@@ -88,23 +94,23 @@ public class GetFarmActivityFeedQueryHandlerTests
             At = DateTime.UtcNow,
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([movement]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([movement]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
         result.Count.ShouldBe(1);
         var item = result[0];
-        item.EventType.ShouldBe("Movement");
+        item.EventType.ShouldBe(ActivityFeedEventType.Movement);
         item.AnimalId.ShouldBe(42);
         item.AnimalName.ShouldBe("Manchita");
-        item.Description.ShouldBe("Movido a Potrero Norte");
+        item.ToLotName.ShouldBe("Potrero Norte");
     }
 
     [Test]
-    public async Task Handle_MovementWithNoToLot_UsesFallbackDescription()
+    public async Task Handle_MovementWithNoToLot_ToLotNameIsNull()
     {
         var animal = MakeAnimal(1);
         var movement = new Movement
@@ -115,18 +121,18 @@ public class GetFarmActivityFeedQueryHandlerTests
             At = DateTime.UtcNow,
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([movement]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([movement]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
-        result[0].Description.ShouldBe("Movimiento registrado");
+        result[0].ToLotName.ShouldBeNull();
     }
 
     [Test]
-    public async Task Handle_TimelineNote_DescriptionIsNoteContent()
+    public async Task Handle_TimelineNote_ExposesNoteContent()
     {
         var animal = MakeAnimal(7, "Lola");
         var note = new AnimalNote
@@ -137,23 +143,23 @@ public class GetFarmActivityFeedQueryHandlerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([note]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([note]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
         result.Count.ShouldBe(1);
         var item = result[0];
-        item.EventType.ShouldBe("TimelineNote");
+        item.EventType.ShouldBe(ActivityFeedEventType.TimelineNote);
         item.AnimalId.ShouldBe(7);
         item.AnimalName.ShouldBe("Lola");
-        item.Description.ShouldBe("Se observó cojera leve");
+        item.NoteContent.ShouldBe("Se observó cojera leve");
     }
 
     [Test]
-    public async Task Handle_Retirement_DescriptionContainsReason()
+    public async Task Handle_Retirement_ExposesRetirementReason()
     {
         var animal = MakeAnimal(3, "Bella");
         var retirement = new AnimalRetirement
@@ -164,22 +170,22 @@ public class GetFarmActivityFeedQueryHandlerTests
             At = DateTime.UtcNow,
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([retirement]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([retirement]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
         result.Count.ShouldBe(1);
         var item = result[0];
-        item.EventType.ShouldBe("Retirement");
+        item.EventType.ShouldBe(ActivityFeedEventType.Retirement);
         item.AnimalId.ShouldBe(3);
-        item.Description.ShouldBe("Dado de baja: Sold");
+        item.RetirementReason.ShouldBe("Sold");
     }
 
     [Test]
-    public async Task Handle_NewbornRegistration_DescriptionAndOccurredAtAreMapped()
+    public async Task Handle_NewbornRegistration_OccurredAtIsBirthDate()
     {
         var birthDate = new DateTime(2026, 3, 10, 0, 0, 0, DateTimeKind.Utc);
         var animal = new Animal
@@ -189,19 +195,18 @@ public class GetFarmActivityFeedQueryHandlerTests
             BirthDate = birthDate,
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([animal]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([animal]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
         result.Count.ShouldBe(1);
         var item = result[0];
-        item.EventType.ShouldBe("NewbornRegistration");
+        item.EventType.ShouldBe(ActivityFeedEventType.NewbornRegistration);
         item.AnimalId.ShouldBe(99);
         item.AnimalName.ShouldBe("Ternero");
-        item.Description.ShouldBe("Nacimiento registrado");
         item.OccurredAt.ShouldBe(birthDate);
     }
 
@@ -217,10 +222,10 @@ public class GetFarmActivityFeedQueryHandlerTests
             CreatedAt = DateTime.UtcNow,
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([note]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([note]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
@@ -254,16 +259,16 @@ public class GetFarmActivityFeedQueryHandlerTests
             At = now.AddHours(-2),
         };
 
-        Repo.Setup(r => r.GetFarmMovementsAsync(1, default)).ReturnsAsync([movement]);
-        Repo.Setup(r => r.GetFarmNotesAsync(1, default)).ReturnsAsync([note]);
-        Repo.Setup(r => r.GetFarmRetirementsAsync(1, default)).ReturnsAsync([retirement]);
-        Repo.Setup(r => r.GetFarmNewbornsAsync(1, default)).ReturnsAsync([]);
+        Repo.Setup(r => r.GetFarmMovementsAsync(1, 5, default)).ReturnsAsync([movement]);
+        Repo.Setup(r => r.GetFarmNotesAsync(1, 5, default)).ReturnsAsync([note]);
+        Repo.Setup(r => r.GetFarmRetirementsAsync(1, 5, default)).ReturnsAsync([retirement]);
+        Repo.Setup(r => r.GetFarmNewbornsAsync(1, 5, default)).ReturnsAsync([]);
 
         var result = (await _handler.Handle(new GetFarmActivityFeedQuery(1, 5), default)).ToList();
 
         result.Count.ShouldBe(3);
-        result[0].EventType.ShouldBe("Movement");
-        result[1].EventType.ShouldBe("Retirement");
-        result[2].EventType.ShouldBe("TimelineNote");
+        result[0].EventType.ShouldBe(ActivityFeedEventType.Movement);
+        result[1].EventType.ShouldBe(ActivityFeedEventType.Retirement);
+        result[2].EventType.ShouldBe(ActivityFeedEventType.TimelineNote);
     }
 }

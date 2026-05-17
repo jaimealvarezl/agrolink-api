@@ -1,6 +1,7 @@
 using AgroLink.Application.Features.ActivityFeed.DTOs;
 using AgroLink.Application.Interfaces;
 using MediatR;
+using static AgroLink.Application.Features.ActivityFeed.DTOs.ActivityFeedEventType;
 
 namespace AgroLink.Application.Features.ActivityFeed.Queries.GetFarmActivityFeed;
 
@@ -27,7 +28,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         events.AddRange(
             movementsTask.Result.Select(m => new ActivityFeedItemDto
             {
-                EventType = "Movement",
+                EventType = Movement,
                 AnimalId = m.AnimalId,
                 AnimalName = string.IsNullOrEmpty(m.Animal.Name) ? null : m.Animal.Name,
                 ToLotName = m.ToLot?.Name,
@@ -38,7 +39,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         events.AddRange(
             notesTask.Result.Select(n => new ActivityFeedItemDto
             {
-                EventType = "TimelineNote",
+                EventType = TimelineNote,
                 AnimalId = n.AnimalId,
                 AnimalName = string.IsNullOrEmpty(n.Animal.Name) ? null : n.Animal.Name,
                 NoteContent = n.Content,
@@ -49,7 +50,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         events.AddRange(
             retirementsTask.Result.Select(r => new ActivityFeedItemDto
             {
-                EventType = "Retirement",
+                EventType = Retirement,
                 AnimalId = r.AnimalId,
                 AnimalName = string.IsNullOrEmpty(r.Animal.Name) ? null : r.Animal.Name,
                 RetirementReason = r.Reason.ToString(),
@@ -60,7 +61,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         events.AddRange(
             newbornsTask.Result.Select(a => new ActivityFeedItemDto
             {
-                EventType = "NewbornRegistration",
+                EventType = NewbornRegistration,
                 AnimalId = a.Id,
                 AnimalName = string.IsNullOrEmpty(a.Name) ? null : a.Name,
                 OccurredAt = a.BirthDate,

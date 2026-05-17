@@ -2,7 +2,7 @@ namespace AgroLink.Application.Features.ActivityFeed.DTOs;
 
 public record ActivityFeedItemDto
 {
-    public string EventType { get; init; } = string.Empty;
+    public ActivityFeedEventType EventType { get; init; }
     public int AnimalId { get; init; }
     public string? AnimalName { get; init; }
     public DateTime OccurredAt { get; init; }
