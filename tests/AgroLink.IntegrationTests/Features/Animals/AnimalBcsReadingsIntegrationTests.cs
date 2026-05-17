@@ -211,7 +211,7 @@ public class AnimalBcsReadingsIntegrationTests : IntegrationTestBase
         var (farm, animal, user) = await SetupAsync(FarmMemberRoles.Editor);
         Authenticate(user);
 
-        var dto = new CreateBcsReadingDto { Score = 6.0, Source = BcsReadingSource.Manual };
+        var dto = new CreateBcsReadingDto { Score = 9.1, Source = BcsReadingSource.Manual };
 
         var response = await Client.PostAsJsonAsync(
             $"/api/farms/{farm.Id}/animals/{animal.Id}/bcs-readings",
