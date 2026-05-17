@@ -222,6 +222,32 @@ public class DashboardIntegrationTests : IntegrationTestBase
         result.LastChecklistDate!.Value.ShouldBe(expected, TimeSpan.FromSeconds(1));
     }
 
+    [Test]
+    public async Task GetSummary_AggregatesNovedadCountAcrossAllLots()
+    {
+        var (farm, paddock, user) = await SetupFarmAsync();
+        var lotA = await AddLotAsync(paddock.Id);
+        var lotB = await AddLotAsync(paddock.Id, "Lot B");
+        var animal = await AddAnimalAsync(lotA.Id);
+        var animalB = await AddAnimalAsync(lotB.Id);
+
+        // Lot A latest session: 1 novedad
+        var sessionA = await AddChecklistAsync(lotA.Id, user.Id, DateTime.UtcNow.AddHours(-2));
+        await AddChecklistItemAsync(sessionA.Id, animal.Id, true, "OBS");
+
+        // Lot B latest session: 2 novedades
+        var sessionB = await AddChecklistAsync(lotB.Id, user.Id, DateTime.UtcNow.AddHours(-1));
+        await AddChecklistItemAsync(sessionB.Id, animalB.Id, true, "OBS");
+        await AddChecklistItemAsync(sessionB.Id, animalB.Id, true, "URG");
+
+        Authenticate(user);
+        var response = await Client.GetAsync($"/api/farms/{farm.Id}/dashboard-summary");
+
+        var result = await response.Content.ReadFromJsonAsync<DashboardSummaryDto>(JsonOptions);
+        result!.NovedadCount.ShouldBe(3);
+        result.LastChecklistIssueCount.ShouldBe(3);
+    }
+
     // --- Overdue lots ---
 
     [Test]

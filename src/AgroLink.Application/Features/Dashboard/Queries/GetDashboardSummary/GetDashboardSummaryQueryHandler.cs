@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.Dashboard.DTOs;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -36,48 +37,48 @@ public class GetDashboardSummaryQueryHandler(
 
         var lotIds = lots.Select(l => l.Id).ToList();
 
-        var allChecklists =
-            lotIds.Count > 0
-                ? (
-                    await checklistRepository.FindAsync(
-                        c => lotIds.Contains(c.LotId),
-                        cancellationToken
-                    )
-                ).ToList()
-                : new List<Checklist>();
+        // One latest checklist per lot — avoids loading full checklist history
+        var latestChecklists = (
+            await checklistRepository.GetLatestPerLotAsync(lotIds, cancellationToken)
+        ).ToList();
 
-        var mostRecentChecklist = allChecklists.MaxBy(c => c.CreatedAt);
+        // lastChecklistDate = most recent session across all lots
+        var mostRecentChecklist = latestChecklists.MaxBy(c => c.CreatedAt);
+        var lastChecklistDate = mostRecentChecklist?.CreatedAt;
 
-        DateTime? lastChecklistDate = null;
+        // Aggregate issue counts across all lots' latest sessions
         var lastChecklistIssueCount = 0;
         var novedadCount = 0;
 
-        if (mostRecentChecklist != null)
+        if (latestChecklists.Count > 0)
         {
-            lastChecklistDate = mostRecentChecklist.CreatedAt;
-
-            var sessionItems = (
+            var latestIds = latestChecklists.Select(c => c.Id).ToList();
+            var allLatestItems = (
                 await checklistItemRepository.FindAsync(
-                    ci => ci.ChecklistId == mostRecentChecklist.Id,
+                    ci => latestIds.Contains(ci.ChecklistId),
                     cancellationToken
                 )
             ).ToList();
 
-            lastChecklistIssueCount = sessionItems.Count(i => i.Condition != "OK");
-            novedadCount = sessionItems.Count(i => i.Present && i.Condition != "OK");
+            lastChecklistIssueCount = allLatestItems.Count(i =>
+                i.Condition != ChecklistItemConditions.Ok
+            );
+            novedadCount = allLatestItems.Count(i =>
+                i.Present && i.Condition != ChecklistItemConditions.Ok
+            );
         }
 
-        var cutoff = DateTime.UtcNow.AddDays(-7);
+        var cutoff = DateTime.UtcNow.AddDays(-DashboardConstants.OverdueLotThresholdDays);
         var now = DateTime.UtcNow;
 
-        var latestByLot = allChecklists
-            .GroupBy(c => c.LotId)
-            .ToDictionary(g => g.Key, g => g.Max(c => c.CreatedAt));
+        var latestDateByLot = latestChecklists.ToDictionary(c => c.LotId, c => c.CreatedAt);
 
         var overdueLots = lots.Select(l =>
                 (
                     Lot: l,
-                    LastDate: latestByLot.ContainsKey(l.Id) ? (DateTime?)latestByLot[l.Id] : null
+                    LastDate: latestDateByLot.ContainsKey(l.Id)
+                        ? (DateTime?)latestDateByLot[l.Id]
+                        : null
                 )
             )
             .Where(x => !x.LastDate.HasValue || x.LastDate < cutoff)

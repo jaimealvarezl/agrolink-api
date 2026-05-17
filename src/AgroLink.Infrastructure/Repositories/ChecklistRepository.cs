@@ -35,6 +35,40 @@ public class ChecklistRepository(AgroLinkDbContext context)
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<Checklist>> GetLatestPerLotAsync(
+        IEnumerable<int> lotIds,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var lotIdList = lotIds.ToList();
+        if (lotIdList.Count == 0)
+        {
+            return [];
+        }
+
+        // Find the most recent CreatedAt per lot (single aggregate query)
+        var latestDates = await _dbSet
+            .Where(c => lotIdList.Contains(c.LotId))
+            .GroupBy(c => c.LotId)
+            .Select(g => new { LotId = g.Key, MaxCreatedAt = g.Max(c => c.CreatedAt) })
+            .ToListAsync(cancellationToken);
+
+        if (latestDates.Count == 0)
+        {
+            return [];
+        }
+
+        // Fetch only checklists on or after the earliest of those dates (bounded window)
+        var minDate = latestDates.Min(x => x.MaxCreatedAt);
+        var candidates = await _dbSet
+            .AsNoTracking()
+            .Where(c => lotIdList.Contains(c.LotId) && c.CreatedAt >= minDate)
+            .ToListAsync(cancellationToken);
+
+        // Pick the latest per lot in memory
+        return candidates.GroupBy(c => c.LotId).Select(g => g.MaxBy(c => c.CreatedAt)!).ToList();
+    }
+
     public async Task<(IEnumerable<Checklist> Items, int TotalCount)> GetPagedByFarmAsync(
         int farmId,
         int page,
