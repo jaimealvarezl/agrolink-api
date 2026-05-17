@@ -5,6 +5,10 @@ public record ActivityFeedItemDto
     public string EventType { get; init; } = string.Empty;
     public int AnimalId { get; init; }
     public string? AnimalName { get; init; }
-    public string Description { get; init; } = string.Empty;
     public DateTime OccurredAt { get; init; }
+
+    // Structured context — one field populated per event type; frontend builds the display string
+    public string? ToLotName { get; init; }
+    public string? NoteContent { get; init; }
+    public string? RetirementReason { get; init; }
 }

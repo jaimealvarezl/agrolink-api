@@ -13,57 +13,60 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
     )
     {
         var farmId = request.FarmId;
+        var limit = request.Limit;
+
+        var movementsTask = repository.GetFarmMovementsAsync(farmId, limit, cancellationToken);
+        var notesTask = repository.GetFarmNotesAsync(farmId, limit, cancellationToken);
+        var retirementsTask = repository.GetFarmRetirementsAsync(farmId, limit, cancellationToken);
+        var newbornsTask = repository.GetFarmNewbornsAsync(farmId, limit, cancellationToken);
+
+        await Task.WhenAll(movementsTask, notesTask, retirementsTask, newbornsTask);
+
         var events = new List<ActivityFeedItemDto>();
 
-        var movements = await repository.GetFarmMovementsAsync(farmId, cancellationToken);
         events.AddRange(
-            movements.Select(m => new ActivityFeedItemDto
+            movementsTask.Result.Select(m => new ActivityFeedItemDto
             {
                 EventType = "Movement",
                 AnimalId = m.AnimalId,
                 AnimalName = string.IsNullOrEmpty(m.Animal.Name) ? null : m.Animal.Name,
-                Description =
-                    m.ToLot != null ? $"Movido a {m.ToLot.Name}" : "Movimiento registrado",
+                ToLotName = m.ToLot?.Name,
                 OccurredAt = m.At,
             })
         );
 
-        var notes = await repository.GetFarmNotesAsync(farmId, cancellationToken);
         events.AddRange(
-            notes.Select(n => new ActivityFeedItemDto
+            notesTask.Result.Select(n => new ActivityFeedItemDto
             {
                 EventType = "TimelineNote",
                 AnimalId = n.AnimalId,
                 AnimalName = string.IsNullOrEmpty(n.Animal.Name) ? null : n.Animal.Name,
-                Description = n.Content,
+                NoteContent = n.Content,
                 OccurredAt = n.CreatedAt,
             })
         );
 
-        var retirements = await repository.GetFarmRetirementsAsync(farmId, cancellationToken);
         events.AddRange(
-            retirements.Select(r => new ActivityFeedItemDto
+            retirementsTask.Result.Select(r => new ActivityFeedItemDto
             {
                 EventType = "Retirement",
                 AnimalId = r.AnimalId,
                 AnimalName = string.IsNullOrEmpty(r.Animal.Name) ? null : r.Animal.Name,
-                Description = $"Dado de baja: {r.Reason}",
+                RetirementReason = r.Reason.ToString(),
                 OccurredAt = r.At,
             })
         );
 
-        var newborns = await repository.GetFarmNewbornsAsync(farmId, cancellationToken);
         events.AddRange(
-            newborns.Select(a => new ActivityFeedItemDto
+            newbornsTask.Result.Select(a => new ActivityFeedItemDto
             {
                 EventType = "NewbornRegistration",
                 AnimalId = a.Id,
                 AnimalName = string.IsNullOrEmpty(a.Name) ? null : a.Name,
-                Description = "Nacimiento registrado",
                 OccurredAt = a.BirthDate,
             })
         );
 
-        return events.OrderByDescending(e => e.OccurredAt).Take(request.Limit);
+        return events.OrderByDescending(e => e.OccurredAt).Take(limit);
     }
 }
