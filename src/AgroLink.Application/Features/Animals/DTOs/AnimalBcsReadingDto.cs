@@ -9,5 +9,7 @@ public class AnimalBcsReadingDto
     public double Score { get; init; }
     public BcsReadingSource Source { get; init; }
     public int ConfirmedByUserId { get; init; }
+    public bool HasAlerts { get; init; }
+    public string? AlertDescription { get; init; }
     public DateTime CreatedAt { get; init; }
 }

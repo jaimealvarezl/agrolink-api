@@ -17,6 +17,8 @@ public class AnimalBcsReadingConfiguration : IEntityTypeConfiguration<AnimalBcsR
 
         builder.Property(e => e.Source).HasConversion<string>().HasMaxLength(20).IsRequired();
 
+        builder.Property(e => e.AlertDescription).HasMaxLength(2000);
+
         builder.Property(e => e.RawAiResponse).HasColumnType("jsonb");
 
         builder

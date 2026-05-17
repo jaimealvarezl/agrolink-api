@@ -88,6 +88,8 @@ public class CreateBcsReadingCommandHandler(
             Score = reading.Score,
             Source = reading.Source,
             ConfirmedByUserId = reading.ConfirmedByUserId,
+            HasAlerts = reading.HasAlerts,
+            AlertDescription = reading.AlertDescription,
             CreatedAt = reading.CreatedAt,
         };
     }
