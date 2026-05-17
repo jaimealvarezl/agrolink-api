@@ -46,6 +46,8 @@ public class GetAnimalDetailQueryHandler(
             ageInMonths--;
         }
 
+        var latestBcs = animal.BcsReadings.MaxBy(r => r.CreatedAt);
+
         var primaryPhotoUrl = GetPrimaryPhotoUrl(animal.Photos);
         var motherPhotoUrl = GetPrimaryPhotoUrl(animal.Mother?.Photos);
         var fatherPhotoUrl = GetPrimaryPhotoUrl(animal.Father?.Photos);
@@ -98,6 +100,10 @@ public class GetAnimalDetailQueryHandler(
                     SharePercent = ao.SharePercent,
                 })
                 .ToList(),
+            LastBcsScore = latestBcs?.Score,
+            LastBcsReadingAt = latestBcs?.CreatedAt,
+            LastBcsHasAlert = latestBcs?.HasAlerts,
+            LastBcsAlertDescription = latestBcs?.AlertDescription,
             PrimaryPhotoUrl = primaryPhotoUrl,
             Photos = photoDtos,
         };

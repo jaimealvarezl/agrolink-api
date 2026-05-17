@@ -54,6 +54,12 @@ public class AnimalDetailDto
     [Required]
     public required List<AnimalOwnerDto> Owners { get; set; } = new();
 
+    // Last BCS reading
+    public double? LastBcsScore { get; set; }
+    public DateTime? LastBcsReadingAt { get; set; }
+    public bool? LastBcsHasAlert { get; set; }
+    public string? LastBcsAlertDescription { get; set; }
+
     // Photos
     public string? PrimaryPhotoUrl { get; set; }
 

@@ -44,6 +44,8 @@ public class CreateBcsReadingCommandHandler(
             Score = dto.Score,
             Source = dto.Source,
             ConfirmedByUserId = request.UserId,
+            HasAlerts = dto.HasAlerts,
+            AlertDescription = dto.AlertDescription,
             RawAiResponse = dto.RawAiResponse,
             CreatedAt = DateTime.UtcNow,
         };
