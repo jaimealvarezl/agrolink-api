@@ -77,7 +77,8 @@ public class GetDashboardSummaryQueryHandler(
                 (
                     Lot: l,
                     LastDate: latestDateByLot.TryGetValue(l.Id, out var value)
-                        ? (DateTime?)value : null
+                        ? (DateTime?)value
+                        : null
                 )
             )
             .Where(x => !x.LastDate.HasValue || x.LastDate < cutoff)
