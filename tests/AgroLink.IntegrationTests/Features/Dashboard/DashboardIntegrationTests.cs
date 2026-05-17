@@ -185,16 +185,17 @@ public class DashboardIntegrationTests : IntegrationTestBase
         var (farm, paddock, user) = await SetupFarmAsync();
         var lot = await AddLotAsync(paddock.Id);
         var animal = await AddAnimalAsync(lot.Id);
+        var animal2 = await AddAnimalAsync(lot.Id); // unique index requires distinct animals per checklist
 
         // Older session: 2 issues — should be ignored
         var older = await AddChecklistAsync(lot.Id, user.Id, DateTime.UtcNow.AddDays(-3));
         await AddChecklistItemAsync(older.Id, animal.Id, true, "OBS");
-        await AddChecklistItemAsync(older.Id, animal.Id, true, "URG");
+        await AddChecklistItemAsync(older.Id, animal2.Id, true, "URG");
 
         // Most recent session: 1 novedad (present + issue)
         var latest = await AddChecklistAsync(lot.Id, user.Id, DateTime.UtcNow.AddDays(-1));
         await AddChecklistItemAsync(latest.Id, animal.Id, true, "OBS");
-        await AddChecklistItemAsync(latest.Id, animal.Id, false, "URG"); // not present — excluded from novedadCount
+        await AddChecklistItemAsync(latest.Id, animal2.Id, false, "URG"); // not present — excluded from novedadCount
 
         Authenticate(user);
         var response = await Client.GetAsync($"/api/farms/{farm.Id}/dashboard-summary");
@@ -230,6 +231,7 @@ public class DashboardIntegrationTests : IntegrationTestBase
         var lotB = await AddLotAsync(paddock.Id, "Lot B");
         var animal = await AddAnimalAsync(lotA.Id);
         var animalB = await AddAnimalAsync(lotB.Id);
+        var animalB2 = await AddAnimalAsync(lotB.Id); // unique index requires distinct animals per checklist
 
         // Lot A latest session: 1 novedad
         var sessionA = await AddChecklistAsync(lotA.Id, user.Id, DateTime.UtcNow.AddHours(-2));
@@ -238,7 +240,7 @@ public class DashboardIntegrationTests : IntegrationTestBase
         // Lot B latest session: 2 novedades
         var sessionB = await AddChecklistAsync(lotB.Id, user.Id, DateTime.UtcNow.AddHours(-1));
         await AddChecklistItemAsync(sessionB.Id, animalB.Id, true, "OBS");
-        await AddChecklistItemAsync(sessionB.Id, animalB.Id, true, "URG");
+        await AddChecklistItemAsync(sessionB.Id, animalB2.Id, true, "URG");
 
         Authenticate(user);
         var response = await Client.GetAsync($"/api/farms/{farm.Id}/dashboard-summary");
