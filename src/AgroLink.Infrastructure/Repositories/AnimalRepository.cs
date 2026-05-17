@@ -287,6 +287,7 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
+            .Include(a => a.BcsReadings.OrderByDescending(r => r.CreatedAt).Take(1))
             .Where(a =>
                 _context.FarmMembers.Any(m =>
                     m.UserId == userId && m.FarmId == a.Lot.Paddock.FarmId

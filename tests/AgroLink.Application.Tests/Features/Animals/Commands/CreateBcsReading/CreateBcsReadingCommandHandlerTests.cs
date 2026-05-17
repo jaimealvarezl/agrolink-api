@@ -248,7 +248,7 @@ public class CreateBcsReadingCommandHandlerTests
     public async Task Handle_ScoreAboveMax_ThrowsArgumentException()
     {
         await Should.ThrowAsync<ArgumentException>(() =>
-            _handler.Handle(BuildCommand(score: 5.1), CancellationToken.None)
+            _handler.Handle(BuildCommand(score: 9.1), CancellationToken.None)
         );
     }
 

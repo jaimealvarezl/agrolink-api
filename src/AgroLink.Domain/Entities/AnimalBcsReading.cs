@@ -14,6 +14,10 @@ public class AnimalBcsReading
 
     public int ConfirmedByUserId { get; set; }
 
+    public bool HasAlerts { get; set; }
+
+    public string? AlertDescription { get; set; }
+
     public string? RawAiResponse { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
