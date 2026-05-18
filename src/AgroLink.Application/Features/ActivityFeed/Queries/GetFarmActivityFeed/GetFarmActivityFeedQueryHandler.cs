@@ -16,17 +16,19 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         var farmId = request.FarmId;
         var limit = request.Limit;
 
-        var movementsTask = repository.GetFarmMovementsAsync(farmId, limit, cancellationToken);
-        var notesTask = repository.GetFarmNotesAsync(farmId, limit, cancellationToken);
-        var retirementsTask = repository.GetFarmRetirementsAsync(farmId, limit, cancellationToken);
-        var newbornsTask = repository.GetFarmNewbornsAsync(farmId, limit, cancellationToken);
-
-        await Task.WhenAll(movementsTask, notesTask, retirementsTask, newbornsTask);
+        var movements = await repository.GetFarmMovementsAsync(farmId, limit, cancellationToken);
+        var notes = await repository.GetFarmNotesAsync(farmId, limit, cancellationToken);
+        var retirements = await repository.GetFarmRetirementsAsync(
+            farmId,
+            limit,
+            cancellationToken
+        );
+        var newborns = await repository.GetFarmNewbornsAsync(farmId, limit, cancellationToken);
 
         var events = new List<ActivityFeedItemDto>();
 
         events.AddRange(
-            movementsTask.Result.Select(m => new ActivityFeedItemDto
+            movements.Select(m => new ActivityFeedItemDto
             {
                 EventType = Movement,
                 AnimalId = m.AnimalId,
@@ -37,7 +39,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         );
 
         events.AddRange(
-            notesTask.Result.Select(n => new ActivityFeedItemDto
+            notes.Select(n => new ActivityFeedItemDto
             {
                 EventType = TimelineNote,
                 AnimalId = n.AnimalId,
@@ -48,7 +50,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         );
 
         events.AddRange(
-            retirementsTask.Result.Select(r => new ActivityFeedItemDto
+            retirements.Select(r => new ActivityFeedItemDto
             {
                 EventType = Retirement,
                 AnimalId = r.AnimalId,
@@ -59,7 +61,7 @@ public class GetFarmActivityFeedQueryHandler(IFarmActivityFeedRepository reposit
         );
 
         events.AddRange(
-            newbornsTask.Result.Select(a => new ActivityFeedItemDto
+            newborns.Select(a => new ActivityFeedItemDto
             {
                 EventType = NewbornRegistration,
                 AnimalId = a.Id,
