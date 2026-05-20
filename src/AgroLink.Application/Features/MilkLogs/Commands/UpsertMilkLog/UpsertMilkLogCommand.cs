@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.MilkLogs.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -12,7 +13,8 @@ public record UpsertMilkLogResult(bool IsNew, MilkLogDto Log);
 
 public class UpsertMilkLogCommandHandler(
     IDailyMilkLogRepository milkLogRepository,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IDateTimeProvider dateTimeProvider
 ) : IRequestHandler<UpsertMilkLogCommand, UpsertMilkLogResult>
 {
     public const int MaxDaysInPast = 30;
@@ -24,7 +26,7 @@ public class UpsertMilkLogCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = dateTimeProvider.TodayUtc;
         var dto = request.Dto;
 
         if (dto.Date > today)
@@ -69,7 +71,6 @@ public class UpsertMilkLogCommandHandler(
                 PricePerLiter = dto.PricePerLiter,
                 UserId = request.UserId,
                 Notes = dto.Notes,
-                CreatedAt = DateTime.UtcNow,
             };
             await milkLogRepository.AddAsync(existing, cancellationToken);
         }
@@ -79,31 +80,12 @@ public class UpsertMilkLogCommandHandler(
             existing.PricePerLiter = dto.PricePerLiter;
             existing.Notes = dto.Notes;
             existing.UserId = request.UserId;
-            existing.UpdatedAt = DateTime.UtcNow;
+            existing.UpdatedAt = dateTimeProvider.UtcNow;
             milkLogRepository.Update(existing);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new UpsertMilkLogResult(isNew, MapToDto(existing));
-    }
-
-    internal static MilkLogDto MapToDto(DailyMilkLog log)
-    {
-        return new MilkLogDto
-        {
-            Id = log.Id,
-            FarmId = log.FarmId,
-            Date = log.Date,
-            TotalLiters = log.TotalLiters,
-            PricePerLiter = log.PricePerLiter,
-            RevenueTotal = log.PricePerLiter.HasValue
-                ? Math.Round(log.TotalLiters * log.PricePerLiter.Value, 2)
-                : null,
-            UserId = log.UserId,
-            Notes = log.Notes,
-            CreatedAt = log.CreatedAt,
-            UpdatedAt = log.UpdatedAt,
-        };
+        return new UpsertMilkLogResult(isNew, existing.ToDto());
     }
 }

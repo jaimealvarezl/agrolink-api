@@ -1,4 +1,3 @@
-using AgroLink.Application.Features.MilkLogs.Commands.UpsertMilkLog;
 using AgroLink.Application.Features.MilkLogs.DTOs;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -21,6 +20,6 @@ public class GetMilkLogByDateQueryHandler(IDailyMilkLogRepository milkLogReposit
             cancellationToken
         );
 
-        return log == null ? null : UpsertMilkLogCommandHandler.MapToDto(log);
+        return log?.ToDto();
     }
 }

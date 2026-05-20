@@ -137,6 +137,7 @@ public static class DependencyInjection
 
         // Infrastructure Services
         services.AddMemoryCache();
+        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddScoped<IFarmRosterService, FarmRosterService>();
         services.AddScoped<IEntityResolutionService, EntityResolutionService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
