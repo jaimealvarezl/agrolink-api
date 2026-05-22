@@ -1,5 +1,6 @@
 using AgroLink.Application.Features.MilkLogs.Commands.UpsertMilkLog;
 using AgroLink.Application.Features.MilkLogs.DTOs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -16,6 +17,12 @@ public class UpsertMilkLogCommandHandlerTests
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<UpsertMilkLogCommandHandler>();
+
+        _mocker.GetMock<IDateTimeProvider>().Setup(d => d.TodayUtc).Returns(Today);
+        _mocker
+            .GetMock<IDateTimeProvider>()
+            .Setup(d => d.UtcNow)
+            .Returns(Today.ToDateTime(TimeOnly.MinValue));
 
         _mocker
             .GetMock<IUnitOfWork>()

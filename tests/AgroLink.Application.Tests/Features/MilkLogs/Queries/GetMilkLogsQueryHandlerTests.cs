@@ -1,4 +1,5 @@
 using AgroLink.Application.Features.MilkLogs.Queries.GetMilkLogs;
+using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using Moq;
@@ -15,6 +16,8 @@ public class GetMilkLogsQueryHandlerTests
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<GetMilkLogsQueryHandler>();
+
+        _mocker.GetMock<IDateTimeProvider>().Setup(d => d.TodayUtc).Returns(Today);
     }
 
     private AutoMocker _mocker = null!;
