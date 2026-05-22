@@ -3,6 +3,7 @@ using System;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgroLink.Infrastructure.Migrations
 {
     [DbContext(typeof(AgroLinkDbContext))]
-    partial class AgroLinkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260520155402_AddDailyMilkLogs")]
+    partial class AddDailyMilkLogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -604,9 +607,6 @@ namespace AgroLink.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
-
-                    b.Property<decimal?>("PricePerLiter")
-                        .HasColumnType("numeric(10,4)");
 
                     b.Property<decimal>("TotalLiters")
                         .HasColumnType("numeric(8,2)");

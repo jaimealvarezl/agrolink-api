@@ -109,6 +109,7 @@ public static class DependencyInjection
         services.AddScoped<IAnimalBcsReadingRepository, AnimalBcsReadingRepository>();
         services.AddScoped<IFarmActivityFeedRepository, FarmActivityFeedRepository>();
         services.AddScoped<IHerdCompositionRepository, HerdCompositionRepository>();
+        services.AddScoped<IDailyMilkLogRepository, DailyMilkLogRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Firebase Admin SDK — initialized once per process using Application Default Credentials.
@@ -136,6 +137,7 @@ public static class DependencyInjection
 
         // Infrastructure Services
         services.AddMemoryCache();
+        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddScoped<IFarmRosterService, FarmRosterService>();
         services.AddScoped<IEntityResolutionService, EntityResolutionService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
