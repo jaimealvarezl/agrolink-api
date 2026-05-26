@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<IRepository<AnimalOwner>, Repository<AnimalOwner>>();
         services.AddScoped<IRepository<Checklist>, Repository<Checklist>>();
         services.AddScoped<IRepository<ChecklistItem>, Repository<ChecklistItem>>();
+        services.AddScoped<IRepository<DailyMilkLog>, Repository<DailyMilkLog>>();
         services.AddScoped<IRepository<Movement>, Repository<Movement>>();
         services.AddScoped<IRepository<User>, Repository<User>>();
         services.AddScoped<IRepository<ClinicalCase>, Repository<ClinicalCase>>();

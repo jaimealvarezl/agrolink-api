@@ -11,7 +11,8 @@ public class GetDashboardSummaryQueryHandler(
     IRepository<Animal> animalRepository,
     ILotRepository lotRepository,
     IChecklistRepository checklistRepository,
-    IRepository<ChecklistItem> checklistItemRepository
+    IRepository<ChecklistItem> checklistItemRepository,
+    IRepository<DailyMilkLog> dailyMilkLogRepository
 ) : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
 {
     public async Task<DashboardSummaryDto> Handle(
@@ -72,6 +73,12 @@ public class GetDashboardSummaryQueryHandler(
         var now = DateTime.UtcNow;
 
         var latestDateByLot = latestChecklists.ToDictionary(c => c.LotId, c => c.CreatedAt);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+
+        var milkTodayLog = await dailyMilkLogRepository.FirstOrDefaultAsync(
+            l => l.FarmId == farmId && l.Date == today,
+            cancellationToken
+        );
 
         var overdueLots = lots.Select(l =>
                 (
@@ -100,7 +107,7 @@ public class GetDashboardSummaryQueryHandler(
             OverdueLots = overdueLots,
             LastChecklistDate = lastChecklistDate,
             LastChecklistIssueCount = lastChecklistIssueCount,
-            MilkToday = null,
+            MilkToday = milkTodayLog?.TotalLiters,
         };
     }
 }

@@ -595,4 +595,67 @@ public class MilkLogsIntegrationTests : IntegrationTestBase
         var response = await Client.GetAsync($"/api/farms/1/milk-logs/{Today:yyyy-MM-dd}");
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
+
+    // --- GET summary ---
+
+    [Test]
+    public async Task GetSummary_NoLogs_ReturnsZeroTotals()
+    {
+        var (farm, user) = await SetupFarmAsync(FarmMemberRoles.Viewer);
+        Authenticate(user);
+
+        var response = await Client.GetAsync($"/api/farms/{farm.Id}/milk-logs/summary");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<MilkLogsSummaryDto>(JsonOptions);
+        result.ShouldNotBeNull();
+        result!.TotalLiters.ShouldBe(0m);
+        result.TotalRevenue.ShouldBe(0m);
+        result.DaysLogged.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task GetSummary_WithLogs_ReturnsCorrectAggregates()
+    {
+        var (farm, user) = await SetupFarmAsync(FarmMemberRoles.Viewer);
+        await SeedLogAsync(farm.Id, user.Id, Today, 100m, 1.5m);
+        await SeedLogAsync(farm.Id, user.Id, Today.AddDays(-1), 200m, 2m);
+        await SeedLogAsync(farm.Id, user.Id, Today.AddDays(-2), 50m);
+        Authenticate(user);
+
+        var response = await Client.GetAsync($"/api/farms/{farm.Id}/milk-logs/summary");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<MilkLogsSummaryDto>(JsonOptions);
+        result.ShouldNotBeNull();
+        result!.TotalLiters.ShouldBe(350m);
+        result.TotalRevenue.ShouldBe(550m);
+        result.DaysLogged.ShouldBe(3);
+    }
+
+    [Test]
+    public async Task GetSummary_DateRange_ExcludesLogsOutsideRange()
+    {
+        var (farm, user) = await SetupFarmAsync(FarmMemberRoles.Viewer);
+        await SeedLogAsync(farm.Id, user.Id, Today.AddDays(-5), 120m, 1.25m);
+        await SeedLogAsync(farm.Id, user.Id, Today.AddDays(-40), 900m, 2m);
+        Authenticate(user);
+
+        var from = D(Today.AddDays(-7));
+        var response = await Client.GetAsync($"/api/farms/{farm.Id}/milk-logs/summary?from={from}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<MilkLogsSummaryDto>(JsonOptions);
+        result.ShouldNotBeNull();
+        result!.TotalLiters.ShouldBe(120m);
+        result.TotalRevenue.ShouldBe(150m);
+        result.DaysLogged.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task GetSummary_Unauthenticated_Returns401()
+    {
+        var response = await Client.GetAsync("/api/farms/1/milk-logs/summary");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
 }

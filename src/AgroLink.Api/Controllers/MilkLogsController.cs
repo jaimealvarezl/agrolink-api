@@ -3,6 +3,7 @@ using AgroLink.Application.Features.MilkLogs.Commands.UpsertMilkLog;
 using AgroLink.Application.Features.MilkLogs.DTOs;
 using AgroLink.Application.Features.MilkLogs.Queries.GetMilkLogByDate;
 using AgroLink.Application.Features.MilkLogs.Queries.GetMilkLogs;
+using AgroLink.Application.Features.MilkLogs.Queries.GetMilkLogsSummary;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +53,21 @@ public class MilkLogsController(IMediator mediator) : BaseController
     {
         var result = await mediator.Send(
             new GetMilkLogsQuery(farmId, from, to, page, pageSize),
+            cancellationToken
+        );
+        return Ok(result);
+    }
+
+    [HttpGet("summary")]
+    public async Task<ActionResult<MilkLogsSummaryDto>> GetSummary(
+        int farmId,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var result = await mediator.Send(
+            new GetMilkLogsSummaryQuery(farmId, from, to),
             cancellationToken
         );
         return Ok(result);

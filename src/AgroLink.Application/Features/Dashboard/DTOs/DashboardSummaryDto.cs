@@ -8,7 +8,7 @@ public class DashboardSummaryDto
     public List<OverdueLotDto> OverdueLots { get; set; } = [];
     public DateTime? LastChecklistDate { get; set; }
     public int LastChecklistIssueCount { get; set; }
-    public double? MilkToday { get; set; }
+    public decimal? MilkToday { get; set; }
 }
 
 public class OverdueLotDto
