@@ -2,7 +2,6 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using AgroLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace AgroLink.Infrastructure.Repositories;
 
@@ -41,24 +40,7 @@ public class TagRepository(AgroLinkDbContext context) : Repository<Tag>(context)
         };
 
         await _dbSet.AddAsync(tag, cancellationToken);
-
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-            return tag;
-        }
-        catch (DbUpdateException ex)
-            when (ex.InnerException
-                    is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
-            )
-        {
-            _context.Entry(tag).State = EntityState.Detached;
-
-            return await _dbSet.FirstAsync(
-                t => t.FarmId == farmId && t.CanonicalName == canonicalName,
-                cancellationToken
-            );
-        }
+        return tag;
     }
 
     public async Task<List<Tag>> GetByFarmAsync(
@@ -72,10 +54,7 @@ public class TagRepository(AgroLinkDbContext context) : Repository<Tag>(context)
         if (!string.IsNullOrWhiteSpace(search))
         {
             var searchTerm = search.Trim().ToLowerInvariant();
-            query = query.Where(t =>
-                t.DisplayName.ToLower().Contains(searchTerm)
-                || t.CanonicalName.ToLower().Contains(searchTerm)
-            );
+            query = query.Where(t => t.CanonicalName.Contains(searchTerm));
         }
 
         return await query.ToListAsync(cancellationToken);
@@ -150,21 +129,18 @@ public class TagRepository(AgroLinkDbContext context) : Repository<Tag>(context)
             return (null, 0);
         }
 
-        var linkedAnimalIds = await _context
-            .AnimalTags.Where(at => at.TagId == id)
-            .Select(at => at.AnimalId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
         var links = await _context
             .AnimalTags.Where(at => at.TagId == id)
             .ToListAsync(cancellationToken);
+
+        var affectedAnimalsCount = links.Select(at => at.AnimalId).Distinct().Count();
+
         _context.AnimalTags.RemoveRange(links);
 
         _dbSet.Remove(tag);
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return (tag, linkedAnimalIds.Count);
+        return (tag, affectedAnimalsCount);
     }
 }

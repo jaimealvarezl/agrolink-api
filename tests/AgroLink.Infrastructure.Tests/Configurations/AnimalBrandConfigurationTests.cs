@@ -23,7 +23,7 @@ public class AnimalBrandConfigurationTests : TestBase
 
     private AgroLinkDbContext _context = null!;
 
-    private async Task<OwnerBrand> CreateTestOwnerBrandAsync(AgroLinkDbContext context, int ownerId)
+    private static async Task<OwnerBrand> CreateTestOwnerBrandAsync(AgroLinkDbContext context, int ownerId)
     {
         var brand = new OwnerBrand
         {

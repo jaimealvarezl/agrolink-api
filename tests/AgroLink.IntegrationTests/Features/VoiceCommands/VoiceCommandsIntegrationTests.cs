@@ -9,11 +9,6 @@ namespace AgroLink.IntegrationTests.Features.VoiceCommands;
 
 public class VoiceCommandsIntegrationTests : IntegrationTestBase
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
     // ── POST /api/farms/{farmId}/voice/commands ──────────────────────────────
 
     [Test]
@@ -98,12 +93,7 @@ public class VoiceCommandsIntegrationTests : IntegrationTestBase
         if (addMember)
         {
             DbContext.FarmMembers.Add(
-                new FarmMember
-                {
-                    FarmId = farm.Id,
-                    UserId = user.Id,
-                    Role = FarmMemberRoles.Editor,
-                }
+                new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Editor, }
             );
             await DbContext.SaveChangesAsync();
         }
@@ -115,10 +105,7 @@ public class VoiceCommandsIntegrationTests : IntegrationTestBase
     {
         var user = new User
         {
-            Name = "Test User",
-            Email = email,
-            PasswordHash = "hash",
-            Role = "USER",
+            Name = "Test User", Email = email, PasswordHash = "hash", Role = "USER",
         };
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();

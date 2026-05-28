@@ -13,10 +13,7 @@ public static partial class TagNormalizer
 
     public static NormalizedTag Normalize(string rawTag)
     {
-        if (rawTag == null)
-        {
-            throw new ArgumentException("Tag cannot be null.");
-        }
+        ArgumentNullException.ThrowIfNull(rawTag);
 
         var normalized = rawTag.Trim();
         normalized = normalized.Trim('#').Trim();

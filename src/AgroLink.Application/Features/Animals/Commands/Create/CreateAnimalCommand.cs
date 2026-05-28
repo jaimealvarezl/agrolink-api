@@ -154,11 +154,12 @@ public class CreateAnimalCommandHandler(
             tagsByCanonical = existingTags.ToDictionary(t => t.CanonicalName, t => t);
 
             if (
-                membership.Role == FarmMemberRoles.Editor
+                membership.Role != FarmMemberRoles.Owner
+                && membership.Role != FarmMemberRoles.Admin
                 && normalizedTags.Any(t => !tagsByCanonical.ContainsKey(t.CanonicalName))
             )
             {
-                throw new ForbiddenAccessException("Foreman cannot create new tags");
+                throw new ForbiddenAccessException("Only farm administrators can create new tags.");
             }
 
             foreach (

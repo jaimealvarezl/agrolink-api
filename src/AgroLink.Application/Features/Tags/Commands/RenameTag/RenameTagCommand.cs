@@ -22,6 +22,16 @@ public class RenameTagCommandHandler(ITagRepository tagRepository)
             throw new NotFoundException($"Tag with ID {request.Id} not found.");
         }
 
+        var duplicate = await tagRepository.GetByCanonicalNamesAsync(
+            request.FarmId,
+            [normalized.CanonicalName],
+            cancellationToken
+        );
+        if (duplicate.Any(t => t.Id != request.Id))
+        {
+            throw new ConflictException($"A tag named '{normalized.DisplayName}' already exists.");
+        }
+
         var tag = await tagRepository.RenameAsync(
             request.Id,
             normalized.DisplayName,

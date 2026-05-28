@@ -249,25 +249,23 @@ public class UpdateAnimalCommandHandler(
             var tagsByCanonical = existingTags.ToDictionary(t => t.CanonicalName, t => t);
 
             if (
-                membership.Role == FarmMemberRoles.Editor
+                membership.Role != FarmMemberRoles.Owner
+                && membership.Role != FarmMemberRoles.Admin
                 && normalizedTags.Any(t => !tagsByCanonical.ContainsKey(t.CanonicalName))
             )
             {
-                throw new ForbiddenAccessException("Foreman cannot create new tags");
+                throw new ForbiddenAccessException("Only farm administrators can create new tags.");
             }
 
-            foreach (var normalizedTag in normalizedTags)
+            foreach (var normalizedTag in normalizedTags.Where(normalizedTag => !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)))
             {
-                if (!tagsByCanonical.ContainsKey(normalizedTag.CanonicalName))
-                {
-                    var upsertedTag = await tagRepository.UpsertAsync(
-                        farmId,
-                        normalizedTag.DisplayName,
-                        request.UserId,
-                        cancellationToken
-                    );
-                    tagsByCanonical[upsertedTag.CanonicalName] = upsertedTag;
-                }
+                var upsertedTag = await tagRepository.UpsertAsync(
+                    farmId,
+                    normalizedTag.DisplayName,
+                    request.UserId,
+                    cancellationToken
+                );
+                tagsByCanonical[upsertedTag.CanonicalName] = upsertedTag;
             }
 
             var targetTagIds = normalizedTags
@@ -275,29 +273,23 @@ public class UpdateAnimalCommandHandler(
                 .ToHashSet();
 
             var existingAnimalTags = animal.AnimalTags.ToList();
-            foreach (var animalTag in existingAnimalTags)
+            foreach (var animalTag in existingAnimalTags.Where(animalTag => !targetTagIds.Contains(animalTag.TagId)))
             {
-                if (!targetTagIds.Contains(animalTag.TagId))
-                {
-                    animal.AnimalTags.Remove(animalTag);
-                }
+                animal.AnimalTags.Remove(animalTag);
             }
 
             var currentTagIds = animal.AnimalTags.Select(at => at.TagId).ToHashSet();
-            foreach (var tagId in targetTagIds)
+            foreach (var tagId in targetTagIds.Where(tagId => !currentTagIds.Contains(tagId)))
             {
-                if (!currentTagIds.Contains(tagId))
-                {
-                    animal.AnimalTags.Add(
-                        new AnimalTag
-                        {
-                            AnimalId = animal.Id,
-                            TagId = tagId,
-                            AddedByUserId = request.UserId,
-                            AddedAt = DateTime.UtcNow,
-                        }
-                    );
-                }
+                animal.AnimalTags.Add(
+                    new AnimalTag
+                    {
+                        AnimalId = animal.Id,
+                        TagId = tagId,
+                        AddedByUserId = request.UserId,
+                        AddedAt = DateTime.UtcNow,
+                    }
+                );
             }
 
             responseTags = normalizedTags.Select(t => t.DisplayName).ToList();
@@ -326,14 +318,13 @@ public class UpdateAnimalCommandHandler(
 
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id, cancellationToken);
 
-            foreach (var ownerDto in dto.Owners)
+            foreach (var animalOwner in dto.Owners.Select(ownerDto => new AnimalOwner
+                     {
+                         AnimalId = request.Id,
+                         OwnerId = ownerDto.OwnerId,
+                         SharePercent = ownerDto.SharePercent,
+                     }))
             {
-                var animalOwner = new AnimalOwner
-                {
-                    AnimalId = request.Id,
-                    OwnerId = ownerDto.OwnerId,
-                    SharePercent = ownerDto.SharePercent,
-                };
                 await animalOwnerRepository.AddAsync(animalOwner, cancellationToken);
             }
         }

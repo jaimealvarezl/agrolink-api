@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using AgroLink.Application.Interfaces;
 using AgroLink.Domain.Entities;
@@ -27,7 +28,7 @@ public class FirebaseUserMiddleware(RequestDelegate next)
                 {
                     context.User.AddIdentity(
                         new ClaimsIdentity([
-                            new Claim("userid", user.Id.ToString()),
+                            new Claim("userid", user.Id.ToString(CultureInfo.InvariantCulture)),
                             new Claim("role", user.Role),
                         ])
                     );
