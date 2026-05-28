@@ -212,7 +212,7 @@ public class CreateAnimalCommandHandler(
             animal.AnimalTags.Add(
                 new AnimalTag
                 {
-                    TagId = tag.Id,
+                    Tag = tag,
                     AddedByUserId = userId,
                     AddedAt = DateTime.UtcNow,
                 }

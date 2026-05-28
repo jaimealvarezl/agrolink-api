@@ -272,28 +272,32 @@ public class UpdateAnimalCommandHandler(
                 tagsByCanonical[upsertedTag.CanonicalName] = upsertedTag;
             }
 
-            var targetTagIds = normalizedTags
-                .Select(t => tagsByCanonical[t.CanonicalName].Id)
-                .ToHashSet();
+            var targetCanonicals = normalizedTags.Select(t => t.CanonicalName).ToHashSet();
 
             var existingAnimalTags = animal.AnimalTags.ToList();
             foreach (
-                var animalTag in existingAnimalTags.Where(animalTag =>
-                    !targetTagIds.Contains(animalTag.TagId)
+                var animalTag in existingAnimalTags.Where(at =>
+                    !targetCanonicals.Contains(at.Tag.CanonicalName)
                 )
             )
             {
                 animal.AnimalTags.Remove(animalTag);
             }
 
-            var currentTagIds = animal.AnimalTags.Select(at => at.TagId).ToHashSet();
-            foreach (var tagId in targetTagIds.Where(tagId => !currentTagIds.Contains(tagId)))
+            var currentCanonicals = animal
+                .AnimalTags.Select(at => at.Tag.CanonicalName)
+                .ToHashSet();
+            foreach (
+                var normalizedTag in normalizedTags.Where(t =>
+                    !currentCanonicals.Contains(t.CanonicalName)
+                )
+            )
             {
+                var tag = tagsByCanonical[normalizedTag.CanonicalName];
                 animal.AnimalTags.Add(
                     new AnimalTag
                     {
-                        AnimalId = animal.Id,
-                        TagId = tagId,
+                        Tag = tag,
                         AddedByUserId = request.UserId,
                         AddedAt = DateTime.UtcNow,
                     }
