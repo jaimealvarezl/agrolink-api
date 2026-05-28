@@ -165,17 +165,24 @@ public class FarmRoleHandlerTests
         var httpContext = new DefaultHttpContext();
         if (source == "route")
         {
-            httpContext.Request.RouteValues["farmId"] = farmId.ToString(CultureInfo.InvariantCulture);
+            httpContext.Request.RouteValues["farmId"] = farmId.ToString(
+                CultureInfo.InvariantCulture
+            );
         }
         else if (source == "query")
         {
             httpContext.Request.Query = new QueryCollection(
-                new Dictionary<string, StringValues> { { "farmId", farmId.ToString(CultureInfo.InvariantCulture) } }
+                new Dictionary<string, StringValues>
+                {
+                    { "farmId", farmId.ToString(CultureInfo.InvariantCulture) },
+                }
             );
         }
         else if (source == "header")
         {
-            httpContext.Request.Headers["x-farm-id"] = farmId.ToString(CultureInfo.InvariantCulture);
+            httpContext.Request.Headers["x-farm-id"] = farmId.ToString(
+                CultureInfo.InvariantCulture
+            );
         }
 
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
@@ -183,7 +190,10 @@ public class FarmRoleHandlerTests
 
     private static ClaimsPrincipal SetupUser(int userId)
     {
-        var claims = new List<Claim> { new("userid", userId.ToString(CultureInfo.InvariantCulture)) };
+        var claims = new List<Claim>
+        {
+            new("userid", userId.ToString(CultureInfo.InvariantCulture)),
+        };
         var identity = new ClaimsIdentity(claims, "test");
         return new ClaimsPrincipal(identity);
     }

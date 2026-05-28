@@ -257,7 +257,11 @@ public class UpdateAnimalCommandHandler(
                 throw new ForbiddenAccessException("Only farm administrators can create new tags.");
             }
 
-            foreach (var normalizedTag in normalizedTags.Where(normalizedTag => !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)))
+            foreach (
+                var normalizedTag in normalizedTags.Where(normalizedTag =>
+                    !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)
+                )
+            )
             {
                 var upsertedTag = await tagRepository.UpsertAsync(
                     farmId,
@@ -273,7 +277,11 @@ public class UpdateAnimalCommandHandler(
                 .ToHashSet();
 
             var existingAnimalTags = animal.AnimalTags.ToList();
-            foreach (var animalTag in existingAnimalTags.Where(animalTag => !targetTagIds.Contains(animalTag.TagId)))
+            foreach (
+                var animalTag in existingAnimalTags.Where(animalTag =>
+                    !targetTagIds.Contains(animalTag.TagId)
+                )
+            )
             {
                 animal.AnimalTags.Remove(animalTag);
             }
@@ -318,12 +326,14 @@ public class UpdateAnimalCommandHandler(
 
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id, cancellationToken);
 
-            foreach (var animalOwner in dto.Owners.Select(ownerDto => new AnimalOwner
-                     {
-                         AnimalId = request.Id,
-                         OwnerId = ownerDto.OwnerId,
-                         SharePercent = ownerDto.SharePercent,
-                     }))
+            foreach (
+                var animalOwner in dto.Owners.Select(ownerDto => new AnimalOwner
+                {
+                    AnimalId = request.Id,
+                    OwnerId = ownerDto.OwnerId,
+                    SharePercent = ownerDto.SharePercent,
+                })
+            )
             {
                 await animalOwnerRepository.AddAsync(animalOwner, cancellationToken);
             }

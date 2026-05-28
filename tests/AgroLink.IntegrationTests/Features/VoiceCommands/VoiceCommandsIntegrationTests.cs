@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using Shouldly;
@@ -93,7 +92,12 @@ public class VoiceCommandsIntegrationTests : IntegrationTestBase
         if (addMember)
         {
             DbContext.FarmMembers.Add(
-                new FarmMember { FarmId = farm.Id, UserId = user.Id, Role = FarmMemberRoles.Editor, }
+                new FarmMember
+                {
+                    FarmId = farm.Id,
+                    UserId = user.Id,
+                    Role = FarmMemberRoles.Editor,
+                }
             );
             await DbContext.SaveChangesAsync();
         }
@@ -105,7 +109,10 @@ public class VoiceCommandsIntegrationTests : IntegrationTestBase
     {
         var user = new User
         {
-            Name = "Test User", Email = email, PasswordHash = "hash", Role = "USER",
+            Name = "Test User",
+            Email = email,
+            PasswordHash = "hash",
+            Role = "USER",
         };
         DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
