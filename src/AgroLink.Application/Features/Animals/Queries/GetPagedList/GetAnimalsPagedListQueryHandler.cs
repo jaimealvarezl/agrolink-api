@@ -36,6 +36,7 @@ public class GetAnimalsPagedListQueryHandler(
             request.Page,
             request.PageSize,
             request.LotId,
+            request.TagIds,
             request.SearchTerm,
             request.IsSick,
             request.IsPregnant,
@@ -64,6 +65,11 @@ public class GetAnimalsPagedListQueryHandler(
                 Sex = a.Sex,
                 BirthDate = a.BirthDate,
                 Cuia = a.Cuia,
+                Tags = a
+                    .AnimalTags.Select(at => at.Tag.DisplayName)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList(),
                 Owners = a
                     .AnimalOwners.Select(ao => new AnimalOwnerDto
                     {

@@ -65,4 +65,7 @@ public class AnimalDetailDto
 
     [Required]
     public required List<AnimalPhotoDto> Photos { get; set; } = new();
+
+    [Required]
+    public required List<string> Tags { get; set; } = [];
 }

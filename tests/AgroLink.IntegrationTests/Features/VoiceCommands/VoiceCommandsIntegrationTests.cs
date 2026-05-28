@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using Shouldly;
@@ -9,11 +8,6 @@ namespace AgroLink.IntegrationTests.Features.VoiceCommands;
 
 public class VoiceCommandsIntegrationTests : IntegrationTestBase
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
     // ── POST /api/farms/{farmId}/voice/commands ──────────────────────────────
 
     [Test]

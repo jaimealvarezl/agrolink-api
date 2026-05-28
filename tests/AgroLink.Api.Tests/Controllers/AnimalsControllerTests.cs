@@ -55,6 +55,7 @@ public class AnimalsControllerTests
             LotId = 1,
             Owners = [],
             Photos = [],
+            Tags = [],
             CreatedAt = DateTime.UtcNow,
         };
     }

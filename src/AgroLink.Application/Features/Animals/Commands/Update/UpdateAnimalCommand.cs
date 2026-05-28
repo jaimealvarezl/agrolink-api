@@ -3,6 +3,7 @@ using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -19,6 +20,7 @@ public class UpdateAnimalCommandHandler(
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
     IFarmMemberRepository farmMemberRepository,
+    ITagRepository tagRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
     IOwnershipValidator ownershipValidator,
@@ -224,6 +226,95 @@ public class UpdateAnimalCommandHandler(
             animal.FatherId = dto.FatherId.Value;
         }
 
+        List<string> responseTags;
+        if (dto.Tags != null)
+        {
+            var normalizedTags = TagNormalizer.NormalizeDistinct(dto.Tags);
+
+            var membership = await farmMemberRepository.GetByFarmAndUserAsync(
+                farmId,
+                request.UserId,
+                cancellationToken: cancellationToken
+            );
+            if (membership == null)
+            {
+                throw new ForbiddenAccessException("User does not have permission for this Farm.");
+            }
+
+            var existingTags = await tagRepository.GetByCanonicalNamesAsync(
+                farmId,
+                normalizedTags.Select(t => t.CanonicalName),
+                cancellationToken
+            );
+            var tagsByCanonical = existingTags.ToDictionary(t => t.CanonicalName, t => t);
+
+            if (
+                membership.Role != FarmMemberRoles.Owner
+                && membership.Role != FarmMemberRoles.Admin
+                && normalizedTags.Any(t => !tagsByCanonical.ContainsKey(t.CanonicalName))
+            )
+            {
+                throw new ForbiddenAccessException("Only farm administrators can create new tags.");
+            }
+
+            foreach (
+                var normalizedTag in normalizedTags.Where(normalizedTag =>
+                    !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)
+                )
+            )
+            {
+                var upsertedTag = await tagRepository.UpsertAsync(
+                    farmId,
+                    normalizedTag.DisplayName,
+                    request.UserId,
+                    cancellationToken
+                );
+                tagsByCanonical[upsertedTag.CanonicalName] = upsertedTag;
+            }
+
+            var targetCanonicals = normalizedTags.Select(t => t.CanonicalName).ToHashSet();
+
+            var existingAnimalTags = animal.AnimalTags.ToList();
+            foreach (
+                var animalTag in existingAnimalTags.Where(at =>
+                    !targetCanonicals.Contains(at.Tag.CanonicalName)
+                )
+            )
+            {
+                animal.AnimalTags.Remove(animalTag);
+            }
+
+            var currentCanonicals = animal
+                .AnimalTags.Select(at => at.Tag.CanonicalName)
+                .ToHashSet();
+            foreach (
+                var normalizedTag in normalizedTags.Where(t =>
+                    !currentCanonicals.Contains(t.CanonicalName)
+                )
+            )
+            {
+                var tag = tagsByCanonical[normalizedTag.CanonicalName];
+                animal.AnimalTags.Add(
+                    new AnimalTag
+                    {
+                        Tag = tag,
+                        AddedByUserId = request.UserId,
+                        AddedAt = DateTime.UtcNow,
+                    }
+                );
+            }
+
+            responseTags = normalizedTags.Select(t => t.DisplayName).ToList();
+        }
+        else
+        {
+            responseTags = animal
+                .AnimalTags.Select(at => at.Tag.DisplayName)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+        }
+
         animal.UpdatedAt = DateTime.UtcNow;
 
         animalRepository.Update(animal);
@@ -239,14 +330,15 @@ public class UpdateAnimalCommandHandler(
 
             await animalOwnerRepository.RemoveByAnimalIdAsync(request.Id, cancellationToken);
 
-            foreach (var ownerDto in dto.Owners)
-            {
-                var animalOwner = new AnimalOwner
+            foreach (
+                var animalOwner in dto.Owners.Select(ownerDto => new AnimalOwner
                 {
                     AnimalId = request.Id,
                     OwnerId = ownerDto.OwnerId,
                     SharePercent = ownerDto.SharePercent,
-                };
+                })
+            )
+            {
                 await animalOwnerRepository.AddAsync(animalOwner, cancellationToken);
             }
         }
@@ -318,6 +410,7 @@ public class UpdateAnimalCommandHandler(
             FatherCuia = father?.Cuia,
             Owners = ownerDtos,
             Photos = photoDtos,
+            Tags = responseTags,
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };

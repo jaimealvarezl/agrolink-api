@@ -59,4 +59,6 @@ public class Animal
 
     public virtual ICollection<AnimalBcsReading> BcsReadings { get; set; } =
         new List<AnimalBcsReading>();
+
+    public virtual ICollection<AnimalTag> AnimalTags { get; set; } = new List<AnimalTag>();
 }

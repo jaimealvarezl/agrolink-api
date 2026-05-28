@@ -106,6 +106,11 @@ public class GetAnimalDetailQueryHandler(
             LastBcsAlertDescription = latestBcs?.AlertDescription,
             PrimaryPhotoUrl = primaryPhotoUrl,
             Photos = photoDtos,
+            Tags = animal
+                .AnimalTags.Select(at => at.Tag.DisplayName)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList(),
         };
     }
 

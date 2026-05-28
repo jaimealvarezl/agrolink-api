@@ -9,6 +9,8 @@ public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : Db
     public DbSet<Paddock> Paddocks { get; set; }
     public DbSet<Lot> Lots { get; set; }
     public DbSet<Animal> Animals { get; set; }
+    public DbSet<Tag> Tags { get; set; }
+    public DbSet<AnimalTag> AnimalTags { get; set; }
     public DbSet<Owner> Owners { get; set; }
     public DbSet<AnimalOwner> AnimalOwners { get; set; }
     public DbSet<Movement> Movements { get; set; }

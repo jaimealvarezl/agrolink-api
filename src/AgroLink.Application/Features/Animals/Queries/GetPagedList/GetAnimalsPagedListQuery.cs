@@ -10,6 +10,7 @@ public record GetAnimalsPagedListQuery(
     int Page = 1,
     int PageSize = 10,
     int? LotId = null,
+    int[]? TagIds = null,
     string? SearchTerm = null,
     bool IsSick = false,
     bool IsPregnant = false,
