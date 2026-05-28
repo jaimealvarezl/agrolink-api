@@ -1,17 +1,15 @@
 using AgroLink.Application.Common.Exceptions;
 using AgroLink.Application.Features.Tags.DTOs;
-using AgroLink.Domain.Constants;
 using AgroLink.Domain.Interfaces;
 using MediatR;
 
 namespace AgroLink.Application.Features.Tags.Commands.UpdateTagColor;
 
-public record UpdateTagColorCommand(int Id, string? ColorToken, int UserId) : IRequest<TagDto>;
+public record UpdateTagColorCommand(int Id, int FarmId, string? ColorToken, int UserId)
+    : IRequest<TagDto>;
 
-public class UpdateTagColorCommandHandler(
-    ITagRepository tagRepository,
-    IFarmMemberRepository farmMemberRepository
-) : IRequestHandler<UpdateTagColorCommand, TagDto>
+public class UpdateTagColorCommandHandler(ITagRepository tagRepository)
+    : IRequestHandler<UpdateTagColorCommand, TagDto>
 {
     public async Task<TagDto> Handle(
         UpdateTagColorCommand request,
@@ -24,25 +22,9 @@ public class UpdateTagColorCommandHandler(
         }
 
         var existingTag = await tagRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (existingTag == null)
+        if (existingTag == null || existingTag.FarmId != request.FarmId)
         {
             throw new NotFoundException($"Tag with ID {request.Id} not found.");
-        }
-
-        var membership = await farmMemberRepository.GetByFarmAndUserAsync(
-            existingTag.FarmId,
-            request.UserId,
-            cancellationToken: cancellationToken
-        );
-
-        if (membership == null)
-        {
-            throw new ForbiddenAccessException("You do not have access to this farm's tags.");
-        }
-
-        if (membership.Role != FarmMemberRoles.Owner && membership.Role != FarmMemberRoles.Admin)
-        {
-            throw new ForbiddenAccessException("Only owners or admins can update tag colors.");
         }
 
         var updatedTag = await tagRepository.UpdateColorAsync(

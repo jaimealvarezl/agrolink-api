@@ -161,7 +161,11 @@ public class CreateAnimalCommandHandler(
                 throw new ForbiddenAccessException("Foreman cannot create new tags");
             }
 
-            foreach (var normalizedTag in normalizedTags.Where(normalizedTag => !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)))
+            foreach (
+                var normalizedTag in normalizedTags.Where(normalizedTag =>
+                    !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)
+                )
+            )
             {
                 var upsertedTag = await tagRepository.UpsertAsync(
                     farmId,
@@ -198,7 +202,11 @@ public class CreateAnimalCommandHandler(
             );
         }
 
-        foreach (var tag in normalizedTags.Select(normalizedTag => tagsByCanonical[normalizedTag.CanonicalName]))
+        foreach (
+            var tag in normalizedTags.Select(normalizedTag =>
+                tagsByCanonical[normalizedTag.CanonicalName]
+            )
+        )
         {
             animal.AnimalTags.Add(
                 new AnimalTag

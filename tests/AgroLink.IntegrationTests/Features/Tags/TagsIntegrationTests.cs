@@ -99,7 +99,7 @@ public class TagsIntegrationTests : IntegrationTestBase
         Authenticate(user);
 
         var response = await Client.PutAsJsonAsync(
-            $"/api/tags/{tag.Id}",
+            $"/api/farms/{farm.Id}/tags/{tag.Id}",
             new { displayName = "Para Venta" }
         );
 
@@ -112,6 +112,32 @@ public class TagsIntegrationTests : IntegrationTestBase
         var updatedTag = await DbContext.Tags.FirstAsync(t => t.Id == tag.Id);
         updatedTag.DisplayName.ShouldBe("Para Venta");
         updatedTag.CanonicalName.ShouldBe("venta");
+    }
+
+    [Test]
+    public async Task Rename_WhenTagBelongsToDifferentFarm_ShouldReturnNotFound()
+    {
+        var (farmA, _, userA) = await SetupFarmWithLotAsync(FarmMemberRoles.Admin, "farm_a_rename");
+        var (farmB, _, userB) = await SetupFarmWithLotAsync(FarmMemberRoles.Admin, "farm_b_rename");
+
+        var tagInFarmB = new Tag
+        {
+            FarmId = farmB.Id,
+            CanonicalName = "venta",
+            DisplayName = "Venta",
+            CreatedByUserId = userB.Id,
+        };
+        DbContext.Tags.Add(tagInFarmB);
+        await DbContext.SaveChangesAsync();
+
+        Authenticate(userA);
+
+        var response = await Client.PutAsJsonAsync(
+            $"/api/farms/{farmA.Id}/tags/{tagInFarmB.Id}",
+            new { displayName = "Para Venta" }
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Test]
@@ -151,7 +177,7 @@ public class TagsIntegrationTests : IntegrationTestBase
 
         Authenticate(user);
 
-        var response = await Client.DeleteAsync($"/api/tags/{tag.Id}");
+        var response = await Client.DeleteAsync($"/api/farms/{farm.Id}/tags/{tag.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var payload = await response.Content.ReadFromJsonAsync<JsonElement>();

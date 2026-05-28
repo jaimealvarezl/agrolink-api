@@ -10,11 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgroLink.Api.Controllers;
 
-[Route("api")]
+[Route("api/farms/{farmId}/tags")]
+[Authorize(Policy = "FarmViewerAccess")]
 public class TagsController(IMediator mediator) : BaseController
 {
-    [HttpGet("farms/{farmId}/tags")]
-    [Authorize(Policy = "FarmViewerAccess")]
+    [HttpGet("")]
     public async Task<ActionResult<List<TagDto>>> GetFarmTags(
         int farmId,
         [FromQuery] string? search,
@@ -25,42 +25,48 @@ public class TagsController(IMediator mediator) : BaseController
         return Ok(tags);
     }
 
-    [HttpPut("tags/{id}")]
-    [Authorize]
+    [HttpPut("{id}")]
+    [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult<TagDto>> RenameTag(
+        int farmId,
         int id,
         [FromBody] RenameTagRequest request,
         CancellationToken cancellationToken
     )
     {
         var tag = await mediator.Send(
-            new RenameTagCommand(id, request.DisplayName, GetCurrentUserId()),
+            new RenameTagCommand(id, farmId, request.DisplayName, GetCurrentUserId()),
             cancellationToken
         );
         return Ok(tag);
     }
 
-    [HttpPatch("tags/{id}/color")]
-    [Authorize]
+    [HttpPatch("{id}/color")]
+    [Authorize(Policy = "FarmAdminAccess")]
     public async Task<ActionResult<TagDto>> UpdateTagColor(
+        int farmId,
         int id,
         [FromBody] UpdateTagColorRequest request,
         CancellationToken cancellationToken
     )
     {
         var tag = await mediator.Send(
-            new UpdateTagColorCommand(id, request.ColorToken, GetCurrentUserId()),
+            new UpdateTagColorCommand(id, farmId, request.ColorToken, GetCurrentUserId()),
             cancellationToken
         );
         return Ok(tag);
     }
 
-    [HttpDelete("tags/{id}")]
-    [Authorize]
-    public async Task<ActionResult<object>> DeleteTag(int id, CancellationToken cancellationToken)
+    [HttpDelete("{id}")]
+    [Authorize(Policy = "FarmAdminAccess")]
+    public async Task<ActionResult<object>> DeleteTag(
+        int farmId,
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         var affectedAnimals = await mediator.Send(
-            new DeleteTagCommand(id, GetCurrentUserId()),
+            new DeleteTagCommand(id, farmId, GetCurrentUserId()),
             cancellationToken
         );
         return Ok(new { affectedAnimals });
