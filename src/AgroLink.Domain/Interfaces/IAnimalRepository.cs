@@ -46,6 +46,7 @@ public interface IAnimalRepository : IRepository<Animal>
         int page,
         int pageSize,
         int? lotId = null,
+        int[]? tagIds = null,
         string? searchTerm = null,
         bool isSick = false,
         bool isPregnant = false,

@@ -59,6 +59,8 @@ public static class DependencyInjection
         services.AddScoped<IRepository<Paddock>, Repository<Paddock>>();
         services.AddScoped<IRepository<Lot>, Repository<Lot>>();
         services.AddScoped<IRepository<Animal>, Repository<Animal>>();
+        services.AddScoped<IRepository<Tag>, Repository<Tag>>();
+        services.AddScoped<IRepository<AnimalTag>, Repository<AnimalTag>>();
         services.AddScoped<IRepository<AnimalPhoto>, Repository<AnimalPhoto>>();
         services.AddScoped<IRepository<Owner>, Repository<Owner>>();
         services.AddScoped<IRepository<AnimalOwner>, Repository<AnimalOwner>>();
@@ -91,6 +93,7 @@ public static class DependencyInjection
         services.AddScoped<IPaddockRepository, PaddockRepository>();
         services.AddScoped<ILotRepository, LotRepository>();
         services.AddScoped<IAnimalRepository, AnimalRepository>();
+        services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<IAnimalPhotoRepository, AnimalPhotoRepository>();
         services.AddScoped<IOwnerRepository, OwnerRepository>();
         services.AddScoped<IAnimalOwnerRepository, AnimalOwnerRepository>();

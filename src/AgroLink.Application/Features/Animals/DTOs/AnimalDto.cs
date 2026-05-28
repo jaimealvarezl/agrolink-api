@@ -49,6 +49,9 @@ public class AnimalDto
     public required List<AnimalPhotoDto> Photos { get; set; }
 
     [Required]
+    public required List<string> Tags { get; set; }
+
+    [Required]
     public required DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -91,6 +94,8 @@ public class CreateAnimalDto
 
     [Required]
     public required List<AnimalOwnerCreateDto> Owners { get; set; }
+
+    public List<string> Tags { get; set; } = [];
 }
 
 public class UpdateAnimalDto
@@ -112,6 +117,7 @@ public class UpdateAnimalDto
     public int? MotherId { get; set; }
     public int? FatherId { get; set; }
     public List<AnimalOwnerCreateDto>? Owners { get; set; }
+    public List<string>? Tags { get; set; }
 }
 
 public class AnimalOwnerDto

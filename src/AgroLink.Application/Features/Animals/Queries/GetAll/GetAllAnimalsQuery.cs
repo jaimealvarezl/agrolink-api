@@ -65,6 +65,11 @@ public class GetAllAnimalsQueryHandler(
                         CreatedAt = p.CreatedAt,
                     })
                     .ToList(),
+                Tags = animal
+                    .AnimalTags.Select(at => at.Tag.DisplayName)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList(),
                 CreatedAt = animal.CreatedAt,
                 UpdatedAt = animal.UpdatedAt,
             })

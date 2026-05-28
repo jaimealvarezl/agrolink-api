@@ -3,6 +3,7 @@ using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -19,6 +20,7 @@ public class UpdateAnimalCommandHandler(
     IAnimalOwnerRepository animalOwnerRepository,
     IAnimalPhotoRepository animalPhotoRepository,
     IFarmMemberRepository farmMemberRepository,
+    ITagRepository tagRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
     IOwnershipValidator ownershipValidator,
@@ -224,6 +226,91 @@ public class UpdateAnimalCommandHandler(
             animal.FatherId = dto.FatherId.Value;
         }
 
+        List<string> responseTags;
+        if (dto.Tags != null)
+        {
+            var normalizedTags = TagNormalizer.NormalizeDistinct(dto.Tags);
+
+            var membership = await farmMemberRepository.GetByFarmAndUserAsync(
+                farmId,
+                request.UserId,
+                cancellationToken: cancellationToken
+            );
+            if (membership == null)
+            {
+                throw new ForbiddenAccessException("User does not have permission for this Farm.");
+            }
+
+            var existingTags = await tagRepository.GetByCanonicalNamesAsync(
+                farmId,
+                normalizedTags.Select(t => t.CanonicalName),
+                cancellationToken
+            );
+            var tagsByCanonical = existingTags.ToDictionary(t => t.CanonicalName, t => t);
+
+            if (
+                membership.Role == FarmMemberRoles.Editor
+                && normalizedTags.Any(t => !tagsByCanonical.ContainsKey(t.CanonicalName))
+            )
+            {
+                throw new ForbiddenAccessException("Foreman cannot create new tags");
+            }
+
+            foreach (var normalizedTag in normalizedTags)
+            {
+                if (!tagsByCanonical.ContainsKey(normalizedTag.CanonicalName))
+                {
+                    var upsertedTag = await tagRepository.UpsertAsync(
+                        farmId,
+                        normalizedTag.DisplayName,
+                        request.UserId,
+                        cancellationToken
+                    );
+                    tagsByCanonical[upsertedTag.CanonicalName] = upsertedTag;
+                }
+            }
+
+            var targetTagIds = normalizedTags
+                .Select(t => tagsByCanonical[t.CanonicalName].Id)
+                .ToHashSet();
+
+            var existingAnimalTags = animal.AnimalTags.ToList();
+            foreach (var animalTag in existingAnimalTags)
+            {
+                if (!targetTagIds.Contains(animalTag.TagId))
+                {
+                    animal.AnimalTags.Remove(animalTag);
+                }
+            }
+
+            var currentTagIds = animal.AnimalTags.Select(at => at.TagId).ToHashSet();
+            foreach (var tagId in targetTagIds)
+            {
+                if (!currentTagIds.Contains(tagId))
+                {
+                    animal.AnimalTags.Add(
+                        new AnimalTag
+                        {
+                            AnimalId = animal.Id,
+                            TagId = tagId,
+                            AddedByUserId = request.UserId,
+                            AddedAt = DateTime.UtcNow,
+                        }
+                    );
+                }
+            }
+
+            responseTags = normalizedTags.Select(t => t.DisplayName).ToList();
+        }
+        else
+        {
+            responseTags = animal
+                .AnimalTags.Select(at => at.Tag.DisplayName)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+        }
+
         animal.UpdatedAt = DateTime.UtcNow;
 
         animalRepository.Update(animal);
@@ -318,6 +405,7 @@ public class UpdateAnimalCommandHandler(
             FatherCuia = father?.Cuia,
             Owners = ownerDtos,
             Photos = photoDtos,
+            Tags = responseTags,
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };

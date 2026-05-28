@@ -3,6 +3,7 @@ using AgroLink.Application.Common.Utilities;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Interfaces;
 using MediatR;
@@ -17,6 +18,7 @@ public class CreateAnimalCommandHandler(
     IFarmRepository farmRepository,
     IOwnerRepository ownerRepository,
     IFarmMemberRepository farmMemberRepository,
+    ITagRepository tagRepository,
     ICurrentUserService currentUserService,
     IOwnershipValidator ownershipValidator,
     IUnitOfWork unitOfWork
@@ -49,11 +51,12 @@ public class CreateAnimalCommandHandler(
         }
 
         var userId = currentUserService.GetRequiredUserId();
-        var isMember = await farmMemberRepository.ExistsAsync(
-            fm => fm.FarmId == farmId && fm.UserId == userId,
-            cancellationToken
+        var membership = await farmMemberRepository.GetByFarmAndUserAsync(
+            farmId,
+            userId,
+            cancellationToken: cancellationToken
         );
-        if (!isMember)
+        if (membership == null)
         {
             throw new ForbiddenAccessException("User does not have permission for this Farm.");
         }
@@ -138,6 +141,38 @@ public class CreateAnimalCommandHandler(
 
         await ownershipValidator.ValidateAsync(dto.Owners, farmId, cancellationToken);
 
+        var normalizedTags = TagNormalizer.NormalizeDistinct(dto.Tags);
+        var tagsByCanonical = new Dictionary<string, Tag>();
+
+        if (normalizedTags.Count > 0)
+        {
+            var existingTags = await tagRepository.GetByCanonicalNamesAsync(
+                farmId,
+                normalizedTags.Select(t => t.CanonicalName),
+                cancellationToken
+            );
+            tagsByCanonical = existingTags.ToDictionary(t => t.CanonicalName, t => t);
+
+            if (
+                membership.Role == FarmMemberRoles.Editor
+                && normalizedTags.Any(t => !tagsByCanonical.ContainsKey(t.CanonicalName))
+            )
+            {
+                throw new ForbiddenAccessException("Foreman cannot create new tags");
+            }
+
+            foreach (var normalizedTag in normalizedTags.Where(normalizedTag => !tagsByCanonical.ContainsKey(normalizedTag.CanonicalName)))
+            {
+                var upsertedTag = await tagRepository.UpsertAsync(
+                    farmId,
+                    normalizedTag.DisplayName,
+                    userId,
+                    cancellationToken
+                );
+                tagsByCanonical[upsertedTag.CanonicalName] = upsertedTag;
+            }
+        }
+
         var animal = new Animal
         {
             Cuia = dto.Cuia,
@@ -160,6 +195,18 @@ public class CreateAnimalCommandHandler(
         {
             animal.AnimalOwners.Add(
                 new AnimalOwner { OwnerId = ownerDto.OwnerId, SharePercent = ownerDto.SharePercent }
+            );
+        }
+
+        foreach (var tag in normalizedTags.Select(normalizedTag => tagsByCanonical[normalizedTag.CanonicalName]))
+        {
+            animal.AnimalTags.Add(
+                new AnimalTag
+                {
+                    TagId = tag.Id,
+                    AddedByUserId = userId,
+                    AddedAt = DateTime.UtcNow,
+                }
             );
         }
 
@@ -208,6 +255,7 @@ public class CreateAnimalCommandHandler(
             FatherCuia = father?.Cuia,
             Owners = ownerDtos,
             Photos = photoDtos,
+            Tags = normalizedTags.Select(t => t.DisplayName).ToList(),
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };

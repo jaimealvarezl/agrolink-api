@@ -4,6 +4,7 @@ using AgroLink.Application.Features.Animals.Commands.Create;
 using AgroLink.Application.Features.Animals.DTOs;
 using AgroLink.Application.Features.Animals.Validators;
 using AgroLink.Application.Interfaces;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
@@ -21,6 +22,17 @@ public class CreateAnimalCommandHandlerTests
     {
         _mocker = new AutoMocker();
         _handler = _mocker.CreateInstance<CreateAnimalCommandHandler>();
+        _mocker
+            .GetMock<IFarmMemberRepository>()
+            .Setup(r =>
+                r.GetByFarmAndUserAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    false,
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new FarmMember { Role = FarmMemberRoles.Admin });
     }
 
     private AutoMocker _mocker = null!;
@@ -296,8 +308,8 @@ public class CreateAnimalCommandHandlerTests
         _mocker.GetMock<ICurrentUserService>().Setup(s => s.GetRequiredUserId()).Returns(5);
         _mocker
             .GetMock<IFarmMemberRepository>()
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<FarmMember, bool>>>()))
-            .ReturnsAsync(false);
+            .Setup(r => r.GetByFarmAndUserAsync(10, 5, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((FarmMember?)null);
 
         // Act & Assert
         await Should.ThrowAsync<ForbiddenAccessException>(() =>

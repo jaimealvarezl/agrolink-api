@@ -104,6 +104,11 @@ public class GetAnimalByIdQueryHandler(
             FatherCuia = father?.Cuia,
             Owners = ownerDtos,
             Photos = photoDtos,
+            Tags = animal
+                .AnimalTags.Select(at => at.Tag.DisplayName)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList(),
             CreatedAt = animal.CreatedAt,
             UpdatedAt = animal.UpdatedAt,
         };

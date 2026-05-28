@@ -21,6 +21,7 @@ public class AnimalListDto
 
     public string? Cuia { get; set; }
     public List<AnimalOwnerDto> Owners { get; set; } = [];
+    public List<string> Tags { get; set; } = [];
 
     // Status Flags
     public bool IsSick { get; set; }

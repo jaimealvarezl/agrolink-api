@@ -20,6 +20,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         return await _dbSet
             .Include(a => a.Lot)
                 .ThenInclude(l => l.Paddock)
+            .Include(a => a.AnimalTags)
+                .ThenInclude(at => at.Tag)
             .Where(a =>
                 a.LotId == lotId
                 && (
@@ -43,6 +45,8 @@ public class AnimalRepository(AgroLinkDbContext context)
         return await _dbSet
             .Include(a => a.Lot)
                 .ThenInclude(l => l.Paddock)
+            .Include(a => a.AnimalTags)
+                .ThenInclude(at => at.Tag)
             .Where(a =>
                 a.Id == id
                 && (
@@ -187,6 +191,7 @@ public class AnimalRepository(AgroLinkDbContext context)
         int page,
         int pageSize,
         int? lotId = null,
+        int[]? tagIds = null,
         string? searchTerm = null,
         bool isSick = false,
         bool isPregnant = false,
@@ -202,6 +207,8 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.Photos)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
+            .Include(a => a.AnimalTags)
+                .ThenInclude(at => at.Tag)
             .Where(a => a.Lot.Paddock.FarmId == farmId);
 
         query = includeRetired
@@ -216,6 +223,11 @@ public class AnimalRepository(AgroLinkDbContext context)
         if (sex.HasValue)
         {
             query = query.Where(a => a.Sex == sex.Value);
+        }
+
+        if (tagIds is { Length: > 0 })
+        {
+            query = query.Where(a => a.AnimalTags.Any(at => tagIds.Contains(at.TagId)));
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -267,6 +279,8 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
+            .Include(a => a.AnimalTags)
+                .ThenInclude(at => at.Tag)
             .Where(a => a.Lot.Paddock.FarmId == farmId)
             .ToListAsync(cancellationToken);
     }
@@ -287,6 +301,8 @@ public class AnimalRepository(AgroLinkDbContext context)
             .Include(a => a.AnimalOwners)
                 .ThenInclude(ao => ao.Owner)
             .Include(a => a.Photos)
+            .Include(a => a.AnimalTags)
+                .ThenInclude(at => at.Tag)
             .Include(a => a.BcsReadings.OrderByDescending(r => r.CreatedAt).Take(1))
             .Where(a =>
                 _context.FarmMembers.Any(m =>
