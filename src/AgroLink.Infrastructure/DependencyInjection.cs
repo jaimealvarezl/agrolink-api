@@ -111,6 +111,7 @@ public static class DependencyInjection
         services.AddScoped<ITelegramInboundEventLogRepository, TelegramInboundEventLogRepository>();
         services.AddScoped<ITelegramOutboundMessageRepository, TelegramOutboundMessageRepository>();
         services.AddScoped<IAnimalBcsReadingRepository, AnimalBcsReadingRepository>();
+        services.AddScoped<IReproductiveEventRepository, ReproductiveEventRepository>();
         services.AddScoped<IFarmActivityFeedRepository, FarmActivityFeedRepository>();
         services.AddScoped<IHerdCompositionRepository, HerdCompositionRepository>();
         services.AddScoped<IDailyMilkLogRepository, DailyMilkLogRepository>();
