@@ -28,6 +28,12 @@ public class CreateReproductiveEventCommandHandler(
     )
     {
         var dto = request.Dto;
+        var eventDate = dto.Date.Kind switch
+        {
+            DateTimeKind.Utc => dto.Date,
+            DateTimeKind.Local => dto.Date.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc),
+        };
         var animal =
             await animalRepository.GetByIdInFarmAsync(
                 request.AnimalId,
@@ -54,7 +60,7 @@ public class CreateReproductiveEventCommandHandler(
             }
         }
 
-        if (dto.Date.Date > DateTime.UtcNow.Date)
+        if (eventDate.Date > DateTime.UtcNow.Date)
         {
             throw new ArgumentException("Event date cannot be in the future.");
         }
@@ -81,11 +87,11 @@ public class CreateReproductiveEventCommandHandler(
 
         DateTime? expectedDueDate = (dto.EventType, status) switch
         {
-            (ReproductiveEventType.Mating, ReproductiveEventStatus.Positive) => dto.Date.AddDays(
+            (ReproductiveEventType.Mating, ReproductiveEventStatus.Positive) => eventDate.AddDays(
                 BovineGestationDays
             ),
             (ReproductiveEventType.PregnancyCheck, ReproductiveEventStatus.Positive)
-                when dto.EstimatedMonths.HasValue => dto.Date.AddDays(
+                when dto.EstimatedMonths.HasValue => eventDate.AddDays(
                 (9 - dto.EstimatedMonths.Value) * 30
             ),
             _ => null,
@@ -100,13 +106,19 @@ public class CreateReproductiveEventCommandHandler(
 
             if (status == ReproductiveEventStatus.Positive)
             {
-                animal.ReproductiveStatus = ReproductiveStatus.Pregnant;
-                animal.UpdatedAt = DateTime.UtcNow;
+                if (animal.ReproductiveStatus != ReproductiveStatus.Pregnant)
+                {
+                    animal.ReproductiveStatus = ReproductiveStatus.Pregnant;
+                    animal.UpdatedAt = DateTime.UtcNow;
+                }
             }
-            else if (latest is null || dto.Date >= latest.Date)
+            else if (latest is null || eventDate >= latest.Date)
             {
-                animal.ReproductiveStatus = ReproductiveStatus.Open;
-                animal.UpdatedAt = DateTime.UtcNow;
+                if (animal.ReproductiveStatus != ReproductiveStatus.Open)
+                {
+                    animal.ReproductiveStatus = ReproductiveStatus.Open;
+                    animal.UpdatedAt = DateTime.UtcNow;
+                }
             }
         }
 
@@ -114,7 +126,7 @@ public class CreateReproductiveEventCommandHandler(
         {
             AnimalId = request.AnimalId,
             EventType = dto.EventType,
-            Date = dto.Date,
+            Date = eventDate,
             BullId = dto.BullId,
             Status = status,
             EstimatedMonths = dto.EstimatedMonths,
