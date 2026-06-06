@@ -85,7 +85,7 @@ public class CreateReproductiveEventCommandHandler(
                 BovineGestationDays
             ),
             (ReproductiveEventType.PregnancyCheck, ReproductiveEventStatus.Positive)
-                when dto.EstimatedMonths.HasValue => DateTime.UtcNow.Date.AddDays(
+                when dto.EstimatedMonths.HasValue => dto.Date.AddDays(
                 (9 - dto.EstimatedMonths.Value) * 30
             ),
             _ => null,
