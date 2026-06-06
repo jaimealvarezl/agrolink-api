@@ -41,7 +41,8 @@ public class ReproductiveEventRepository(AgroLinkDbContext context) : IReproduct
     )
     {
         return await context
-            .ReproductiveEvents.AsNoTracking().Where(e =>
+            .ReproductiveEvents.AsNoTracking()
+            .Where(e =>
                 e.AnimalId == animalId
                 && e.Status == ReproductiveEventStatus.Positive
                 && (
