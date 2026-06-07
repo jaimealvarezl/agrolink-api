@@ -15,6 +15,7 @@ public class DeviceTokenRepository(AgroLinkDbContext context) : IDeviceTokenRepo
         );
         if (existing != null)
         {
+            existing.UserId = token.UserId;
             existing.LastSeenAt = DateTime.UtcNow;
             return;
         }

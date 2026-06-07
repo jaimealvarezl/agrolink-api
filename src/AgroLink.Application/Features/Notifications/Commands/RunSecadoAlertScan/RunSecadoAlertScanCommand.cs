@@ -22,13 +22,6 @@ public class RunSecadoAlertScanCommandHandler(
     IUnitOfWork unitOfWork
 ) : IRequestHandler<RunSecadoAlertScanCommand, SecadoScanSummaryDto>
 {
-    private sealed record Candidate(
-        int AnimalId,
-        string AnimalName,
-        DateOnly ExpectedDueDate,
-        int FarmId
-    );
-
     public async Task<SecadoScanSummaryDto> Handle(
         RunSecadoAlertScanCommand request,
         CancellationToken cancellationToken
@@ -39,9 +32,12 @@ public class RunSecadoAlertScanCommandHandler(
         var managuaNow = TimeZoneInfo.ConvertTimeFromUtc(scannedAt, managuaTimeZone);
         var targetDate = DateOnly.FromDateTime(managuaNow).AddDays(AlertConstants.SECADO_LEAD_DAYS);
 
-        var targetStartUtc = DateTime.SpecifyKind(
-            targetDate.ToDateTime(TimeOnly.MinValue),
-            DateTimeKind.Utc
+        var targetStartUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(
+                targetDate.ToDateTime(TimeOnly.MinValue),
+                DateTimeKind.Unspecified
+            ),
+            managuaTimeZone
         );
         var targetEndUtc = targetStartUtc.AddDays(1);
 
@@ -60,6 +56,11 @@ public class RunSecadoAlertScanCommandHandler(
             .GroupBy(e => e.AnimalId)
             .Select(g => g.OrderByDescending(x => x.Date).First())
             .ToList();
+
+        if (latestByAnimal.Count == 0)
+        {
+            return new SecadoScanSummaryDto(scannedAt, targetDate, 0, 0, 0, 0);
+        }
 
         var animalIds = latestByAnimal.Select(e => e.AnimalId).Distinct().ToList();
 
@@ -100,14 +101,7 @@ public class RunSecadoAlertScanCommandHandler(
                 continue;
             }
 
-            candidates.Add(
-                new Candidate(
-                    ev.AnimalId,
-                    animal.Name,
-                    DateOnly.FromDateTime(ev.ExpectedDueDate.Value),
-                    paddock.FarmId
-                )
-            );
+            candidates.Add(new Candidate(ev.AnimalId, animal.Name, targetDate, paddock.FarmId));
         }
 
         var sent = 0;
@@ -188,4 +182,11 @@ public class RunSecadoAlertScanCommandHandler(
             prunedTokens
         );
     }
+
+    private sealed record Candidate(
+        int AnimalId,
+        string AnimalName,
+        DateOnly ExpectedDueDate,
+        int FarmId
+    );
 }
