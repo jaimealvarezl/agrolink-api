@@ -87,6 +87,9 @@ public static class DependencyInjection
             IRepository<TelegramOutboundMessage>,
             Repository<TelegramOutboundMessage>
         >();
+        services.AddScoped<IRepository<ReproductiveEvent>, Repository<ReproductiveEvent>>();
+        services.AddScoped<IRepository<DeviceToken>, Repository<DeviceToken>>();
+        services.AddScoped<IRepository<SentNotification>, Repository<SentNotification>>();
 
         // Specific Repositories
         services.AddScoped<IFarmRepository, FarmRepository>();
@@ -115,6 +118,8 @@ public static class DependencyInjection
         services.AddScoped<IFarmActivityFeedRepository, FarmActivityFeedRepository>();
         services.AddScoped<IHerdCompositionRepository, HerdCompositionRepository>();
         services.AddScoped<IDailyMilkLogRepository, DailyMilkLogRepository>();
+        services.AddScoped<IDeviceTokenRepository, DeviceTokenRepository>();
+        services.AddScoped<ISentNotificationRepository, SentNotificationRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Firebase Admin SDK — initialized once per process using Application Default Credentials.
@@ -148,6 +153,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IStorageService, GcsStorageService>();
         services.AddScoped<IStoragePathProvider, StoragePathProvider>();
+        services.AddScoped<IPushNotificationSender, FcmPushNotificationSender>();
 
         // External worker operations are dispatched directly to the registered services.
         // Cloud Run has unrestricted internet access so no Lambda/HTTP proxy is needed.

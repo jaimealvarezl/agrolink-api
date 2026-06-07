@@ -35,6 +35,8 @@ public class AgroLinkDbContext(DbContextOptions<AgroLinkDbContext> options) : Db
     public DbSet<AnimalBcsReading> AnimalBcsReadings { get; set; }
     public DbSet<DailyMilkLog> DailyMilkLogs { get; set; }
     public DbSet<ReproductiveEvent> ReproductiveEvents => Set<ReproductiveEvent>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<SentNotification> SentNotifications => Set<SentNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
