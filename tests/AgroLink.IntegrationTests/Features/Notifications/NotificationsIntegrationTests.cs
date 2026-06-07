@@ -1,4 +1,5 @@
 using System.Net;
+using AgroLink.Domain.Constants;
 using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -81,6 +82,114 @@ public class NotificationsIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task BirthWatchScan_WithMatchingPregnantAnimal_SendsOnceAndDeduplicates()
+    {
+        var (_, animal, memberUser) = await SetupFarmWithAnimalForDueDateAsync(
+            ReproductiveStatus.Pregnant,
+            GetBirthWatchWindowEnd()
+        );
+        DbContext.DeviceTokens.Add(
+            new DeviceToken
+            {
+                UserId = memberUser.Id,
+                Token = $"token-{Guid.NewGuid()}",
+                Platform = "android",
+            }
+        );
+        await DbContext.SaveChangesAsync();
+
+        var fakePushSender = Factory.Services.GetRequiredService<FakePushNotificationSender>();
+        var callsBefore = fakePushSender.Calls.Count;
+
+        var firstResponse = await CreateBirthWatchScanRequestAsync();
+        var firstBody = await firstResponse.Content.ReadAsStringAsync();
+        firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK, firstBody);
+
+        var secondResponse = await CreateBirthWatchScanRequestAsync();
+        var secondBody = await secondResponse.Content.ReadAsStringAsync();
+        secondResponse.StatusCode.ShouldBe(HttpStatusCode.OK, secondBody);
+
+        DbContext.ChangeTracker.Clear();
+        var rows = await DbContext.SentNotifications.CountAsync(x => x.AnimalId == animal.Id);
+        rows.ShouldBe(1);
+
+        var callsAfter = fakePushSender.Calls.Count;
+        (callsAfter - callsBefore).ShouldBe(1);
+    }
+
+    [Test]
+    public async Task BirthWatchScan_WithCatchUpWindow_FiresForAnimalInsideWindow()
+    {
+        var dueDateInsideWindow = GetBirthWatchWindowEnd().AddDays(-9);
+        var (_, animal, memberUser) = await SetupFarmWithAnimalForDueDateAsync(
+            ReproductiveStatus.Pregnant,
+            dueDateInsideWindow
+        );
+        DbContext.DeviceTokens.Add(
+            new DeviceToken
+            {
+                UserId = memberUser.Id,
+                Token = $"token-{Guid.NewGuid()}",
+                Platform = "android",
+            }
+        );
+        await DbContext.SaveChangesAsync();
+
+        var fakePushSender = Factory.Services.GetRequiredService<FakePushNotificationSender>();
+        var callsBefore = fakePushSender.Calls.Count;
+
+        var response = await CreateBirthWatchScanRequestAsync();
+        var responseBody = await response.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, responseBody);
+
+        var callsAfter = fakePushSender.Calls.Count;
+        (callsAfter - callsBefore).ShouldBe(1);
+
+        DbContext.ChangeTracker.Clear();
+        var rows = await DbContext.SentNotifications.CountAsync(x => x.AnimalId == animal.Id);
+        rows.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task BirthWatchScan_WithBoundary_OutsideWindowSendsZero()
+    {
+        var outsideWindowDueDate = GetBirthWatchWindowEnd().AddDays(1);
+        await SetupFarmWithAnimalForDueDateAsync(ReproductiveStatus.Pregnant, outsideWindowDueDate);
+
+        var fakePushSender = Factory.Services.GetRequiredService<FakePushNotificationSender>();
+        var callsBefore = fakePushSender.Calls.Count;
+
+        var response = await CreateBirthWatchScanRequestAsync();
+        var responseBody = await response.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, responseBody);
+
+        var callsAfter = fakePushSender.Calls.Count;
+        (callsAfter - callsBefore).ShouldBe(0);
+
+        var rows = await DbContext.SentNotifications.CountAsync();
+        rows.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task BirthWatchScan_WithNonPregnantAnimal_SendsZero()
+    {
+        await SetupFarmWithAnimalForDueDateAsync(ReproductiveStatus.Open, GetBirthWatchWindowEnd());
+
+        var fakePushSender = Factory.Services.GetRequiredService<FakePushNotificationSender>();
+        var callsBefore = fakePushSender.Calls.Count;
+
+        var response = await CreateBirthWatchScanRequestAsync();
+        var responseBody = await response.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, responseBody);
+
+        var callsAfter = fakePushSender.Calls.Count;
+        (callsAfter - callsBefore).ShouldBe(0);
+
+        var rows = await DbContext.SentNotifications.CountAsync();
+        rows.ShouldBe(0);
+    }
+
+    [Test]
     public async Task PostDeviceToken_WithoutAuth_Returns401()
     {
         var response = await Client.PostAsJsonAsync(
@@ -96,6 +205,16 @@ public class NotificationsIntegrationTests : IntegrationTestBase
         var request = new HttpRequestMessage(
             HttpMethod.Post,
             "/api/internal/jobs/secado-alert-scan"
+        );
+        request.Headers.Add("X-Internal-Job-Key", "test-job-key");
+        return await Client.SendAsync(request);
+    }
+
+    private async Task<HttpResponseMessage> CreateBirthWatchScanRequestAsync()
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/api/internal/jobs/birth-watch-alert-scan"
         );
         request.Headers.Add("X-Internal-Job-Key", "test-job-key");
         return await Client.SendAsync(request);
@@ -195,5 +314,12 @@ public class NotificationsIntegrationTests : IntegrationTestBase
         var managuaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Managua");
         var managuaNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, managuaTimeZone);
         return DateOnly.FromDateTime(managuaNow).AddDays(60);
+    }
+
+    private static DateOnly GetBirthWatchWindowEnd()
+    {
+        var managuaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Managua");
+        var managuaNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, managuaTimeZone);
+        return DateOnly.FromDateTime(managuaNow).AddDays(AlertConstants.BIRTH_WATCH_LEAD_DAYS);
     }
 }
