@@ -32,12 +32,9 @@ public class RunSecadoAlertScanCommandHandler(
         var managuaNow = TimeZoneInfo.ConvertTimeFromUtc(scannedAt, managuaTimeZone);
         var targetDate = DateOnly.FromDateTime(managuaNow).AddDays(AlertConstants.SECADO_LEAD_DAYS);
 
-        var targetStartUtc = TimeZoneInfo.ConvertTimeToUtc(
-            DateTime.SpecifyKind(
-                targetDate.ToDateTime(TimeOnly.MinValue),
-                DateTimeKind.Unspecified
-            ),
-            managuaTimeZone
+        var targetStartUtc = DateTime.SpecifyKind(
+            targetDate.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc
         );
         var targetEndUtc = targetStartUtc.AddDays(1);
 
