@@ -4,6 +4,7 @@ using AgroLink.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Testcontainers.PostgreSql;
 
@@ -42,6 +43,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                             _dbContainer.GetConnectionString()
                         },
                         { "AWS:Region", "us-east-1" },
+                        { "InternalJobs:JobKey", "test-job-key" },
                     }
                 );
             }
@@ -90,6 +92,12 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
             db.Database.Migrate();
 
             services.AddScoped<IStorageService, FakeStorageService>();
+
+            services.RemoveAll<IPushNotificationSender>();
+            services.AddSingleton<FakePushNotificationSender>();
+            services.AddSingleton<IPushNotificationSender>(sp =>
+                sp.GetRequiredService<FakePushNotificationSender>()
+            );
         });
     }
 
