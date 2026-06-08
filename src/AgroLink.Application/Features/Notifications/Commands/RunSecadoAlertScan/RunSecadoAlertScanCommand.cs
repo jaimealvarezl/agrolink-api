@@ -104,6 +104,7 @@ public class RunSecadoAlertScanCommandHandler(
         var sent = 0;
         var skipped = 0;
         var prunedTokens = 0;
+        var tokensByFarm = new Dictionary<int, List<string>>();
 
         foreach (var candidate in candidates)
         {
@@ -120,10 +121,16 @@ public class RunSecadoAlertScanCommandHandler(
                 continue;
             }
 
-            var tokens = await deviceTokenRepository.GetTokensByFarmAsync(
-                candidate.FarmId,
-                cancellationToken
-            );
+            if (!tokensByFarm.TryGetValue(candidate.FarmId, out var tokens))
+            {
+                tokens = (
+                    await deviceTokenRepository.GetTokensByFarmAsync(
+                        candidate.FarmId,
+                        cancellationToken
+                    )
+                ).ToList();
+                tokensByFarm[candidate.FarmId] = tokens;
+            }
 
             if (tokens.Count > 0)
             {
@@ -150,6 +157,7 @@ public class RunSecadoAlertScanCommandHandler(
                         0,
                         cancellationToken
                     );
+                    tokens.Remove(unregisteredToken);
                     prunedTokens++;
                 }
 

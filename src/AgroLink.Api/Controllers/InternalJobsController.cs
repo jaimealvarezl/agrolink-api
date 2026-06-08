@@ -23,7 +23,9 @@ public class InternalJobsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("birth-watch-alert-scan")]
-    public async Task<IActionResult> BirthWatchAlertScan(CancellationToken cancellationToken)
+    public async Task<ActionResult<BirthWatchScanSummaryDto>> BirthWatchAlertScan(
+        CancellationToken cancellationToken
+    )
     {
         var result = await mediator.Send(new RunBirthWatchAlertScanCommand(), cancellationToken);
         return Ok(result);
