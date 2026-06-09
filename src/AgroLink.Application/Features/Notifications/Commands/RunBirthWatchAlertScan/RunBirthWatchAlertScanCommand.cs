@@ -6,12 +6,13 @@ using AgroLink.Domain.Entities;
 using AgroLink.Domain.Enums;
 using AgroLink.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
-namespace AgroLink.Application.Features.Notifications.Commands.RunSecadoAlertScan;
+namespace AgroLink.Application.Features.Notifications.Commands.RunBirthWatchAlertScan;
 
-public record RunSecadoAlertScanCommand : IRequest<SecadoScanSummaryDto>;
+public record RunBirthWatchAlertScanCommand : IRequest<BirthWatchScanSummaryDto>;
 
-public class RunSecadoAlertScanCommandHandler(
+public class RunBirthWatchAlertScanCommandHandler(
     IRepository<ReproductiveEvent> reproductiveEventRepository,
     IRepository<Animal> animalRepository,
     IRepository<Lot> lotRepository,
@@ -19,32 +20,39 @@ public class RunSecadoAlertScanCommandHandler(
     IDeviceTokenRepository deviceTokenRepository,
     ISentNotificationRepository sentNotificationRepository,
     IPushNotificationSender pushNotificationSender,
-    IUnitOfWork unitOfWork
-) : IRequestHandler<RunSecadoAlertScanCommand, SecadoScanSummaryDto>
+    IUnitOfWork unitOfWork,
+    ILogger<RunBirthWatchAlertScanCommandHandler> logger
+) : IRequestHandler<RunBirthWatchAlertScanCommand, BirthWatchScanSummaryDto>
 {
-    public async Task<SecadoScanSummaryDto> Handle(
-        RunSecadoAlertScanCommand request,
+    public async Task<BirthWatchScanSummaryDto> Handle(
+        RunBirthWatchAlertScanCommand request,
         CancellationToken cancellationToken
     )
     {
         var scannedAt = DateTime.UtcNow;
         var managuaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Managua");
         var managuaNow = TimeZoneInfo.ConvertTimeFromUtc(scannedAt, managuaTimeZone);
-        var targetDate = DateOnly.FromDateTime(managuaNow).AddDays(AlertConstants.SECADO_LEAD_DAYS);
+        var todayManagua = DateOnly.FromDateTime(managuaNow);
+        var windowEnd = todayManagua.AddDays(AlertConstants.BIRTH_WATCH_LEAD_DAYS);
 
-        var targetStartUtc = DateTime.SpecifyKind(
-            targetDate.ToDateTime(TimeOnly.MinValue),
+        var todayStartUtc = DateTime.SpecifyKind(
+            todayManagua.ToDateTime(TimeOnly.MinValue),
             DateTimeKind.Utc
         );
-        var targetEndUtc = targetStartUtc.AddDays(1);
+        var windowEndUtc = DateTime.SpecifyKind(
+            todayManagua
+                .AddDays(AlertConstants.BIRTH_WATCH_LEAD_DAYS + 1)
+                .ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc
+        );
 
         var rawEvents = await reproductiveEventRepository.FindAsync(
             e =>
                 e.EventType == ReproductiveEventType.PregnancyCheck
                 && e.Status == ReproductiveEventStatus.Positive
                 && e.ExpectedDueDate.HasValue
-                && e.ExpectedDueDate.Value >= targetStartUtc
-                && e.ExpectedDueDate.Value < targetEndUtc
+                && e.ExpectedDueDate.Value > todayStartUtc
+                && e.ExpectedDueDate.Value < windowEndUtc
                 && e.Animal.ReproductiveStatus == ReproductiveStatus.Pregnant,
             cancellationToken
         );
@@ -56,7 +64,7 @@ public class RunSecadoAlertScanCommandHandler(
 
         if (latestByAnimal.Count == 0)
         {
-            return new SecadoScanSummaryDto(scannedAt, targetDate, 0, 0, 0, 0);
+            return new BirthWatchScanSummaryDto(scannedAt, windowEnd, 0, 0, 0, 0);
         }
 
         var animalIds = latestByAnimal.Select(e => e.AnimalId).Distinct().ToList();
@@ -98,7 +106,21 @@ public class RunSecadoAlertScanCommandHandler(
                 continue;
             }
 
-            candidates.Add(new Candidate(ev.AnimalId, animal.Name, targetDate, paddock.FarmId));
+            var expectedDueDateOnly = DateOnly.FromDateTime(ev.ExpectedDueDate.Value);
+            var daysUntilDue = (
+                expectedDueDateOnly.ToDateTime(TimeOnly.MinValue)
+                - todayManagua.ToDateTime(TimeOnly.MinValue)
+            ).Days;
+
+            candidates.Add(
+                new Candidate(
+                    ev.AnimalId,
+                    animal.Name,
+                    expectedDueDateOnly,
+                    daysUntilDue,
+                    paddock.FarmId
+                )
+            );
         }
 
         var sent = 0;
@@ -110,7 +132,7 @@ public class RunSecadoAlertScanCommandHandler(
         {
             var alreadySent = await sentNotificationRepository.ExistsAsync(
                 candidate.AnimalId,
-                NotificationType.SecadoDryOff,
+                NotificationType.BirthWatch,
                 candidate.ExpectedDueDate,
                 cancellationToken
             );
@@ -135,15 +157,15 @@ public class RunSecadoAlertScanCommandHandler(
             if (tokens.Count > 0)
             {
                 var body =
-                    $"🔔 Secado pendiente: {candidate.AnimalName} — parto esperado en {AlertConstants.SECADO_LEAD_DAYS} días. Suspender ordeño hoy.";
+                    $"🐄 Parto en {candidate.DaysUntilDue} días: {candidate.AnimalName}. Pásela a potrero de maternidad y revise ubre/condición.";
 
                 var result = await pushNotificationSender.SendAsync(
                     tokens,
-                    "🔔 Secado pendiente",
+                    "🐄 Parto cercano",
                     body,
                     new Dictionary<string, string>
                     {
-                        ["type"] = "secado",
+                        ["type"] = "birth_watch",
                         ["animalId"] = candidate.AnimalId.ToString(CultureInfo.InvariantCulture),
                         ["tab"] = "reproductive",
                     },
@@ -168,7 +190,7 @@ public class RunSecadoAlertScanCommandHandler(
                 new SentNotification
                 {
                     AnimalId = candidate.AnimalId,
-                    NotificationType = NotificationType.SecadoDryOff,
+                    NotificationType = NotificationType.BirthWatch,
                     ExpectedDueDate = candidate.ExpectedDueDate,
                     SentAt = DateTime.UtcNow,
                 },
@@ -176,11 +198,20 @@ public class RunSecadoAlertScanCommandHandler(
             );
         }
 
+        logger.LogInformation(
+            "BirthWatchAlertScan: candidates={Candidates} sent={Sent} skipped={Skipped} pruned={PrunedTokens} windowEnd={WindowEnd}",
+            candidates.Count,
+            sent,
+            skipped,
+            prunedTokens,
+            windowEnd
+        );
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new SecadoScanSummaryDto(
+        return new BirthWatchScanSummaryDto(
             scannedAt,
-            targetDate,
+            windowEnd,
             candidates.Count,
             sent,
             skipped,
@@ -192,6 +223,7 @@ public class RunSecadoAlertScanCommandHandler(
         int AnimalId,
         string AnimalName,
         DateOnly ExpectedDueDate,
+        int DaysUntilDue,
         int FarmId
     );
 }

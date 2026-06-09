@@ -1,4 +1,5 @@
 using AgroLink.Api.Filters;
+using AgroLink.Application.Features.Notifications.Commands.RunBirthWatchAlertScan;
 using AgroLink.Application.Features.Notifications.Commands.RunSecadoAlertScan;
 using AgroLink.Application.Features.Notifications.DTOs;
 using MediatR;
@@ -18,6 +19,15 @@ public class InternalJobsController(IMediator mediator) : ControllerBase
     )
     {
         var result = await mediator.Send(new RunSecadoAlertScanCommand(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("birth-watch-alert-scan")]
+    public async Task<ActionResult<BirthWatchScanSummaryDto>> BirthWatchAlertScan(
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await mediator.Send(new RunBirthWatchAlertScanCommand(), cancellationToken);
         return Ok(result);
     }
 }
