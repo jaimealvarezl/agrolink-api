@@ -20,6 +20,7 @@ public class GetTheftAlertPdfQueryHandler(
     private const string MutedHex = "#6B7280";
     private const string SurfaceHex = "#F9F5EF";
     private const string BorderHex = "#E5DDD0";
+    private const string ReferralUrl = "agrolink.ni/r/alerta";
 
     public async Task<byte[]?> Handle(
         GetTheftAlertPdfQuery request,
@@ -278,10 +279,10 @@ public class GetTheftAlertPdfQueryHandler(
                                         .FontSize(9)
                                         .FontColor("#FFD4A8");
 
-                                    row.ConstantItem(70)
+                                    row.ConstantItem(110)
                                         .AlignMiddle()
                                         .AlignRight()
-                                        .Text("agrolink.mx")
+                                        .Text(ReferralUrl)
                                         .FontSize(9)
                                         .FontColor("#FFD4A8");
                                 });
